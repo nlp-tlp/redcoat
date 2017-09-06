@@ -84,7 +84,7 @@ def combine_final_versions(final_versions):
 
 def main():
 	if not exists(DATA_DIR):
-		makedirs(DATA_DIR)	
+		sys.stdout.write(Fore.RED + "ERROR: " + Style.RESET_ALL + "The %s directory is missing. Please create it and paste all of your annotated_data files in it." % DATA_DIR)
 
 	files = [f for f in listdir(DATA_DIR) if isfile(join(DATA_DIR, f))]
 	first_group_index, last_group_index, group_indexes = find_range(files)
