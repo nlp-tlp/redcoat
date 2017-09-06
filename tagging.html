@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Tagging</title>
+
+		<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">
+		<style>
+			body {
+				font-family: "Open Sans", sans-serif;
+				padding: 0;
+				margin: 0;
+
+			}
+			input, button {
+				font-family: "Open Sans", sans-serif;
+			}
+			main {
+				width: 1152px;
+				max-width: 100%;
+				margin: 0 auto;
+				position: relative;
+				padding-top: 150px;
+				padding-left: 200px;
+			}
+			#sentence-tagging, #ending-message {
+				font-size: 32px;
+				color: #333;
+				line-height: 220%;
+			}
+	
+			#sentence-tagging .sentence {
+				margin-bottom: 50px;
+				transition: margin-top 0.2s linear;
+				margin-top: 0;
+				opacity: 0.6;
+				transition: opacity 0.5s ease;
+
+			}
+			#sentence-tagging .sentence .word, #sentence-tagging .sentence .punctuation {
+				background: none;
+				padding: 0px 10px;
+				position: relative;
+				word-wrap: normal;
+				display: inline-block;
+				margin: 10px 0;
+
+			}
+			#sentence-tagging .sentence .punctuation {
+				opacity: 0.5;
+			}
+
+			/* $color-list: #99FFCC, #FFCCCC, #CCCCFF, #CCFF99, #CCFFCC, #CCFFFF, #FFCC99, #FFCCFF, #FFFF99, #FFFFCC, #CCCC99, #fbafff, #ffbfaf, #c6ffcb;  */
+
+			.word:not(.tag):not(.selected) {
+				border-bottom: 1px solid #ccc;
+				box-sizing: border-box;
+			}
+			#sentence-tagging .sentence .word.tag::before {
+				content: attr(data-content);
+				width: 100%;
+				height: 100%;
+				top: -1px;
+				left: 0;
+				position: absolute;
+				z-index: -1;
+				border-bottom: 2px solid rgba(0, 0, 0, 0.3);
+				font-size: 12px;
+				line-height: 125px;
+				font-weight: bold;
+				text-align: center;
+				color: rgba(0, 0, 0, 0.5);
+				overflow: hidden;
+
+			}
+
+			#sentence-tagging .sentence .word.tag-1::before { background: #99FFCC; }
+			#sentence-tagging .sentence .word.tag-2::before { background: #FFCCCC; }
+			#sentence-tagging .sentence .word.tag-3::before { background: #CCCCFF; }
+			#sentence-tagging .sentence .word.tag-4::before { background: #CCFF99; }
+			#sentence-tagging .sentence .word.tag-5::before { background: #CCFFCC; }
+			#sentence-tagging .sentence .word.tag-6::before { background: #CCFFFF; }
+			#sentence-tagging .sentence .word.tag-7::before { background: #FFCC99; }
+			#sentence-tagging .sentence .word.tag-8::before { background: #FFCCFF; }
+			#sentence-tagging .sentence .word.tag-9::before { background: #FFFF99; }
+			#sentence-tagging .sentence .word.tag-0::before { background: #FFFFCC; }
+			#sentence-tagging .sentence .word.tag-a::before { background: #CCCC99; }
+			#sentence-tagging .sentence .word.tag-b::before { background: #fbafff; }
+
+		
+			#sentence-tagging .sentence .word.selected::after {
+				background: rgba(230, 230, 230, 0.8);
+				content: " ";
+				width: 100%;
+				height: 100%;
+				top: -1px;
+				left: 0;
+				position: absolute;
+				z-index: -1;
+				border: 1px solid #bbb;
+			}
+			#sentence-tagging .sentence .word.selected.tag::after {
+				background-blend-mode: color-dodge;
+				background: rgba(255, 255, 255, 0.6);
+			}
+
+
+			#sentence-tagging .sentence.selected {
+				opacity: 1;
+			}
+
+			#sentence-tagging .sentence .word.selected.chain:before {
+				content: " ";
+				background: #dedede;
+				top: 0;
+				position: absolute;
+				width: 12px;
+				height: 100%;
+				right: -10px;
+			}
+
+			#feather-overlay {
+				position: fixed;
+				top: 40px;
+				background: linear-gradient(rgba(255, 255, 255, 0.7), rgba(0, 0, 0, 0));
+				height: 210px;
+				z-index: 100;
+				width: 100%;
+				display: none;
+			}
+			@media(max-width: 1400px) {
+				nav#legend {
+					display: none;
+				}
+			}
+			nav#navbar {
+				position: fixed;
+				top: 0px;
+				width: 100%;
+				z-index: 1000;
+				background: #eee;
+				padding: 15px 0;
+			}
+
+			nav#navbar .navbar-left {
+				position: absolute;
+				right: 0;
+				left: 0;	
+				width: 20%;			
+				margin-left: 12px;
+			}
+			#logo {
+				font-weight: bold;
+			}
+
+			nav#navbar .navbar-right {
+				position: absolute;
+				right: 0;
+				top: 0;	
+				margin-top: 5px;
+				margin-right: 8px;	
+				/*width: 190px;	*/	
+			}
+			nav#navbar .navbar-right input, nav#navbar .navbar-right button {
+				height: 36px;
+			}
+
+			button#save-to-file {
+				font-family: "Open Sans", sans-serif;
+
+				box-sizing: border-box;
+				cursor: pointer;
+				text-align: center;	
+				margin-left: 10px;
+			}
+
+
+			input#jump-to-batch {
+				padding-left: 8px;
+				width: 135px;
+			}
+			button#jump-to-batch-go {
+				width: 40px;
+				text-align: center;	
+				cursor: pointer;
+
+			}
+
+			nav#legend {
+				position: fixed;
+				top: 100px;
+				left: 0;
+				width: 300px;
+				padding: 0 80px;
+				font-size: 24px;
+				color: #222;
+
+
+			}
+			nav#legend ul, nav#hotkeys ul {
+				list-style: none;
+				padding-left: 0px;
+			}
+			nav#hotkeys {
+				position: fixed;
+				bottom: 0;
+				left: 0;
+				color: #444;
+				font-size: 12px;
+				padding: 0 70px;
+			}
+
+			/* $color-list: #99FFCC, #FFCCCC, #CCCCFF, #CCFF99, #CCFFCC, #CCFFFF, #FFCC99, #FFCCFF, #FFFF99, #FFFFCC, #CCCC99, #fbafff, #ffbfaf, #c6ffcb;  */
+			nav#legend ul li {
+				padding: 2px 8px;
+				margin-bottom: 6px;
+				border-bottom: 2px solid rgba(0, 0, 0, 0.3);
+			}
+			nav#legend ul li:nth-child(1) { background: #99FFCC; }
+			nav#legend ul li:nth-child(2) { background: #FFCCCC; }
+			nav#legend ul li:nth-child(3) { background: #CCCCFF; }
+			nav#legend ul li:nth-child(4) { background: #CCFF99; }
+			nav#legend ul li:nth-child(5) { background: #CCFFCC; }
+			nav#legend ul li:nth-child(6) { background: #CCFFFF; }
+			nav#legend ul li:nth-child(7) { background: #FFCC99; }
+			nav#legend ul li:nth-child(8) { background: #FFCCFF; }
+			nav#legend ul li:nth-child(9) { background: #FFFF99; }
+			nav#legend ul li:nth-child(10) { background: #FFFFCC; }
+			nav#legend ul li:nth-child(11) { background: #CCCC99; }
+			nav#legend ul li:nth-child(12) { background: #fbafff; }
+
+			#sentence-counter, #saving-notification, #loading-notification, #ending-notification {			
+				
+				text-align: center;
+				font-size: 16px;
+				color: #555;
+				width: 100%;
+				display: none;
+			}
+			#loading-notification {
+				display: block;
+			}
+
+			span#group-number {
+				font-weight: bold;
+			}
+			span#group-total {
+				font-weight: bold;
+			}
+			span#saving-filename {
+				font-weight: bold;
+			}
+			#saving-notification {
+				display: none;
+			}
+			#jump-to-batch-error {
+				position: absolute;
+				right: 0;
+				top: 50px;
+				border: 1px solid #936161;
+				color: #222;
+				width: 100%;
+				padding: 6px;
+				box-sizing: border-box;
+				background: #FFCCCC;
+				display: none;
+			}
+			#jump-to-batch-error:before {
+				content: " ";
+				top: -11px;
+				left: 80px;
+				height: 10px;
+				position: absolute;
+  				width: 0;
+				height: 0;
+				border-style: solid;
+				border-width: 0 10px 10px 10px;
+				border-color: transparent transparent #936161 transparent;
+			}
+			#jump-to-batch-error:after {
+				content: " ";
+				top: -10px;
+				left: 80px;
+				height: 10px;
+				position: absolute;
+  				width: 0;
+				height: 0;
+				border-style: solid;
+				border-width: 0 10px 10px 10px;
+				border-color: transparent transparent #FFCCCC transparent;
+			}
+		</style>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+	</head>
+	<body>
+		<nav id="navbar">
+			<div class="navbar-left">
+				<div id="logo">
+					Annotator
+				</div>
+			</div>
+			<div id="ending-notification">Annotation complete.</div>
+			<div id="loading-notification">Loading dataset...</div>
+			<div id="sentence-counter">Showing group <span id="group-number">?</span> of <span id="group-total">?</span>.</div>
+			<div id="saving-notification">Saving to <span id="saving-filename">?</span></div>
+			<div class="navbar-right">
+
+				<input name="jump-to-batch" id="jump-to-batch" type="number" placeholder="Jump to group..."/>
+				<button id="jump-to-batch-go">Go</button>
+				<div id="jump-to-batch-error">Please enter a valid group number.</div>
+
+				
+				<button id="save-to-file">Save</button>
+			</div>
+		</nav>
+		<nav id="legend">
+			<h3>Legend</h3>
+			<ul id="legend-list">
+				<!--
+				<li><b>1. </b>Person</li>
+				<li><b>2. </b>Injury</li>
+				<li><b>3. </b>Body part</li>
+				<li><b>4. </b>Vehicle</li>
+				<li><b>5. </b>Activity</li>
+				<li><b>6. </b>Location</li>
+				<li><b>7. </b>Date/time</li>
+				<li><b>8. </b>Accident cause</li>
+				<li><b>9. </b>Condition</li>
+				-->
+
+			</ul>
+
+			
+		</nav>
+		<!--
+		<nav id="hotkeys">
+			<h3>Hotkeys</h3>
+			<ul>
+				<li><b>j</b>: jump to group</li>
+				<li><b>l</b>: show/hide legend</li>
+				<li><b>1-9</b>: tag entity</li>
+			</ul>
+		</nav>
+		-->
+		<main id="main">
+			<div id="sentence-tagging">
+				
+
+
+			</div>
+		</main>
+
+	</body>
+
+	<script type="text/javascript" src="json_data.js"></script>
+	<script>
+
+
+		
+		var tagClassNames = entity_classes_abbr // from the js file
+
+
+		var loading = true // can't do anything if loading
+
+		//document.getElementById("sentence-tagging").innerHTML = data
+
+		var st = $("#sentence-tagging")
+		var WS = "<span class=\"word\">"
+		var WE   = "</span>" 
+		var PS = "<span class=\"punctuation\">"
+		var PE   = "</span>" 
+
+		var BATCH_SIZE = 10
+
+		var groupNumber = 1 // Each batch is 10 records
+		var groupTotal = Math.floor(data.length / BATCH_SIZE) + 1 // It's actually 5 for now
+
+		var annotatedTagNumbers = []
+		var annotatedTags = []
+
+
+
+		var groupData
+		var sentenceIndex
+		var wordIndex
+		var sentenceLength
+		var selectedWord
+		var chainStart
+		var chainType
+		var currentlyScrolling = false
+
+		var selectingJump = false
+		var ended = false
+
+		function finishedScrolling() {
+			currentlyScrolling = false
+		}
+
+		function generateLegend() {
+			var ll = $("#legend-list")
+			var count = 0
+			for(var i = 0; i < entity_classes.length; i++) {
+				count++
+				if(count == 10) {
+					count = 0
+				}
+				ll.append("<li><b>" + count + ". </b>" + entity_classes[i] + "</li>")
+			}
+		}
+		generateLegend()
+
+		function loadGroup() {
+
+
+
+			$("#ending-message").remove()
+
+			loading = true
+
+			if(groupNumber <= groupTotal) { 
+
+
+				groupStart = (groupNumber - 1) * BATCH_SIZE
+				groupEnd = groupStart + BATCH_SIZE
+				groupData = data.slice(groupStart, groupEnd)
+
+
+				$("#main").children(0).fadeOut(300, continueLoading);
+
+			} else {
+				$("#main").children(0).fadeOut(300, showEndingMessage);
+			}
+
+
+
+			function continueLoading() {
+
+				annotatedTagNumbers = []
+				annotatedTags = []
+
+				st.remove()
+				$("<div id=\"sentence-tagging\"></div>").hide().appendTo("#main").fadeIn(300)
+				st = $("#sentence-tagging")
+
+				//window.setTimeout(300, function() { st.addClass("show")})
+				//st.addClass("show");
+
+				//console.log(st)
+
+				showSentenceCounter()
+
+				$.each(groupData, function(key, value) {
+
+					var content = WS + value.join(WE + "" + WS);
+					content += WE
+					// Remove punctuation-only words
+					content = content.replace(/<span class="word">([.,\/#!$%\^&\*;:{}=\-_`~()"'])+<\/span>/g, "<span class=\"punctuation\">$1</span>")
+					var s = st.append("<div class=\"sentence\">" + content + "</div>")
+
+					annotatedTagNumbers.push(new Array(value.length).fill(-1))
+					annotatedTags.push(new Array(value.length).fill("O"))
+
+				});
+
+				sentenceIndex = 0
+				wordIndex = -1
+				sentenceLength = calculateSentenceLength()
+				selectedWord = getSelectedWord()
+				chainStart = -1
+				chainType = "forwards"
+				st.children(0).eq(sentenceIndex).addClass("selected")
+				moveForward()
+
+
+				$("#group-total").html(groupTotal)
+				$("#group-number").html(groupNumber)
+				if(currentlyScrolling) {
+					$("html, body").scrollTop(st.children().eq(sentenceIndex).offset().top - 150)
+				} else {
+					currentlyScrolling = true
+					$("html, body").animate({
+					    scrollTop: st.children().eq(sentenceIndex).offset().top - 150
+					}, 200, finishedScrolling);					
+				}
+
+				loading = false
+				selectedWord.addClass("selected")
+
+
+			}
+			function showEndingMessage() {
+				showSentenceCounter()
+
+				st.remove()
+				$("<div id=\"sentence-tagging\"></div>").hide().appendTo("#main").fadeIn(300)
+				st = $("#sentence-tagging")
+
+				$("#main").append("<div id=\"ending-message\">Thanks for using Michael's tagging platform.<br/><br/>Please copy/paste all of the downloaded annotation files into the <code>annotated_data</code> folder and use the <code>combine_data.py</code> program to combine them.</div>")
+
+				showEndingNotification()
+				loading = false
+				ended = true
+			}
+		}
+		loadGroup()
+
+
+		function generateAnnotatedTags() {
+			for(var i = 0; i < annotatedTagNumbers.length; i++) {
+				for(var j = annotatedTagNumbers[i].length - 1; j >= 0; j--) {
+					tagNumber = annotatedTagNumbers[i][j]
+					if(tagNumber == -1) {
+						annotatedTags[i][j] = "O"
+					} else {
+						annotatedTags[i][j] = "B-" + tagClassNames[tagNumber]
+						if(j > 0) {
+							if(annotatedTagNumbers[i][j - 1] == tagNumber) {
+								annotatedTags[i][j] = "I-" + tagClassNames[tagNumber]
+							}
+						}
+					}
+				}		
+
+			};
+		}
+		
+
+		function getSelectedWord() {
+			selectedWord = st.children().eq(sentenceIndex).children('span.word').eq(wordIndex)
+		}
+		
+
+		function calculateSentenceLength() {
+			sentenceLength = st.children().eq(sentenceIndex).children('span.word').length	
+			return sentenceLength
+		}
+
+
+		function tagSelected(tagClass) {
+			$("span.word.selected").removeClass(function (index, className) {
+				return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
+			});
+
+			$("span.word.selected").addClass("tag")
+			$("span.word.selected").addClass("tag-" + tagClass)
+			var tc = tagClass - 1
+			console.log(tc)
+			if(tc == -1)
+				tc = 9
+			$("span.word.selected").attr("data-content", entity_classes[tc])
+			$("span.word.selected").each(function(e) {
+				annotatedTagNumbers[sentenceIndex][$(this).index()] = tagClass - 1;
+			});
+
+
+ 	
+			$(".word").removeClass("selected")
+			moveForward()
+		}
+
+		function highlightSelected(direction) {			
+			if(!chaining) {				
+				$(".word").removeClass("selected")
+				chainStart = -1
+			} else {
+
+				var arr = st.children().eq(sentenceIndex).children('span.word.selected')
+				var last = $(arr[arr.length - 1])
+				var first = $(arr[0])
+
+				if(direction == "forwards") {
+					if($('span.word.selected').length == 1) {
+						chainStart = wordIndex
+						chainType = "forwards"
+					}
+					if(chainType == "forwards") {
+						if(first.index() < chainStart - 1) {
+							first.removeClass("selected")
+						}
+					} else {
+						if(first.index() < chainStart) {
+							first.removeClass("selected")
+						}						
+					}
+
+				} else if (direction == "backwards") {
+					if($('span.word.selected').length == 1) {
+						chainStart = wordIndex + 1
+						chainType = "backwards"
+					}
+					if(last.index() >= chainStart && chainType == "forwards") {
+						last.removeClass("selected")
+					}
+				}
+			}
+			if(!loading) {
+				selectedWord.addClass("selected")
+				var oft = selectedWord.offset().top
+				if($(window).height() - (oft - $("body").scrollTop()) < 150 || $("body").scrollTop() - oft > -150) {
+					if(currentlyScrolling) {
+						$("html, body").scrollTop(oft - 150)
+					} else {
+						currentlyScrolling = true
+						$("html, body").animate({
+						    scrollTop: oft - 150
+						}, 200, finishedScrolling);
+					}
+				}
+			}
+			
+			//$("html, body").animate({
+			//    scrollTop: st.children().eq(sentenceIndex).offset().top - 150
+			//}, 100);
+		}
+
+		function nextSentence() {
+			if(sentenceIndex < groupData.length - 1) {
+				sentenceIndex++				
+				$(".sentence").removeClass("selected")
+				st.children().eq(sentenceIndex).addClass("selected")
+				$("#sentence-number").html(sentenceIndex + 1)	
+				if(currentlyScrolling) {
+					$("html, body").scrollTop(st.children().eq(sentenceIndex).offset().top - 150)
+				} else {
+					currentlyScrolling = true
+					$("html, body").animate({
+					    scrollTop: st.children().eq(sentenceIndex).offset().top - 150
+					}, 200, finishedScrolling);
+				}								
+
+				wordIndex = 0
+				sentenceLength = calculateSentenceLength()
+			} else {
+				saveDataToFile()
+				groupNumber++
+				loadGroup(groupNumber)
+			}
+		}
+		function previousSentence() {
+			if(sentenceIndex > 0) {
+				sentenceIndex--	
+				$(".sentence").removeClass("selected")
+				st.children().eq(sentenceIndex).addClass("selected")
+			
+				if(currentlyScrolling) {
+					$("html, body").scrollTop(st.children().eq(sentenceIndex).offset().top - 150)
+				} else {
+					currentlyScrolling = true
+					$("html, body").animate({
+					    scrollTop: st.children().eq(sentenceIndex).offset().top - 150
+					}, 200, finishedScrolling);
+				}		
+			    $("#sentence-number").html(sentenceIndex + 1)
+
+				sentenceLength = calculateSentenceLength()
+				wordIndex = sentenceLength - 1
+			}
+		}
+
+		function moveForward() {
+			wordIndex++
+
+			if(wordIndex >= sentenceLength) {
+				nextSentence()
+			}
+			getSelectedWord()
+			highlightSelected("forwards");
+		}
+		function moveBackward() {
+			wordIndex--
+			if(wordIndex < 0) {
+				if(sentenceIndex > 0) {
+
+					previousSentence()
+				}
+			}
+			if(wordIndex == -1) {
+				wordIndex = 0
+			}
+			getSelectedWord()
+			highlightSelected("backwards");
+		}
+
+		function deleteTag() {
+			selectedWord.removeClass(function (index, className) {
+				return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
+			});
+			selectedWord.removeClass("tag")
+			annotatedTagNumbers[sentenceIndex][selectedWord.index()] = - 1;
+			
+
+		}
+
+
+		function jumpButtonFocus() {
+
+		}
+
+		$("#jump-to-batch").focus(function() {
+			selectingJump = true
+
+
+		})
+		$("#jump-to-batch").blur(function() {
+			selectingJump = false
+
+		})
+
+		var chaining = false
+		var map = {37: false, 39: false, 16: false};
+		$(document).keydown(function(e) {
+				if(!selectingJump && !loading && !ended) {
+				    if (e.keyCode in map) {
+				    	if(e.keyCode == 16) {
+				    		chaining = true
+				    	}
+				        map[e.keyCode] = true;
+				        if (map[37]) {		// Left
+				        	
+				        	if (map[16]) {
+				        		chaining = true
+				        	} else {
+				        		chaining = false
+				        	}
+				        	moveBackward()
+				        } else if (map[39]) {  // Right
+				        	
+				        	if (map[16]) {
+				        		chaining = true
+				        	} else {
+				        		chaining = false
+				        	}
+				        	moveForward()
+				        }
+				    }
+				    if(e.keyCode >= 48 && e.keyCode <= 57) {
+				    	tagSelected(e.keyCode - 48)
+				    }
+
+				    if(e.keyCode == 40) {		    	
+				    	nextSentence()
+				    	wordIndex = -1
+				    	moveForward()
+				    }
+				    if(e.keyCode == 38) {
+				    	previousSentence();
+				    	wordIndex = -1
+				    	moveForward()
+				    }
+				    if(e.keyCode == 46) {
+				    	deleteTag()
+				    }
+				    if(e.keyCode == 8) {
+				    	moveBackward()
+				    	deleteTag()
+				    }
+
+			} else {
+				if(e.keyCode == 13) {
+					$("#jump-to-batch-go").click()
+				}
+				if(e.keyCode == 27) {
+					$("#jump-to-batch").blur()
+				}
+			}
+
+			if(e.keyCode == 74) { // j
+				console.log('j')
+				$("#jump-to-batch").focus()
+			}
+ 		}).keyup(function(e) {
+		    if (e.keyCode in map) {
+		    	/*if(e.keyCode == 16 && 16 in map) {
+		    		chaining = false
+		    	}*/
+		        map[e.keyCode] = false;
+		    }
+		});
+
+		// Keypress events
+		/*$("body").keydown(function(e) {
+			console.log(e)
+		  if(e.keyCode == 37 || e.keyCode == 65 ) { // left
+		    console.log("left")
+		    moveBackward()
+		  }
+		  else if(e.keyCode == 39 || e.keyCode == 68) { // right
+		    console.log("right")
+		    moveForward()
+		  }
+		});*/
+
+
+
+
+		function showSavingNotification(filename) {
+			$("#loading-notification").hide()
+			$("#ending-notification").hide()
+			$("#saving-notification").show();
+			$("#saving-filename").html(filename + "...")
+        	$("#sentence-counter").hide();
+		}
+		function showSentenceCounter() {
+			$("#loading-notification").hide()
+			$("#ending-notification").hide()
+			$("#saving-notification").hide();
+        	$("#sentence-counter").show();
+		}
+		function showEndingNotification() {
+			$("#loading-notification").hide()
+			$("#ending-notification").show()
+			$("#saving-notification").hide();
+        	$("#sentence-counter").hide();			
+		}
+
+
+		$("#jump-to-batch-go").click(function() {
+			console.log($("#jump-to-batch")[0].value)
+			console.log("clicked")
+			function validateValue(value) {
+				var val = parseInt(value)
+				if(val > 0 && val < groupTotal + 1) {
+					return val
+				} else {
+					return -1
+				}
+			}
+			var v = validateValue($("#jump-to-batch")[0].value)
+			if(v > 0) {
+				groupNumber = v;
+				ended = false
+				loadGroup()
+				$("#jump-to-batch").val("")
+				$("#jump-to-batch").blur()
+			} else {
+				showJumpToGroupError()
+			}
+		})
+	
+
+		function showJumpToGroupError() {
+			function fadeBackOut() {
+				window.setTimeout(function() { $("#jump-to-batch-error").fadeOut(300)}, 1000 )
+			}
+			if($("#jump-to-batch-error:visible").length == 0)
+				$("#jump-to-batch-error").fadeIn(300, fadeBackOut)
+		}
+
+		function saveDataToFileOutput(dataFilename) {
+			generateAnnotatedTags()
+			outputData = ""
+			for(var i = 0; i < groupData.length; i++) {
+				for(var j = 0; j < groupData[i].length; j++) {
+					outputData += groupData[i][j] + " " + annotatedTags[i][j] + "\n"
+				}
+				outputData += "\n"
+			}
+
+			var dlfile = document.createElement('a');
+			dlfile.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(outputData));
+   			dlfile.setAttribute('download', dataFilename);
+			var event = document.createEvent('MouseEvents');
+       		event.initEvent('click', true, true);
+        	dlfile.dispatchEvent(event);
+		}
+
+		function saveDataToFileSuppressNotification() {
+			var dataFilename = "annotated_data_" + groupNumber + ".txt"
+			saveDataToFileOutput(dataFilename)
+		}
+
+		function saveDataToFile() {
+			var dataFilename = "annotated_data_" + groupNumber + ".txt"
+			showSavingNotification(dataFilename)
+			saveDataToFileOutput(dataFilename)			
+		}
+
+		$("#save-to-file").click(saveDataToFileSuppressNotification)
+
+	</script>
+
+</html>
