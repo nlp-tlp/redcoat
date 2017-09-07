@@ -1,9 +1,15 @@
 # By Michael Stewart
 # Takes raw data from a txt file and turns it into HTML/JS so that it may be rapidly tagged.
 
-import nltk, json, sys
-from nltk.tokenize import word_tokenize
+import json, sys
 from colorama import Fore, Style
+try:
+	from nltk.tokenize import word_tokenizeaaa
+except:
+	print "Note: NLTK not installed. Tokenising using spaces only."
+	print "Please consider installing NLTK for much better results.\n"
+	def word_tokenize(line):
+		return line.split()
 
 INPUT_FILE  = "raw_data.txt"
 OUTPUT_FILE = "json_data.js"
@@ -38,12 +44,6 @@ with open(INPUT_ENTITY_CLASSES, 'r') as f:
 		entity_classes.append(splitline[0])
 		entity_classes_abbr.append(splitline[1])
 	print "done."
-
-			
-#for s in tokenized_sentences:
-#	for w in s:
-#		print w,
-#	print "\n"
 
 with open(OUTPUT_FILE, 'w') as f:
 	print "Writing data to %s..." % OUTPUT_FILE,
