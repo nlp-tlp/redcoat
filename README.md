@@ -70,7 +70,7 @@ This program will only merge the most recent versions of each annotated file, so
 
 The program will also notify you if there are any gaps between annotated data files. For example, if you are missing `annotated_data_4.txt` but have an `annotated_data_5.txt`, the program will let you know.
 
-Once the program has finished, you can find your merged file inside the `annotated_data/merged_data` folder. The format of each line in the file is a token, followed by a space, followed by its entity class. For example,
+Once the program has finished, you can find your merged file inside the `annotated_data/merged_data` folder. The format of each line in the file is a token, followed by a space, followed by its entity class (in the BIO style). This mirrors the format used in the CoNLL2003 dataset. For example, tagging the sentence "John bought 300 shares of Acme Corp in 2006" would result in:
 
     Jim B-PER
     bought O
