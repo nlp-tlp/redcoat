@@ -68,6 +68,8 @@ You can then run the `combine_data.py` program to combine them all into one file
     
 This program will only merge the most recent versions of each annotated file, so if you tagged the same group twice (and have something like `annotated_data_1.txt` and `annotated_data_1 (1).txt`), it will place the old versions into a folder named `old_versions`.
 
+The program will also notify you if there are any gaps between annotated data files. For example, if you are missing `annotated_data_4.txt` but have an `annotated_data_5.txt`, the program will let you know.
+
 Once the program has finished, you can find your merged file inside the `annotated_data/merged_data` folder. The format of each line in the file is a token, followed by a space, followed by its entity class. For example,
 
     Michael B-PER
@@ -86,3 +88,4 @@ Please let me know if there are any issues!
 - **Why can't I tag punctuation?** I tried to make the annotation task as fast as possible. Tokens that comprise solely punctuation characters are almost never entities, so discluding them as taggable entities helps speed up annotation.
 - **How do I use already-tokenized data?** At this stage, you can't. Though you could turn your tokenised data into JSON, copying the format of the `json_data.js` file.
 - **Is there any ability to label links between entities?** Not yet, no. This tool is purely for generating entity recognition data, not entity linking.
+- **Do I need NLTK or Colorama?** NLTK is highly recommended, as without it the `generate_js.py` program will "tokenise" your data using space characters. Colorama is completely optional - it just makes the terminal output a little nicer when running `combine_data.py`.
