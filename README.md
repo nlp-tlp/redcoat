@@ -79,3 +79,10 @@ Once the program has finished, you can find your merged file inside the `annotat
     shop O
 
 Please let me know if there are any issues!
+
+## Possible FAQs
+
+- **How is this quicker than BRAT, for example?** There's no need to use the mouse here. You don't need to ensure you begin dragging your mouse at the exact right spot, and there are no menus to navigate. There are also no AJAX requests - everything is done client-side, so the transition between records is faster. It's also much quicker to set up.
+- **Why can't I tag punctuation?** I tried to make the annotation task as fast as possible. Tokens that comprise solely punctuation characters are almost never entities, so discluding them as taggable entities helps speed up annotation.
+- **How do I use already-tokenized data?** At this stage, you can't. Though you could turn your tokenised data into JSON, copying the format of the `json_data.js` file.
+- **Is there any ability to label links between entities?** Not yet, no. This tool is purely for generating entity recognition data, not entity linking.
