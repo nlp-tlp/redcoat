@@ -72,13 +72,15 @@ The program will also notify you if there are any gaps between annotated data fi
 
 Once the program has finished, you can find your merged file inside the `annotated_data/merged_data` folder. The format of each line in the file is a token, followed by a space, followed by its entity class. For example,
 
-    Michael B-PER
-    was O
-    waiting O
-    inside O
-    the O
-    Apple B-ORG
-    shop O
+    Jim B-PER
+    bought O
+    300 O
+    shares O
+    of O
+    Acme B-ORG
+    Corp I-ORG
+    in O
+    2006 B-TIM
 
 Please let me know if there are any issues!
 
