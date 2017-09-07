@@ -70,8 +70,7 @@ This program will only merge the most recent versions of each annotated file, so
 
 Once the program has finished, you can find your merged file inside the `annotated_data/merged_data` folder. The format of each line in the file is a token, followed by a space, followed by its entity class. For example,
 
-    The O
-    person B-PER
+    Michael B-PER
     was O
     waiting O
     inside O
