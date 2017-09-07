@@ -4,7 +4,7 @@
 import json, sys
 from colorama import Fore, Style
 try:
-	from nltk.tokenize import word_tokenizeaaa
+	from nltk.tokenize import word_tokenize
 except:
 	print "Note: NLTK not installed. Tokenising using spaces only."
 	print "Please consider installing NLTK for much better results.\n"
