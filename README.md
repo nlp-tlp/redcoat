@@ -60,7 +60,7 @@ Note: I've found Chrome to be faster than Firefox for this application as it doe
 
 ### 3. Merging the annotated data into one file
 
-Once you've completed annotating, there will be a bunch of `annotated_data.txt` files in your download directory. Create a folder named `annotated_data` in the root directory of this repository, and copy/paste all of the annotated data files into it.
+Once you've completed annotating, there will be a bunch of `annotated_data.txt` files in your download directory. Copy and paste all of these files into the folder named `annotated_data` in the root directory of this repository.
 
 You can then run the `combine_data.py` program to combine them all into one file:
 
