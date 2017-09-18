@@ -4,3 +4,4 @@ json_data.js
 annotated_data/*.txt
 annotated_data/merged_data/*.txt
 annotated_data/old_versions/*.txt
+node_modules/

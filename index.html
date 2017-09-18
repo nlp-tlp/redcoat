@@ -289,8 +289,11 @@
 				border-color: transparent transparent #FFCCCC transparent;
 			}
 		</style>
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
+		<!-- Script loading found here: https://stackoverflow.com/questions/32621988/electron-jquery-is-not-defined -->
+		<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		<script>if (window.module) module = window.module;</script>
 
 	</head>
 	<body>

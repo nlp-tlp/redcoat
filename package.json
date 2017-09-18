@@ -1,0 +1,33 @@
+{
+  "name": "annotation-tool",
+  "version": "1.0.0",
+  "description": "A lightweight web-based annotation tool for labelling entity recognition data.",
+  "main": "main.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "start": "electron main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Michael-Stewart-Webdev/annotation-tool.git"
+  },
+  "keywords": [
+    "named-entity-recognition",
+    "entity-recognition",
+    "annotator",
+    "annotation"
+  ],
+  "author": "Michael Stewart",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Michael-Stewart-Webdev/annotation-tool/issues"
+  },
+  "homepage": "https://github.com/Michael-Stewart-Webdev/annotation-tool#readme",
+  "dependencies": {
+    "electron": "^1.7.6",
+    "nedb": "^1.8.0"
+  }
+}
