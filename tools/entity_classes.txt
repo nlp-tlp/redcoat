@@ -1,0 +1,10 @@
+Person	PER
+Injury	INJ
+Body part	BOD
+Vehicle	VEH
+Equipment	EQU
+Activity	ACT
+Location	LOC
+Date/time	DAT
+Accident cause	ACC
+Condition	CON

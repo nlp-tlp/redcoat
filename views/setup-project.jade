@@ -1,0 +1,164 @@
+extends layout
+
+block content
+
+	section#setup-menu
+		nav#sidenav
+			div.title
+				| Set up project
+			ul.setup-stages#nav-setup-stages
+				li 
+					span 						
+						| Project Details
+						i.fa.fa-check
+				li.not-yet-started
+					span 
+						i.fa.fa-check
+						| Upload Dataset
+				li.not-yet-started
+					span 
+						i.fa.fa-check
+						| Upload Categories
+				li.not-yet-started
+					span 
+						i.fa.fa-check
+						| Distribution
+				li.not-yet-started
+					span 
+						i.fa.fa-check
+						| Administrator Account
+		div#setup-questions
+			article#project-details.article-heading
+				h1 Project Details				
+				div.form-section
+					p Please enter the details of your project below.
+					form
+						div.form-group
+							label(for="input-project-name") Project Name*
+							input(id="input-project-name" placeholder="Project Name" autofocus required)
+							div.form-help The name of the project.
+						div.form-group
+							label(for="input-project-name") Project Description
+							input(id="input-project-name" placeholder="Project Description")
+							div.form-help A short description of the project.
+						//div.submit-row
+						//	input(type="submit" value="Next: Upload Dataset")
+				div.back-to-previous
+					p					
+						| Back to Project Details
+						i.fa.fa-arrow-up
+			article#dataset.article-heading.not-scrolled-to
+				h1 Dataset				
+				div.form-section
+					p Before uploading your data, please determine whether your dataset is tokenized.
+					blockquote
+						a(id="already-tokenized-data-button") Yes, my data is already tokenized.
+					blockquote
+						a(id="untokenized-data-button") No, my data is not tokenized.
+
+					div#already-tokenized-data.subsection.subsection-hidden
+						h3 Already tokenized data
+						div.pad
+							p Please upload your tokenized data using the form below.
+							p The dataset must be saved as a <code>.txt</code> file. Each token within your data must be separated by a newline, and each record must be separated by an additional newline. <a href="/files/example_tokenized.txt" download>Click here</a> to download a small example file.
+							form
+								div.form-group
+									label(for="input-tokenized-data") Tokenized data file
+									input(type="file" id="input-tokenized-data")
+							//blockquote
+							//	a(id="actually-untokenized-data-button") Actually, my data is not tokenized.	
+													
+
+		
+					div#untokenized-data.subsection.subsection-hidden
+						h3 Untokenized data
+						div.pad
+							p Please upload your data using the form below.
+							p The dataset must be saved as a <code>.txt</code> file. Each record within your data must be separated by a new line. <a href="/files/example_untokenized.txt" download>Click here</a> to download a small example file.
+							form
+								div.form-group
+									label(for="input-tokenized-data") Untokenized data file
+									input(type="file" id="input-tokenized-data")
+							//blockquote
+							//	a(id="actually-already-tokenized-data-button") Actually, my data is already tokenized.	
+			div(style="height: 600px")
+
+
+
+block scripts
+	script.
+
+		// Scroll to headings when clicking on nav
+		$($("#nav-setup-stages").children()).on("click", function() {
+			$('html, body').animate({scrollTop: $($(".article-heading")[$(this).index()]).offset().top - 100}, 500);
+		});
+
+		$(document).on('scroll', function() {
+
+			$(".article-heading.scrolled-to").each(function() {
+
+			    if($(document).scrollTop()<$(this).position().top - 250){
+			    	
+			    	$(this).addClass("not-scrolled-to")
+			    	$(this).removeClass("scrolled-to")
+
+			    	$($("#nav-setup-stages").children()[$(this).index() - 1]).removeClass("scrolled-past")
+			    	$($("#nav-setup-stages").children()[$(this).index()]).addClass("not-yet-started")
+			       
+			    }			
+
+			})
+
+			$(".article-heading.not-scrolled-to").each(function() {
+			    if($(document).scrollTop()>=$(this).position().top - 250){
+			    	
+			    	$(this).removeClass("not-scrolled-to")
+			    	$(this).addClass("scrolled-to")
+
+			    	$($("#nav-setup-stages").children()[$(this).index() - 1]).addClass("scrolled-past")
+			    	$($("#nav-setup-stages").children()[$(this).index()]).removeClass("not-yet-started")
+			       
+			    }
+
+
+			})
+
+
+		})
+
+
+
+
+
+
+		$("#already-tokenized-data-button").on("click", function() {
+			$("#already-tokenized-data").slideDown(500)
+			$("#untokenized-data").slideUp(500)
+
+			$("#untokenized-data-button").addClass("fade-out");			
+			$("#already-tokenized-data-button").removeClass("fade-out");
+		});
+
+		$("#untokenized-data-button").on("click", function() {
+			$("#untokenized-data").slideDown(500)
+			$("#already-tokenized-data").slideUp(500)
+
+			$("#already-tokenized-data-button").addClass("fade-out");
+			$("#untokenized-data-button").removeClass("fade-out");
+		});
+
+		/*$("#actually-already-tokenized-data-button").on("click", function() {
+			$("#untokenized-data").addClass("subsection-hidden");
+			$("#already-tokenized-data-button").removeClass("fade-out");
+			$("#already-tokenized-data-button").click()			
+		});
+
+		$("#actually-untokenized-data-button").on("click", function() {
+			$("#already-tokenized-data").addClass("subsection-hidden");
+			$("#untokenized-data-button").removeClass("fade-out");
+			$("#untokenized-data-button").click()			
+		});*/
+		
+
+
+	

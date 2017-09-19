@@ -2,13 +2,16 @@
   "name": "annotation-tool",
   "version": "1.0.0",
   "description": "A lightweight web-based annotation tool for labelling entity recognition data.",
-  "main": "main.js",
+  "main": "./bin/www",
   "directories": {
     "example": "examples"
   },
   "scripts": {
-    "start": "electron main.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "browser-refresh ./bin/www",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build-css": "node-sass scss/stylesheet.scss -o public/stylesheets --output-style compressed",
+    "watch-css": "nodemon --watch scss -V -e scss -x \"npm run build-css\"",
+    "dev": "concurrently --kill-others \"npm start\" \"npm run watch-css\""
   },
   "repository": {
     "type": "git",
@@ -27,7 +30,17 @@
   },
   "homepage": "https://github.com/Michael-Stewart-Webdev/annotation-tool#readme",
   "dependencies": {
-    "electron": "^1.7.6",
-    "nedb": "^1.8.0"
+    "body-parser": "^1.18.1",
+    "express": "^4.15.4",
+    "jade": "^1.11.0",
+    "jquery": "^3.2.1",
+    "nedb": "^1.8.0",
+    "node-sass": "^4.5.3",
+    "serve-favicon": "^2.4.4"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "*.css"
+    ]
   }
 }

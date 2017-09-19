@@ -1,0 +1,32 @@
+doctype html
+html
+	head
+		
+		title Annotation Tool - #{title}
+		link(rel='stylesheet', href='/stylesheets/stylesheet.css')
+		link(href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css')
+		link(rel='shortcut icon', href='/images/uwa_logo_small.png', type='image/x-icon') 
+		link(href="https://fonts.googleapis.com/css?family=Droid+Sans+Mono" rel="stylesheet")
+		link(href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet")
+
+
+		script(src="/javascripts/jquery-3.2.1.min.js")
+
+		block head
+
+		if homepage
+			body.homepage
+		else
+			body
+
+		include partials/navbar
+		div#main-container
+			main
+				if showLoadingScreen
+					div(id="loading-screen")
+						div(class="loading") Loading...			
+				block content
+		block scripts
+
+		script(src="#{process.env.BROWSER_REFRESH_URL}")
+
