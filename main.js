@@ -71,7 +71,21 @@ app.use(function(err, req, res, next) {
 });
 
 
-require('browser-refresh-client')
-    .enableSpecialReload('*.jade')
+var patterns = '*.css *.less *.styl *.scss *.sass *.png *.jpeg *.jpg *.gif *.webp *.svg';
+ 
+var browserRefreshClient = require('browser-refresh-client')
+
+browserRefreshClient
+    .enableSpecialReload(patterns, { autoRefresh: false })
+    .onFileModified(function(path) {
+      browserRefreshClient.refreshStyles();
+    })
+
+
+
+
+
+
+
 
 module.exports = app;

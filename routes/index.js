@@ -20,5 +20,10 @@ buildRoute('/',				'homepage', 	{ title: 'Welcome', homepage: true });
 buildRoute('/setup-project',				'setup-project', 	{ title: 'Set up project' });
 
 
+router.post('/upload-tokenized', function (req, res) {
+  //console.log("posted to upload tokenized")
+ // res.end()
+  res.send({"success": true})
+})
 
 module.exports = router

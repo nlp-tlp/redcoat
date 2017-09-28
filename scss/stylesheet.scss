@@ -1,6 +1,7 @@
 @import "navbar";
 @import "setup-project";
 @import "mixins";
+@import "upload-widget";
 
 
 $navbar-height: 50px;
@@ -145,6 +146,12 @@ hr {
 	border: 0;
 	border-top: 1px solid #ccc;
 	margin: 40px 0;
+}
+
+#main-container {
+	width: 1600px;
+	position: relative;
+	margin: 0 auto;
 }
 
 main {
