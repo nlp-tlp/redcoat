@@ -8,22 +8,21 @@ $navbar-height: 50px;
 
 
 #welcome {
-	h1  {
+	h1, h2#h2-byline  {
 		text-align: center;
-		text-transform: uppercase;
-		font-size: 70px;
+		//text-transform: uppercase;
+		font-size: 140px;
 		position: relative;
-		margin-bottom:  80px;
+		margin-bottom:  0px;
 		color: white;
 		letter-spacing: 2px;
-		margin-top: 120px;
+		margin-top: 60px;
 		&:before {
 			content: attr(data-content);
 			top: 2px;
 			left: 2px;
 			position: absolute;
-			opacity: 0.5;
-			font-size: 70px;
+			opacity: 0.7;
 			text-align: center;
 			width: 100%;
 			color: darken(rgb(185, 12, 5),30);
@@ -31,6 +30,12 @@ $navbar-height: 50px;
 
 
 		}
+	}
+	h2#h2-byline {
+		font-size: 27px;
+		margin-top: 10px;
+		margin-bottom: 40px;
+		text-transform: uppercase;
 	}
 	p {
 		color: #444;
