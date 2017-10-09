@@ -1,13 +1,17 @@
+
+/*
+var initialSetup = require('./initial_setup');
+initialSetup.promptForAdminAccount()
+*/
+
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
-var logger = require('morgan');
 var bodyParser = require('body-parser');
 
 
 //var users = require('./routes/users');
 
-var sassMiddleware = require('node-sass-middleware');
 var path = require('path');
 
 var app = express();
@@ -22,18 +26,9 @@ app.locals.pretty = true;
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-/*app.use(
-   sassMiddleware({
-       src: __dirname + '/scss', 
-       dest: __dirname + '/public/stylesheets',
-       prefix:  '/stylesheets',
-       outputStyle: 'compressed',
-       debug: true,       
-   })
-); */
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);
