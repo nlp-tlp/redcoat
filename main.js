@@ -49,6 +49,8 @@ app.use(function(req, res, next) {
   next(err);
 });
 
+
+
 // error handlers
 
 // development error handler
@@ -74,7 +76,7 @@ app.use(function(err, req, res, next) {
 });
 
 
-var patterns = '*.css *.less *.styl *.scss *.sass *.png *.jpeg *.jpg *.gif *.webp *.svg';
+var patterns = '*.jade *.css *.less *.styl *.scss *.sass *.png *.jpeg *.jpg *.gif *.webp *.svg';
  
 var browserRefreshClient = require('browser-refresh-client')
 

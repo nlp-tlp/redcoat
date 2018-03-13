@@ -52,63 +52,32 @@ block content
 			article#dataset.article-heading.not-scrolled-to
 				h1 Dataset				
 				div.form-section
-					p Before uploading your data, please determine whether your dataset has been tokenized.
-					blockquote
-						a(id="already-tokenized-data-button" class="subsection-open-button") Yes, my data has been tokenized.
-					blockquote
-						a(id="untokenized-data-button" class="subsection-open-button") No, my data has not been tokenized.
-
-					div#already-tokenized-data.subsection.subsection-hidden
-						h3 Already tokenized data
-						div.pad
-							p Please upload your tokenized data using the form below.
-							p The dataset must be saved as a <code>.txt</code> file. Each token within your data must be separated by a newline, and each record must be separated by an additional newline. <a href="/files/example_tokenized.txt" download>Click here</a> to download a small example file.
-							form
-								div.form-group
-									//label(for="input-tokenized-data").file-upload-label Tokenized data file
-									//div.form-file-upload
-									//	input(type="file" id="input-tokenized-data")
-									//	input(type="submit" value="Upload")
-
-
-							div.upload-widget
-								form.box(class="js" method='post', action='upload-tokenized', enctype='multipart/form-data', novalidate='')
-									.box__input
-										i.fa.fa-upload.upload-icon										
-										input#file.box__file(type='file', name='files[]', data-multiple-caption='{count} files selected', multiple='')
-										label(for='file')
-											strong Choose a file
-											span.box__dragndrop  or drag it here
-											| .
-										button.box__button(type='submit') Upload
-									.box__uploading Uploading…
-									.box__success
-										| Your file was successfully uploaded.
-									.box__error
-										| Error! 
-										span
-										| . 
-										a.box__restart(href='https://css-tricks.com/examples/DragAndDropFileUploading//?', role='button') Try again!
-
-
-
-
-							//blockquote
-							//	a(id="actually-untokenized-data-button") Actually, my data is not tokenized.	
-													
-
-		
-					div#untokenized-data.subsection.subsection-hidden
-						h3 Untokenized data
-						div.pad
-							p Please upload your data using the form below.
-							p The dataset must be saved as a <code>.txt</code> file. Each record within your data must be separated by a new line. <a href="/files/example_untokenized.txt" download>Click here</a> to download a small example file.
-							form
-								div.form-group
-									label(for="input-tokenized-data") Untokenized data file
-									input(type="file" id="input-tokenized-data")
-							//blockquote
-							//	a(id="actually-already-tokenized-data-button") Actually, my data is already tokenized.	
+					h3 Already tokenized data				
+					p Please upload your tokenized data using the form below.
+					p The dataset must be saved as a <code>.txt</code> file. Each token within your data must be separated by a newline, and each record must be separated by an additional newline. <a href="/files/example_tokenized.txt" download>Click here</a> to download a small example file.
+					
+					div.upload-widget
+						form.box(class="js" method='post', action='upload-tokenized', enctype='multipart/form-data', novalidate='')
+							.box__input
+								i.fa.fa-upload.upload-icon
+								input#file1.box__file(type='file', name='files[]', data-multiple-caption='{count} files selected', multiple='')
+								label(for='file1')
+									strong Choose a file
+									span.box__dragndrop  or drag it here
+									| .
+								button.box__button(type='submit') Upload
+							.box__uploading Uploading…
+							.box__success
+								| Your file was successfully uploaded.
+							.box__error
+								| Error! 
+								span
+								| . 
+								a.box__restart(href='https://css-tricks.com/examples/DragAndDropFileUploading//?', role='button') Try again!
+							.progress-bar-container
+								.progress-bar
+								.progress-bar-fill
+								.progress-percent-complete
 
 
 			article#dataset.article-heading.not-scrolled-to
@@ -384,6 +353,9 @@ block scripts
 
 				// if the form was submitted
 
+		        var progressBar = $(this).find('.progress-bar-fill')
+		        var progressPercent = $(this).find('.progress-percent-complete')
+
 				$form.on( 'submit', function( e )
 				{
 					// preventing the duplicate submissions if the current one is in progress
@@ -410,6 +382,27 @@ block scripts
 						// ajax request
 						$.ajax(
 						{
+
+							xhr: function() {
+							var xhr = new window.XMLHttpRequest();
+
+							xhr.upload.addEventListener("progress", function(evt) {
+							  if (evt.lengthComputable) {
+							    var percentComplete = evt.loaded / evt.total;
+							    percentComplete = parseInt(percentComplete * 100);
+
+							    progressBar.css("width", "" + percentComplete + "%")
+							    progressPercent.html("" + percentComplete + "%")
+
+							    if (percentComplete === 100) {
+
+							    }
+
+							  }
+							}, false);
+
+							return xhr;
+							},						
 							url: 			$form.attr( 'action' ),
 							type:			$form.attr( 'method' ),
 							data: 			ajaxData,
