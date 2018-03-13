@@ -43,6 +43,11 @@ var annTokenValidation =
 /* Schema */
 
 var annDocSchema = new Schema({
+  ann_group_id: {
+    type: Schema.Types.ObjectId,
+    required: [true, "id required"],
+    ref: 'Ann_Group'
+  },
   tokens: {
     type: [String],
     required: true,

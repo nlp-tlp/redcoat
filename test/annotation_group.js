@@ -2,6 +2,7 @@ var expect = require('chai').expect;
  
 var AnnotationGroup = require('../models/annotation_group');
 var AnnotationDoc = require('../models/annotation_doc');
+var AnnotationProject = require('../models/annotation_project');
 
 var createValidDoc = function() {
   return new AnnotationDoc({
@@ -10,8 +11,20 @@ var createValidDoc = function() {
   })
 }
 
+
 describe('Annotation groups', function() {
-  describe('Fail conditions', function() {
+
+  var ap = new AnnotationProject({});
+
+
+    it('should fail if it does not belong to a project', function(done) { 
+      var doc = createValidDoc();
+      var ag = new AnnotationGroup({
+        ann_docs: [doc]
+      });
+      ag.validate(function(err) { expect(err.errors.ann_project_id).to.exist; done();
+      });
+    });
 
     it('should fail if it does not have least one annotation document', function(done) { 
       var ag = new AnnotationGroup({
@@ -39,16 +52,14 @@ describe('Annotation groups', function() {
       ag.validate(function(err) { expect(err.errors.ann_docs).to.exist; done(); });
     });
 
-  });
-  describe('Pass conditions', function() {
     it('should pass if it contains two unique documents', function(done) {
       var doc1 = createValidDoc()
       var doc2 = createValidDoc()
       var ag = new AnnotationGroup({ 
+        ann_project_id: ap._id,
         ann_docs: [doc1, doc2] 
       });   
       ag.validate(function(err) { expect(err).to.not.exist; done(); });
     });
 
-  });
 });

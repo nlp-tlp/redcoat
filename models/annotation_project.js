@@ -2,6 +2,8 @@ var ann_conf = require("./conf/annotation_settings.js")
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
 
+var AnnotationGroup = require('./annotation_group')
+
 /* Validation */
 
 MIN_GROUPS_PER_PROJECT = ann_conf.MIN_GROUPS_PER_PROJECT;
@@ -41,6 +43,18 @@ var annProjectSchema = new Schema({
   created_at: Date,
   updated_at: Date
 })
+
+annProjectSchema.pre('remove', function(callback) {
+  console.log("deleting PROJECT")
+  /*AnnotationGroup.find({ann_project_id: this._id}, function(err, group) {
+    for(var i = 0; i < group.length; i++) {
+      console.log(group[i])
+      group[i].remove()
+    }   
+  });  
+  */
+  this.model('AnnotationGroup').remove({ ann_project_id: this._id }, callback);
+});
 
 /* Model */
 

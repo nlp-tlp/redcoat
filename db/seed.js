@@ -54,4 +54,5 @@ project1.save(function(err) {
   console.log('Project 1 saved successfully!');
 });
 
-return
+
+mongoose.disconnect();

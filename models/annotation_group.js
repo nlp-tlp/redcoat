@@ -33,6 +33,11 @@ var annDocValidation =
 /* Schema */
 
 var annGroupSchema = new Schema({
+  ann_project_id: {
+    type: Schema.Types.ObjectId,
+    ref: 'Ann_Project',
+    required: true
+  },
   ann_docs: { 
     type: [{
       type: Schema.Types.ObjectId, ref: 'Ann_Doc'
@@ -42,6 +47,14 @@ var annGroupSchema = new Schema({
   created_at: Date,
   updated_at: Date
 })
+
+annGroupSchema.pre('remove', function(next) {
+ /* AnnotationGroup.findOne({ann_project_id: this._id}, function(err, group) {
+    group.remove()
+  });  
+  next();*/
+  console.log("deleting GROUP")
+});
 
 /* Model */
 
