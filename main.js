@@ -5,6 +5,9 @@ var logger = require('morgan');
 var bodyParser = require('body-parser');
 
 
+var mongoose = require('mongoose')
+mongoose.connect('mongodb://localhost/redcoat-db-dev');
+
 //var users = require('./routes/users');
 
 var sassMiddleware = require('node-sass-middleware');
