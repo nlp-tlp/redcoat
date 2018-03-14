@@ -79,49 +79,119 @@ describe('Annotation projects', function() {
 
 
 
+    it('should remove associated groups and documents when deleted', function(done) {
+
+      mongoose.connect('mongodb://localhost/redcoat-db-test')
+      var id0 = mongoose.Types.ObjectId();
+      var id1 = mongoose.Types.ObjectId();
+      var id2 = mongoose.Types.ObjectId();
+      var id3 = mongoose.Types.ObjectId();
+      var id4 = mongoose.Types.ObjectId();
+      var id5 = mongoose.Types.ObjectId();
+      var id6 = "5aa774b9d44fd435970e0bc5"//mongoose.Types.ObjectId();
+
+      function setUpCascadeTest(callback) {      
+
+        var d1 = new AnnotationDoc({
+          _id: id0,
+          tokens: ["Hello", "there"],
+          ann_tokens: ["O", "O"]
+        })
+        
+        var d2 = new AnnotationDoc({
+          _id: id1,
+          tokens: ["Hello", "there"],
+          ann_tokens: ["O", "O"]
+        })
+
+        var g1 = new AnnotationGroup({
+          _id: id2,
+          ann_docs: [d1]
+        });
+        var g2 = new AnnotationGroup({    
+          _id: id3,    
+          ann_docs: [d1]
+        }) 
+        var g3 = new AnnotationGroup({      // Unrelated to project 1
+          _id: id4,    
+          ann_docs: [d1]
+        }) 
+        var ap2 = new AnnotationProject({
+          _id: id5,
+          ann_groups: [g3]
+        });
+        var ap = new AnnotationProject({
+          _id: id6,
+          ann_groups: [g1, g2]
+        });
+
+        d1.ann_group_id   = g1._id;
+        d2.ann_group_id   = g2._id;
+        g1.ann_project_id = ap._id;
+        g2.ann_project_id = ap._id;
+        g3.ann_project_id = ap2._id;
+
+        // why isnt javascript synchronous
+        d1.save(function(err) { 
+          if(err) console.log(err);
+          d2.save(function(err) {
+            if(err) console.log(err);
+            g1.save(function(err) {
+              if(err) console.log(err);
+              g2.save(function(err) {
+                if(err) console.log(err);
+                g3.save(function(err) {
+                  if(err) console.log(err);
+                  ap.save(function(err) { 
+                    if(err) console.log(err);
+                    ap2.save(function(err) { 
+                      if(err) console.log(err);
+                      callback();          
+                    })        
+                  })
+                })
+              })
+            })
+          })
+        })        
+       }
 
 
-    var id1 = mongoose.Types.ObjectId();
-    var id2 = mongoose.Types.ObjectId();
-    var id3 = "5aa774b9d44fd435970e0bc2"//mongoose.Types.ObjectId();
 
-    mongoose.connect('mongodb://localhost/redcoat-db-test')
+        setUpCascadeTest(function() {         
+          AnnotationProject.findOne({_id: id5}, function(err, proj) {
+            //console.log("FIND:", proj, err)
+            //console.log(id4,proj, err)
+            proj.remove(function(err) {
+              //console.log("REMOVE:", proj, err)
+              // ap.remove(function(err) { console.log(err)})
+              //console.log("err: ", err)
+              AnnotationGroup.count({}, function(err, count){
+                expect(count).to.equal(1); 
+                AnnotationDoc.count({}, function(err, count){
+                  expect(count).to.equal(0);
+                  done();
+                });
 
-    var g1 = new AnnotationGroup({
-      _id: id1,
-      ann_docs: docs
-    });
-    var g2 = new AnnotationGroup({    
-      _id: id2,    
-      ann_docs: docs
-    })  
-    var ap = new AnnotationProject({
-      _id: id3,
-      ann_groups: [g1, g2]
-    });
-    g1.ann_project_id = ap._id;
-    g2.ann_project_id = ap._id;
+              });
 
-    g1.save()
-    g2.save()
-    ap.save()
+            })
+          });
+          
 
-   
 
-    it('should remove associated groups when deleted', function(done) {
 
-      AnnotationProject.findOne({_id: id3}, function(err, proj) {
-        proj.remove()
+
+          //after(function(done){
+          //  mongoose.connection.close(done);
+          //});
+
+        
       });
-     // ap.remove(function(err) { console.log(err)})
-      var c = AnnotationGroup.count({}, function(err, count){
-        expect(count).to.equal(0);      
-        done();          
+      after(function(done){
+        mongoose.connection.close(done);
       });
-    })
 
-    after(function(done){
-      mongoose.connection.close(done);
     });
 
     /*after(function(done){

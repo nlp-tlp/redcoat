@@ -1,8 +1,10 @@
+var AnnotationGroup = require('./annotation_group')
+
 var ann_conf = require("./conf/annotation_settings.js")
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
 
-var AnnotationGroup = require('./annotation_group')
+
 
 /* Validation */
 
@@ -44,16 +46,26 @@ var annProjectSchema = new Schema({
   updated_at: Date
 })
 
-annProjectSchema.pre('remove', function(callback) {
-  console.log("deleting PROJECT")
-  /*AnnotationGroup.find({ann_project_id: this._id}, function(err, group) {
-    for(var i = 0; i < group.length; i++) {
-      console.log(group[i])
-      group[i].remove()
-    }   
-  });  
-  */
-  this.model('AnnotationGroup').remove({ ann_project_id: this._id }, callback);
+annProjectSchema.pre('remove', function(next) {
+  //this.model('AnnGroup').remove({ ann_project_id: this._id }, callback);
+  //this.model('AnnGroup').remove({ ann_project_id: this._id }, callback);
+  AnnotationGroup.find({ann_project_id: this._id}, function(err, groups) {
+   // console.log("hello i am deleting all groups", groups.length)
+    var gl = groups.length;
+    for(var i = 0; i < gl; i++) {
+      //console.log(i, groups[i])
+      groups[i].remove(function(err) {
+        //console.log("err", err)
+        console.log("Group removed.");
+        
+        if(i == gl) {
+
+          next();
+        }
+      });
+    }
+  });
+  //next();
 });
 
 /* Model */

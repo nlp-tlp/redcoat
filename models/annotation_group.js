@@ -1,3 +1,5 @@
+var AnnotationDoc = require('./annotation_doc')
+
 var ann_conf = require("./conf/annotation_settings.js")
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
@@ -49,11 +51,22 @@ var annGroupSchema = new Schema({
 })
 
 annGroupSchema.pre('remove', function(next) {
- /* AnnotationGroup.findOne({ann_project_id: this._id}, function(err, group) {
-    group.remove()
-  });  
-  next();*/
-  console.log("deleting GROUP")
+  //console.log('deleting GROUP')
+  //this.model('AnnDoc').remove({ ann_group_id: this._id }, callback);
+  AnnotationDoc.find({ann_group_id: this._id}, function(err, docs) {
+    var dl = docs.length
+    for(var i = 0; i < dl; i++) {
+      docs[i].remove(function(err) {
+        //console.log("Document removed.");
+        //console.log('d', i, dl)
+        if(i == dl) {
+          //console.log('nek')
+          next();
+        }
+      });
+    }
+  });
+
 });
 
 /* Model */
