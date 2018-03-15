@@ -52,32 +52,11 @@ block content
 			article#dataset.article-heading.not-scrolled-to
 				h1 Dataset				
 				div.form-section
-					h3 Already tokenized data				
-					p Please upload your tokenized data using the form below.
+					p Please upload your  data using the form below.
 					p The dataset must be saved as a <code>.txt</code> file. Each token within your data must be separated by a newline, and each record must be separated by an additional newline. <a href="/files/example_tokenized.txt" download>Click here</a> to download a small example file.
 					
-					div.upload-widget
-						form.box(class="js" method='post', action='upload-tokenized', enctype='multipart/form-data', novalidate='')
-							.box__input
-								i.fa.fa-upload.upload-icon
-								input#file1.box__file(type='file', name='files[]', data-multiple-caption='{count} files selected', multiple='')
-								label(for='file1')
-									strong Choose a file
-									span.box__dragndrop  or drag it here
-									| .
-								button.box__button(type='submit') Upload
-							.box__uploading Uploading…
-							.box__success
-								| Your file was successfully uploaded.
-							.box__error
-								| Error! 
-								span
-								| . 
-								a.box__restart(href='https://css-tricks.com/examples/DragAndDropFileUploading//?', role='button') Try again!
-							.progress-bar-container
-								.progress-bar
-								.progress-bar-fill
-								.progress-percent-complete
+					- var action = 'upload-tokenized'
+					include partials/upload_widget
 
 
 			article#dataset.article-heading.not-scrolled-to
@@ -98,12 +77,9 @@ block content
 							p The list of entity categories must be saved as a <code>.txt</code> file. Each line in the file must contain an entity category, followed by a tab character, followed by an abbreviated form of that entity (such as <code>PER</code> for "Person").
 							p You may optionally add a tag colour by adding an additional tab character and a 6-digit hexadecimal colour code to the end of the line. This will determine the colour of the respective entity's label during annotation.
 							p <a href="/files/example_categories.txt" download>Click here</a> to download a small example file.
-							form
-								div.form-group
-									//label(for="input-tokenized-data").file-upload-label Tokenized data file
-									//div.form-file-upload
-									//	input(type="file" id="input-tokenized-data")
-									//	input(type="submit" value="Upload")
+							
+							- var action = 'upload-categories'
+							include partials/upload_widget
 						
 
 					div#entity-categories-list.subsection.subsection-hidden
@@ -417,7 +393,9 @@ block scripts
 							success: function( data )
 							{
 								$form.addClass( data.success == true ? 'is-success' : 'is-error' );
-								if( !data.success ) $errorMsg.text( data.error );
+								if( !data.success ) {
+									$errorMsg.text( data.error );
+								}
 							},
 							error: function()
 							{								

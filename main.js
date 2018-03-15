@@ -6,7 +6,9 @@ var bodyParser = require('body-parser');
 
 
 var mongoose = require('mongoose')
-mongoose.connect('mongodb://localhost/redcoat-db-dev');
+mongoose.connect('mongodb://localhost/redcoat-db-dev', function(err) {
+  if(err) { console.log("\x1b[31m" + err.message); }
+});
 
 //var users = require('./routes/users');
 

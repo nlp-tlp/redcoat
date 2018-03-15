@@ -1,0 +1,22 @@
+div.upload-widget
+	form.box(class="js" method='post', action=action, enctype='multipart/form-data', novalidate='')
+		.box__input
+			i.fa.fa-upload.upload-icon
+			input(id="file-" + action, class="box__file", type='file', name='files[]', data-multiple-caption='{count} files selected', multiple='')
+			label(for='file-' + action)
+				strong Choose a file
+				span.box__dragndrop  or drag it here
+				| .
+			button.box__button(type='submit') Upload
+		.box__uploading Uploading…
+		.box__success
+			| Your file was successfully uploaded.
+		.box__error
+			| Error: 
+			span
+			| 
+			a.box__restart(href='#', role='button') Try again.
+		.progress-bar-container
+			.progress-bar
+			.progress-bar-fill
+			.progress-percent-complete
