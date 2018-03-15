@@ -1,9 +1,10 @@
 
 
-var ann_conf = require("./conf/annotation_settings.js")
+var ann_conf = require("./common/annotation_settings.js")
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
 
+var cf = require("./common/common_functions.js")
 
 
 /* Validation */
@@ -46,30 +47,20 @@ var ProjectSchema = new Schema({
   updated_at: Date
 })
 
+// Common methods
+ProjectSchema.methods.setCurrentDate = cf.setCurrentDate
+ProjectSchema.methods.cascadeDelete = cf.cascadeDelete
+
 ProjectSchema.pre('save', function(next) {
-  var currentDate = new Date();
-  this.updated_at = currentDate;
-  if (!this.created_at)
-    this.created_at = currentDate;
+  // 1. Set current date
+  this.setCurrentDate();
   next();
 });
 
 // Cascade delete for project, so all associated groups are deleted when a project is deleted.
 ProjectSchema.pre('remove', function(next) {
-  //this.model('AnnGroup').remove({ ann_project_id: this._id }, callback);
-  //this.model('AnnGroup').remove({ ann_project_id: this._id }, callback);
   var DocumentGroup = require('./document_group')
-  DocumentGroup.find({project_id: this._id}, function(err, groups) {
-    if(err) console.log(err);
-    var gl = groups.length;
-    if(gl == 0) { next(); }
-    for(var i = 0; i < gl; i++) {
-      groups[i].remove(function(err) {        
-        if(i == gl) next();
-      });
-    }
-  });
-  //next();
+  this.cascadeDelete(DocumentGroup, {project_id: this._id}, next)
 });
 
 

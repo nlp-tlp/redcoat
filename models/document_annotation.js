@@ -3,7 +3,8 @@ var Document = require('./document')
 
 
 
-var ann_conf = require("./conf/annotation_settings.js")
+var cf = require("./common/common_functions.js")
+var ann_conf = require("./common/annotation_settings.js")
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
 
@@ -53,29 +54,34 @@ var DocumentAnnotationSchema = new Schema({
 })
 
 
-DocumentAnnotationSchema.pre('save', function(next) {  
-
-
-  // Set the current / updated date
-  var currentDate = new Date();
-  this.updated_at = currentDate;
-  if (!this.created_at)
-    this.created_at = currentDate;
-
+// Common methods
+DocumentAnnotationSchema.methods.setCurrentDate = cf.setCurrentDate
+DocumentAnnotationSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists
+DocumentAnnotationSchema.methods.verifyLabelCount = function(next) {
   // Ensure associated document's number of tokens matches the number of labels
   var ann_doc = this;
   Document.findOne({_id: this.document_id}, function(err, doc) {
     function fail() {
       return next(new Error("Number of labels must match number of tokens in document"))
     }
-
     if (err) fail()
     else if (doc.length == 0) fail()   
     else doc.tokens.length == ann_doc.labels.length ? next() : fail();
+    
   });
+}
 
+// Pre-save methods
+DocumentAnnotationSchema.pre('save', function(next) {  
+  var t = this;
 
-  //next();
+  // 1. Set current date
+  t.setCurrentDate()
+  // 2. Verify associated exists
+  t.verifyAssociatedExists(Document, t.document_id, function () {
+    // 3. Verify label count matches document token count
+    t.verifyLabelCount(next)
+  });   
 });
 
 /* Model */

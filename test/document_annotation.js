@@ -99,6 +99,18 @@ describe('Document Annotations', function() {
         })
       })    
     });
+
+    it('should fail if it belongs to a document that doesn\'t exist', function(done) { 
+      var doc_ann = new DocumentAnnotation({
+        document_group_id:  mongoose.Types.ObjectId(),
+        labels: ["O", 4.2, 9]
+      });
+      doc_ann.save(function(err) {
+          expect(err).to.exist; done();
+      });   
+    });
+
+
     beforeEach(function(done) {
       mongoose.connect('mongodb://localhost/redcoat-db-test', function(err) {
         if(err) console.log(err);

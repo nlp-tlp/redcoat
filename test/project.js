@@ -7,6 +7,7 @@ var expect = require('chai').expect;
 var Project = require('../models/project');
 var DocumentGroup = require('../models/document_group');
 var Document = require('../models/document');
+var DocumentAnnotation = require('../models/document_annotation');
  
 describe('Projects', function() {
 
@@ -73,7 +74,7 @@ describe('Projects', function() {
 
 
 
-    it('should remove associated groups and documents (but not non-associated ones) when deleted', function(done) {
+    it('should remove associated groups, documents, and document annotations (but not non-associated ones) when deleted', function(done) {
 
       // Create a bunch of fixed ids for the objects
       var id0 = mongoose.Types.ObjectId();
@@ -88,6 +89,9 @@ describe('Projects', function() {
       function setUpCascadeTest(callback) {      
 
         // Create 3 documents, 3 groups, and 2 projects
+        var a1  = new DocumentAnnotation({ labels: ["O", "O"] })        
+        var a2  = new DocumentAnnotation({ labels: ["O", "O"] })
+        var a3  = new DocumentAnnotation({ labels: ["O", "O"] })
         var d1  = new Document({ _id: id0, tokens: ["Hello", "there"] })        
         var d2  = new Document({ _id: id1, tokens: ["Hello", "dude"] })
         var d3  = new Document({ _id: id2, tokens: ["Hello", "man"] })
@@ -98,6 +102,9 @@ describe('Projects', function() {
         var proj2 = new Project({ _id: id7, document_groups: [g3] });
 
         // Assign the parent ids to the documents and groups
+        a1.document_id         = d1._id;
+        a2.document_id         = d2._id;
+        a3.document_id         = d3._id;
         d1.document_group_id   = g1._id;
         d2.document_group_id   = g2._id;
         d3.document_group_id   = g3._id;
@@ -108,13 +115,16 @@ describe('Projects', function() {
         // Save everything. There must be a better way to do this sequentially
         proj2.save(function(err) { if(err) console.log(err);
          proj1.save(function(err) { if(err) console.log(err);
-          g3.save(function(err) { if(err) console.log(err);
-           g2.save(function(err) { if(err) console.log(err);
-            g1.save(function(err) { if(err) console.log(err);
-             d3.save(function(err) { if(err) console.log(err);
-              d2.save(function(err) { if(err) console.log(err);
-               d1.save(function(err) { if(err) console.log(err);
-                callback(); })})})})})})})})}
+          g3.save(function(err)    { if(err) console.log(err);
+           g2.save(function(err)    { if(err) console.log(err);
+            g1.save(function(err)    { if(err) console.log(err);
+             d3.save(function(err)    { if(err) console.log(err);
+              d2.save(function(err)    { if(err) console.log(err);
+               d1.save(function(err)    { if(err) console.log(err);
+                a3.save(function(err)    { if(err) console.log(err);
+                 a2.save(function(err)    { if(err) console.log(err);
+                  a1.save(function(err)    { if(err) console.log(err);
+                   callback(); })})})})})})})})})})})}
 
 
         setUpCascadeTest(function() {  
@@ -126,7 +136,10 @@ describe('Projects', function() {
                 expect(count).to.equal(1); 
                 Document.count({}, function(err, count){
                   expect(count).to.equal(1);
-                  done();
+                  DocumentAnnotation.count({}, function(err, count){
+                    expect(count).to.equal(1);
+                    done();
+                  });
                 });
               });
             })

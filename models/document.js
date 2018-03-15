@@ -1,8 +1,9 @@
 "use strict"
-var ann_conf = require("./conf/annotation_settings.js")
+var ann_conf = require("./common/annotation_settings.js")
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
 
+var cf = require("./common/common_functions.js")
 
 
 /* Validation */
@@ -65,22 +66,28 @@ DocumentSchema.pre('remove', function(next) {
   });
 });
 
+// Common methods
+DocumentSchema.methods.setCurrentDate = cf.setCurrentDate
+DocumentSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists
+DocumentSchema.methods.cascadeDelete = cf.cascadeDelete
+
+
 DocumentSchema.pre('save', function(next) {
-  var currentDate = new Date();
-  this.updated_at = currentDate;
-  if (!this.created_at)
-    this.created_at = currentDate;
+  this.setCurrentDate()
 
   // Verify document group exists
   var DocumentGroup = require('./document_group')
-  DocumentGroup.findOne({_id: this.document_group_id}, function(err, doc) {
-    if(err || doc == null) next(new Error("Document's Document Group must exist in database."))
-    else { next() }
-  });
-
+  this.verifyAssociatedExists(DocumentGroup, this.document_group_id, next)
 
 
 });
+
+
+DocumentSchema.pre('remove', function(next) {
+  var DocumentAnnotation = require('./document_annotation')
+  this.cascadeDelete(DocumentAnnotation, {document_id: this._id}, next)
+});
+
 
 
 /* Model */
