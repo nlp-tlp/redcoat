@@ -53,11 +53,13 @@ var DocumentGroupSchema = new Schema({
   updated_at: Date
 })
 
-// Common methods
+/* Common methods */
+
 DocumentGroupSchema.methods.setCurrentDate = cf.setCurrentDate
 DocumentGroupSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists
 DocumentGroupSchema.methods.cascadeDelete = cf.cascadeDelete
 
+/* Middleware */
 
 DocumentGroupSchema.pre('save', function(next) {
   // 1. Set current date

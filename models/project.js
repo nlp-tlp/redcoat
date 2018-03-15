@@ -47,9 +47,12 @@ var ProjectSchema = new Schema({
   updated_at: Date
 })
 
-// Common methods
+/* Common methods */
+
 ProjectSchema.methods.setCurrentDate = cf.setCurrentDate
 ProjectSchema.methods.cascadeDelete = cf.cascadeDelete
+
+/* Middleware */
 
 ProjectSchema.pre('save', function(next) {
   // 1. Set current date

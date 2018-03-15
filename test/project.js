@@ -76,30 +76,22 @@ describe('Projects', function() {
 
     it('should remove associated groups, documents, and document annotations (but not non-associated ones) when deleted', function(done) {
 
-      // Create a bunch of fixed ids for the objects
-      var id0 = mongoose.Types.ObjectId();
-      var id1 = mongoose.Types.ObjectId();
-      var id2 = mongoose.Types.ObjectId();
-      var id3 = mongoose.Types.ObjectId();
-      var id4 = mongoose.Types.ObjectId();
-      var id5 = mongoose.Types.ObjectId();
-      var id6 = mongoose.Types.ObjectId();
-      var id7 = mongoose.Types.ObjectId();
+      var proj_id = mongoose.Types.ObjectId();
 
       function setUpCascadeTest(callback) {      
 
-        // Create 3 documents, 3 groups, and 2 projects
-        var a1  = new DocumentAnnotation({ labels: ["O", "O"] })        
-        var a2  = new DocumentAnnotation({ labels: ["O", "O"] })
-        var a3  = new DocumentAnnotation({ labels: ["O", "O"] })
-        var d1  = new Document({ _id: id0, tokens: ["Hello", "there"] })        
-        var d2  = new Document({ _id: id1, tokens: ["Hello", "dude"] })
-        var d3  = new Document({ _id: id2, tokens: ["Hello", "man"] })
-        var g1  = new DocumentGroup({ _id: id3, documents: [d1] })
-        var g2  = new DocumentGroup({ _id: id4, documents: [d2] }) 
-        var g3  = new DocumentGroup({ _id: id5, documents: [d3] })
-        var proj1 = new Project({ _id: id6, document_groups: [g1, g2] });
-        var proj2 = new Project({ _id: id7, document_groups: [g3] });
+        // Create 3 document annotations, 3 documents, 3 groups, and 2 projects
+        var a1    = new DocumentAnnotation({ labels: ["O", "O"] })        
+        var a2    = new DocumentAnnotation({ labels: ["O", "O"] })
+        var a3    = new DocumentAnnotation({ labels: ["O", "O"] })
+        var d1    = new Document({ tokens: ["Hello", "there"] })        
+        var d2    = new Document({ tokens: ["Hello", "dude"] })
+        var d3    = new Document({ tokens: ["Hello", "man"] })
+        var g1    = new DocumentGroup({ documents: [d1] })
+        var g2    = new DocumentGroup({ documents: [d2] }) 
+        var g3    = new DocumentGroup({ documents: [d3] })
+        var proj1 = new Project({ _id: proj_id, document_groups: [g1, g2] });
+        var proj2 = new Project({ document_groups: [g3] });
 
         // Assign the parent ids to the documents and groups
         a1.document_id         = d1._id;
@@ -111,6 +103,21 @@ describe('Projects', function() {
         g1.project_id          = proj1._id;
         g2.project_id          = proj1._id;
         g3.project_id          = proj2._id;
+
+
+        function saveMany(objects, done) {      
+          obj = objects.pop()
+          obj.save(function(err) {
+            if (err) throw new Error(console.log(err))
+            
+            if (objects.length > 0) saveMany(objects, done)
+            else done()            
+          })       
+        }
+
+        saveMany([proj2, proj1, g3, g2, g1, d3, d2, d1, a3, a2, a1].reverse(), callback)
+      }
+        /*
 
         // Save everything. There must be a better way to do this sequentially
         proj2.save(function(err) { if(err) console.log(err);
@@ -125,11 +132,12 @@ describe('Projects', function() {
                  a2.save(function(err)    { if(err) console.log(err);
                   a1.save(function(err)    { if(err) console.log(err);
                    callback(); })})})})})})})})})})})}
+        */
 
 
         setUpCascadeTest(function() {  
           // Retrieve the project to be deleted 
-          Project.findOne({_id: id6}, function(err, proj) {
+          Project.findOne({_id: proj_id}, function(err, proj) {
             // Delete the project, and count the number of groups and docs left. There should be 1 of each, as 2 of each were associated with the deleted project.
             proj.remove(function(err) {
               DocumentGroup.count({}, function(err, count){

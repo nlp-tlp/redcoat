@@ -54,7 +54,7 @@ var DocumentAnnotationSchema = new Schema({
 })
 
 
-// Common methods
+/* Common methods */
 DocumentAnnotationSchema.methods.setCurrentDate = cf.setCurrentDate
 DocumentAnnotationSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists
 DocumentAnnotationSchema.methods.verifyLabelCount = function(next) {
@@ -71,16 +71,24 @@ DocumentAnnotationSchema.methods.verifyLabelCount = function(next) {
   });
 }
 
-// Pre-save methods
+/* Middleware */
 DocumentAnnotationSchema.pre('save', function(next) {  
   var t = this;
 
   // 1. Set current date
   t.setCurrentDate()
   // 2. Verify associated exists
-  t.verifyAssociatedExists(Document, t.document_id, function () {
+  t.verifyAssociatedExists(Document, t.document_id, function (err) {
+
+
+
     // 3. Verify label count matches document token count
-    t.verifyLabelCount(next)
+    t.verifyLabelCount(function(err) {
+
+      // 4. Create relationship between ann doc and doc by adding this ann doc to documents.document_annotations?
+
+      next(err)
+    });
   });   
 });
 

@@ -9,8 +9,7 @@ module.exports = {
 	// Verify an associated record exists in the database.
 	verifyAssociatedExists: function(model, asso_id, next) {	
 	  model.findOne({_id: asso_id}, function(err, obj) {
-
-	    if(err || obj == null) next(new Error("Associated record must exist in database."))
+	    if(err || obj == null) { next(new Error("Associated record must exist in database.")) }
 	    else { next() }
 	  });
 	},

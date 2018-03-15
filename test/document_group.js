@@ -23,16 +23,14 @@ describe('Document groups', function() {
       var doc_group = new DocumentGroup({
         documents: [doc]
       });
-      doc_group.validate(function(err) { expect(err.errors.project_id).to.exist; done();
-      });
+      doc_group.validate(function(err) { expect(err.errors.project_id).to.exist; done(); });
     });
 
     it('should fail if it does not have least one annotation document', function(done) { 
       var doc_group = new DocumentGroup({
         documents: []
       });
-      doc_group.validate(function(err) { expect(err.errors.documents).to.exist; done();
-      });
+      doc_group.validate(function(err) { expect(err.errors.documents).to.exist; done(); });
     });
     it('should fail if it has more than ten annotation documents', function(done) {
       docs = new Array(11);
