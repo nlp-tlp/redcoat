@@ -1,24 +1,22 @@
 var mongoose = require('mongoose')
-mongoose.connect('mongodb://localhost/redcoat-db');
 var Schema = mongoose.Schema;
+
+
+EMAIL_MAXLENGTH    = 254;
+USERNAME_MAXLENGTH = 50;
+PASSWORD_MAXLENGTH = 100;
 
 // create a schema
 var userSchema = new Schema({
-  name: String,
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  email: { type: String, required: true, unique: true, minlength: 1, maxlength: EMAIL_MAXLENGTH },
+  username: { type: String, required: true, unique: true, minlength: 1, maxlength: USERNAME_MAXLENGTH },
+  password: { type: String, required: true, minlength: 1, maxlength: PASSWORD_MAXLENGTH },
   admin: Boolean,
-  location: String,
-  meta: {
-    age: Number,
-    website: String
-  },
   created_at: Date,
   updated_at: Date
 });
 
-// the schema is useless so far
-// we need to create a model using it
+
 var User = mongoose.model('User', userSchema);
 
 module.exports = User;

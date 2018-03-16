@@ -1,7 +1,8 @@
 var cf = require('./common/common_functions');
 var expect = require('chai').expect;
 var Project = require('../models/project');
-var mongoose = require('mongoose');
+var User = require('../models/user');
+var rid = require('mongoose').Types.ObjectId;
 
 describe('Projects', function() {
 
@@ -36,14 +37,8 @@ describe('Projects', function() {
 
   describe("user_id", function() {
 
-    // Connect to mongoose before all tests in this block
-    before(function(done) {
-      cf.connectToMongoose(done);
-    });
-    // Disconnect from mongoose after all tests finish, and drop the test database.
-    after(function(done) {
-      cf.disconnectFromMongooseAndDropDb(done);
-    });
+    before(function(done) { cf.connectToMongoose(done); });
+    after(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
 
     /* user_id errors */
     it('should fail validation if user_id is absent or blank', function(done) { 
@@ -52,11 +47,25 @@ describe('Projects', function() {
       cf.validateMany([proj1, proj2], function(err) { expect(err.errors.user_id).to.exist }, done);
     }); 
 
+    it('should fail to save if user_id does not exist in the Users collection', function(done) { 
+      var proj = new Project( { 
+        project_name: "Qwyjibo",
+        user_id: rid() ,
+        valid_labels: [
+          { label: "fine", abbreviation: "fine", color: "#123456" }
+        ]
+      });
 
-
-
-
-
+      proj.save(function(err) { 
+        expect(err).to.exist;
+        // Ensure the project wasn't saved. (Note: I spent 2 hours debugging this because the User model had connected to redcoat-db-dev for some reason and the connection
+        // was never closed. The tests were hanging, and I couldn't figure out why...)
+        Project.count({}, function(err, count) {
+          expect(count).to.equal(0);
+          done();
+        });
+      });
+    }); 
   });
 
   /* valid_labels */
@@ -152,34 +161,48 @@ describe('Projects', function() {
 
   });
 
+  /* Valid object test */
+
   describe("Validity tests", function() {
+  
+    before(function(done) { cf.connectToMongoose(done); });
+    after(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
 
-      
-    /* Valid object test */
+    function createValidProject(n_labels, user_id) {
+      var proj = new Project( {
+        user_id: user_id == undefined ? rid() : user_id,
+        project_name: "New Project"
+      });
+      for(var i = 0; i < n_labels; i++) {
+        var valid_label = { label: "test-" + i, abbreviation: "b-" + i, color: "#" + ("000000" + i).substr(-6, 6) }
+        proj.valid_labels.push(valid_label);
+      }      
+      return proj;
+    }
+    function createValidUser(done) {
+      var user = new User( {
+        email:    "misming@nootnoot.com",
+        username: "Pingu",
+        password: "nootnoot"
+      });
+      user.save(function(err) {
+        done(user);
+      })
+    }
+
     it('should pass validation if everything is OK', function(done) { 
-      
-      function createProject(n_labels) {
-        var proj = new Project( {
-          user_id: mongoose.Types.ObjectId(), // User doesn't exist, but it will validate (just not save).
-          project_name: "New Project"
-        });
-        for(var i = 0; i < n_labels; i++) {
-          var valid_label = { label: "test-" + i, abbreviation: "b-" + i, color: "#" + ("000000" + i).substr(-6, 6) }
-          proj.valid_labels.push(valid_label);
-        }      
-        return proj;
-      }
-
-      projs = [createProject(1), createProject(4), createProject(7), createProject(18)];
+      projs = [createValidProject(1), createValidProject(4), createValidProject(7), createValidProject(18)];
       cf.validateMany(projs, function(err) { expect(err).to.not.exist; }, done);
-    
     });
-  });
+    it('should pass saving if everything is OK', function(done) {
+      createValidUser(function(user) {
+        projs = [createValidProject(1, user._id), createValidProject(4, user._id), createValidProject(7, user._id), createValidProject(18, user._id)];
+        cf.saveMany(projs, function(err) { expect(err).to.not.exist; }, done);
+      });
+  
+    });
+  });   
 })
-
-
-
-
 
 
 

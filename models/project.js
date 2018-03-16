@@ -1,5 +1,3 @@
-
-
 var ann_conf = require("./common/annotation_settings.js")
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
@@ -100,6 +98,7 @@ var ProjectSchema = new Schema({
 
 ProjectSchema.methods.setCurrentDate = cf.setCurrentDate
 ProjectSchema.methods.cascadeDelete = cf.cascadeDelete
+ProjectSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists
 
 /* Middleware */
 
@@ -108,9 +107,12 @@ ProjectSchema.pre('save', function(next) {
   this.setCurrentDate();
 
   // 2. Validate admin exists
-  //var User = require('./user')
-  //this.verifyAssociatedExists(User, this.user_id, next)
-  next();
+  var User = require('./user')
+  this.verifyAssociatedExists(User, this.user_id, function(err) {
+    next(err);
+  })
+  //next()
+
 });
 
 // Cascade delete for project, so all associated groups are deleted when a project is deleted.
