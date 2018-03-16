@@ -1,4 +1,11 @@
 module.exports = {
+
+	// Returns true if a string is not blank (filled with whitespace).
+	validateNotBlank: function(str) {
+  		return '' != str.replace(/^\s+/, '').replace(/\s+$/, '')
+	},
+
+
 	// Set the updated_at and created_at fields.
 	setCurrentDate: function() {
 	  var currentDate = new Date();

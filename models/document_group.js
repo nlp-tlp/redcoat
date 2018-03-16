@@ -44,10 +44,8 @@ var DocumentGroupSchema = new Schema({
     required: true
   },
   documents: { 
-    type: [{
-      type: Schema.Types.ObjectId, ref: 'Document'
-    }],
-    validate: documentValidation
+    type: [[String]],
+    //validate: documentValidation
   },  
   created_at: Date,
   updated_at: Date
@@ -70,10 +68,10 @@ DocumentGroupSchema.pre('save', function(next) {
   this.verifyAssociatedExists(Project, this.project_id, next)
 });
 
-DocumentGroupSchema.pre('remove', function(next) {
+/*DocumentGroupSchema.pre('remove', function(next) {
   var Document = require('./document')
   this.cascadeDelete(Document, {document_group_id: this._id}, next)
-});
+});*/
 
 
 /* Model */
