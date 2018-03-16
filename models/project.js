@@ -17,9 +17,9 @@ ABBREVIATION_MAXLENGTH = 20;
 //MIN_GROUPS_PER_PROJECT = ann_conf.MIN_GROUPS_PER_PROJECT;
 //MAX_GROUPS_PER_PROJECT = ann_conf.MAX_GROUPS_PER_PROJECT;
 
-var validateValidLabelsHaveLabelAndAbbreviation = function(valid_labels) {
+var validateValidLabelsHaveLabelAbbreviationAndColor = function(valid_labels) {
   for(var i = 0; i < valid_labels.length; i++ ) {
-    if(valid_labels[i].label == undefined || valid_labels[i].abbreviation == undefined) {
+    if(valid_labels[i].label == undefined || valid_labels[i].abbreviation == undefined || valid_labels[i].color == undefined ) {
       return false;
     }
   }
@@ -31,8 +31,12 @@ var validateValidLabelsHaveUniqueLabels = function(valid_labels) {
   return new Set(allLabels).size == allLabels.length;
 }
 var validateValidLabelsHaveUniqueAbbreviations = function(valid_labels) {
-  allLabels = valid_labels.map(value => value.abbreviation);
-  return new Set(allLabels).size == allLabels.length;
+  allAbbrevs = valid_labels.map(value => value.abbreviation);
+  return new Set(allAbbrevs).size == allAbbrevs.length;
+}
+var validateValidLabelsHaveUniqueColors = function(valid_labels) {
+  allColors = valid_labels.map(value => value.color);
+  return new Set(allColors).size == allColors.length;
 }
 
 var validateValidLabelsCountMin = function(valid_labels) {
@@ -42,23 +46,21 @@ var validateValidLabelsCountMax = function(valid_labels) {
   return valid_labels.length <= VALID_LABEL_MAXCOUNT;
 }
 
-/*
-var validateAllAbbreviationsHaveLabels = function(valid_labels) {
-  for(var i = 0; i < valid_labels.length; i++ ) {
-    if(valid_labels[i].hasOwnProperty("abbreviation") && !valid_labels[i].hasOwnProperty("abbreviation")) {
-      return false;
-    }
-  }
-  return true;
+var validateValidHexColor = function(col) {
+  return /^#[0-9A-F]{6}$/i.test(col);
 }
-*/
 
 var validLabelsValidator = [
-  { validator: validateValidLabelsHaveLabelAndAbbreviation, msg: "All labels must have a corresponding abbreviation."  },
+  { validator: validateValidLabelsHaveLabelAbbreviationAndColor, msg: "All labels must have a corresponding abbreviation and color."  },
   { validator: validateValidLabelsCountMin, msg: "Must have one or more labels." },
   { validator: validateValidLabelsCountMax, msg: "Must have " + VALID_LABEL_MAXCOUNT + " or fewer labels." },
   { validator: validateValidLabelsHaveUniqueLabels, msg: "Labels must be unique." },
-  { validator: validateValidLabelsHaveUniqueAbbreviations, msg: "Abbreviations must be unique." }
+  { validator: validateValidLabelsHaveUniqueAbbreviations, msg: "Abbreviations must be unique." },
+  { validator: validateValidLabelsHaveUniqueColors, msg: "Colors must be unique." }
+]
+var colorValidator = [
+ { validator: cf.validateNotBlank},
+ { validator: validateValidHexColor, msg: "Color must be a valid hex color." }
 ]
 
 /* Schema */
@@ -83,8 +85,8 @@ var ProjectSchema = new Schema({
     type: [
       { 
         label:        { type: String, minlength: 1, maxlength: LABEL_MAXLENGTH, validate: cf.validateNotBlank },
-        abbreviation: { type: String, minlength: 1, maxlength: ABBREVIATION_MAXLENGTH,  validate: cf.validateNotBlank }//,
-      //color:        { type: String, minlength: 1, maxlength: 10, validate: cf.validateNotBlank }
+        abbreviation: { type: String, minlength: 1, maxlength: ABBREVIATION_MAXLENGTH,  validate: cf.validateNotBlank },
+        color:        { type: String, validate: colorValidator }
       }
     ],
     validate: validLabelsValidator
