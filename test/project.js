@@ -2,6 +2,7 @@ var cf = require('./common/common_functions');
 var expect = require('chai').expect;
 var Project = require('../models/project');
 var User = require('../models/user');
+var DocumentGroup = require('../models/document_group');
 var rid = require('mongoose').Types.ObjectId;
 
 describe('Projects', function() {
@@ -37,8 +38,8 @@ describe('Projects', function() {
 
   describe("user_id", function() {
 
-    before(function(done) { cf.connectToMongoose(done); });
-    after(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
+    beforeEach(function(done) { cf.connectToMongoose(done); });
+    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
 
     /* user_id errors */
     it('should fail validation if user_id is absent or blank', function(done) { 
@@ -159,49 +160,113 @@ describe('Projects', function() {
       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
     });
 
+
+    it('should fail validation if valid_labels contains the label or abbreviation \"O\"', function(done) { 
+      var proj1 = new Project( { valid_labels: [ 
+        { label: "O", abbreviation: "fine", color: "#111111" },
+        { label: "fine", abbreviation: "ok", color: "#222222" } ] });
+      var proj2 = new Project( { valid_labels: [ 
+        { label: "fine", abbreviation: "fine", color: "#111111" },
+        { label: "fine", abbreviation: "O", color: "#222222" } ] });
+      var proj3 = new Project( { valid_labels: [ 
+        { label: "fine", abbreviation: "fine", color: "#111111" },
+        { label: "fine", abbreviation: "o", color: "#222222" } ] });
+      proj1.validate(function(err) { 
+        expect(err.errors.valid_labels).to.exist;
+        proj2.validate(function(err) { 
+          expect(err.errors.valid_labels).to.exist;
+          proj3.validate(function(err) { 
+            expect(err.errors.valid_labels).to.exist;
+            done();
+          });
+        });
+      });
+    });
+
   });
+
+
+
 
   /* Valid object test */
 
   describe("Validity tests", function() {
   
-    before(function(done) { cf.connectToMongoose(done); });
-    after(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
-
-    function createValidProject(n_labels, user_id) {
-      var proj = new Project( {
-        user_id: user_id == undefined ? rid() : user_id,
-        project_name: "New Project"
-      });
-      for(var i = 0; i < n_labels; i++) {
-        var valid_label = { label: "test-" + i, abbreviation: "b-" + i, color: "#" + ("000000" + i).substr(-6, 6) }
-        proj.valid_labels.push(valid_label);
-      }      
-      return proj;
-    }
-    function createValidUser(done) {
-      var user = new User( {
-        email:    "misming@nootnoot.com",
-        username: "Pingu",
-        password: "nootnoot"
-      });
-      user.save(function(err) {
-        done(user);
-      })
-    }
+    beforeEach(function(done) { cf.connectToMongoose(done); });
+    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
 
     it('should pass validation if everything is OK', function(done) { 
-      projs = [createValidProject(1), createValidProject(4), createValidProject(7), createValidProject(18)];
-      cf.validateMany(projs, function(err) { expect(err).to.not.exist; }, done);
+      var user = cf.createValidUser();
+      user.save(function(err) {      
+        var projs = [cf.createValidProject(1, user._id), cf.createValidProject(4, user._id), cf.createValidProject(7, user._id), cf.createValidProject(18, user._id)];
+        cf.validateMany(projs, function(err) { expect(err).to.not.exist; }, done);
+      });
     });
     it('should pass saving if everything is OK', function(done) {
-      createValidUser(function(user) {
-        projs = [createValidProject(1, user._id), createValidProject(4, user._id), createValidProject(7, user._id), createValidProject(18, user._id)];
+      var user = cf.createValidUser();
+      user.save(function(err) {
+        var projs = [cf.createValidProject(1, user._id), cf.createValidProject(4, user._id), cf.createValidProject(7, user._id), cf.createValidProject(18, user._id)];
         cf.saveMany(projs, function(err) { expect(err).to.not.exist; }, done);
       });
   
     });
   });   
+
+  describe("Cascade delete", function() {
+
+    it('should delete all associated document groups and document_group_annotations when deleted', function(done) {
+
+      expect(1).to.equal(0);
+      done();
+
+    });
+  });
+
+
+
+  describe("Instance methods", function() {
+
+    beforeEach(function(done) { cf.connectToMongoose(done); });
+    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });    
+
+    it('should sort its document_groups in order of times_annotated', function(done) {
+
+      var user = cf.createValidUser();
+      user.save(function(err) {
+        var proj1 = cf.createValidProject(6, user._id);
+        var proj2 = cf.createValidProject(11, user._id);
+        var proj1_id = proj1._id;
+        var proj2_id = proj2._id;
+        // Save the two projects
+        cf.saveMany([proj1, proj2], function(err) { expect(err).to.not.exist; }, function() {
+          // Create 6 document groups (3 for each project)
+          var doc_groups = [cf.createValidDocumentGroup(4, proj1._id), cf.createValidDocumentGroup(6, proj1._id), cf.createValidDocumentGroup(7, proj1._id),
+                           cf.createValidDocumentGroup(4, proj2._id), cf.createValidDocumentGroup(6, proj2._id), cf.createValidDocumentGroup(7, proj2._id)
+          ];
+          var doc_group_ids = [ doc_groups[0]._id, doc_groups[1]._id, doc_groups[2]._id, doc_groups[3]._id, doc_groups[4]._id, doc_groups[5]._id ]
+          cf.saveMany(doc_groups, function(err) { expect(err).to.not.exist; }, function() {
+            // Update the first four document groups to have different numbers of times_annotated
+            DocumentGroup.findOneAndUpdate( { _id : doc_group_ids[0] }, { $set: { times_annotated: 6 } }).exec()
+            .then(function() { return DocumentGroup.findOneAndUpdate( { _id : doc_group_ids[1] }, { $set: { times_annotated: 4 } })})
+            .then(function() { return DocumentGroup.findOneAndUpdate( { _id : doc_group_ids[2] }, { $set: { times_annotated: 2 } })})
+            .then(function() { return DocumentGroup.findOneAndUpdate( { _id : doc_group_ids[3] }, { $set: { times_annotated: 7 } })})
+            .then(function() { return Project.findOne({ _id: proj1_id }).exec();
+            })
+            .then(function(proj) {
+              proj.sortDocumentGroupsByTimesAnnotated(function(err, sorted_doc_groups) {
+                expect(err).to.not.exist;
+                expect(sorted_doc_groups[0].times_annotated).to.equal(2);
+                expect(sorted_doc_groups[1].times_annotated).to.equal(4);
+                expect(sorted_doc_groups[2].times_annotated).to.equal(6);
+                expect(sorted_doc_groups.length).to.equal(3);
+                done();
+              });
+            });
+          });
+        });
+      });
+    });
+  });
 })
 
 

@@ -1,4 +1,45 @@
+
+DOCUMENT_MAXCOUNT         = 10
+DOCUMENT_MAX_TOKEN_LENGTH = 200
+ABBREVIATION_MAXLENGTH    = 20
+
 module.exports = {
+
+	DOCUMENT_MAXCOUNT         : DOCUMENT_MAXCOUNT,		// Max number of tokens in a document.
+	DOCUMENT_MAX_TOKEN_LENGTH : DOCUMENT_MAX_TOKEN_LENGTH,  // Max length of one token in a document.
+	ABBREVIATION_MAXLENGTH    : ABBREVIATION_MAXLENGTH,   // Max length of a label abbreviation.
+
+
+	// Validate that a document contains at least 1 token.
+	validateDocumentCountMin: function(arr) {
+	  return arr.length > 0;
+	},
+
+	// Validate that a document contains less than DOCUMENT_MAXCOUNT tokens.
+	validateDocumentCountMax: function(arr) {
+	  return arr.length <= DOCUMENT_MAXCOUNT;
+	},
+
+	// Validate that no tokens in the document are of length 0.
+	validateDocumentTokenLengthMin: function(arr) {
+	  for(var i = 0; i < arr.length; i++) {
+	    if(arr[i].length == 0) {
+	      return false;
+	    }
+	  }
+	  return true;
+	},
+
+	// Validate that no tokens in the document are of length greater than DOCUMENT_MAX_TOKEN_LENGTH;
+	validateDocumentTokenLengthMax: function(arr) {
+	  for(var i = 0; i < arr.length; i++) {
+	    if(arr[i].length > DOCUMENT_MAX_TOKEN_LENGTH) {
+	      return false;
+	    }
+	  }
+	  return true;
+	},
+
 
 	// Returns true if a string is not blank (filled with whitespace).
 	validateNotBlank: function(str) {

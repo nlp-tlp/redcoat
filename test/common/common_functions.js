@@ -1,6 +1,12 @@
 var mongoose = require('mongoose');
+var rid = require('mongoose').Types.ObjectId;
+var Project = require('../../models/project');
+var User = require('../../models/user');
+var DocumentGroup = require('../../models/document_group');
+
 //mongoose.set('debug', true);
 var DB_TEST_URI = 'mongodb://localhost/redcoat-db-test'
+
 
 // Connects to Mongoose.
 function connectToMongoose(done) {
@@ -45,10 +51,65 @@ function saveMany(objects, error_function, done) {
     })       
 }
 
+// Creates a valid user.
+function createValidUser() {
+  var user = new User( {
+    email:    "misming@nootnoot.com",
+    username: "Pingu",
+    password: "nootnoot"
+  });
+  return user;
+}
+
+// Creates a valid project.
+// n_labels: The number of labels for the project.
+// user_id: The user_id of the user the project belongs to.
+function createValidProject(n_labels, user_id) {
+  var proj = new Project( {
+    user_id: user_id,
+    project_name: "New Project"
+  });
+  for(var i = 0; i < n_labels; i++) {
+    var valid_label = { label: "test-" + i, abbreviation: "b-" + i, color: "#" + ("000000" + i).substr(-6, 6) }
+    proj.valid_labels.push(valid_label);
+  }      
+  return proj;
+}
+
+// Creates an array of valid documents.
+// n_docs: The number of documents to create.
+function createValidDocuments(n_docs) {
+  docs = []
+  for(var i = 0; i < n_docs; i++) {
+    docs.push(["hello", "there"])
+  }
+  return docs;
+}
+
+// Creates a valid document group.
+// n_docs: The number of documents for the document group.
+// project_id: The project_id of the project the document group belongs to.
+function createValidDocumentGroup(n_docs, project_id) {
+  var docgroup = new DocumentGroup({ 
+    project_id: project_id,
+    documents: createValidDocuments(n_docs) 
+  });
+  return docgroup;
+}
+
+
+
+
+
+
 
 module.exports = {
     connectToMongoose:                  connectToMongoose,
-    disconnectFromMongooseAndDropDb: disconnectFromMongooseAndDropDb,
-    validateMany:                      validateMany,
-    saveMany: saveMany,
+    disconnectFromMongooseAndDropDb:    disconnectFromMongooseAndDropDb,
+    validateMany:                       validateMany,
+    saveMany:                           saveMany,
+    createValidProject:                 createValidProject,
+    createValidUser:                    createValidUser,
+    createValidDocuments:               createValidDocuments,
+    createValidDocumentGroup:           createValidDocumentGroup
 }

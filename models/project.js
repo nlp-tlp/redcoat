@@ -1,13 +1,13 @@
-var ann_conf = require("./common/annotation_settings.js")
+var ann_conf = require("./common/annotation_settings")
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
-
-var cf = require("./common/common_functions.js")
+var DocumentGroup = require('./document_group')
+var cf = require("./common/common_functions")
 
 PROJECT_NAME_MAXLENGTH = 50;
 VALID_LABEL_MAXCOUNT   = 20;
 LABEL_MAXLENGTH        = 20;
-ABBREVIATION_MAXLENGTH = 20;
+ABBREVIATION_MAXLENGTH = cf.ABBREVIATION_MAXLENGTH;
 
 
 /* Validation */
@@ -37,6 +37,18 @@ var validateValidLabelsHaveUniqueColors = function(valid_labels) {
   return new Set(allColors).size == allColors.length;
 }
 
+var validateValidLabelsNoRestrictedLabels = function(valid_labels) {
+  allLabels  = valid_labels.map(value => value.label);
+  allAbbrevs = valid_labels.map(value => value.abbreviation);
+  for(var i = 0; i < allLabels.length; i++) {
+    if(allLabels[i].toLowerCase() == "o") return false;
+  }
+  for(var i = 0; i < allAbbrevs.length; i++) {
+    if(allAbbrevs[i].toLowerCase() == "o") return false;
+  }
+  return true;
+}
+
 var validateValidLabelsCountMin = function(valid_labels) {
   return valid_labels.length > 0;
 }
@@ -48,15 +60,16 @@ var validateValidHexColor = function(col) {
   return /^#[0-9A-F]{6}$/i.test(col);
 }
 
-var validLabelsValidator = [
+var validLabelsValidation = [
   { validator: validateValidLabelsHaveLabelAbbreviationAndColor, msg: "All labels must have a corresponding abbreviation and color."  },
   { validator: validateValidLabelsCountMin, msg: "Must have one or more labels." },
   { validator: validateValidLabelsCountMax, msg: "Must have " + VALID_LABEL_MAXCOUNT + " or fewer labels." },
   { validator: validateValidLabelsHaveUniqueLabels, msg: "Labels must be unique." },
   { validator: validateValidLabelsHaveUniqueAbbreviations, msg: "Abbreviations must be unique." },
-  { validator: validateValidLabelsHaveUniqueColors, msg: "Colors must be unique." }
+  { validator: validateValidLabelsHaveUniqueColors, msg: "Colors must be unique." },
+  { validator: validateValidLabelsNoRestrictedLabels, msg: "Labels and abbreviations cannot be 'O' (it is reserved for non-entities)." }
 ]
-var colorValidator = [
+var colorValidation = [
  { validator: cf.validateNotBlank},
  { validator: validateValidHexColor, msg: "Color must be a valid hex color." }
 ]
@@ -84,10 +97,10 @@ var ProjectSchema = new Schema({
       { 
         label:        { type: String, minlength: 1, maxlength: LABEL_MAXLENGTH, validate: cf.validateNotBlank },
         abbreviation: { type: String, minlength: 1, maxlength: ABBREVIATION_MAXLENGTH,  validate: cf.validateNotBlank },
-        color:        { type: String, validate: colorValidator }
+        color:        { type: String, validate: colorValidation }
       }
     ],
-    validate: validLabelsValidator
+    validate: validLabelsValidation
   },
   // The created at/updated at dates.
   created_at: Date,
@@ -99,6 +112,12 @@ var ProjectSchema = new Schema({
 ProjectSchema.methods.setCurrentDate = cf.setCurrentDate
 ProjectSchema.methods.cascadeDelete = cf.cascadeDelete
 ProjectSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists
+
+/* Instance methods */
+
+ProjectSchema.methods.sortDocumentGroupsByTimesAnnotated = function(done) {
+  return DocumentGroup.find({ project_id: this._id }).sort('times_annotated').exec(done);
+}
 
 /* Middleware */
 
@@ -115,7 +134,7 @@ ProjectSchema.pre('save', function(next) {
 
 });
 
-// Cascade delete for project, so all associated groups are deleted when a project is deleted.
+// Cascade delete for project, so all associated document groups are deleted when a project is deleted.
 ProjectSchema.pre('remove', function(next) {
   var DocumentGroup = require('./document_group')
   this.cascadeDelete(DocumentGroup, {project_id: this._id}, next)

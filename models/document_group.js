@@ -1,39 +1,27 @@
-
-var cf = require("./common/common_functions.js")
-
 var ann_conf = require("./common/annotation_settings.js")
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
+
+var cf = require("./common/common_functions.js")
 
 
 
 /* Validation */
 
-MIN_DOCS_PER_GROUP = ann_conf.MIN_DOCS_PER_GROUP;
-MAX_DOCS_PER_GROUP = ann_conf.MAX_DOCS_PER_GROUP;
+DOCUMENT_MAXCOUNT         = cf.DOCUMENT_MAXCOUNT;
+DOCUMENT_MAX_TOKEN_LENGTH = cf.DOCUMENT_MAX_TOKEN_LENGTH;
 
-var validateMinDocs = function(val) {
-  return val.length > 0;
-}
 
-var validateMaxDocs = function(val) {
-  return val.length <= MAX_DOCS_PER_GROUP;
-}
-
-var validateDocsUnique = function(arr) {
-  function onlyUnique(value, index, self) { 
-    return self.indexOf(value) === index;
-  }
-  return arr.filter( onlyUnique ).length == arr.length;
-}
 
 
 var documentValidation =  
   [
-    { validator: validateMinDocs, msg: '{PATH}: Need at least ' + MIN_DOCS_PER_GROUP + ' annotation record in group.'},
-    { validator: validateMaxDocs, msg: '{PATH}: exceeds the limit of ' + MAX_DOCS_PER_GROUP + ' documents in group.' },
-    { validator: validateDocsUnique, msg: 'Documents must be unique.' }
+    { validator: cf.validateDocumentCountMin,       msg: '{PATH}: Need at least '        + 1 + ' document in group.'},
+    { validator: cf.validateDocumentCountMax,       msg: '{PATH}: exceeds the limit of ' + cf.DOCUMENT_MAXCOUNT + ' documents in group.' },
+    { validator: cf.validateDocumentTokenLengthMin, msg: 'Document in document group cannot be empty.'},
+    { validator: cf.validateDocumentTokenLengthMax, msg: 'All tokens in document must be less than ' + cf.DOCUMENT_MAX_TOKEN_LENGTH + ' characters long.'},
   ] 
+
 
 /* Schema */
 
@@ -45,8 +33,14 @@ var DocumentGroupSchema = new Schema({
   },
   documents: { 
     type: [[String]],
-    //validate: documentValidation
+    minlength: 1,
+    maxlength: 10,
+    validate: documentValidation
   },  
+  times_annotated: {
+    type: Number,
+    default: 0,
+  },
   created_at: Date,
   updated_at: Date
 })
@@ -61,17 +55,20 @@ DocumentGroupSchema.methods.cascadeDelete = cf.cascadeDelete
 
 DocumentGroupSchema.pre('save', function(next) {
   // 1. Set current date
-  this.setCurrentDate()
+  this.setCurrentDate();
 
   // 2. Verify associated exists
   var Project = require('./project')
-  this.verifyAssociatedExists(Project, this.project_id, next)
+  this.verifyAssociatedExists(Project, this.project_id, function(err) {
+    next(err);
+  })
 });
 
-/*DocumentGroupSchema.pre('remove', function(next) {
-  var Document = require('./document')
-  this.cascadeDelete(Document, {document_group_id: this._id}, next)
-});*/
+// Cascade delete for document_group, so all associated document_group_annotations are deleted when a document_group is deleted.
+DocumentGroupSchema.pre('remove', function(next) {
+  var DocumentGroupAnnotation = require('./document_group_annotation')
+  this.cascadeDelete(DocumentGroupAnnotation, {document_group_id: this._id}, next)
+});
 
 
 /* Model */
