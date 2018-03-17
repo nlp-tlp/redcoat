@@ -42,11 +42,16 @@ describe('Projects', function() {
     beforeEach(function(done) { cf.connectToMongoose(done); });
     afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
 
-    /* user_id errors */
     it('should fail validation if user_id is absent or blank', function(done) { 
       var proj1 = new Project( {  } );
       var proj2 = new Project( { user_id: "" });
-      cf.validateMany([proj1, proj2], function(err) { expect(err.errors.user_id).to.exist }, done);
+      proj1.validate(function(err) { 
+        expect(err.errors.user_id).to.exist;
+        proj2.validate(function(err) { 
+          expect(err.errors.user_id).to.exist;
+          done();
+        });
+      });          
     }); 
 
     it('should fail to save if user_id does not exist in the Users collection', function(done) { 
@@ -183,7 +188,6 @@ describe('Projects', function() {
         });
       });
     });
-
   });
 
 
@@ -213,6 +217,8 @@ describe('Projects', function() {
     });
   });   
 
+  /* Cascade deletion test */
+
   describe("Cascade delete", function() {
 
     beforeEach(function(done) { cf.connectToMongoose(done); });
@@ -220,22 +226,22 @@ describe('Projects', function() {
 
     it('should delete all associated document groups and document_group_annotations when deleted', function(done) {
 
-      var p1_id = rid();
       var user = cf.createValidUser();
       var projs = [cf.createValidProject(1, user._id), cf.createValidProject(4, user._id), cf.createValidProject(7, user._id), cf.createValidProject(18, user._id)];
-      projs[0]._id = p1_id;
+      p1_id = projs[0]._id;
       var doc_groups = [cf.createValidDocumentGroup(5, projs[0]._id), cf.createValidDocumentGroup(5, projs[0]._id), cf.createValidDocumentGroup(5, projs[2]._id)];
       var doc_group_annotations = [cf.createValidDocumentGroupAnnotation(5, user._id, doc_groups[0]._id), cf.createValidDocumentGroupAnnotation(5, user._id, doc_groups[0]._id), cf.createValidDocumentGroupAnnotation(5, user._id, doc_groups[0]._id)];
+     
       user.save(function(err) {
         cf.saveMany(projs, function(err) { expect(err).to.not.exist; }, function() {
           cf.saveMany(doc_groups, function(err) { expect(err).to.not.exist; }, function() {
             cf.saveMany(doc_group_annotations, function(err) { expect(err).to.not.exist; }, function() {
               Project.findById(p1_id, function(err, proj) {
-                proj.remove(function(err) {             
+                proj.remove(function(err) { 
                   Project.count({}, function(err, count) {
                     expect(count).to.equal(3);
-                    DocumentGroup.count({}, function(err, count) {
-                      expect(count).to.equal(1);
+                    DocumentGroup.find({}, function(err, doc_groups2) {
+                      expect(doc_groups2.length).to.equal(1);
                       DocumentGroupAnnotation.count({}, function(err, count) {
                         expect(count).to.equal(0);
                         done();
@@ -252,6 +258,7 @@ describe('Projects', function() {
   });
 
 
+  /* Instance method tests */
 
   describe("Instance methods", function() {
 
@@ -270,7 +277,7 @@ describe('Projects', function() {
         cf.saveMany([proj1, proj2], function(err) { expect(err).to.not.exist; }, function() {
           // Create 6 document groups (3 for each project)
           var doc_groups = [cf.createValidDocumentGroup(4, proj1._id), cf.createValidDocumentGroup(6, proj1._id), cf.createValidDocumentGroup(7, proj1._id),
-                           cf.createValidDocumentGroup(4, proj2._id), cf.createValidDocumentGroup(6, proj2._id), cf.createValidDocumentGroup(7, proj2._id)
+                            cf.createValidDocumentGroup(4, proj2._id), cf.createValidDocumentGroup(6, proj2._id), cf.createValidDocumentGroup(7, proj2._id)
           ];
           var doc_group_ids = [ doc_groups[0]._id, doc_groups[1]._id, doc_groups[2]._id, doc_groups[3]._id, doc_groups[4]._id, doc_groups[5]._id ]
           cf.saveMany(doc_groups, function(err) { expect(err).to.not.exist; }, function() {

@@ -99,41 +99,19 @@ DocumentGroupAnnotationSchema.methods.verifyLabelsAreValid = function(done) {
       done();
     });
   });
-
-
-
-
-/*
-  .then(function(doc_group) {
-    if(doc_group) {
-
-      var v = verifyLabelTokenCountsSame(t, doc_group);
-      return Project.findById(doc_group.project_id);
-
-    }
-    else return new Error("Document Group not found.");
-  })  
-  .then(function(proj) {
-    if(proj) {
-      return verifyLabelsAreInProjectValidLabels(t, proj);
-    } else {
-      return new Error("Project not found.");
-    }
-  })
-  .then(function(err) {
-    done(err);
-  });*/
-
 }
-DocumentGroupAnnotationSchema.methods.verifyLabelsCountEqualsDocumentsCount = function(done) {
-
-  done();
-
-}
-DocumentGroupAnnotationSchema.methods.verifyEachLabelsLengthEqualsDocumentsLength = function(done) {
-
-  done();
-
+DocumentGroupAnnotationSchema.methods.verifyUserIdSameAsProjects = function(done) {
+  var t = this;
+  var Project = require('./project');
+  var DocumentGroup = require('./document_group');  
+  DocumentGroup.findById(t.document_group_id, function(err, doc_group) {
+    if(err) { done(err); return; }
+    Project.findById(doc_group.project_id, function(err, proj) {
+      if(err) { done(err); return; }
+      if(t.user_id.equals(proj.user_id)) { done(); return; }
+      else { done(new Error("Project's used_id must match user_id.")); }      
+    });
+  });
 }
 
 /* Middleware */
@@ -159,18 +137,15 @@ DocumentGroupAnnotationSchema.pre('save', function(next) {
         if(err) { next(err); return }
 
         // 5. Verify number of labels = number of documents in this object's document_group
-        t.verifyLabelsCountEqualsDocumentsCount(function(err) {
+        t.verifyUserIdSameAsProjects(function(err) {          
           if(err) { next(err); return }
-
-          // 5. Verify each labels array has the same number of labels as each corresponding document
-          t.verifyEachLabelsLengthEqualsDocumentsLength(function(err) {
-            next(err);
-          });
+          next();
         });
       });
     });
   });
 });
+
 
 /*DocumentGroupSchema.pre('remove', function(next) {
   var Document = require('./document')

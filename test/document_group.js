@@ -3,6 +3,7 @@ var expect = require('chai').expect;
 var Project = require('../models/project');
 var User = require('../models/user');
 var DocumentGroup = require('../models/document_group');
+var DocumentGroupAnnotation = require('../models/document_group_annotation');
 var rid = require('mongoose').Types.ObjectId;
 
 describe('Document Groups', function() {
@@ -145,8 +146,8 @@ describe('Document Groups', function() {
 
   describe("Validity tests", function() {
 
-    before(function(done) { cf.connectToMongoose(done); });
-    after(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
+    beforeEach(function(done) { cf.connectToMongoose(done); });
+    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
    
     it('should pass validation if everything is OK', function(done) { 
       var user = cf.createValidUser();
@@ -170,7 +171,56 @@ describe('Document Groups', function() {
     });
   });
 
-})
+  describe("Instance methods", function() {
+
+    beforeEach(function(done) { cf.connectToMongoose(done); });
+    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
+
+    it('should correctly return all annotations via getAnnotations()', function(done) {
+      var user =          cf.createValidUser();
+      var projs =        [cf.createValidProject(1, user._id),
+                          cf.createValidProject(4, user._id),
+                          cf.createValidProject(7, user._id),
+                          cf.createValidProject(18, user._id)];
+      var docgroups =    [cf.createValidDocumentGroup(5, projs[0]._id),
+                          cf.createValidDocumentGroup(5, projs[1]._id),
+                          cf.createValidDocumentGroup(5, projs[2]._id)];    
+      var docgroupanns = [cf.createValidDocumentGroupAnnotation(5, user._id, docgroups[0]._id),
+                          cf.createValidDocumentGroupAnnotation(5, user._id, docgroups[0]._id),
+                          cf.createValidDocumentGroupAnnotation(5, user._id, docgroups[0]._id),
+                          cf.createValidDocumentGroupAnnotation(5, user._id, docgroups[1]._id),
+                          cf.createValidDocumentGroupAnnotation(5, user._id, docgroups[2]._id),
+                          cf.createValidDocumentGroupAnnotation(5, user._id, docgroups[2]._id)];
+      var d1_id = docgroups[0]._id;
+      var d2_id = docgroups[1]._id;
+      var d3_id = docgroups[2]._id;
+      user.save(function(err) {        
+        cf.saveMany(projs, function(err) { expect(err).to.not.exist; }, function() {
+          cf.saveMany(docgroups, function(err) { expect(err).to.not.exist; }, function() {
+            cf.saveMany(docgroupanns, function(err) { expect(err).to.not.exist; }, function() {              
+              DocumentGroup.findOne({_id: d1_id}, function(err, d1) {
+                d1.getAnnotations( function(err, annotations) {
+                  expect(annotations.length).to.equal(3);
+                  DocumentGroup.findOne({_id: d2_id}, function(err, d2) {
+                    d2.getAnnotations( function(err, annotations) {
+                      expect(annotations.length).to.equal(1);
+                      DocumentGroup.findOne({_id: d3_id}, function(err, d3) {
+                        d3.getAnnotations( function(err, annotations) {
+                          expect(annotations.length).to.equal(2);
+                          done();
+                        });
+                      });
+                    });
+                  });
+                });             
+              });
+            });
+          });
+        });
+      });       
+    });
+  });
+});
 
 
 

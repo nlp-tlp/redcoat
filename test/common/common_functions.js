@@ -24,7 +24,7 @@ function disconnectFromMongooseAndDropDb(done) {
       mongoose.connection.close(function(err) {
           done();
       });
-      });
+    });
   }  
 }
 // Validates many objects at once.

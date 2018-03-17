@@ -118,14 +118,16 @@ module.exports = {
 		try {
 		  var asso_id = asso_id;
 		  model.find(query, function(err, objs) {		  	
-		    if(err) console.log(err);
-		    var ol = objs.length;
-		    if(ol == 0) { next(); }
-		    for(var i = 0; i < ol; i++) {
-		      objs[i].remove(function(err) {        
-		        if(i == ol) next();
-		      });
+		    function deleteObjs(objs, done) {
+		    	if(objs.length == 0) { return done(); }		    	
+			    obj = objs.pop()
+			    //console.log("Deleting object from " + model.collection.collectionName)
+			    obj.remove(function(err) {
+			      if (objs.length > 0) return deleteObjs(objs, done)
+			      else return done()            
+			    }) 
 		    }
+		    deleteObjs(objs, next);
 		  });
 		 } catch(err) {
 		 	console.log("ERROR", err)

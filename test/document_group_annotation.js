@@ -33,6 +33,7 @@ describe('Document Group Annotations', function() {
       var doc_group_ann = new DocumentGroupAnnotation();
       doc_group_ann.validate(function(err) { expect(err.errors.user_id).to.exist; done(); });
     });
+
     it('should fail to save if user_id does not exist in the Users collection', function(done) { 
       var user = cf.createValidUser();
       var proj = cf.createValidProject(1, user._id);
@@ -57,6 +58,39 @@ describe('Document Group Annotations', function() {
         });
       });
     }); 
+
+    it('should fail to save if its user_id is not the same as its project\'s user_id', function(done) {
+      var user1 = cf.createValidUser();
+      var user2 = cf.createValidUser();
+      var proj = cf.createValidProject(1, user1._id);
+      var doc_group = cf.createValidDocumentGroup(1, proj._id);
+      user1.save()
+      .then(function() {
+        return user2.save();
+      })
+      .then(function() {
+        return proj.save();
+      })
+      .then(function() {
+        return doc_group.save();
+      })
+      .then(function() {
+        var doc_group_ann = new DocumentGroupAnnotation({ 
+          user_id: user2._id,
+          document_group_id: doc_group._id,
+          project_id: proj._id,
+          labels: [ ["O", "O"]]
+        })
+        doc_group_ann.save(function(err) {
+          expect(err).to.exist;
+          var mongoose = require('mongoose')
+          mongoose.connection.db.dropDatabase(function(err) {
+            done();
+          });
+          
+        });
+      });
+    });
   })
 
   /* document_group_id */
@@ -74,6 +108,7 @@ describe('Document Group Annotations', function() {
       var user = cf.createValidUser();
       var proj = cf.createValidProject(1, user._id);
       var doc_group = cf.createValidDocumentGroup(1, proj._id);
+      doc_group.times_annotated = 50;
       user.save()
       .then(function() {
         return proj.save();
@@ -85,6 +120,7 @@ describe('Document Group Annotations', function() {
         var doc_group_ann = new DocumentGroupAnnotation({ 
           user_id: user._id,
           document_group_id: rid(),
+          pingu: "noot noot",
           project_id: proj._id,
           labels: [ ["O", "O"]]
         })
@@ -94,11 +130,9 @@ describe('Document Group Annotations', function() {
         });
       });
     }); 
-
-
-
-
   });
+
+  /* labels */
 
   describe("labels", function() {
 
@@ -137,9 +171,6 @@ describe('Document Group Annotations', function() {
           done();
         });
       });
-
-
-
     });
  
 
@@ -195,7 +226,7 @@ describe('Document Group Annotations', function() {
     });
   });
 
-
+  /* Valid object tests */
 
   describe("Validity tests", function() {
 

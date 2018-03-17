@@ -52,6 +52,19 @@ DocumentGroupSchema.methods.setCurrentDate = cf.setCurrentDate
 DocumentGroupSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists
 DocumentGroupSchema.methods.cascadeDelete = cf.cascadeDelete
 
+
+/* Instance methods */
+
+DocumentGroupSchema.methods.getAnnotations = function(done) {
+  var DocumentGroupAnnotation = require('./document_group_annotation');
+  DocumentGroupAnnotation.find( { document_group_id: this._id }, function(err, doc_group_anns) {
+    if(err) done(err, null);
+    else return done(null, doc_group_anns);
+  })
+}
+
+
+
 /* Middleware */
 
 DocumentGroupSchema.pre('save', function(next) {
