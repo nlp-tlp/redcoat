@@ -3,6 +3,7 @@ var expect = require('chai').expect;
 var Project = require('../models/project');
 var User = require('../models/user');
 var DocumentGroup = require('../models/document_group');
+var DocumentGroupAnnotation = require('../models/document_group_annotation');
 var rid = require('mongoose').Types.ObjectId;
 
 describe('Projects', function() {
@@ -214,11 +215,39 @@ describe('Projects', function() {
 
   describe("Cascade delete", function() {
 
+    beforeEach(function(done) { cf.connectToMongoose(done); });
+    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });    
+
     it('should delete all associated document groups and document_group_annotations when deleted', function(done) {
 
-      expect(1).to.equal(0);
-      done();
-
+      var p1_id = rid();
+      var user = cf.createValidUser();
+      var projs = [cf.createValidProject(1, user._id), cf.createValidProject(4, user._id), cf.createValidProject(7, user._id), cf.createValidProject(18, user._id)];
+      projs[0]._id = p1_id;
+      var doc_groups = [cf.createValidDocumentGroup(5, projs[0]._id), cf.createValidDocumentGroup(5, projs[0]._id), cf.createValidDocumentGroup(5, projs[2]._id)];
+      var doc_group_annotations = [cf.createValidDocumentGroupAnnotation(5, user._id, doc_groups[0]._id), cf.createValidDocumentGroupAnnotation(5, user._id, doc_groups[0]._id), cf.createValidDocumentGroupAnnotation(5, user._id, doc_groups[0]._id)];
+      user.save(function(err) {
+        cf.saveMany(projs, function(err) { expect(err).to.not.exist; }, function() {
+          cf.saveMany(doc_groups, function(err) { expect(err).to.not.exist; }, function() {
+            cf.saveMany(doc_group_annotations, function(err) { expect(err).to.not.exist; }, function() {
+              Project.findById(p1_id, function(err, proj) {
+                proj.remove(function(err) {             
+                  Project.count({}, function(err, count) {
+                    expect(count).to.equal(3);
+                    DocumentGroup.count({}, function(err, count) {
+                      expect(count).to.equal(1);
+                      DocumentGroupAnnotation.count({}, function(err, count) {
+                        expect(count).to.equal(0);
+                        done();
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          }); // yay pyramid
+        });
+      });
     });
   });
 

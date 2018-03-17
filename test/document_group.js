@@ -9,13 +9,7 @@ describe('Document Groups', function() {
 
 
 
-  function createTooLongDocument() {
-    var doc = []
-    for(var i = 0; i < 500; i++) {
-      doc.push("word");
-    }
-    return doc;
-  }
+
 
   /* project_id */
 
@@ -42,6 +36,13 @@ describe('Document Groups', function() {
   })
 
   describe("documents", function() {
+    function createTooLongDocument() {
+      var doc = []
+      for(var i = 0; i < 500; i++) {
+        doc.push("word");
+      }
+      return doc;
+    }
 
     /* Document count */
     it('should fail validation if it does not have any documents', function(done) { 
@@ -66,6 +67,17 @@ describe('Document Groups', function() {
       var docgroup = new DocumentGroup({ documents: [ createTooLongDocument() ] } );
       docgroup.validate(function(err) { expect(err.errors.documents).to.exist; done(); });
     });    
+
+    /* Document token count */
+    it('should fail validation if it contains a document with an empty token', function(done) { 
+      var docgroup = new DocumentGroup({ documents: [ ["", "is", "not", "ok"] ] } );
+      docgroup.validate(function(err) { expect(err.errors.documents).to.exist; done(); });
+    });    
+    it('should fail validation if it contains a document with a token that is too long', function(done) { 
+      var docgroup = new DocumentGroup({ documents: [["thiiiiiiiiiiiiiiiiiiiiiiiis", "is", "not", "ok"]] } );
+      docgroup.validate(function(err) { expect(err.errors.documents).to.exist; done(); });
+    });    
+
 
   })
 
@@ -130,20 +142,6 @@ describe('Document Groups', function() {
     }); 
 
   });
-
-
-  describe("Cascade delete", function() {
-
-    it('should delete all associated document_group_annotations when deleted', function(done) {
-
-      expect(1).to.equal(0);
-      done();
-
-    });
-  });
-
-
-
 
   describe("Validity tests", function() {
 

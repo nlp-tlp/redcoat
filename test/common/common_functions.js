@@ -3,6 +3,7 @@ var rid = require('mongoose').Types.ObjectId;
 var Project = require('../../models/project');
 var User = require('../../models/user');
 var DocumentGroup = require('../../models/document_group');
+var DocumentGroupAnnotation = require('../../models/document_group_annotation');
 
 //mongoose.set('debug', true);
 var DB_TEST_URI = 'mongodb://localhost/redcoat-db-test'
@@ -86,17 +87,35 @@ function createValidDocuments(n_docs) {
   return docs;
 }
 
+// Creates an array of valid labels.
+// n_labels: The number of labels to create.
+function createValidLabels(n_labels) {
+  docs = []
+  for(var i = 0; i < n_labels; i++) {
+    docs.push(["O", "O"])
+  }
+  return docs;
+}
+
 // Creates a valid document group.
 // n_docs: The number of documents for the document group.
 // project_id: The project_id of the project the document group belongs to.
 function createValidDocumentGroup(n_docs, project_id) {
-  var docgroup = new DocumentGroup({ 
+  var doc_group = new DocumentGroup({ 
     project_id: project_id,
     documents: createValidDocuments(n_docs) 
   });
-  return docgroup;
+  return doc_group;
 }
 
+function createValidDocumentGroupAnnotation(n_labels, user_id, document_group_id) {
+  var doc_group_annotation = new DocumentGroupAnnotation({ 
+    user_id: user_id,
+    document_group_id: document_group_id,
+    labels: createValidLabels(n_labels)
+  });
+  return doc_group_annotation;
+}
 
 
 
@@ -111,5 +130,6 @@ module.exports = {
     createValidProject:                 createValidProject,
     createValidUser:                    createValidUser,
     createValidDocuments:               createValidDocuments,
-    createValidDocumentGroup:           createValidDocumentGroup
+    createValidDocumentGroup:           createValidDocumentGroup,
+    createValidDocumentGroupAnnotation: createValidDocumentGroupAnnotation
 }

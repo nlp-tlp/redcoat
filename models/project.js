@@ -137,7 +137,7 @@ ProjectSchema.pre('save', function(next) {
 // Cascade delete for project, so all associated document groups are deleted when a project is deleted.
 ProjectSchema.pre('remove', function(next) {
   var DocumentGroup = require('./document_group')
-  this.cascadeDelete(DocumentGroup, {project_id: this._id}, next)
+  this.cascadeDelete(DocumentGroup, {project_id: this._id}, next);
 });
 
 

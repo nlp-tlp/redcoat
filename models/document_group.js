@@ -10,6 +10,7 @@ var cf = require("./common/common_functions.js")
 
 DOCUMENT_MAXCOUNT         = cf.DOCUMENT_MAXCOUNT;
 DOCUMENT_MAX_TOKEN_LENGTH = cf.DOCUMENT_MAX_TOKEN_LENGTH;
+DOCUMENT_MAX_TOKEN_COUNT  = cf.DOCUMENT_MAX_TOKEN_COUNT;
 
 
 
@@ -18,8 +19,10 @@ var documentValidation =
   [
     { validator: cf.validateDocumentCountMin,       msg: '{PATH}: Need at least '        + 1 + ' document in group.'},
     { validator: cf.validateDocumentCountMax,       msg: '{PATH}: exceeds the limit of ' + cf.DOCUMENT_MAXCOUNT + ' documents in group.' },
-    { validator: cf.validateDocumentTokenLengthMin, msg: 'Document in document group cannot be empty.'},
+    { validator: cf.validateDocumentTokenLengthMin, msg: 'No token in document can be empty.'},
     { validator: cf.validateDocumentTokenLengthMax, msg: 'All tokens in document must be less than ' + cf.DOCUMENT_MAX_TOKEN_LENGTH + ' characters long.'},
+    { validator: cf.validateDocumentTokenCountMin,  msg: 'All documents must have at least one token.' },
+    { validator: cf.validateDocumentTokenCountMax,  msg: 'No documents can have more than ' + cf.DOCUMENT_MAX_TOKEN_COUNT + ' tokens.'},
   ] 
 
 
@@ -33,8 +36,6 @@ var DocumentGroupSchema = new Schema({
   },
   documents: { 
     type: [[String]],
-    minlength: 1,
-    maxlength: 10,
     validate: documentValidation
   },  
   times_annotated: {
