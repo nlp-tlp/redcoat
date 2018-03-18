@@ -12,7 +12,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build-css": "node-sass scss/stylesheet.scss -o public/stylesheets --output-style compressed",
     "watch-css": "nodemon --watch scss -V -e scss -x \"npm run build-css\"",
-    "dev": "concurrently --kill-others \"npm start\" \"npm run watch-css\"",
+    "dev": "concurrently --kill-others \"nodemon\" \"npm run watch-css\"",
     "seed": "node db/seed.js"
   },
   "repository": {
@@ -35,6 +35,8 @@
     "body-parser": "^1.18.2",
     "browser-refresh-client": "^1.1.4",
     "concurrently": "^3.5.0",
+    "cookie-parser": "^1.4.3",
+    "csurf": "^1.9.0",
     "debug": "^3.1.0",
     "express": "^4.16.1",
     "font-awesome": "^4.7.0",

@@ -117,6 +117,10 @@ function createValidDocumentGroupAnnotation(n_labels, user_id, document_group_id
   return doc_group_annotation;
 }
 
+// Creates a string of length n.
+function createStringOfLength(n) {
+  return new Array(n + 1).join( 'x' );
+}
 
 
 
@@ -131,5 +135,6 @@ module.exports = {
     createValidUser:                    createValidUser,
     createValidDocuments:               createValidDocuments,
     createValidDocumentGroup:           createValidDocumentGroup,
-    createValidDocumentGroupAnnotation: createValidDocumentGroupAnnotation
+    createValidDocumentGroupAnnotation: createValidDocumentGroupAnnotation,
+    createStringOfLength:               createStringOfLength,
 }

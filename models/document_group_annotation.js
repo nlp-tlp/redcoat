@@ -1,15 +1,7 @@
-var ann_conf = require("./common/annotation_settings.js")
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
 
 var cf = require("./common/common_functions.js")
-
-
-ABBREVIATION_MAXLENGTH    = cf.ABBREVIATION_MAXLENGTH;
-DOCUMENT_MAXCOUNT         = cf.DOCUMENT_MAXCOUNT;
-DOCUMENT_MAX_TOKEN_LENGTH = cf.DOCUMENT_MAX_TOKEN_LENGTH;
-DOCUMENT_MAX_TOKEN_COUNT  = cf.DOCUMENT_MAX_TOKEN_COUNT;
-
 
 /* Validation */
 

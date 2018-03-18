@@ -53,7 +53,7 @@ block content
 				h1 Dataset				
 				div.form-section
 					p Please upload your  data using the form below.
-					p The dataset must be saved as a <code>.txt</code> file. Each token within your data must be separated by a newline, and each record must be separated by an additional newline. <a href="/files/example_tokenized.txt" download>Click here</a> to download a small example file.
+					p The dataset must be saved as a <code>.txt</code> file. Each token within your data must be separated by a newline, and each record must be separated by an additional newline. <a href="/files/example_dataset.txt" download>Click here</a> to download a small example file.
 					
 					- var action = 'upload-tokenized'
 					include partials/upload_widget
@@ -62,31 +62,30 @@ block content
 			article#dataset.article-heading.not-scrolled-to
 				h1 Entity Categories
 				div.form-section
-					p Please determine how you would prefer to upload the entity categories (such as "Person" and "Organisation") in your data.
+					p Please determine how you would prefer to list the entity categories (such as "Person" and "Organisation") in your data.
 					blockquote
-						a(id="entity-categories-file-button" class="subsection-open-button") My entity categories are saved in a file.
-					blockquote
-						a(id="entity-categories-list-button" class="subsection-open-button") I'll list the entity categories here.
+						a(id="entity-categories-list-button" class="subsection-open-button") I have a list of the entity classes present in my data.
 					blockquote
 						a(id="entity-categories-ner-button" class="subsection-open-button") I'm using the standard 4 class model for Named Entity Recognition.
 
-					div#entity-categories-file.subsection.subsection-hidden
-						h3 Entity categories from file
-						div.pad
-							p Please upload your entity categories using the form below.
-							p The list of entity categories must be saved as a <code>.txt</code> file. Each line in the file must contain an entity category, followed by a tab character, followed by an abbreviated form of that entity (such as <code>PER</code> for "Person").
-							p You may optionally add a tag colour by adding an additional tab character and a 6-digit hexadecimal colour code to the end of the line. This will determine the colour of the respective entity's label during annotation.
-							p <a href="/files/example_categories.txt" download>Click here</a> to download a small example file.
+					//- div#entity-categories-file.subsection.subsection-hidden
+					//- 	h3 Entity categories from file
+					//- 	div.pad
+					//- 		p Please upload your entity categories using the form below.
+					//- 		p The list of entity categories must be saved as a <code>.txt</code> file. Each line in the file must contain an entity category, followed by a tab character, followed by an abbreviated form of that entity (such as <code>PER</code> for "Person").
+					//- 		p You may optionally add a tag colour by adding an additional tab character and a 6-digit hexadecimal colour code to the end of the line. This will determine the colour of the respective entity's label during annotation.
+					//- 		p <a href="/files/example_categories.txt" download>Click here</a> to download a small example file.
 							
-							- var action = 'upload-categories'
-							include partials/upload_widget
+					//- 		- var action = 'upload-categories'
+					//- 		include partials/upload_widget
 						
 
 					div#entity-categories-list.subsection.subsection-hidden
 						h3 List entity categories
 						div.pad
-							p Please enter your entity categories into the table below.
+							p Please enter your entity categories into the form below.
 							p The "Abbreviation" will determine what is written in the output file after annotation, while the "Colour" will determine the colour of the tag during annotation.
+							p Note: you can press Tab to jump to the next item in the form.
 
 							form
 								table.entity-categories-table
@@ -98,40 +97,46 @@ block content
 									tbody
 										tr
 											td
+												input(id="ec-1")
 											td
+												input(id="ec-2")
 											td
+												input(id="ec-3")
 										tr
 											td
+												input(id="ec-4")
 											td
+												input(id="ec-5")
 											td
-										tr
-											td
-											td
-											td
+												input(id="ec-6")
+
 
 			article#dataset.article-heading.not-scrolled-to
 				h1 Distribution
 				div.form-section
 					p Please determine how you would like to distribute the annotation task.
 					blockquote
-						a(id="distribute-self-button" class="subsection-open-button") I'll complete the annotation task myself.
+						a(id="distribute-self-button" class="subsection-open-button") I'll annotate the data myself. I may invite other users to help annotate later.
 					blockquote
-						a(id="distribute-self-codes-button" class="subsection-open-button") I'd like a list of codes that I will send to the annotators myself.
+						a(id="distribute-self-button" class="subsection-open-button") I have a list of the email addresses of people who will annotate my data.
+				//- blockquote
+				//-		a(id="distribute-self-codes-button" class="subsection-open-button") I'd like a list of codes that I will send to the annotators myself.
 					blockquote
 						a(id="distribute-email-button" class="subsection-open-button") I'd like the server to email codes to the annotators automatically.		
 
 
-			article#dataset.article-heading.not-scrolled-to
-				h1 Administrator Account
-				div.form-section
-					p In order to keep track of the annotation and to easily download the data that has been annotated, please provide a username and password below. This will provide you with the ability to log in to the application through the homepage.
-					form
-						div.form-group
-							label(for="input-project-name") Username*
-							input(id="input-project-name" placeholder="Username" autofocus required)
-						div.form-group(style="margin-top: -20px")
-							label(for="input-project-name") Password*
-							input(id="input-project-name" type="password" placeholder="")
+
+			//- article#dataset.article-heading.not-scrolled-to
+			//- 	h1 Administrator Account
+			//- 	div.form-section
+			//- 		p In order to keep track of the annotation and to easily download the data that has been annotated, please provide a username and password below. This will provide you with the ability to log in to the application through the homepage.
+			//- 		form
+			//- 			div.form-group
+			//- 				label(for="input-project-name") Username*
+			//- 				input(id="input-project-name" placeholder="Username" autofocus required)
+			//- 			div.form-group(style="margin-top: -20px")
+			//- 				label(for="input-project-name") Password*
+			//- 				input(id="input-project-name" type="password" placeholder="")
 
 
 			article#dataset.article-heading.not-scrolled-to
@@ -194,24 +199,24 @@ block scripts
 
 
 
-		$("#entity-categories-file-button").on("click", function() {
-			$("#entity-categories-file").slideDown(500)
-			$("#entity-categories-list").slideUp(500)
-
-			$("#entity-categories-list-button").addClass("fade-out");			
-			$("#entity-categories-file-button").removeClass("fade-out");
-		});
 
 		$("#entity-categories-list-button").on("click", function() {
 			$("#entity-categories-list").slideDown(500)
-			$("#entity-categories-file").slideUp(500)
+			$("#entity-categories-ner").slideUp(500)
+			$("#ec-1").focus();
 
-			$("#entity-categories-file-button").addClass("fade-out");			
+			$("#entity-categories-ner-button").addClass("fade-out");			
 			$("#entity-categories-list-button").removeClass("fade-out");
 		});
 
 
+		$("#entity-categories-ner-button").on("click", function() {
+			$("#entity-categories-ner").slideDown(500)
+			$("#entity-categories-list").slideUp(500)
 
+			$("#entity-categories-list-button").addClass("fade-out");			
+			$("#entity-categories-ner-button").removeClass("fade-out");
+		});
 
 
 		$("#already-tokenized-data-button").on("click", function() {
@@ -254,6 +259,10 @@ block scripts
 
 		'use strict';
 
+		var MAX_FILESIZE = 1 * 1024 * 1024; // 1mb for now.
+
+
+
 		;( function( $, window, document, undefined )
 		{
 			// feature detection for drag&drop upload
@@ -274,24 +283,55 @@ block scripts
 					$label		 = $form.find( 'label' ),
 					$errorMsg	 = $form.find( '.box__error span' ),
 					$restart	 = $form.find( '.box__restart' ),
+					$csrfToken   = $form.find( 'input[name="_csrf"]'),
 					droppedFiles = false,
 					showFiles	 = function( files )
 					{
-						$label.text( files.length > 1 ? ( $input.attr( 'data-multiple-caption' ) || '' ).replace( '{count}', files.length ) : files[ 0 ].name );
+						$label.text( files[ 0 ].name );
 					};
+
+
+				function validateFile(file) {
+					var a = checkFilesize(file);
+					var b = checkFiletype(file);
+					return a && b;
+				}
+
+				function checkFilesize(file) {
+					if(file.size > MAX_FILESIZE) {
+						$form.addClass('is-error');
+						$errorMsg.text("File must be less than 1mb in size.");
+					} else {
+						return true;
+					}
+				}
+
+				function checkFiletype(file) {
+					if(file.type != "text/plain") {
+						$form.addClass('is-error');
+						$errorMsg.text("File must be a plain text file (.txt).");					
+					} else {
+						return true;
+					}
+				}
+
 
 				// letting the server side to know we are going to make an Ajax request
 				$form.append( '<input type="hidden" name="ajax" value="1" />' );
 
+				$input.on('click', function() {
+
+					$(this).val("");
+				});
+
 				// automatically submit the form on file select
 				$input.on( 'change', function( e )
-				{
-					showFiles( e.target.files );
-
-					
-					$form.trigger( 'submit' );
-
-					
+				{	
+	
+					if(validateFile(e.target.files[0])) {
+						showFiles( e.target.files );					
+						$form.trigger( 'submit' );
+					}					
 				});
 
 
@@ -317,10 +357,17 @@ block scripts
 					.on( 'drop', function( e )
 					{
 						droppedFiles = e.originalEvent.dataTransfer.files; // the files that were dropped
-						showFiles( droppedFiles );
 
-						
-						$form.trigger( 'submit' ); // automatically submit the form on file drop
+						if(droppedFiles.length > 1) {
+
+							$form.addClass('is-error');
+							$errorMsg.text("You may only upload 1 file at a time.");
+						} else {
+							if(validateFile(droppedFiles[0])) {
+								showFiles( droppedFiles );						
+								$form.trigger( 'submit' ); // automatically submit the form on file drop								
+							}					
+						}					
 
 						
 					});
@@ -339,12 +386,15 @@ block scripts
 
 					$form.addClass( 'is-uploading' ).removeClass( 'is-error' );
 
+
 					if( isAdvancedUpload ) // ajax file upload for modern browsers
 					{
 						e.preventDefault();
 
+
 						// gathering the form data
 						var ajaxData = new FormData( $form.get( 0 ) );
+
 						if( droppedFiles )
 						{
 							$.each( droppedFiles, function( i, file )
@@ -353,31 +403,32 @@ block scripts
 							});
 						}
 
-						console.log($form.attr( 'action' ))
+						
+						var csrfToken = $csrfToken.val();					
 
 						// ajax request
 						$.ajax(
 						{
 
 							xhr: function() {
-							var xhr = new window.XMLHttpRequest();
+								var xhr = new window.XMLHttpRequest();
 
-							xhr.upload.addEventListener("progress", function(evt) {
-							  if (evt.lengthComputable) {
-							    var percentComplete = evt.loaded / evt.total;
-							    percentComplete = parseInt(percentComplete * 100);
+								xhr.upload.addEventListener("progress", function(evt) {
+								  if (evt.lengthComputable) {
+								    var percentComplete = evt.loaded / evt.total;
+								    percentComplete = parseInt(percentComplete * 100);
 
-							    progressBar.css("width", "" + percentComplete + "%")
-							    progressPercent.html("" + percentComplete + "%")
+								    progressBar.css("width", "" + percentComplete + "%")
+								    progressPercent.html("" + percentComplete + "%")
 
-							    if (percentComplete === 100) {
+								    if (percentComplete === 100) {
 
-							    }
+								    }
 
-							  }
-							}, false);
+								  }
+								}, false);
 
-							return xhr;
+								return xhr;
 							},						
 							url: 			$form.attr( 'action' ),
 							type:			$form.attr( 'method' ),
@@ -386,12 +437,14 @@ block scripts
 							cache:			false,
 							contentType:	false,
 							processData:	false,
+							headers: { 'csrf-token': csrfToken },
 							complete: function()
 							{
 								$form.removeClass( 'is-uploading' );
 							},
 							success: function( data )
 							{
+								console.log(data);
 								$form.addClass( data.success == true ? 'is-success' : 'is-error' );
 								if( !data.success ) {
 									$errorMsg.text( data.error );

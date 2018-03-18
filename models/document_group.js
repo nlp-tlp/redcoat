@@ -1,29 +1,7 @@
-var ann_conf = require("./common/annotation_settings.js")
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
 
 var cf = require("./common/common_functions.js")
-
-
-
-/* Validation */
-
-DOCUMENT_MAXCOUNT         = cf.DOCUMENT_MAXCOUNT;
-DOCUMENT_MAX_TOKEN_LENGTH = cf.DOCUMENT_MAX_TOKEN_LENGTH;
-DOCUMENT_MAX_TOKEN_COUNT  = cf.DOCUMENT_MAX_TOKEN_COUNT;
-
-
-
-
-var documentValidation =  
-  [
-    { validator: cf.validateDocumentCountMin,       msg: '{PATH}: Need at least '        + 1 + ' document in group.'},
-    { validator: cf.validateDocumentCountMax,       msg: '{PATH}: exceeds the limit of ' + cf.DOCUMENT_MAXCOUNT + ' documents in group.' },
-    { validator: cf.validateDocumentTokenLengthMin, msg: 'No token in document can be empty.'},
-    { validator: cf.validateDocumentTokenLengthMax, msg: 'All tokens in document must be less than ' + cf.DOCUMENT_MAX_TOKEN_LENGTH + ' characters long.'},
-    { validator: cf.validateDocumentTokenCountMin,  msg: 'All documents must have at least one token.' },
-    { validator: cf.validateDocumentTokenCountMax,  msg: 'No documents can have more than ' + cf.DOCUMENT_MAX_TOKEN_COUNT + ' tokens.'},
-  ] 
 
 
 /* Schema */
@@ -34,10 +12,7 @@ var DocumentGroupSchema = new Schema({
     ref: 'Project',
     required: true
   },
-  documents: { 
-    type: [[String]],
-    validate: documentValidation
-  },  
+  documents: cf.fields.documents,
   times_annotated: {
     type: Number,
     default: 0,

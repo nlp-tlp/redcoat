@@ -1,8 +1,9 @@
 div.upload-widget
-	form.box(class="js" method='post', action=action, enctype='multipart/form-data', novalidate='')
+	form.box(class="js" method='post', action=action, novalidate='')
 		.box__input
 			i.fa.fa-upload.upload-icon
-			input(id="file-" + action, class="box__file", type='file', name='files[]', data-multiple-caption='{count} files selected', multiple='')
+			input(type="hidden", name="_csrf", value="" + csrfToken)
+			input(id="file-" + action, class="box__file", type='file', name='files[]', data-multiple-caption='{count} files selected')
 			label(for='file-' + action)
 				strong Choose a file
 				span.box__dragndrop  or drag it here

@@ -330,9 +330,19 @@ div#setup-questions {
 		tr {
 			th, td {
 				border: 1px solid #ddd;
-				padding: 10px 0;
+				padding:  0;
 				height: 40px;
 				background: #fff;
+
+
+				input {
+					border: none !important;
+					margin: 0;
+					width: 100%;
+					padding: 15px;
+
+
+				}
 			}
 			th {
 				border-bottom: 2px solid #ddd;

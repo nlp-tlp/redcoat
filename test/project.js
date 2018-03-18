@@ -11,7 +11,6 @@ describe('Projects', function() {
   /* project_name */
 
   describe("project_name", function() {
-
     it('should fail validation if it does not have a project name', function(done) { 
       var proj = new Project();
       proj.validate(function(err) { expect(err.errors.project_name).to.exist; done(); });
@@ -21,20 +20,45 @@ describe('Projects', function() {
       proj.validate(function(err) { expect(err.errors.project_name).to.exist; done(); });
     });
     it('should fail validation if the name is too long', function(done) { 
-      var proj = new Project({ project_name: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" }); // 51 chars
+      var proj = new Project({ project_name: cf.createStringOfLength(51) }); // 51 chars
       proj.validate(function(err) { expect(err.errors.project_name).to.exist; done(); });
     });
     it('should fail validation if the name is blank', function(done) { 
-      var proj = new Project({ project_name: "      " }); // 51 chars
+      var proj = new Project({ project_name: "      " });
       proj.validate(function(err) { expect(err.errors.project_name).to.exist; done(); });
     });
     it('should pass validation (for project_name) if the name is OK', function(done) { 
-      var proj = new Project({ project_name: "xxxxxxxxxxxx" }); // 51 chars
+      var proj = new Project({ project_name: "Cool project." });
       proj.validate(function(err) { expect(err.errors.project_name).to.not.exist; done(); });
     });
 
   })
 
+  /* project_description */
+
+  describe("project_description", function() {
+
+    it('should fail validation if the description is too short', function(done) { 
+      var proj = new Project({ project_description: "" });
+      proj.validate(function(err) { expect(err.errors.project_description).to.exist; done(); });
+    });
+    it('should fail validation if the description is too long', function(done) { 
+      var proj = new Project({ project_description: cf.createStringOfLength(510) }); // 51 chars
+      proj.validate(function(err) { expect(err.errors.project_description).to.exist; done(); });
+    });
+    it('should fail validation if the description is blank', function(done) { 
+      var proj = new Project({ project_description: "    " });
+      proj.validate(function(err) { expect(err.errors.project_description).to.exist; done(); });
+    });
+    it('should pass validation (for project_description) if description is missing', function(done) { 
+      var proj = new Project({ });
+      proj.validate(function(err) { expect(err.errors.project_description).to.not.exist; done(); });
+    });    
+    it('should pass validation (for project_description) if the descriptin is OK', function(done) { 
+      var proj = new Project({ project_description: "This is a nice description." });
+      proj.validate(function(err) { expect(err.errors.project_description).to.not.exist; done(); });
+    });    
+  });
   /* user */
 
   describe("user_id", function() {
@@ -85,7 +109,7 @@ describe('Projects', function() {
       proj.validate(function(err) { expect(err.errors['valid_labels.0.label']).to.exist; done(); });
     }); 
     it('should fail validation if valid_labels contains a label that is too long', function(done) { 
-      var proj = new Project( { valid_labels: [ { label: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", abbreviation: "fine", color: "#111111" }] });
+      var proj = new Project( { valid_labels: [ { label: cf.createStringOfLength(30), abbreviation: "fine", color: "#111111" }] });
       proj.validate(function(err) { expect(err.errors['valid_labels.0.label']).to.exist; done(); });
     });  
     it('should fail validation if valid_labels contains a label that is blank', function(done) { 
@@ -99,7 +123,7 @@ describe('Projects', function() {
       proj.validate(function(err) { expect(err.errors['valid_labels.0.abbreviation']).to.exist; done(); });
     }); 
     it('should fail validation if valid_labels contains an abbreviation that is too long', function(done) { 
-      var proj = new Project( { valid_labels: [ { label: "fine", abbreviation: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", color: "#111111" }] });
+      var proj = new Project( { valid_labels: [ { label: "fine", abbreviation: cf.createStringOfLength(30), color: "#111111" }] });
       proj.validate(function(err) { expect(err.errors['valid_labels.0.abbreviation']).to.exist; done(); });
     });  
     it('should fail validation if valid_labels contains an abbreviation that is blank', function(done) { 
