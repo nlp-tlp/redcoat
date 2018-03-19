@@ -2,7 +2,7 @@ var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
 var DocumentGroup = require('./document_group')
 var cf = require("./common/common_functions")
-
+var User = require("./user")
 
 USERS_PER_PROJECT_MAXCOUNT = cf.USERS_PER_PROJECT_MAXCOUNT;
 
@@ -12,7 +12,7 @@ validateArrayHasUniqueValues = cf.validateArrayHasUniqueValues;
 //   return arr.length < USERS_PER_PROJECT_MAXCOUNT;
 // }
 
-usersValidation = [
+userIdsValidation = [
   { validator: validateArrayHasUniqueValues },
 ];
 
@@ -37,6 +37,7 @@ var ProjectSchema = new Schema({
     ref: 'User',
     maxlength: USERS_PER_PROJECT_MAXCOUNT,
     index: true,
+    validate: userIdsValidation
   },
 
   // The created at/updated at dates.
@@ -53,16 +54,20 @@ ProjectSchema.methods.verifyAssociatedObjectsExist = cf.verifyAssociatedObjectsE
 
 /* Instance methods */
 
-ProjectSchema.methods.sortDocumentGroupsByTimesAnnotated = function(done) {
-  return DocumentGroup.find({ project_id: this._id }).sort('times_annotated').exec(done);
+ProjectSchema.methods.sortDocumentGroupsByTimesAnnotated = function(next) {
+  return DocumentGroup.find({ project_id: this._id }).sort('times_annotated').exec(next);
 }
 
+ProjectSchema.methods.getUsers = function(next) {
 
-/* Middleware */
+  User.find( { _id: { $in : this.user_ids } } , function(err, users) {
+    if(err) return next(new Error("There was an error attempting to run the find users query."));
+    else return next(users);
+  });
+}
 
-ProjectSchema.pre('validate', function(next) {
-  // Add the creator of the project to the list of user_ids, so that they can annotate it too if they want to.
-  //this.user_ids
+ProjectSchema.methods.addCreatorToUsers = function(next) {
+
   if(this.user_ids == undefined) {
     this.user_ids = [];
   }
@@ -73,6 +78,13 @@ ProjectSchema.pre('validate', function(next) {
     this.user_ids.push(this.user_id);
     next();
   }
+}
+
+/* Middleware */
+
+ProjectSchema.pre('validate', function(next) {
+  // Add the creator of the project to the list of user_ids, so that they can annotate it too if they want to.
+  this.addCreatorToUsers(next);
 })
 
 ProjectSchema.pre('save', function(next) {

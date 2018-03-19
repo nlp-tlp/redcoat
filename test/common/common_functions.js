@@ -60,11 +60,16 @@ function saveMany(objects, error_function, done) {
     })       
 }
 
+// Returns a random sequence of characters.
+function randomCharSeq() {
+  return Math.random().toString(36).substring(10);
+}
+
 // Creates a valid user.
 function createValidUser() {
   var user = new User( {
-    email:    "misming@nootnootzzzz.com",
-    username: "Pingu",
+    email:    "misming@nootnoot-" + randomCharSeq() + ".com",
+    username: "Pingu" + randomCharSeq(),
     password: "nootnoot"
   });
   return user;

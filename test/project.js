@@ -113,10 +113,25 @@ describe('Projects', function() {
     // before(function(done) { cf.connectToMongoose(done); });
     after(function(done)  { cf.dropMongooseDb(done); });
 
+
+
     it('should fail validation if user_ids contains the same user twice', function(done) {
 
-      done();
+      var user1 = cf.createValidUser();
+      var user2 = cf.createValidUser();
+      var user3 = cf.createValidUser();
+      var proj1 = cf.createValidProject(1, user1._id);
 
+      proj1.user_ids.push(user2._id);
+      proj1.user_ids.push(user3._id);
+      proj1.user_ids.push(user3._id);
+
+      cf.saveMany([user1, user2, user3], function(err) { expect(err).to.not.exist; }, function() {
+        proj1.validate(function(err) {
+          expect(err.errors.user_ids).to.exist;
+          done();
+        });
+      });
 
     });
 
@@ -136,6 +151,29 @@ describe('Projects', function() {
       });         
     }); 
 
+    it('should pass validation if the project creator is already in the users array prior to validation', function(done) {
+
+      var user1 = cf.createValidUser();
+      var user2 = cf.createValidUser();
+      var proj1 = cf.createValidProject(1, user1._id);
+
+      proj1.user_ids.push(user1._id); // Same as creator, but should still validate correctly because it won't be added twice
+      proj1.user_ids.push(user2._id);
+
+      cf.saveMany([user1, user2], function(err) { expect(err).to.not.exist; }, function() {
+        proj1.validate(function(err) {
+          expect(err).to.not.exist;
+          expect(proj1.user_ids.length).to.equal(2);
+          console.log(proj1.user_ids)
+          proj1.getUsers(function(users) {
+            console.log("USERS:", users);
+          });
+
+          done();
+        });
+      });
+
+    });
 
   });
 
@@ -177,7 +215,10 @@ describe('Projects', function() {
       var proj2 = new Project( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "red" }] });
       var proj3 = new Project( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "" }] });
       var proj4 = new Project( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "#1234g4" }] });
-      cf.validateMany([proj1, proj2, proj3, proj4], function(err) { expect(err.errors['valid_labels.0.color']).to.exist }, done);
+      var proj5 = new Project( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "" }] });
+      var proj6 = new Project( { valid_labels: [ { label: "fine", abbreviation: "fine", color: " #111" }] });
+      var proj7 = new Project( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "   " }] });
+      cf.validateMany([proj1, proj2, proj3, proj4, proj5, proj6, proj7], function(err) { expect(err.errors['valid_labels.0.color']).to.exist }, done);
     }); 
     it('should pass validation for color if valid_labels contains a valid color', function(done) { 
       var proj = new Project( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "#111111" }] });
@@ -185,16 +226,16 @@ describe('Projects', function() {
     }); 
    
     /* Missing attributes */
-    it('should fail validation if valid_labels contains a label without a corresponding abbreviation', function(done) { 
+    it('should fail validation if valid_labels contains a valid_label with no label', function(done) { 
+      var proj = new Project( { valid_labels: [ { abbreviation: "xxx", color: "#111111" }] });
+      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
+    });
+    it('should fail validation if valid_labels contains a valid_label with no abbreviation', function(done) { 
       var proj = new Project( { valid_labels: [ { label: "fine", color: "#111111" }] });
       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
     });
-    it('should fail validation if valid_labels contains a label without a corresponding color', function(done) { 
-      var proj = new Project( { valid_labels: [ { label: "fine", abbreviation: "     " }] });
-      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
-    });
-    it('should fail validation if valid_labels contains an abbreviation and color but not a label', function(done) { 
-      var proj = new Project( { valid_labels: [ { abbreviation: "     ", color: "#111111" }] });
+    it('should fail validation if valid_labels contains a valid_label with no color', function(done) { 
+      var proj = new Project( { valid_labels: [ { label: "fine", abbreviation: "xxx" }] });
       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
     });
     it('should fail validation if it has 0 valid_labels', function(done) { 
@@ -230,7 +271,7 @@ describe('Projects', function() {
       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
     });
 
-
+    /* Protected terms */
     it('should fail validation if valid_labels contains the label or abbreviation \"O\"', function(done) { 
       var proj1 = new Project( { valid_labels: [ 
         { label: "O", abbreviation: "fine", color: "#111111" },
