@@ -11,14 +11,19 @@ describe('Document Groups', function() {
 
 
 
+  before(function(done) {
+    cf.connectToMongoose(done);
+  });
+  after(function(done) {
+    cf.disconnectFromMongoose(done);
+  });
 
   /* project_id */
 
   describe("project_id", function() {
 
 
-    beforeEach(function(done) { cf.connectToMongoose(done); });
-    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
+    afterEach(function(done)  { cf.dropMongooseDb(done); });
 
     it('should fail validation if it does not have a project_id', function(done) { 
       var docgroup = new DocumentGroup();
@@ -85,8 +90,7 @@ describe('Document Groups', function() {
 
   describe("times_annotated", function() {
 
-    beforeEach(function(done)     { cf.connectToMongoose(done); });
-    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
+    afterEach(function(done)  { cf.dropMongooseDb(done); });
 
     it('should be created with times_annotated set to 0', function(done) {
       var user = cf.createValidUser();
@@ -146,9 +150,8 @@ describe('Document Groups', function() {
 
   describe("Validity tests", function() {
 
-    beforeEach(function(done) { cf.connectToMongoose(done); });
-    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
-   
+    afterEach(function(done)  { cf.dropMongooseDb(done); });
+
     it('should pass validation if everything is OK', function(done) { 
       var user = cf.createValidUser();
       var projs = [cf.createValidProject(1, user._id), cf.createValidProject(4, user._id), cf.createValidProject(7, user._id), cf.createValidProject(18, user._id)];
@@ -173,8 +176,7 @@ describe('Document Groups', function() {
 
   describe("Instance methods", function() {
 
-    beforeEach(function(done) { cf.connectToMongoose(done); });
-    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
+    afterEach(function(done)  { cf.dropMongooseDb(done); });
 
     it('should correctly return all annotations via getAnnotations()', function(done) {
       var user =          cf.createValidUser();

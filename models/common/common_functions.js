@@ -2,13 +2,15 @@ var mongoose = require('mongoose');
 
 DOCUMENT_GROUP_TOTAL_MAXCOUNT = 1000; // Number of groups that can be in a project.
 
-DOCUMENT_MAXCOUNT         = 10
-DOCUMENT_MAX_TOKEN_LENGTH = 20
-DOCUMENT_MAX_TOKEN_COUNT  = 200
-ABBREVIATION_MAXLENGTH    = 20
+USERS_PER_PROJECT_MAXCOUNT = 100;
+PROJECTS_PER_USER_MAXCOUNT = 20;
+DOCUMENT_MAXCOUNT          = 10;
+DOCUMENT_MAX_TOKEN_LENGTH  = 20;
+DOCUMENT_MAX_TOKEN_COUNT   = 200;
+ABBREVIATION_MAXLENGTH     = 20;
 
 PROJECT_NAME_MAXLENGTH 				= 50;
-PROJECT_DESCRIPTION_MAXLENGTH = 500; // Max length of a project description.
+PROJECT_DESCRIPTION_MAXLENGTH       = 500; // Max length of a project description.
 VALID_LABEL_MAXCOUNT   				= 20;
 LABEL_MAXLENGTH        				= 20;
 
@@ -190,12 +192,19 @@ module.exports = {
 	VALID_LABEL_MAXCOUNT      		: VALID_LABEL_MAXCOUNT,     // Max number of valid labels
 	LABEL_MAXLENGTH           		: LABEL_MAXLENGTH,          // Max length of one label
 	PROJECT_DESCRIPTION_MAXLENGTH : PROJECT_DESCRIPTION_MAXLENGTH, // Max length of a project description.
+	USERS_PER_PROJECT_MAXCOUNT      : USERS_PER_PROJECT_MAXCOUNT, // Max number of users per project.
+	PROJECTS_PER_USER_MAXCOUNT      : PROJECTS_PER_USER_MAXCOUNT, // Max number of projects per user.
 
 	validateNotBlank : validateNotBlank,
 	validateDocumentCountMin: validateDocumentCountMin,
 	validateDocumentCountMax: validateDocumentCountMax, 
 	validateLabelAbbreviationLengthMin: validateLabelAbbreviationLengthMin,
 	validateLabelAbbreviationLengthMax: validateLabelAbbreviationLengthMax,
+
+	// Validates that all values in an array are unique.
+	validateArrayHasUniqueValues: function(arr) {
+	  return new Set(arr).size == arr.length;
+	},
 
 	// Set the updated_at and created_at fields.
 	setCurrentDate: function() {
@@ -210,6 +219,23 @@ module.exports = {
 	    if(err || obj == null) { next( { "association": new Error("Associated " + model.collection.collectionName + " record must exist in database.") } )  }
 	    else { next() }
 	  });
+	},
+	// Verify that all records in an associated array exist in the database.
+	verifyAssociatedObjectsExist: function(model, asso_arr, next) {	
+		var len = asso_arr.length;
+		//console.log(asso_arr);
+		//console.log(asso_arr[0])
+		//model.findById(asso_arr[0], function(err, f) {
+		//	console.log(err, f);
+		//})
+		model.count( { _id: { $in : asso_arr } } , function(err, count) {
+			//console.log(count, len)
+			if(len != count) {
+				next( { "association": new Error("All associated " + model.collection.collectionName + " records must exist in database.") });
+			} else {
+				next();
+			}
+		});
 	},
 	// Delete all objects associated with the object. Model is the model being deleted, asso_id is the child object's reference to the parent object.
 	// 'query' will look something like {project_id: this._id}

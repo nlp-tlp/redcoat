@@ -9,6 +9,14 @@ var rid = require('mongoose').Types.ObjectId;
 describe('Document Group Annotations', function() {
 
 
+
+  before(function(done) {
+    cf.connectToMongoose(done);
+  });
+  after(function(done) {
+    cf.disconnectFromMongoose(done);
+  });
+
   // Creates a valid user, project, and document_group.
   function setUpObjects() {
     var user = cf.createValidUser();
@@ -26,8 +34,7 @@ describe('Document Group Annotations', function() {
 
   describe("user_id", function() {
 
-    beforeEach(function(done) { cf.connectToMongoose(done); });
-    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
+    afterEach(function(done)  { cf.dropMongooseDb(done); });
 
     it('should fail validation if it does not have a user_id', function(done) { 
       var doc_group_ann = new DocumentGroupAnnotation();
@@ -97,8 +104,7 @@ describe('Document Group Annotations', function() {
 
   describe("document_group_id", function() {
 
-    beforeEach(function(done) { cf.connectToMongoose(done); });
-    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
+    afterEach(function(done)  { cf.dropMongooseDb(done); });
 
     it('should fail validation if it does not have a document_group_id', function(done) { 
       var doc_group_ann = new DocumentGroupAnnotation();
@@ -136,8 +142,7 @@ describe('Document Group Annotations', function() {
 
   describe("labels", function() {
 
-    beforeEach(function(done) { cf.connectToMongoose(done); });
-    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
+    afterEach(function(done)  { cf.dropMongooseDb(done); });
 
     it("should fail to save if any labels are not listed in project.valid_labels", function(done) {
       objs = setUpObjects(); user = objs.user; proj = objs.proj; doc_group = objs.doc_group;      
@@ -230,8 +235,7 @@ describe('Document Group Annotations', function() {
 
   describe("Validity tests", function() {
 
-    beforeEach(function(done) { cf.connectToMongoose(done); });
-    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
+    afterEach(function(done)  { cf.dropMongooseDb(done); });
 
     it('should pass saving if everything is OK', function(done) { 
       objs = setUpObjects(); user = objs.user; proj = objs.proj; doc_group = objs.doc_group;

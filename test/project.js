@@ -6,7 +6,16 @@ var DocumentGroup = require('../models/document_group');
 var DocumentGroupAnnotation = require('../models/document_group_annotation');
 var rid = require('mongoose').Types.ObjectId;
 
+
 describe('Projects', function() {
+
+
+  before(function(done) {
+    cf.connectToMongoose(done);
+  });
+  after(function(done) {
+    cf.disconnectFromMongoose(done);
+  });
 
   /* project_name */
 
@@ -63,8 +72,8 @@ describe('Projects', function() {
 
   describe("user_id", function() {
 
-    beforeEach(function(done) { cf.connectToMongoose(done); });
-    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
+    
+    after(function(done)  { cf.dropMongooseDb(done); });
 
     it('should fail validation if user_id is absent or blank', function(done) { 
       var proj1 = new Project( {  } );
@@ -97,6 +106,37 @@ describe('Projects', function() {
         });
       });
     }); 
+  });
+
+  describe("user_ids", function() {
+
+    // before(function(done) { cf.connectToMongoose(done); });
+    after(function(done)  { cf.dropMongooseDb(done); });
+
+    it('should fail validation if user_ids contains the same user twice', function(done) {
+
+      done();
+
+
+    });
+
+    it('should place the admin of the project into user_ids', function(done) {
+
+      var user = cf.createValidUser();
+      user.save(function(err) {
+        var proj1 = cf.createValidProject(1, user._id);
+          proj1.validate(function(err) { 
+          expect(err).to.not.exist;
+          proj1.save(function(err, proj) {
+            expect(proj.user_ids).to.include(user._id); 
+            //expect(err.errors.user_id).to.exist;
+            done();
+          });
+        }); 
+      });         
+    }); 
+
+
   });
 
   /* valid_labels */
@@ -221,8 +261,8 @@ describe('Projects', function() {
 
   describe("Validity tests", function() {
   
-    beforeEach(function(done) { cf.connectToMongoose(done); });
-    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });
+    // before(function(done) { cf.connectToMongoose(done); });
+    after(function(done)  { cf.dropMongooseDb(done); });
 
     it('should pass validation if everything is OK', function(done) { 
       var user = cf.createValidUser();
@@ -245,8 +285,8 @@ describe('Projects', function() {
 
   describe("Cascade delete", function() {
 
-    beforeEach(function(done) { cf.connectToMongoose(done); });
-    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });    
+    // before(function(done) { cf.connectToMongoose(done); });
+    after(function(done)  { cf.dropMongooseDb(done); });    
 
     it('should delete all associated document groups and document_group_annotations when deleted', function(done) {
 
@@ -286,8 +326,8 @@ describe('Projects', function() {
 
   describe("Instance methods", function() {
 
-    beforeEach(function(done) { cf.connectToMongoose(done); });
-    afterEach(function(done)  { cf.disconnectFromMongooseAndDropDb(done); });    
+    // before(function(done) { cf.connectToMongoose(done); });
+    after(function(done)  { cf.dropMongooseDb(done); });    
 
     it('should sort its document_groups in order of times_annotated', function(done) {
 

@@ -4,6 +4,18 @@ var DocumentGroup = require('./document_group')
 var cf = require("./common/common_functions")
 
 
+USERS_PER_PROJECT_MAXCOUNT = cf.USERS_PER_PROJECT_MAXCOUNT;
+
+validateArrayHasUniqueValues = cf.validateArrayHasUniqueValues;
+
+// function validateUsersCountMax(arr) {
+//   return arr.length < USERS_PER_PROJECT_MAXCOUNT;
+// }
+
+usersValidation = [
+  { validator: validateArrayHasUniqueValues },
+];
+
 /* Schema */
 
 var ProjectSchema = new Schema({
@@ -18,6 +30,15 @@ var ProjectSchema = new Schema({
 
   // The valid labels to use for annotation within the project.
   valid_labels: cf.fields.valid_labels,
+
+  // The users who are annotating the project.
+  user_ids: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'User',
+    maxlength: USERS_PER_PROJECT_MAXCOUNT,
+    index: true,
+  },
+
   // The created at/updated at dates.
   created_at: Date,
   updated_at: Date
@@ -28,6 +49,7 @@ var ProjectSchema = new Schema({
 ProjectSchema.methods.setCurrentDate = cf.setCurrentDate
 ProjectSchema.methods.cascadeDelete = cf.cascadeDelete
 ProjectSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists
+ProjectSchema.methods.verifyAssociatedObjectsExist = cf.verifyAssociatedObjectsExist
 
 /* Instance methods */
 
@@ -35,17 +57,39 @@ ProjectSchema.methods.sortDocumentGroupsByTimesAnnotated = function(done) {
   return DocumentGroup.find({ project_id: this._id }).sort('times_annotated').exec(done);
 }
 
+
 /* Middleware */
 
+ProjectSchema.pre('validate', function(next) {
+  // Add the creator of the project to the list of user_ids, so that they can annotate it too if they want to.
+  //this.user_ids
+  if(this.user_ids == undefined) {
+    this.user_ids = [];
+  }
+  var s = new Set(this.user_ids);
+  if(s.has(this.user_id)) {
+    next();
+  } else {
+    this.user_ids.push(this.user_id);
+    next();
+  }
+})
+
 ProjectSchema.pre('save', function(next) {
+  var t = this;
   // 1. Set current date
-  this.setCurrentDate();
+  t.setCurrentDate();
 
   // 2. Validate admin exists
   var User = require('./user')
-  this.verifyAssociatedExists(User, this.user_id, function(err) {
-    next(err);
-  })
+  t.verifyAssociatedExists(User, t.user_id, function(err) {
+    if(err) { next(err); return; }
+    //this.users.push(this.user_id);
+
+    t.verifyAssociatedObjectsExist(User, t.user_ids, function(err) {
+      next(err);
+    });
+  });
   //next()
 
 });

@@ -5,27 +5,35 @@ var User = require('../../models/user');
 var DocumentGroup = require('../../models/document_group');
 var DocumentGroupAnnotation = require('../../models/document_group_annotation');
 
+var options = {
+  keepAlive: 1,
+  connectTimeoutMS: 30000 ,
+};
+
 //mongoose.set('debug', true);
 var DB_TEST_URI = 'mongodb://localhost/redcoat-db-test'
 
 
-// Connects to Mongoose.
+// Connects to the Mongo database.
 function connectToMongoose(done) {
-    mongoose.connect(DB_TEST_URI, function(err) { 
-        if(err) console.log(err); 
+    mongoose.connect(DB_TEST_URI, options, function(err) { 
+        if(err) console.log("Connection error:", err); 
         done();
-        //console.log("Connected to db.");        
     });
 }
-// Disconnects from Mongoose and drops the database.
-function disconnectFromMongooseAndDropDb(done) {
+// Drops the Mongo database.
+function dropMongooseDb(done) {
   if(mongoose.connection.db) {
       mongoose.connection.db.dropDatabase(function(err) {
-      mongoose.connection.close(function(err) {
-          done();
-      });
+        done();
     });
   }  
+}
+// Disconnects from the Mongo database.
+function disconnectFromMongoose(done) {
+  mongoose.connection.close(function(err) {
+    done();
+  });
 }
 // Validates many objects at once.
 // objects: The array of objects to validate.
@@ -55,7 +63,7 @@ function saveMany(objects, error_function, done) {
 // Creates a valid user.
 function createValidUser() {
   var user = new User( {
-    email:    "misming@nootnoot.com",
+    email:    "misming@nootnootzzzz.com",
     username: "Pingu",
     password: "nootnoot"
   });
@@ -128,7 +136,8 @@ function createStringOfLength(n) {
 
 module.exports = {
     connectToMongoose:                  connectToMongoose,
-    disconnectFromMongooseAndDropDb:    disconnectFromMongooseAndDropDb,
+    dropMongooseDb:                     dropMongooseDb,
+    disconnectFromMongoose:             disconnectFromMongoose,
     validateMany:                       validateMany,
     saveMany:                           saveMany,
     createValidProject:                 createValidProject,
