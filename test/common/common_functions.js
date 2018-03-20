@@ -22,13 +22,51 @@ function connectToMongoose(done) {
     });
 }
 // Drops the Mongo database.
-function dropMongooseDb(done) {
-  if(mongoose.connection.db) {
-      mongoose.connection.db.dropDatabase(function(err) {
-        done();
-    });
-  }  
+// If included with options, may exclude some collection.
+function dropMongooseDb(options, done) {
+
+  function dropCollections(collections, except, done) {
+    if (collections.length == 0) {
+      return done();
+    }
+    collection = collections.pop();
+    if(collection.name == except) {
+      dropCollections(collections, except, done);
+    } else {
+      mongoose.connection.db.dropCollection(collection.name, function(err, result) {
+        dropCollections(collections, except, done);
+      });      
+    }
+
+  }
+
+
+  if(typeof options == "function") {
+    done = options;
+  }
+
+  if(options.except) {
+    if(mongoose.connection.db) {
+      mongoose.connection.db.listCollections().toArray(function (err, collections) {
+        if(collections.length > 0)
+          dropCollections(collections, options.except, done)
+        else 
+          done();
+      });
+
+    }
+  } else {
+    if(mongoose.connection.db) {
+        mongoose.connection.db.dropDatabase(function(err) {
+         
+          done();
+      });
+    }  
+  }
+  
+
 }
+
 // Disconnects from the Mongo database.
 function disconnectFromMongoose(done) {
   mongoose.connection.close(function(err) {
@@ -43,8 +81,8 @@ function validateMany(objects, error_function, done) {
     obj = objects.pop()
     obj.validate(function(err) {
       error_function(err);
-      if (objects.length > 0) validateMany(objects, error_function, done)
-      else done()            
+      if (objects.length > 0) validateMany(objects, error_function, done);
+      else done();      
     })       
 }
 // Saves many objects at once.
@@ -70,10 +108,23 @@ function createValidUser() {
   var user = new User( {
     email:    "misming@nootnoot-" + randomCharSeq() + ".com",
     username: "Pingu" + randomCharSeq(),
-    password: "nootnoot"
   });
   return user;
 }
+
+// Registers an array of users via passport's authenticate method.
+// objects: The array of objects to register.
+// error_function: The function to call on the errors that arise from saving.
+// done: The callback function to call when complete.
+function registerUsers(objects, error_function, done) {
+  obj = objects.pop()
+  User.register(obj, 'password', function(err, user) {
+    error_function(err);
+    if (objects.length > 0) registerUsers(objects, error_function, done)
+    else done()            
+  })       
+}
+
 
 // Creates a valid project.
 // n_labels: The number of labels for the project.
@@ -145,6 +196,7 @@ module.exports = {
     disconnectFromMongoose:             disconnectFromMongoose,
     validateMany:                       validateMany,
     saveMany:                           saveMany,
+    registerUsers:                      registerUsers,
     createValidProject:                 createValidProject,
     createValidUser:                    createValidUser,
     createValidDocuments:               createValidDocuments,

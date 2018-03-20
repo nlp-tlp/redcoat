@@ -33,14 +33,13 @@ describe('Projects', function() {
       proj.validate(function(err) { expect(err.errors.project_name).to.exist; done(); });
     });
     it('should fail validation if the name is blank', function(done) { 
-      var proj = new Project({ project_name: "      " });
+      var proj = new Project({ project_name: "      " });      
       proj.validate(function(err) { expect(err.errors.project_name).to.exist; done(); });
     });
     it('should pass validation (for project_name) if the name is OK', function(done) { 
       var proj = new Project({ project_name: "Cool project." });
       proj.validate(function(err) { expect(err.errors.project_name).to.not.exist; done(); });
     });
-
   })
 
   /* project_description */
@@ -115,7 +114,7 @@ describe('Projects', function() {
     var user3 = cf.createValidUser(); 
 
     before(function(done) { 
-      cf.saveMany([user1, user2, user3], function() {}, done);
+      cf.registerUsers([user1, user2, user3], function(err) { }, done);
     });
     after(function(done)  { cf.dropMongooseDb(done); });
 
@@ -137,12 +136,11 @@ describe('Projects', function() {
     it('should place the admin of the project into user_ids', function(done) {
       var proj1 = cf.createValidProject(1, user1._id);
         proj1.validate(function(err) { 
-        expect(err).to.not.exist;
-        proj1.save(function(err, proj) {
-          expect(proj.user_ids).to.include(user1._id); 
-          //expect(err.errors.user_id).to.exist;
-          done();
-        });
+          expect(err).to.not.exist;
+          proj1.save(function(err, proj) {
+            expect(proj.user_ids).to.include(user1._id); 
+            done();
+          });
       });         
     }); 
 
@@ -291,9 +289,7 @@ describe('Projects', function() {
   
     var user = cf.createValidUser();
     before(function(done) { 
-      user.save(function(err, user) {
-        done();
-      });
+      cf.registerUsers([user], function(err) { }, done);
     });
     after(function(done)  { cf.dropMongooseDb(done); });
 
@@ -311,7 +307,6 @@ describe('Projects', function() {
 
   describe("Cascade delete", function() {
 
-    // before(function(done) { cf.connectToMongoose(done); });
     after(function(done)  { cf.dropMongooseDb(done); });    
 
     it('should delete all associated document groups and document_group_annotations when deleted', function(done) {
@@ -322,7 +317,7 @@ describe('Projects', function() {
       var doc_groups = [cf.createValidDocumentGroup(5, projs[0]._id), cf.createValidDocumentGroup(5, projs[0]._id), cf.createValidDocumentGroup(5, projs[2]._id)];
       var doc_group_annotations = [cf.createValidDocumentGroupAnnotation(5, user._id, doc_groups[0]._id), cf.createValidDocumentGroupAnnotation(5, user._id, doc_groups[0]._id), cf.createValidDocumentGroupAnnotation(5, user._id, doc_groups[0]._id)];
      
-      user.save(function(err) {
+      cf.registerUsers([user], function(err) { expect(err).to.not.exist; }, function() {
         cf.saveMany(projs, function(err) { expect(err).to.not.exist; }, function() {
           cf.saveMany(doc_groups, function(err) { expect(err).to.not.exist; }, function() {
             cf.saveMany(doc_group_annotations, function(err) { expect(err).to.not.exist; }, function() {
@@ -358,7 +353,7 @@ describe('Projects', function() {
     it('should sort its document_groups in order of times_annotated', function(done) {
 
       var user = cf.createValidUser();
-      user.save(function(err) {
+      cf.registerUsers([user], function(err) { expect(err).to.not.exist; }, function() {
         var proj1 = cf.createValidProject(6, user._id);
         var proj2 = cf.createValidProject(11, user._id);
         var proj1_id = proj1._id;

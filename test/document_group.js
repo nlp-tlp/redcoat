@@ -91,7 +91,7 @@ describe('Document Groups', function() {
 
     var user = cf.createValidUser();
     before(function(done) {
-      user.save(done);
+      cf.registerUsers([user], function(err) { }, done);
     })
     after(function(done)  { cf.dropMongooseDb(done); });
 
@@ -149,7 +149,7 @@ describe('Document Groups', function() {
 
     var user = cf.createValidUser();
     before(function(done) {
-      user.save(done);
+      cf.registerUsers([user], function(err) { }, done);
     })
     after(function(done)  { cf.dropMongooseDb(done); });
 
@@ -191,7 +191,7 @@ describe('Document Groups', function() {
       var d1_id = docgroups[0]._id;
       var d2_id = docgroups[1]._id;
       var d3_id = docgroups[2]._id;
-      user.save(function(err) {        
+      cf.registerUsers([user], function(err) { }, function(err) {    
         cf.saveMany(projs, function(err) { expect(err).to.not.exist; }, function() {
           cf.saveMany(docgroups, function(err) { expect(err).to.not.exist; }, function() {
             cf.saveMany(docgroupanns, function(err) { expect(err).to.not.exist; }, function() {              

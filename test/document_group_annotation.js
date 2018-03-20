@@ -9,38 +9,39 @@ var rid = require('mongoose').Types.ObjectId;
 describe('Document Group Annotations', function() {
 
 
+  var user1 = cf.createValidUser();
+  var user2 = cf.createValidUser();
 
   before(function(done) {
-    cf.connectToMongoose(done);
+    cf.connectToMongoose(function() {
+      cf.registerUsers([user1, user2], function(err) { }, function () {
+        return done();
+      });
+    });
   });
   after(function(done) {
     cf.disconnectFromMongoose(done);
   });
 
-  // Creates a valid user, project, and document_group.
+  // Creates a valid project and document_group.
   function setUpObjects() {
-    var user = cf.createValidUser();
-    var proj = cf.createValidProject(1, user._id);
+
+    var proj = cf.createValidProject(1, user1._id);
     proj.valid_labels = [
         { label: "test-1", abbreviation: "TEST-1", color: "#000001" },
         { label: "test-2", abbreviation: "TEST-2", color: "#000002" },
         { label: "test-3", abbreviation: "TEST-3", color: "#000003" },
     ];
     var doc_group = cf.createValidDocumentGroup(2, proj._id);
-    return {user: user, proj: proj, doc_group: doc_group};
+    return {proj: proj, doc_group: doc_group};
   }
 
   /* user_id */
 
   describe("user_id", function() {
 
-    var user1 = cf.createValidUser();
-    var user2 = cf.createValidUser();
-    before(function(done) {
-      cf.saveMany([user1, user2], function() {}, done)
-    })
 
-    after(function(done)  { cf.dropMongooseDb(done); });
+    after(function(done)  { cf.dropMongooseDb({ except: "users"}, done); });
 
     it('should fail validation if it does not have a user_id', function(done) { 
       var doc_group_ann = new DocumentGroupAnnotation();
@@ -85,11 +86,7 @@ describe('Document Group Annotations', function() {
         })
         doc_group_ann.save(function(err) {
           expect(err).to.exist;
-          var mongoose = require('mongoose')
-          mongoose.connection.db.dropDatabase(function(err) {
-            done();
-          });
-          
+          done();
         });
       });
     });
@@ -99,27 +96,23 @@ describe('Document Group Annotations', function() {
 
   describe("document_group_id", function() {
 
-    after(function(done)  { cf.dropMongooseDb(done); });
+    //after(function(done)  { cf.dropMongooseDb({ except: "users"}, done); });
 
     it('should fail validation if it does not have a document_group_id', function(done) { 
       var doc_group_ann = new DocumentGroupAnnotation();
       doc_group_ann.validate(function(err) { expect(err.errors.document_group_id).to.exist; done(); });
     });
     it('should fail to save if document_group_id does not exist in the Document Groups collection', function(done) { 
-      var user = cf.createValidUser();
-      var proj = cf.createValidProject(1, user._id);
+      var proj = cf.createValidProject(1, user1._id);
       var doc_group = cf.createValidDocumentGroup(1, proj._id);
       doc_group.times_annotated = 50;
-      user.save()
-      .then(function() {
-        return proj.save();
-      })
+      proj.save()
       .then(function() {
         return doc_group.save();
       })
       .then(function() {
         var doc_group_ann = new DocumentGroupAnnotation({ 
-          user_id: user._id,
+          user_id: user1._id,
           document_group_id: rid(),
           pingu: "noot noot",
           project_id: proj._id,
@@ -133,14 +126,17 @@ describe('Document Group Annotations', function() {
     }); 
   });
 
+
+
+
   /* labels */
 
   describe("labels", function() {
 
-    after(function(done)  { cf.dropMongooseDb(done); });
+    after(function(done)  { cf.dropMongooseDb({ except: "users"}, done); });
 
     it("should fail to save if any labels are not listed in project.valid_labels", function(done) {
-      objs = setUpObjects(); user = objs.user; proj = objs.proj; doc_group = objs.doc_group;      
+      objs = setUpObjects(); proj = objs.proj; doc_group = objs.doc_group;      
       doc_group.documents = [
         ["word", "word", "word", "word", "word", "word", "word", "word", "word", "word", 
          "word", "word", "word", "word", "word", "word", "word", "word", "word", "word", 
@@ -153,9 +149,9 @@ describe('Document Group Annotations', function() {
          "word", "word", "word", "word", "word", "word", "word", "word", "word", "word", "word" // 41 tokens
         ]
       ]
-      cf.saveMany([doc_group, proj, user], function(err) { expect(err).to.not.exist; }, function() {
+      cf.saveMany([doc_group, proj], function(err) { expect(err).to.not.exist; }, function() {
         var doc_group_ann = new DocumentGroupAnnotation({
-          user_id: user._id,
+          user_id: user1._id,
           document_group_id: doc_group._id,
           labels: [
             [ "O", "TEST-1", "TEST-1", "TEST-1", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "TEST-2", "TEST-3", "TEST-2",
@@ -175,16 +171,16 @@ describe('Document Group Annotations', function() {
  
 
     it("should fail to save if the number of documents does not match the number of corresponding documents", function(done) {
-      objs = setUpObjects(); user = objs.user; proj = objs.proj; doc_group = objs.doc_group;   
+      objs = setUpObjects(); proj = objs.proj; doc_group = objs.doc_group;   
 
       doc_group.documents = [
         ["word", "word", "word", "word", "word"],
         ["word", "word", "word"],
         ["word", "word", "word", "word"]
       ];
-      cf.saveMany([doc_group, proj, user], function(err) { expect(err).to.not.exist; }, function() {
+      cf.saveMany([doc_group, proj], function(err) { expect(err).to.not.exist; }, function() {
         var doc_group_ann = new DocumentGroupAnnotation({
-          user_id: user._id,
+          user_id: user1._id,
           document_group_id: doc_group._id,
           labels: [
             ["O", "O", "O", "O", "O"],
@@ -202,15 +198,15 @@ describe('Document Group Annotations', function() {
 
 
     it("should fail to save if the number of tokens in each label array does not match the number of tokens in corresponding documents", function(done) {
-      objs = setUpObjects(); user = objs.user; proj = objs.proj; doc_group = objs.doc_group;   
+      objs = setUpObjects(); proj = objs.proj; doc_group = objs.doc_group;   
       doc_group.documents = [
         ["word", "word", "word", "word", "word"],
         ["word", "word", "word"],
         ["word", "word", "word", "word"]
       ];
-      cf.saveMany([doc_group, proj, user], function(err) { expect(err).to.not.exist; }, function() {
+      cf.saveMany([doc_group, proj], function(err) { expect(err).to.not.exist; }, function() {
         var doc_group_ann = new DocumentGroupAnnotation({
-          user_id: user._id,
+          user_id: user1._id,
           document_group_id: doc_group._id,
           labels: [
             ["O", "O", "O", "O", "O"],
@@ -230,18 +226,18 @@ describe('Document Group Annotations', function() {
 
   describe("Validity tests", function() {
 
-    after(function(done)  { cf.dropMongooseDb(done); });
+    after(function(done)  { cf.dropMongooseDb({ except: "users"}, done); });
 
     it('should pass saving if everything is OK', function(done) { 
-      objs = setUpObjects(); user = objs.user; proj = objs.proj; doc_group = objs.doc_group;
+      objs = setUpObjects(); proj = objs.proj; doc_group = objs.doc_group;
       doc_group.documents = [
         ["word", "word", "word", "word", "word"],
         ["word", "word", "word"],
         ["word", "word", "word", "word"]
       ];
-      cf.saveMany([doc_group, proj, user], function(err) { expect(err).to.not.exist; }, function() {
+      cf.saveMany([doc_group, proj], function(err) { expect(err).to.not.exist; }, function() {
         var doc_group_ann = new DocumentGroupAnnotation({
-          user_id: user._id,
+          user_id: user1._id,
           document_group_id: doc_group._id,
           labels: [
             ["O", "O", "TEST-1", "O", "O"],
