@@ -37,12 +37,14 @@ var ProjectSchema = new Schema({
     ref: 'User',
     maxlength: USERS_PER_PROJECT_MAXCOUNT,
     index: true,
-    validate: userIdsValidation
+    validate: userIdsValidation,
+    default: []
   },
-
-  // The created at/updated at dates.
-  created_at: Date,
-  updated_at: Date
+}, {
+  timestamps: { 
+    createdAt: "created_at",
+    updatedAt: "updated_at"
+  }
 })
 
 /* Common methods */
@@ -54,23 +56,30 @@ ProjectSchema.methods.verifyAssociatedObjectsExist = cf.verifyAssociatedObjectsE
 
 /* Instance methods */
 
+// Sorts the project's document groups in ascending order of the number of times they have been annotated.
 ProjectSchema.methods.sortDocumentGroupsByTimesAnnotated = function(next) {
   return DocumentGroup.find({ project_id: this._id }).sort('times_annotated').exec(next);
 }
 
-ProjectSchema.methods.getUsers = function(next) {
+// Returns whether a particular user is subscribed to annotate a project.
+ProjectSchema.methods.projectHasUser = function(user_id) {
+  return !(this.user_ids.indexOf(user_id) === -1);
+}
 
+// Returns an array of user objects from this project's user_ids.
+ProjectSchema.methods.getUsers = function(next) {
   User.find( { _id: { $in : this.user_ids } } , function(err, users) {
-    if(err) return next(new Error("There was an error attempting to run the find users query."));
-    else return next(users);
+    if(err) { next(new Error("There was an error attempting to run the find users query.")); return; }
+    else { next(null, users); return; }
   });
 }
 
+// Adds the creator of the project to its user_ids (as the creator should always be able to annotate the project).
 ProjectSchema.methods.addCreatorToUsers = function(next) {
 
-  if(this.user_ids == undefined) {
-    this.user_ids = [];
-  }
+  //if(this.user_ids == undefined) {
+   // this.user_ids = [];
+  //}
   var s = new Set(this.user_ids);
   if(s.has(this.user_id)) {
     next();
@@ -96,14 +105,12 @@ ProjectSchema.pre('save', function(next) {
   var User = require('./user')
   t.verifyAssociatedExists(User, t.user_id, function(err) {
     if(err) { next(err); return; }
-    //this.users.push(this.user_id);
 
+    // 3. Validate all users in the user_ids array exist.
     t.verifyAssociatedObjectsExist(User, t.user_ids, function(err) {
       next(err);
     });
   });
-  //next()
-
 });
 
 // Cascade delete for project, so all associated document groups are deleted when a project is deleted.

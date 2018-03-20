@@ -31,9 +31,12 @@ var DocumentGroupAnnotationSchema = new Schema({
     type: [[String]],
     validate: labelsValidation
   },
-  created_at: Date,
-  updated_at: Date
-})
+}, {
+  timestamps: { 
+    createdAt: "created_at",
+    updatedAt: "updated_at"
+  }
+});
 
 /* Common methods */
 
@@ -74,8 +77,6 @@ DocumentGroupAnnotationSchema.methods.verifyLabelsAreValid = function(done) {
     return null; // no error   
   }
 
-  // need to verify project id the same as document group project's id
-
   var Project = require('./project');
   var DocumentGroup = require('./document_group');
   var t = this;
@@ -92,7 +93,10 @@ DocumentGroupAnnotationSchema.methods.verifyLabelsAreValid = function(done) {
     });
   });
 }
-DocumentGroupAnnotationSchema.methods.verifyUserIdSameAsProjects = function(done) {
+
+// Validates that the id of the user that created this document is present in the project's user_ids (users
+// who are allowed to annotate the project).
+DocumentGroupAnnotationSchema.methods.verifyUserIdListedInProjectUserIds = function(done) {
   var t = this;
   var Project = require('./project');
   var DocumentGroup = require('./document_group');  
@@ -100,8 +104,13 @@ DocumentGroupAnnotationSchema.methods.verifyUserIdSameAsProjects = function(done
     if(err) { done(err); return; }
     Project.findById(doc_group.project_id, function(err, proj) {
       if(err) { done(err); return; }
-      if(t.user_id.equals(proj.user_id)) { done(); return; }
-      else { done(new Error("Project's used_id must match user_id.")); }      
+      if(!proj.projectHasUser(t.user_id)) {
+        e = new Error("Project's used_ids must include user_id.");
+        e.name = "UserNotInProjectError";
+        done(e);        
+      } else { 
+        done(); return;
+       }   
     });
   });
 }
@@ -128,8 +137,8 @@ DocumentGroupAnnotationSchema.pre('save', function(next) {
       t.verifyLabelsAreValid(function(err) {
         if(err) { next(err); return }
 
-        // 5. Verify number of labels = number of documents in this object's document_group
-        t.verifyUserIdSameAsProjects(function(err) {          
+        // 5. Verify user_id of this doc group is in the project's users array
+        t.verifyUserIdListedInProjectUserIds(function(err) {          
           if(err) { next(err); return }
           next();
         });
@@ -137,12 +146,6 @@ DocumentGroupAnnotationSchema.pre('save', function(next) {
     });
   });
 });
-
-
-/*DocumentGroupSchema.pre('remove', function(next) {
-  var Document = require('./document')
-  this.cascadeDelete(Document, {document_group_id: this._id}, next)
-});*/
 
 
 /* Model */

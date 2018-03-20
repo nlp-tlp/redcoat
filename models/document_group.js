@@ -17,9 +17,12 @@ var DocumentGroupSchema = new Schema({
     type: Number,
     default: 0,
   },
-  created_at: Date,
-  updated_at: Date
-})
+}, {
+  timestamps: { 
+    createdAt: "created_at",
+    updatedAt: "updated_at"
+  }
+});
 
 /* Common methods */
 

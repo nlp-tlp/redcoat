@@ -240,23 +240,19 @@ module.exports = {
 	// Delete all objects associated with the object. Model is the model being deleted, asso_id is the child object's reference to the parent object.
 	// 'query' will look something like {project_id: this._id}
 	cascadeDelete: function(model, query, next) {
-		try {
-		  var asso_id = asso_id;
-		  model.find(query, function(err, objs) {		  	
-		    function deleteObjs(objs, done) {
-		    	if(objs.length == 0) { return done(); }		    	
-			    obj = objs.pop()
-			    //console.log("Deleting object from " + model.collection.collectionName)
-			    obj.remove(function(err) {
-			      if (objs.length > 0) return deleteObjs(objs, done)
-			      else return done()            
-			    }) 
-		    }
-		    deleteObjs(objs, next);
-		  });
-		 } catch(err) {
-		 	console.log("ERROR", err)
-		}
+	  var asso_id = asso_id;
+	  model.find(query, function(err, objs) {		  	
+	    function deleteObjs(objs, done) {
+	    	if(objs.length == 0) { return done(); }		    	
+		    obj = objs.pop()
+		    //console.log("Deleting object from " + model.collection.collectionName)
+		    obj.remove(function(err) {
+		      if (objs.length > 0) return deleteObjs(objs, done)
+		      else return done()            
+		    }) 
+	    }
+	    deleteObjs(objs, next);
+	  });
 	},
 
 	fields: {

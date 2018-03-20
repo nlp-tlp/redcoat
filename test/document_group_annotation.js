@@ -69,7 +69,7 @@ describe('Document Group Annotations', function() {
       });
     }); 
 
-    it('should fail to save if its user_id is not the same as its project\'s user_id', function(done) {
+    it('should fail to save if its user_id is not listed under its project\'s user_ids', function(done) {
 
       var proj = cf.createValidProject(1, user1._id);
       var doc_group = cf.createValidDocumentGroup(1, proj._id);
@@ -86,6 +86,7 @@ describe('Document Group Annotations', function() {
         })
         doc_group_ann.save(function(err) {
           expect(err).to.exist;
+          expect(err.name).to.equal("UserNotInProjectError");
           done();
         });
       });
