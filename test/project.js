@@ -110,71 +110,58 @@ describe('Projects', function() {
 
   describe("user_ids", function() {
 
-    // before(function(done) { cf.connectToMongoose(done); });
+    var user1 = cf.createValidUser();
+    var user2 = cf.createValidUser();
+    var user3 = cf.createValidUser(); 
+
+    before(function(done) { 
+      cf.saveMany([user1, user2, user3], function() {}, done);
+    });
     after(function(done)  { cf.dropMongooseDb(done); });
-
-
 
     it('should fail validation if user_ids contains the same user twice', function(done) {
 
-      var user1 = cf.createValidUser();
-      var user2 = cf.createValidUser();
-      var user3 = cf.createValidUser();
       var proj1 = cf.createValidProject(1, user1._id);
 
       proj1.user_ids.push(user2._id);
       proj1.user_ids.push(user3._id);
       proj1.user_ids.push(user3._id);
 
-      cf.saveMany([user1, user2, user3], function(err) { expect(err).to.not.exist; }, function() {
-        proj1.validate(function(err) {
-          expect(err.errors.user_ids).to.exist;
-          done();
-        });
-      });
+      proj1.validate(function(err) {
+        expect(err.errors.user_ids).to.exist;
+        done();
+      });  
 
     });
 
     it('should place the admin of the project into user_ids', function(done) {
-
-      var user = cf.createValidUser();
-      user.save(function(err) {
-        var proj1 = cf.createValidProject(1, user._id);
-          proj1.validate(function(err) { 
-          expect(err).to.not.exist;
-          proj1.save(function(err, proj) {
-            expect(proj.user_ids).to.include(user._id); 
-            //expect(err.errors.user_id).to.exist;
-            done();
-          });
-        }); 
+      var proj1 = cf.createValidProject(1, user1._id);
+        proj1.validate(function(err) { 
+        expect(err).to.not.exist;
+        proj1.save(function(err, proj) {
+          expect(proj.user_ids).to.include(user1._id); 
+          //expect(err.errors.user_id).to.exist;
+          done();
+        });
       });         
     }); 
 
     it('should pass validation if the project creator is already in the users array prior to validation', function(done) {
 
-      var user1 = cf.createValidUser();
-      var user2 = cf.createValidUser();
       var proj1 = cf.createValidProject(1, user1._id);
 
       proj1.user_ids.push(user1._id); // Same as creator, but should still validate correctly because it won't be added twice
       proj1.user_ids.push(user2._id);
+      proj1.validate(function(err) {
+        expect(err).to.not.exist;
+        expect(proj1.user_ids.length).to.equal(2);
+        //proj1.getUsers(function(users) {
+        //  console.log("USERS:", users);
+        //});
 
-      cf.saveMany([user1, user2], function(err) { expect(err).to.not.exist; }, function() {
-        proj1.validate(function(err) {
-          expect(err).to.not.exist;
-          expect(proj1.user_ids.length).to.equal(2);
-          console.log(proj1.user_ids)
-          proj1.getUsers(function(users) {
-            console.log("USERS:", users);
-          });
-
-          done();
-        });
+        done();
       });
-
     });
-
   });
 
   /* valid_labels */
@@ -302,23 +289,21 @@ describe('Projects', function() {
 
   describe("Validity tests", function() {
   
-    // before(function(done) { cf.connectToMongoose(done); });
-    after(function(done)  { cf.dropMongooseDb(done); });
-
-    it('should pass validation if everything is OK', function(done) { 
-      var user = cf.createValidUser();
-      user.save(function(err) {      
-        var projs = [cf.createValidProject(1, user._id), cf.createValidProject(4, user._id), cf.createValidProject(7, user._id), cf.createValidProject(18, user._id)];
-        cf.validateMany(projs, function(err) { expect(err).to.not.exist; }, done);
+    var user = cf.createValidUser();
+    before(function(done) { 
+      user.save(function(err, user) {
+        done();
       });
     });
+    after(function(done)  { cf.dropMongooseDb(done); });
+
+    it('should pass validation if everything is OK', function(done) {       
+      var projs = [cf.createValidProject(1, user._id), cf.createValidProject(4, user._id), cf.createValidProject(7, user._id), cf.createValidProject(18, user._id)];
+      cf.validateMany(projs, function(err) { expect(err).to.not.exist; }, done);  
+    });
     it('should pass saving if everything is OK', function(done) {
-      var user = cf.createValidUser();
-      user.save(function(err) {
-        var projs = [cf.createValidProject(1, user._id), cf.createValidProject(4, user._id), cf.createValidProject(7, user._id), cf.createValidProject(18, user._id)];
-        cf.saveMany(projs, function(err) { expect(err).to.not.exist; }, done);
-      });
-  
+      var projs = [cf.createValidProject(1, user._id), cf.createValidProject(4, user._id), cf.createValidProject(7, user._id), cf.createValidProject(18, user._id)];
+      cf.saveMany(projs, function(err) { expect(err).to.not.exist; }, done);  
     });
   });   
 

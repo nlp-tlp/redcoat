@@ -22,8 +22,7 @@ describe('Document Groups', function() {
 
   describe("project_id", function() {
 
-
-    afterEach(function(done)  { cf.dropMongooseDb(done); });
+    after(function(done)  { cf.dropMongooseDb(done); });
 
     it('should fail validation if it does not have a project_id', function(done) { 
       var docgroup = new DocumentGroup();
@@ -90,25 +89,25 @@ describe('Document Groups', function() {
 
   describe("times_annotated", function() {
 
-    afterEach(function(done)  { cf.dropMongooseDb(done); });
+    var user = cf.createValidUser();
+    before(function(done) {
+      user.save(done);
+    })
+    after(function(done)  { cf.dropMongooseDb(done); });
 
     it('should be created with times_annotated set to 0', function(done) {
-      var user = cf.createValidUser();
       var proj = cf.createValidProject(1, user._id);
       var docgroup = cf.createValidDocumentGroup(5, proj._id);
-      user.save(function(err) {
-        proj.save(function(err) {
-          docgroup.save(function(err, docgroup) { 
-            expect(docgroup.times_annotated).to.equal(0); 
-            done();
-          });
+      proj.save(function(err) {
+        docgroup.save(function(err, docgroup) { 
+          expect(docgroup.times_annotated).to.equal(0); 
+          done();
         });
       });
     });  
 
     // Note: need to rewrite this one to incorporate document_group_annotation model
     it('should correctly increment times_annotated when two users annotate a document group at nearly the same time', function(done) {
-      var user = cf.createValidUser();
       var proj = cf.createValidProject(1, user._id);
       var docgroup = cf.createValidDocumentGroup(5, proj._id);
       var doc_id = docgroup._id;
@@ -127,20 +126,18 @@ describe('Document Groups', function() {
         })        
       }
 
-      user.save(function(err) {
-        proj.save(function(err) {
-          docgroup.save(function(err, docgroup) { 
-            firstAnnotation(function() {
-              DocumentGroup.findOne( { _id: doc_id }, function(err, docgroup) {
-                expect(docgroup.times_annotated).to.equal(1);                        
-              });
+      proj.save(function(err) {
+        docgroup.save(function(err, docgroup) { 
+          firstAnnotation(function() {
+            DocumentGroup.findOne( { _id: doc_id }, function(err, docgroup) {
+              expect(docgroup.times_annotated).to.equal(1);                        
             });
-            secondAnnotation(function() {
-              DocumentGroup.findOne( { _id: doc_id }, function(err, docgroup) {
-                expect(docgroup.times_annotated).to.equal(2);      
-                done();                      
-              });          
-            });
+          });
+          secondAnnotation(function() {
+            DocumentGroup.findOne( { _id: doc_id }, function(err, docgroup) {
+              expect(docgroup.times_annotated).to.equal(2);      
+              done();                      
+            });          
           });
         });
       });
@@ -150,26 +147,24 @@ describe('Document Groups', function() {
 
   describe("Validity tests", function() {
 
-    afterEach(function(done)  { cf.dropMongooseDb(done); });
+    var user = cf.createValidUser();
+    before(function(done) {
+      user.save(done);
+    })
+    after(function(done)  { cf.dropMongooseDb(done); });
 
-    it('should pass validation if everything is OK', function(done) { 
-      var user = cf.createValidUser();
+    it('should pass validation if everything is OK', function(done) {       
       var projs = [cf.createValidProject(1, user._id), cf.createValidProject(4, user._id), cf.createValidProject(7, user._id), cf.createValidProject(18, user._id)];
       var docgroups = [cf.createValidDocumentGroup(5, projs[0]._id), cf.createValidDocumentGroup(5, projs[1]._id), cf.createValidDocumentGroup(5, projs[2]._id)];
-      user.save(function(err) {
-        cf.saveMany(projs, function(err) { expect(err).to.not.exist; }, function() {
-          cf.validateMany(docgroups, function(err) { expect(err).to.not.exist; }, done)
-        });
+      cf.saveMany(projs, function(err) { expect(err).to.not.exist; }, function() {
+        cf.validateMany(docgroups, function(err) { expect(err).to.not.exist; }, done)
       });
     });
     it('should pass saving if everything is OK', function(done) { 
-      var user = cf.createValidUser();
       var projs = [cf.createValidProject(1, user._id), cf.createValidProject(4, user._id), cf.createValidProject(7, user._id), cf.createValidProject(18, user._id)];
       var docgroups = [cf.createValidDocumentGroup(5, projs[0]._id), cf.createValidDocumentGroup(5, projs[1]._id), cf.createValidDocumentGroup(5, projs[2]._id)];
-      user.save(function(err) {
-        cf.saveMany(projs, function(err) { expect(err).to.not.exist; }, function() {
-          cf.saveMany(docgroups, function(err) { expect(err).to.not.exist; }, done)
-        });
+      cf.saveMany(projs, function(err) { expect(err).to.not.exist; }, function() {
+        cf.saveMany(docgroups, function(err) { expect(err).to.not.exist; }, done)
       });
     });
   });

@@ -52,12 +52,12 @@ function validateMany(objects, error_function, done) {
 // error_function: The function to call on the errors that arise from saving.
 // done: The callback function to call when complete.
 function saveMany(objects, error_function, done) {
-    obj = objects.pop()
-    obj.save(function(err) {
-      error_function(err);
-      if (objects.length > 0) saveMany(objects, error_function, done)
-      else done()            
-    })       
+  obj = objects.pop()
+  obj.save(function(err) {
+    error_function(err);
+    if (objects.length > 0) saveMany(objects, error_function, done)
+    else done()            
+  })       
 }
 
 // Returns a random sequence of characters.

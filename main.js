@@ -7,6 +7,9 @@ var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser')
 var csrf = require('csurf')
 
+var passport = require('passport');
+var LocalStrategy = require('passport-local').Strategy;
+
 var mongoose = require('mongoose')
 mongoose.connect('mongodb://localhost/redcoat-db-dev', function(err) {
   if(err) { console.log("\x1b[31m" + err.message); }
@@ -61,6 +64,15 @@ app.use(function(req, res, next) {
 });
 
 
+app.use(passport.initialize());
+app.use(passport.session());
+// passport config
+var User = require('./models/user');
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+
 
 // error handlers
 
@@ -85,6 +97,10 @@ app.use(function(err, req, res, next) {
     error: {}
   });
 });
+
+
+
+
 
 
 var patterns = '*.jade *.css *.less *.styl *.scss *.sass *.png *.jpeg *.jpg *.gif *.webp *.svg';

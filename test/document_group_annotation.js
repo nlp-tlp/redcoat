@@ -34,7 +34,13 @@ describe('Document Group Annotations', function() {
 
   describe("user_id", function() {
 
-    afterEach(function(done)  { cf.dropMongooseDb(done); });
+    var user1 = cf.createValidUser();
+    var user2 = cf.createValidUser();
+    before(function(done) {
+      cf.saveMany([user1, user2], function() {}, done)
+    })
+
+    after(function(done)  { cf.dropMongooseDb(done); });
 
     it('should fail validation if it does not have a user_id', function(done) { 
       var doc_group_ann = new DocumentGroupAnnotation();
@@ -42,13 +48,9 @@ describe('Document Group Annotations', function() {
     });
 
     it('should fail to save if user_id does not exist in the Users collection', function(done) { 
-      var user = cf.createValidUser();
-      var proj = cf.createValidProject(1, user._id);
+      var proj = cf.createValidProject(1, user1._id);
       var doc_group = cf.createValidDocumentGroup(1, proj._id);
-      user.save()
-      .then(function() {
-        return proj.save();
-      })
+      proj.save()
       .then(function() {
         return doc_group.save();
       })
@@ -67,17 +69,10 @@ describe('Document Group Annotations', function() {
     }); 
 
     it('should fail to save if its user_id is not the same as its project\'s user_id', function(done) {
-      var user1 = cf.createValidUser();
-      var user2 = cf.createValidUser();
+
       var proj = cf.createValidProject(1, user1._id);
       var doc_group = cf.createValidDocumentGroup(1, proj._id);
-      user1.save()
-      .then(function() {
-        return user2.save();
-      })
-      .then(function() {
-        return proj.save();
-      })
+      proj.save()
       .then(function() {
         return doc_group.save();
       })
@@ -104,7 +99,7 @@ describe('Document Group Annotations', function() {
 
   describe("document_group_id", function() {
 
-    afterEach(function(done)  { cf.dropMongooseDb(done); });
+    after(function(done)  { cf.dropMongooseDb(done); });
 
     it('should fail validation if it does not have a document_group_id', function(done) { 
       var doc_group_ann = new DocumentGroupAnnotation();
@@ -142,7 +137,7 @@ describe('Document Group Annotations', function() {
 
   describe("labels", function() {
 
-    afterEach(function(done)  { cf.dropMongooseDb(done); });
+    after(function(done)  { cf.dropMongooseDb(done); });
 
     it("should fail to save if any labels are not listed in project.valid_labels", function(done) {
       objs = setUpObjects(); user = objs.user; proj = objs.proj; doc_group = objs.doc_group;      
@@ -235,7 +230,7 @@ describe('Document Group Annotations', function() {
 
   describe("Validity tests", function() {
 
-    afterEach(function(done)  { cf.dropMongooseDb(done); });
+    after(function(done)  { cf.dropMongooseDb(done); });
 
     it('should pass saving if everything is OK', function(done) { 
       objs = setUpObjects(); user = objs.user; proj = objs.proj; doc_group = objs.doc_group;
