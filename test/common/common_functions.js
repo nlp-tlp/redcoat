@@ -125,7 +125,6 @@ function registerUsers(objects, error_function, done) {
   })       
 }
 
-
 // Creates a valid project.
 // n_labels: The number of labels for the project.
 // user_id: The user_id of the user the project belongs to.
@@ -138,6 +137,26 @@ function createValidProject(n_labels, user_id) {
     var valid_label = { label: "test-" + i, abbreviation: "b-" + i, color: "#" + ("000000" + i).substr(-6, 6) }
     proj.valid_labels.push(valid_label);
   }      
+  return proj;
+}
+
+// Creates a valid project or wip_project, depending on 'model'.
+// n_labels: The number of labels for the project.
+// user_id: The user_id of the user the project belongs to.
+function createValidProjectOrWIPP(model, n_labels, user_id) {
+  var proj = new model( {
+    user_id: user_id,
+    project_name: "New Project"
+  });
+
+  if(model.collection.name == "wip projects") {
+    proj.documents.push(["Valid", "document"]);
+  }
+
+  for(var i = 0; i < n_labels; i++) {
+    var valid_label = { label: "test-" + i, abbreviation: "b-" + i, color: "#" + ("000000" + i).substr(-6, 6) }
+    proj.valid_labels.push(valid_label);
+  }
   return proj;
 }
 
@@ -197,6 +216,11 @@ function createTooLongDocument() {
 
 
 
+
+
+
+
+
 module.exports = {
     connectToMongoose:                  connectToMongoose,
     dropMongooseDb:                     dropMongooseDb,
@@ -205,6 +229,7 @@ module.exports = {
     saveMany:                           saveMany,
     registerUsers:                      registerUsers,
     createValidProject:                 createValidProject,
+    createValidProjectOrWIPP:           createValidProjectOrWIPP,
     createValidUser:                    createValidUser,
     createValidDocuments:               createValidDocuments,
     createValidDocumentGroup:           createValidDocumentGroup,

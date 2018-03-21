@@ -159,6 +159,10 @@ var validateLabelAbbreviationLengthMax = function(arr) {
   return true;
 };
 
+// Validates that all values in an array are unique.
+var validateArrayHasUniqueValues = function(arr) {
+  return new Set(arr).size == arr.length;
+}
 
 
 
@@ -170,8 +174,9 @@ var validateLabelAbbreviationLengthMax = function(arr) {
 
 
 
-
-
+userIdsValidation = [
+  { validator: validateArrayHasUniqueValues },
+];
 
 validLabelsValidation = [
   { validator: validateValidLabelsHaveLabelAbbreviationAndColor, msg: "All labels must have a corresponding abbreviation and color."  },
@@ -220,11 +225,7 @@ module.exports = {
 	validateDocumentCountMax: validateDocumentCountMax, 
 	validateLabelAbbreviationLengthMin: validateLabelAbbreviationLengthMin,
 	validateLabelAbbreviationLengthMax: validateLabelAbbreviationLengthMax,
-
-	// Validates that all values in an array are unique.
-	validateArrayHasUniqueValues: function(arr) {
-	  return new Set(arr).size == arr.length;
-	},
+	validateArrayHasUniqueValues : validateArrayHasUniqueValues,
 
 	// Set the updated_at and created_at fields.
 	setCurrentDate: function() {
@@ -275,6 +276,20 @@ module.exports = {
 	  });
 	},
 
+	// Adds the creator of the project (or WIP Project) to its list of user_ids if it is not there.
+	addCreatorToUsers: function(next) {
+	  //if(this.user_ids == undefined) {
+	   // this.user_ids = [];
+	  //}
+	  var s = new Set(this.user_ids);
+	  if(s.has(this.user_id)) {
+	    next();
+	  } else {
+	    this.user_ids.push(this.user_id);
+	    next();
+	  }
+	},
+
 	fields: {
 	  
 	  user_id: {
@@ -320,5 +335,15 @@ module.exports = {
 		    ],
 		    validate: validLabelsValidation
 	  },
+
+		user_ids: {
+	    type: [mongoose.Schema.Types.ObjectId],
+	    ref: 'User',
+	    maxlength: USERS_PER_PROJECT_MAXCOUNT,
+	    index: true,
+	    validate: userIdsValidation,
+	    default: []
+	  },
+
 	}
 }

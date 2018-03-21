@@ -5,6 +5,7 @@ var User = require('../models/user');
 var DocumentGroup = require('../models/document_group');
 var DocumentGroupAnnotation = require('../models/document_group_annotation');
 var rid = require('mongoose').Types.ObjectId;
+var st = require('./common/shared_tests');
 
 describe('Document Groups', function() {
 
@@ -40,45 +41,7 @@ describe('Document Groups', function() {
     });
   })
 
-  describe("documents", function() {
-
-    /* Document count */
-    it('should fail validation if it does not have any documents', function(done) { 
-      var docgroup = new DocumentGroup();
-      docgroup.validate(function(err) { expect(err.errors.documents).to.exist; done(); });
-    });
-    it('should fail validation if it has too many documents', function(done) { 
-      var docgroup = new DocumentGroup({ documents: cf.createValidDocuments(12) } );
-      docgroup.validate(function(err) { expect(err.errors.documents).to.exist; done(); });
-    });
-    it('should pass validation for documents if it has a suitable number of valid documents', function(done) { 
-      var docgroup = new DocumentGroup({ documents: cf.createValidDocuments(7) } );
-      docgroup.validate(function(err) { expect(err.errors.documents).to.not.exist; done(); });
-    });
-
-    /* Document length */
-    it('should fail validation if it contains a document that is empty', function(done) { 
-      var docgroup = new DocumentGroup({ documents: [ [], ["this", "one", "is", "ok"] ] } );
-      docgroup.validate(function(err) { expect(err.errors.documents).to.exist; done(); });
-    });    
-    it('should fail validation if it contains a document that is too long', function(done) { 
-      var docgroup = new DocumentGroup({ documents: [ cf.createTooLongDocument() ] } );
-      docgroup.validate(function(err) { expect(err.errors.documents).to.exist; done(); });
-    });    
-
-    /* Document token count */
-    it('should fail validation if it contains a document with an empty token', function(done) { 
-      var docgroup = new DocumentGroup({ documents: [ ["", "is", "not", "ok"] ] } );
-      docgroup.validate(function(err) { expect(err.errors.documents).to.exist; done(); });
-    });    
-    it('should fail validation if it contains a document with a token that is too long', function(done) { 
-
-      var docgroup = new DocumentGroup({ documents: [[cf.createStringOfLength(150), "is", "not", "ok"]] } );
-      docgroup.validate(function(err) { expect(err.errors.documents).to.exist; done(); });
-    });    
-
-
-  })
+  st.runDocumentTests(DocumentGroup);
 
 
   describe("times_annotated", function() {

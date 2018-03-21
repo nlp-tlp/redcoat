@@ -31,7 +31,10 @@ var WipProjectSchema = new Schema({
   valid_labels: cf.fields.valid_labels,
 
   // All documents in the project.
-  all_documents: cf.fields.all_documents,
+  documents: cf.fields.all_documents,
+
+  // The users who are annotating the project.
+  user_ids: cf.fields.user_ids,
 
   // The created at/updated at dates.
   created_at: Date,
@@ -63,7 +66,16 @@ WipProjectSchema.methods.tokenizeString = function(str, done) {
   done(err, tokenized_sentences);
 }
 
+// Adds the creator of the project to its user_ids (as the creator should always be able to annotate the project).
+WipProjectSchema.methods.addCreatorToUsers = cf.addCreatorToUsers;
+
+
 /* Middleware */
+
+WipProjectSchema.pre('validate', function(next) {
+  // Add the creator of the project to the list of user_ids, so that they can annotate it too if they want to.
+  this.addCreatorToUsers(next);
+});
 
 WipProjectSchema.pre('save', function(next) {
   // 1. Set current date

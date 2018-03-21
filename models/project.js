@@ -4,17 +4,15 @@ var DocumentGroup = require('./document_group')
 var cf = require("./common/common_functions")
 var User = require("./user")
 
-USERS_PER_PROJECT_MAXCOUNT = cf.USERS_PER_PROJECT_MAXCOUNT;
+//USERS_PER_PROJECT_MAXCOUNT = cf.USERS_PER_PROJECT_MAXCOUNT;
 
-validateArrayHasUniqueValues = cf.validateArrayHasUniqueValues;
+
 
 // function validateUsersCountMax(arr) {
 //   return arr.length < USERS_PER_PROJECT_MAXCOUNT;
 // }
 
-userIdsValidation = [
-  { validator: validateArrayHasUniqueValues },
-];
+
 
 /* Schema */
 
@@ -32,14 +30,8 @@ var ProjectSchema = new Schema({
   valid_labels: cf.fields.valid_labels,
 
   // The users who are annotating the project.
-  user_ids: {
-    type: [mongoose.Schema.Types.ObjectId],
-    ref: 'User',
-    maxlength: USERS_PER_PROJECT_MAXCOUNT,
-    index: true,
-    validate: userIdsValidation,
-    default: []
-  },
+  user_ids: cf.fields.user_ids,
+
 }, {
   timestamps: { 
     createdAt: "created_at",
@@ -75,26 +67,14 @@ ProjectSchema.methods.getUsers = function(next) {
 }
 
 // Adds the creator of the project to its user_ids (as the creator should always be able to annotate the project).
-ProjectSchema.methods.addCreatorToUsers = function(next) {
-
-  //if(this.user_ids == undefined) {
-   // this.user_ids = [];
-  //}
-  var s = new Set(this.user_ids);
-  if(s.has(this.user_id)) {
-    next();
-  } else {
-    this.user_ids.push(this.user_id);
-    next();
-  }
-}
+ProjectSchema.methods.addCreatorToUsers = cf.addCreatorToUsers;
 
 /* Middleware */
 
 ProjectSchema.pre('validate', function(next) {
   // Add the creator of the project to the list of user_ids, so that they can annotate it too if they want to.
   this.addCreatorToUsers(next);
-})
+});
 
 ProjectSchema.pre('save', function(next) {
   var t = this;

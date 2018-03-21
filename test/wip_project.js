@@ -6,6 +6,9 @@ var User = require('../models/user');
 var DocumentGroup = require('../models/document_group');
 var DocumentGroupAnnotation = require('../models/document_group_annotation');
 var rid = require('mongoose').Types.ObjectId;
+var st = require('./common/shared_tests');
+
+
 
 describe('WIP Projects', function() {
 
@@ -16,6 +19,17 @@ describe('WIP Projects', function() {
     cf.disconnectFromMongoose(done);
   });
 
+  
+
+  st.runProjectNameTests(WipProject);
+  st.runProjectDescriptionTests(WipProject);
+  st.runProjectUserIdTests(WipProject);
+  st.runProjectUserIdsTests(WipProject);
+  st.runProjectValidLabelsTests(WipProject);
+  st.runDocumentTests(WipProject);
+
+
+
 
   describe("Instance methods", function() {
 
@@ -25,8 +39,6 @@ describe('WIP Projects', function() {
         done();
       });
     });
-
-
 
 
     describe("tokenizeString", function() {
@@ -44,42 +56,6 @@ describe('WIP Projects', function() {
           expect(tokenized_sents).to.eql(correctly_tokenized_sents);
           done();
         });
-      });
-
-    });
-
-
-    describe("all_documents", function() {
-
-      /* Document count */
-      it('should fail validation if it does not have any documents', function(done) { 
-        var wip = new WipProject();
-        wip.validate(function(err) { expect(err.errors.all_documents).to.exist; done(); });
-      });
-      it('should fail validation if it has too many documents', function(done) { 
-        var wip = new WipProject({ all_documents: cf.createValidDocuments(10050) } );
-        wip.validate(function(err) { expect(err.errors.all_documents).to.exist; done(); });
-      });
-
-      /* Document length */
-      it('should fail validation if it contains a document that is empty', function(done) { 
-        var wip = new WipProject({ dall_ocuments: [ [], ["this", "one", "is", "ok"] ] } );
-        wip.validate(function(err) { expect(err.errors.all_documents).to.exist; done(); });
-      });    
-      it('should fail validation if it contains a document that is too long', function(done) { 
-        var wip = new WipProject({ all_documents: [ cf.createTooLongDocument() ] } );
-        wip.validate(function(err) { expect(err.errors.all_documents).to.exist; done(); });
-      });   
-
-      /* Document token count */
-      it("should fail validation if documents contains a token that is empty", function(done) {
-        var wip = new WipProject( { all_documents: [ [ "hello", "there" ], ["I", "am", "a", "", "token"] ] })
-        wip.validate(function(err) { expect(err.errors.all_documents).to.exist; done(); })
-      });
-
-      it("should fail validation if documents contains a token that is too long", function(done) {
-        var wip = new WipProject( { all_documents: [ [ "hello", "there" ], ["I", "am", "a", cf.createStringOfLength(150), "token"] ] })
-        wip.validate(function(err) { expect(err.errors.all_documents).to.exist; done(); })
       });
 
     });
