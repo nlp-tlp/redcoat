@@ -3,7 +3,7 @@ var Schema = mongoose.Schema;
 var cf = require("./common/common_functions")
 
 var natural = require('../tools/natural');
-var tokenizer = new natural.WordPunctTokenizer();
+var tokenizer = new natural.TreebankWordTokenizer();
 
 // A model for storing projects that are "work in progress" (WIP). 
 // When a user wants to create a new project, a WipProject will be created.
@@ -33,7 +33,7 @@ var WipProjectSchema = new Schema({
   // All documents in the project.
   documents: cf.fields.all_documents,
 
-  // The users who are annotating the project.
+  // The users who will be annotating the project.
   user_ids: cf.fields.user_ids,
 
   // The created at/updated at dates.
@@ -46,24 +46,36 @@ var WipProjectSchema = new Schema({
 WipProjectSchema.methods.setCurrentDate = cf.setCurrentDate;
 WipProjectSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists;
 
+// Creates an array of documents from a given string, assigns them to this wip_project's documents array, and validates the documents field.
 WipProjectSchema.methods.createDocumentsFromString = function(str, done) {
-
-
-  this.tokenizeString(str);
+  var t = this;
+  t.tokenizeString(str, function(err, tokenized_sentences) {
+    for(var i = 0; i < tokenized_sentences.length; i++) {
+      t.documents.push(tokenized_sentences[i]);
+    }
+    t.validate(function(err) {
+      var e = null;
+      if(err.errors.documents) {
+        e = { errors: { documents: err.errors.documents.message } };
+      }
+      done(e);
+    });
+  });
 }
 
+// Uses Natural's TreebankWordTokenizer to tokenize a given string into an array of tokenized sentences.
 WipProjectSchema.methods.tokenizeString = function(str, done) {
 
   sents = str.split("\n");
   tokenized_sentences = [];
 
   for(var i = 0; i < sents.length; i++) {
-   var ts = tokenizer.tokenize(sents[i]);    
-   tokenized_sentences.push(ts);     
+    var ts = tokenizer.tokenize(sents[i]); 
+    if(ts.length > 0) {
+      tokenized_sentences.push(ts);      
+    }  
   }
-  err = null;
-
-  done(err, tokenized_sentences);
+  done(null, tokenized_sentences);
 }
 
 // Adds the creator of the project to its user_ids (as the creator should always be able to annotate the project).

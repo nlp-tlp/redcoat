@@ -26,9 +26,8 @@ var DocumentGroupSchema = new Schema({
 
 /* Common methods */
 
-DocumentGroupSchema.methods.setCurrentDate = cf.setCurrentDate
-DocumentGroupSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists
-DocumentGroupSchema.methods.cascadeDelete = cf.cascadeDelete
+DocumentGroupSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists;
+DocumentGroupSchema.methods.cascadeDelete = cf.cascadeDelete;
 
 
 /* Instance methods */
@@ -46,10 +45,8 @@ DocumentGroupSchema.methods.getAnnotations = function(done) {
 /* Middleware */
 
 DocumentGroupSchema.pre('save', function(next) {
-  // 1. Set current date
-  this.setCurrentDate();
 
-  // 2. Verify associated exists
+  // 1. Verify associated exists
   var Project = require('./project')
   this.verifyAssociatedExists(Project, this.project_id, function(err) {
     next(err);

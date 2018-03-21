@@ -41,10 +41,9 @@ var ProjectSchema = new Schema({
 
 /* Common methods */
 
-ProjectSchema.methods.setCurrentDate = cf.setCurrentDate
-ProjectSchema.methods.cascadeDelete = cf.cascadeDelete
-ProjectSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists
-ProjectSchema.methods.verifyAssociatedObjectsExist = cf.verifyAssociatedObjectsExist
+ProjectSchema.methods.cascadeDelete = cf.cascadeDelete;
+ProjectSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists;
+ProjectSchema.methods.verifyAssociatedObjectsExist = cf.verifyAssociatedObjectsExist;
 
 /* Instance methods */
 
@@ -78,15 +77,13 @@ ProjectSchema.pre('validate', function(next) {
 
 ProjectSchema.pre('save', function(next) {
   var t = this;
-  // 1. Set current date
-  t.setCurrentDate();
 
-  // 2. Validate admin exists
+  // 1. Validate admin exists
   var User = require('./user')
   t.verifyAssociatedExists(User, t.user_id, function(err) {
     if(err) { next(err); return; }
 
-    // 3. Validate all users in the user_ids array exist.
+    // 2. Validate all users in the user_ids array exist.
     t.verifyAssociatedObjectsExist(User, t.user_ids, function(err) {
       next(err);
     });

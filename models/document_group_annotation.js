@@ -40,8 +40,7 @@ var DocumentGroupAnnotationSchema = new Schema({
 
 /* Common methods */
 
-DocumentGroupAnnotationSchema.methods.setCurrentDate = cf.setCurrentDate
-DocumentGroupAnnotationSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists
+DocumentGroupAnnotationSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists;
 
 /* Label pre-save hook */
 
@@ -119,27 +118,25 @@ DocumentGroupAnnotationSchema.methods.verifyUserIdListedInProjectUserIds = funct
 
 DocumentGroupAnnotationSchema.pre('save', function(next) {
   var t = this;
-  // 1. Set current date
-  t.setCurrentDate();
 
-  // 2. Verify associated user exists
+  // 1. Verify associated user exists
   var User = require('./user');
   t.verifyAssociatedExists(User, t.user_id, function(err) {
 
-    if(err) { next(err); return }
+    if(err) { next(err); return; }
 
-    // 3. Verify associated document_group exists
+    // 2. Verify associated document_group exists
     var DocumentGroup = require('./document_group');
     t.verifyAssociatedExists(DocumentGroup, t.document_group_id, function(err){
-      if(err) { next(err); return }
+      if(err) { next(err); return; }
       
-      // 4. Verify labels are valid labels according to this object's project      
+      // 3. Verify labels are valid labels according to this object's project      
       t.verifyLabelsAreValid(function(err) {
-        if(err) { next(err); return }
+        if(err) { next(err); return; }
 
-        // 5. Verify user_id of this doc group is in the project's users array
+        // 4. Verify user_id of this doc group is in the project's users array
         t.verifyUserIdListedInProjectUserIds(function(err) {          
-          if(err) { next(err); return }
+          if(err) { next(err); return; }
           next();
         });
       });
