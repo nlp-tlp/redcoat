@@ -41,13 +41,6 @@ describe('Document Groups', function() {
   })
 
   describe("documents", function() {
-    function createTooLongDocument() {
-      var doc = []
-      for(var i = 0; i < 500; i++) {
-        doc.push("word");
-      }
-      return doc;
-    }
 
     /* Document count */
     it('should fail validation if it does not have any documents', function(done) { 
@@ -69,7 +62,7 @@ describe('Document Groups', function() {
       docgroup.validate(function(err) { expect(err.errors.documents).to.exist; done(); });
     });    
     it('should fail validation if it contains a document that is too long', function(done) { 
-      var docgroup = new DocumentGroup({ documents: [ createTooLongDocument() ] } );
+      var docgroup = new DocumentGroup({ documents: [ cf.createTooLongDocument() ] } );
       docgroup.validate(function(err) { expect(err.errors.documents).to.exist; done(); });
     });    
 
@@ -79,7 +72,8 @@ describe('Document Groups', function() {
       docgroup.validate(function(err) { expect(err.errors.documents).to.exist; done(); });
     });    
     it('should fail validation if it contains a document with a token that is too long', function(done) { 
-      var docgroup = new DocumentGroup({ documents: [["thiiiiiiiiiiiiiiiiiiiiiiiis", "is", "not", "ok"]] } );
+
+      var docgroup = new DocumentGroup({ documents: [[cf.createStringOfLength(150), "is", "not", "ok"]] } );
       docgroup.validate(function(err) { expect(err.errors.documents).to.exist; done(); });
     });    
 

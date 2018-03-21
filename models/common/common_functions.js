@@ -5,7 +5,7 @@ DOCUMENT_GROUP_TOTAL_MAXCOUNT = 1000; // Number of groups that can be in a proje
 USERS_PER_PROJECT_MAXCOUNT = 100;
 PROJECTS_PER_USER_MAXCOUNT = 20;
 DOCUMENT_MAXCOUNT          = 10;
-DOCUMENT_MAX_TOKEN_LENGTH  = 20;
+DOCUMENT_MAX_TOKEN_LENGTH  = 100;
 DOCUMENT_MAX_TOKEN_COUNT   = 200;
 ABBREVIATION_MAXLENGTH     = 20;
 
@@ -79,49 +79,59 @@ var validateDocumentCountMax = function(arr) {
   return arr.length <= DOCUMENT_MAXCOUNT;
 };
 
-
-// Validate that no documents are of length 0.
-var validateDocumentTokenCountMin = function(arr) {
-  for(var i = 0; i < arr.length; i++) {
-  	if(arr[i].length == 0) {
-    	return false;
-    }	    
-  }
-  return true;
-};
-
-// Validate that no documents are of length greater than DOCUMENT_MAX_TOKEN_LENGTH.
-var validateDocumentTokenCountMax = function(arr) {
-  for(var i = 0; i < arr.length; i++) {
-  	if(arr[i].length > DOCUMENT_MAX_TOKEN_COUNT) {
-    	return false;
-    }	    
-  }
-  return true;
-};
-
 // Validate that no tokens in the document are of length 0.
-var validateDocumentTokenLengthMin = function(arr) {
+var validateDocumentTokenLengthMin = function(arr, done) {
   for(var i = 0; i < arr.length; i++) {
-  	for(var j = 0; j < arr[i].length; j++) {
-    	if(arr[i][j].length == 0) {
-      	return false;
+    for(var j = 0; j < arr[i].length; j++) {
+      if(arr[i][j].length == 0) {
+        msg = "Error on line " + (i+1) + ", token " + (j+1) + " (\"" + arr[i][j] + "\"): token must have length greater than 0.";
+        done(false, msg);
+        return;
       }
     }
   }
-  return true;
+  done(true);
 };
+
 
 // Validate that no tokens in the document are of length greater than DOCUMENT_MAX_TOKEN_LENGTH.
 var validateDocumentTokenLengthMax = function(arr, done) {
   for(var i = 0; i < arr.length; i++) {
-  	for(var j = 0; j < arr[i].length; j++) {
-	    if(arr[i][j].length > DOCUMENT_MAX_TOKEN_LENGTH) {
-	      return false;
-	    }
-	  }
+    for(var j = 0; j < arr[i].length; j++) {
+      if(arr[i][j].length > DOCUMENT_MAX_TOKEN_LENGTH) {
+        msg = "Error on line " + (i+1) + ", token " + (j+1) + " (\"" + arr[i][j] + "\"): all tokens in the document must be less than " + DOCUMENT_MAX_TOKEN_LENGTH + " characters long.";
+        done(false, msg);
+        return;
+      }
+    }
   }
-  return true;
+  done(true);
+};
+
+
+
+// Validate that no documents are of length 0.
+var validateDocumentTokenCountMin = function(arr, done) {
+  for(var i = 0; i < arr.length; i++) {
+  	if(arr[i].length == 0) {
+  		msg = "Error on line " + (i+1) + ": document cannot be empty.";
+    	done(false, msg);
+    	return;
+    }	    
+  }
+  done(true);
+};
+
+// Validate that no documents are of length greater than DOCUMENT_MAX_TOKEN_LENGTH.
+var validateDocumentTokenCountMax = function(arr, done) {
+  for(var i = 0; i < arr.length; i++) {
+  	if(arr[i].length > DOCUMENT_MAX_TOKEN_COUNT) {
+  		msg = "Error on line " + (i+1) + ": document cannot contain more than " + DOCUMENT_MAX_TOKEN_COUNT + " tokens.";
+    	done(false, msg);
+    	return;
+    }	    
+  }
+  done(true);
 };
 
 
@@ -159,6 +169,10 @@ var validateLabelAbbreviationLengthMax = function(arr) {
 
 
 
+
+
+
+
 validLabelsValidation = [
   { validator: validateValidLabelsHaveLabelAbbreviationAndColor, msg: "All labels must have a corresponding abbreviation and color."  },
   { validator: validateValidLabelsCountMin, msg: "Must have one or more labels." },
@@ -175,78 +189,18 @@ colorValidation = [
 ];
 
 documentValidation = [
-  { validator: validateDocumentCountMin,       msg: '{PATH}: Need at least '        + 1 + ' document in group.'},
+  { validator: validateDocumentCountMin,       msg: '{PATH}: Need at least 1 document in group.'},
   { validator: validateDocumentCountMax,       msg: '{PATH}: exceeds the limit of ' + DOCUMENT_MAXCOUNT + ' documents in group.' },
-  { validator: validateDocumentTokenLengthMin, msg: 'No token in document can be empty.'},
-  { validator: validateDocumentTokenLengthMax, msg: 'All tokens in document must be less than ' + DOCUMENT_MAX_TOKEN_LENGTH + ' characters long.'},
-  { validator: validateDocumentTokenCountMin,  msg: 'All documents must have at least one token.' },
-  { validator: validateDocumentTokenCountMax,  msg: 'No documents can have more than ' + DOCUMENT_MAX_TOKEN_COUNT + ' tokens.'},
+  { validator: function(arr, done) { validateDocumentTokenLengthMin(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+  { validator: function(arr, done) { validateDocumentTokenLengthMax(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+  { validator: function(arr, done) { validateDocumentTokenCountMin( arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+  { validator: function(arr, done) { validateDocumentTokenCountMax( arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
 ]; 
 
-//allDocumentValidation = documentValidation;
-//allDocumentValidation[0].msg ='Need at least 1 document in project.'; 
-//allDocumentValidation[1] = 
-//  { validator: validateDocumentCountMax,       msg: '{PATH}: exceeds the limit of ' + DOCUMENT_TOTAL_MAXCOUNT + ' documents in project.' },
+allDocumentValidation = documentValidation;
+allDocumentValidation[0].msg = '{PATH}: Need at least 1 document in project.';
+allDocumentValidation[1].msg = '{PATH}: exceeds the limit of ' + DOCUMENT_TOTAL_MAXCOUNT + ' documents in project.';
 
-
-
-// Validate that no tokens in the document are empty.
-// A callback version that is used by WipProject to give a useful error message.
-var validateDocumentTokenLengthMinCb = function(arr, done) {
-  for(var i = 0; i < arr.length; i++) {
-    for(var j = 0; j < arr[i].length; j++) {
-      if(arr[i][j].length == 0) {
-        msg = "Error on line " + (i+1) + ", token " + (j+1) + " (\"" + arr[i][j] + "\"): token must have length greater than 0.";
-        done(false, msg);
-        return;
-      }
-    }
-  }
-  done(true);
-};
-
-// Validate that no tokens in the document are of length greater than DOCUMENT_MAX_TOKEN_LENGTH.
-// A callback version that is used by WipProject to give a useful error message.
-var validateDocumentTokenLengthMaxCb = function(arr, done) {
-  for(var i = 0; i < arr.length; i++) {
-    for(var j = 0; j < arr[i].length; j++) {
-      if(arr[i][j].length > DOCUMENT_MAX_TOKEN_LENGTH) {
-        msg = "Error on line " + (i+1) + ", token " + (j+1) + " (\"" + arr[i][j] + "\"): all tokens in the document must be less than " + DOCUMENT_MAX_TOKEN_LENGTH + " characters long.";
-        done(false, msg);
-        return;
-      }
-    }
-  }
-  done(true);
-};
-
-
-allDocumentValidation = [
-  { validator: validateDocumentCountMin,       msg: '{PATH}: Need at least '        + 1 + ' document in project.'},
-  { validator: validateDocumentCountMax,       msg: '{PATH}: exceeds the limit of ' + DOCUMENT_TOTAL_MAXCOUNT + ' documents in project.' },
-  { isAsync: true,
-    validator: function(arr, done) {
-      validateDocumentTokenLengthMaxCb(arr, function(result, msg) {
-        done(result, msg);
-      })
-    },
-    msg: '{PATH}: All tokens in document must be less than ' + DOCUMENT_MAX_TOKEN_LENGTH + ' characters long.'
-  },
-  { isAsync: true,
-    validator: function(arr, done) {
-      validateDocumentTokenLengthMinCb(arr, function(result, msg) {
-        done(result, msg);
-      })
-    },
-    msg: 'No token in document can be empty.'
-  },
-
-
-
-    // },       msg: 'Project must contain at least one document.'},
-
-
-]
 
 module.exports = {
 

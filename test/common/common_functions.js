@@ -186,7 +186,14 @@ function createStringOfLength(n) {
   return new Array(n + 1).join( 'x' );
 }
 
-
+// Creates a document that is too long (more than 200 tokens)
+function createTooLongDocument() {
+  var doc = []
+  for(var i = 0; i < 250; i++) {
+    doc.push("word");
+  }
+  return doc;
+}
 
 
 
@@ -203,4 +210,5 @@ module.exports = {
     createValidDocumentGroup:           createValidDocumentGroup,
     createValidDocumentGroupAnnotation: createValidDocumentGroupAnnotation,
     createStringOfLength:               createStringOfLength,
+    createTooLongDocument:              createTooLongDocument,
 }

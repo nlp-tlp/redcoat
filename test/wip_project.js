@@ -51,22 +51,37 @@ describe('WIP Projects', function() {
 
     describe("all_documents", function() {
 
+      /* Document count */
+      it('should fail validation if it does not have any documents', function(done) { 
+        var wip = new WipProject();
+        wip.validate(function(err) { expect(err.errors.all_documents).to.exist; done(); });
+      });
+      it('should fail validation if it has too many documents', function(done) { 
+        var wip = new WipProject({ all_documents: cf.createValidDocuments(10050) } );
+        wip.validate(function(err) { expect(err.errors.all_documents).to.exist; done(); });
+      });
 
+      /* Document length */
+      it('should fail validation if it contains a document that is empty', function(done) { 
+        var wip = new WipProject({ dall_ocuments: [ [], ["this", "one", "is", "ok"] ] } );
+        wip.validate(function(err) { expect(err.errors.all_documents).to.exist; done(); });
+      });    
+      it('should fail validation if it contains a document that is too long', function(done) { 
+        var wip = new WipProject({ all_documents: [ cf.createTooLongDocument() ] } );
+        wip.validate(function(err) { expect(err.errors.all_documents).to.exist; done(); });
+      });   
+
+      /* Document token count */
       it("should fail validation if documents contains a token that is empty", function(done) {
-        wip2 = new WipProject( { all_documents: [ [ "hello", "there" ], ["I", "am", "a", "", "token"] ] })
-        wip2.validate(function(err) {
-          expect(err.errors.all_documents).to.exist;
-          done();
-        })
+        var wip = new WipProject( { all_documents: [ [ "hello", "there" ], ["I", "am", "a", "", "token"] ] })
+        wip.validate(function(err) { expect(err.errors.all_documents).to.exist; done(); })
       });
 
       it("should fail validation if documents contains a token that is too long", function(done) {
-        wip2 = new WipProject( { all_documents: [ [ "hello", "there" ], ["I", "am", "a", "loooooooooooooooooooooooooooooooooooooong", "token"] ] })
-        wip2.validate(function(err) {
-          expect(err.errors.all_documents).to.exist;
-          done();
-        })
+        var wip = new WipProject( { all_documents: [ [ "hello", "there" ], ["I", "am", "a", cf.createStringOfLength(150), "token"] ] })
+        wip.validate(function(err) { expect(err.errors.all_documents).to.exist; done(); })
       });
+
     });
   });
 });
