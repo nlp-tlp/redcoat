@@ -10,7 +10,7 @@ DOCUMENT_MAX_TOKEN_COUNT   = 200;
 ABBREVIATION_MAXLENGTH     = 20;
 
 PROJECT_NAME_MAXLENGTH 				= 50;
-PROJECT_DESCRIPTION_MAXLENGTH       = 500; // Max length of a project description.
+PROJECT_DESCRIPTION_MAXLENGTH = 500; // Max length of a project description.
 VALID_LABEL_MAXCOUNT   				= 20;
 LABEL_MAXLENGTH        				= 20;
 
@@ -113,7 +113,7 @@ var validateDocumentTokenLengthMin = function(arr) {
 };
 
 // Validate that no tokens in the document are of length greater than DOCUMENT_MAX_TOKEN_LENGTH.
-var validateDocumentTokenLengthMax = function(arr) {
+var validateDocumentTokenLengthMax = function(arr, done) {
   for(var i = 0; i < arr.length; i++) {
   	for(var j = 0; j < arr[i].length; j++) {
 	    if(arr[i][j].length > DOCUMENT_MAX_TOKEN_LENGTH) {
@@ -152,6 +152,13 @@ var validateLabelAbbreviationLengthMax = function(arr) {
 
 
 
+
+
+
+
+
+
+
 validLabelsValidation = [
   { validator: validateValidLabelsHaveLabelAbbreviationAndColor, msg: "All labels must have a corresponding abbreviation and color."  },
   { validator: validateValidLabelsCountMin, msg: "Must have one or more labels." },
@@ -176,11 +183,70 @@ documentValidation = [
   { validator: validateDocumentTokenCountMax,  msg: 'No documents can have more than ' + DOCUMENT_MAX_TOKEN_COUNT + ' tokens.'},
 ]; 
 
-allDocumentValidation = documentValidation;
-allDocumentValidation[1] = 
+//allDocumentValidation = documentValidation;
+//allDocumentValidation[0].msg ='Need at least 1 document in project.'; 
+//allDocumentValidation[1] = 
+//  { validator: validateDocumentCountMax,       msg: '{PATH}: exceeds the limit of ' + DOCUMENT_TOTAL_MAXCOUNT + ' documents in project.' },
+
+
+
+// Validate that no tokens in the document are empty.
+// A callback version that is used by WipProject to give a useful error message.
+var validateDocumentTokenLengthMinCb = function(arr, done) {
+  for(var i = 0; i < arr.length; i++) {
+    for(var j = 0; j < arr[i].length; j++) {
+      if(arr[i][j].length == 0) {
+        msg = "Error on line " + (i+1) + ", token " + (j+1) + " (\"" + arr[i][j] + "\"): token must have length greater than 0.";
+        done(false, msg);
+        return;
+      }
+    }
+  }
+  done(true);
+};
+
+// Validate that no tokens in the document are of length greater than DOCUMENT_MAX_TOKEN_LENGTH.
+// A callback version that is used by WipProject to give a useful error message.
+var validateDocumentTokenLengthMaxCb = function(arr, done) {
+  for(var i = 0; i < arr.length; i++) {
+    for(var j = 0; j < arr[i].length; j++) {
+      if(arr[i][j].length > DOCUMENT_MAX_TOKEN_LENGTH) {
+        msg = "Error on line " + (i+1) + ", token " + (j+1) + " (\"" + arr[i][j] + "\"): all tokens in the document must be less than " + DOCUMENT_MAX_TOKEN_LENGTH + " characters long.";
+        done(false, msg);
+        return;
+      }
+    }
+  }
+  done(true);
+};
+
+
+allDocumentValidation = [
+  { validator: validateDocumentCountMin,       msg: '{PATH}: Need at least '        + 1 + ' document in project.'},
   { validator: validateDocumentCountMax,       msg: '{PATH}: exceeds the limit of ' + DOCUMENT_TOTAL_MAXCOUNT + ' documents in project.' },
+  { isAsync: true,
+    validator: function(arr, done) {
+      validateDocumentTokenLengthMaxCb(arr, function(result, msg) {
+        done(result, msg);
+      })
+    },
+    msg: '{PATH}: All tokens in document must be less than ' + DOCUMENT_MAX_TOKEN_LENGTH + ' characters long.'
+  },
+  { isAsync: true,
+    validator: function(arr, done) {
+      validateDocumentTokenLengthMinCb(arr, function(result, msg) {
+        done(result, msg);
+      })
+    },
+    msg: 'No token in document can be empty.'
+  },
 
 
+
+    // },       msg: 'Project must contain at least one document.'},
+
+
+]
 
 module.exports = {
 
@@ -287,7 +353,7 @@ module.exports = {
 
 		all_documents: {
 			type: [[String]],
-			validate: allDocumentValidation
+			validate: allDocumentValidation,
 		},
 
 		valid_labels:	{

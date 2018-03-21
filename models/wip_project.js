@@ -3,6 +3,7 @@ var Schema = mongoose.Schema;
 var cf = require("./common/common_functions")
 
 var natural = require('../tools/natural');
+var tokenizer = new natural.WordPunctTokenizer();
 
 // A model for storing projects that are "work in progress" (WIP). 
 // When a user wants to create a new project, a WipProject will be created.
@@ -42,15 +43,24 @@ var WipProjectSchema = new Schema({
 WipProjectSchema.methods.setCurrentDate = cf.setCurrentDate;
 WipProjectSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists;
 
+WipProjectSchema.methods.createDocumentsFromString = function(str, done) {
 
-WipProjectSchema.methods.createDocumentsFromString = function(sents) {
+
+  this.tokenizeString(str);
+}
+
+WipProjectSchema.methods.tokenizeString = function(str, done) {
+
+  sents = str.split("\n");
+  tokenized_sentences = [];
 
   for(var i = 0; i < sents.length; i++) {
-   var t = tokenizer.tokenize(sents[i]);          
-   //console.log(t)
+   var ts = tokenizer.tokenize(sents[i]);    
+   tokenized_sentences.push(ts);     
   }
+  err = null;
 
-  return;
+  done(err, tokenized_sentences);
 }
 
 /* Middleware */
