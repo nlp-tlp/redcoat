@@ -3,7 +3,7 @@ var router = express.Router();
 var path = require('path');
 var extend = require('util')._extend
 
-var natural = require('../tools/natural');
+
 
 //const fileType = require('file-type');
 var formidable = require('formidable');
@@ -103,15 +103,17 @@ router.post('/upload-tokenized', parseForm, csrfProtection, function (req, res) 
 
 
 
-
+      // Tokenize the thing with the WipProject.
 
       var sents = fs.readFileSync(file.path, 'utf-8').split('\n');
+
+      /*
 
       for(var i = 0; i < sents.length; i++) {
        var t = tokenizer.tokenize(sents[i]);          
        //console.log(t)
       }
-
+      */
 
       // Attempt to create a new wip_project?
       

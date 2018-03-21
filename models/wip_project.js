@@ -2,6 +2,8 @@ var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
 var cf = require("./common/common_functions")
 
+var natural = require('../tools/natural');
+
 // A model for storing projects that are "work in progress" (WIP). 
 // When a user wants to create a new project, a WipProject will be created.
 // As the user goes through the form, the fields of the WipProject will be updated,
@@ -37,8 +39,20 @@ var WipProjectSchema = new Schema({
 
 /* Common methods */
 
-WipProjectSchema.methods.setCurrentDate = cf.setCurrentDate
-WipProjectSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists
+WipProjectSchema.methods.setCurrentDate = cf.setCurrentDate;
+WipProjectSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists;
+
+
+WipProjectSchema.methods.createDocumentsFromString = function(sents) {
+
+  for(var i = 0; i < sents.length; i++) {
+   var t = tokenizer.tokenize(sents[i]);          
+   //console.log(t)
+  }
+
+  return;
+}
+
 /* Middleware */
 
 WipProjectSchema.pre('save', function(next) {
