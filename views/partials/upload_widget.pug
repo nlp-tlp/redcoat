@@ -3,6 +3,7 @@ div.upload-widget
 		.box__input
 			i.fa.fa-upload.upload-icon
 			input(type="hidden", name="_csrf", value="" + csrfToken)
+			input(type="hidden", name="_id", value="" + wip_project_id)
 			input(id="file-" + action, class="box__file", type='file', name='files[]', data-multiple-caption='{count} files selected')
 			label(for='file-' + action)
 				strong Choose a file
@@ -11,7 +12,12 @@ div.upload-widget
 			button.box__button(type='submit') Upload
 		.box__uploading Uploading…
 		.box__success
-			| Your file was successfully uploaded.
+			.box__success_left
+				i.fa.fa-check.check-icon
+			.box__success_right
+				.box__success_message
+					| Your file has been successfully uploaded.
+					.box__success_details
 		.box__error
 			| Error: 
 			span

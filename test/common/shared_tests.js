@@ -47,7 +47,7 @@ function runProjectDescriptionTests(model, done) {
       var proj = new model({ });
       proj.validate(function(err) { expect(err.errors.project_description).to.not.exist; done(); });
     });    
-    it('should pass validation (for project_description) if the descriptin is OK', function(done) { 
+    it('should pass validation (for project_description) if the description is OK', function(done) { 
       var proj = new model({ project_description: "This is a nice description." });
       proj.validate(function(err) { expect(err.errors.project_description).to.not.exist; done(); });
     });    
@@ -58,7 +58,7 @@ function runProjectUserIdTests(model, done) {
   describe("user_id", function() {
 
     
-    after(function(done)  { cf.dropMongooseDb(done); });
+    afterEach(function(done)  { cf.dropMongooseDb(done); });
 
     it('should fail validation if user_id is absent or blank', function(done) { 
       var proj1 = new model( {  } );
@@ -91,20 +91,21 @@ function runProjectUserIdTests(model, done) {
         });
       });
     }); 
-  });
+  });  
 }
 
 function runProjectUserIdsTests(model, done) {
   describe("user_ids", function() {
 
-    var user1 = cf.createValidUser();
-    var user2 = cf.createValidUser();
-    var user3 = cf.createValidUser(); 
+    var user1, user2, user3;
 
-    before(function(done) { 
+    beforeEach(function(done) { 
+      user1 = cf.createValidUser();
+      user2 = cf.createValidUser();
+      user3 = cf.createValidUser();
       cf.registerUsers([user1, user2, user3], function(err) { }, done);
     });
-    after(function(done)  { cf.dropMongooseDb(done); });
+    afterEach(function(done)  { cf.dropMongooseDb(done); });
 
     it('should fail validation if user_ids contains the same user twice', function(done) {
 
@@ -123,12 +124,12 @@ function runProjectUserIdsTests(model, done) {
 
     it('should place the admin of the project into user_ids', function(done) {
       var proj1 = cf.createValidProjectOrWIPP(model, 1, user1._id);
-        proj1.validate(function(err) { 
-          expect(err).to.not.exist;
-          proj1.save(function(err, proj) {
-            expect(proj.user_ids).to.include(user1._id); 
-            done();
-          });
+      proj1.validate(function(err) { 
+        expect(err).to.not.exist;
+        proj1.save(function(err, proj) {
+          expect(proj.user_ids).to.include(user1._id); 
+          done();
+        });
       });         
     }); 
 

@@ -149,7 +149,7 @@ function createValidProjectOrWIPP(model, n_labels, user_id) {
     project_name: "New Project"
   });
 
-  if(model.collection.name == "wip projects") {
+  if(model.collection.name == "wipprojects") {
     proj.documents.push(["Valid", "document"]);
   }
 

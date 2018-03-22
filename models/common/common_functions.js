@@ -79,6 +79,11 @@ var validateDocumentCountMax = function(arr) {
   return arr.length <= DOCUMENT_MAXCOUNT;
 };
 
+// Validate that a document contains less than DOCUMENT_TOTAL_MAXCOUNT tokens.
+var validateDocumentTotalCountMax = function(arr) {
+  return arr.length <= DOCUMENT_TOTAL_MAXCOUNT;
+};
+
 // Validate that no tokens in the document are of length 0.
 var validateDocumentTokenLengthMin = function(arr, done) {
   for(var i = 0; i < arr.length; i++) {
@@ -99,7 +104,7 @@ var validateDocumentTokenLengthMax = function(arr, done) {
   for(var i = 0; i < arr.length; i++) {
     for(var j = 0; j < arr[i].length; j++) {
       if(arr[i][j].length > DOCUMENT_MAX_TOKEN_LENGTH) {
-        msg = "Error on line " + (i+1) + ", token " + (j+1) + " (\"" + arr[i][j] + "\"): all tokens in the document must be less than " + DOCUMENT_MAX_TOKEN_LENGTH + " characters long.";
+        msg = "Error on line " + (i+1) + ", token " + (j+1) + ": all tokens in the document must be less than " + DOCUMENT_MAX_TOKEN_LENGTH + " characters long.";
         done(false, msg);
         return;
       }
@@ -171,9 +176,6 @@ var validateArrayHasUniqueValues = function(arr) {
 
 
 
-
-
-
 userIdsValidation = [
   { validator: validateArrayHasUniqueValues },
 ];
@@ -202,9 +204,16 @@ documentValidation = [
   { validator: function(arr, done) { validateDocumentTokenCountMax( arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
 ]; 
 
-allDocumentValidation = documentValidation;
-allDocumentValidation[0].msg = '{PATH}: Need at least 1 document in project.';
-allDocumentValidation[1].msg = '{PATH}: exceeds the limit of ' + DOCUMENT_TOTAL_MAXCOUNT + ' documents in project.';
+allDocumentValidation = [
+  { validator: validateDocumentCountMin,       msg: 'Your file does not appear to contain any lines.'},
+  { validator: validateDocumentTotalCountMax,  msg: 'Please ensure your file contains less than ' + DOCUMENT_TOTAL_MAXCOUNT + ' lines.' },
+  { validator: function(arr, done) { validateDocumentTokenLengthMin(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+  { validator: function(arr, done) { validateDocumentTokenLengthMax(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+  { validator: function(arr, done) { validateDocumentTokenCountMin( arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+  { validator: function(arr, done) { validateDocumentTokenCountMax( arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+]; 
+
+
 
 
 module.exports = {
@@ -297,7 +306,15 @@ module.exports = {
 	     ref: 'User',
 	     required: true
 	  },	  
-	  
+
+    user_id_unique: {
+       type: mongoose.Schema.Types.ObjectId,
+       ref: 'User',
+       required: true,
+       unique: true,
+       index: true,
+    },    
+
 	  project_name: {
 	    type: String,
 	    required: true,

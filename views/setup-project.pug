@@ -283,11 +283,13 @@ block scripts
 					$label		 = $form.find( 'label' ),
 					$errorMsg	 = $form.find( '.box__error span' ),
 					$restart	 = $form.find( '.box__restart' ),
+					$successDets = $form.find( '.box__success_details' ),
 					$csrfToken   = $form.find( 'input[name="_csrf"]'),
-					droppedFiles = false,
-					showFiles	 = function( files )
+					$wippid      = $form.find( 'input[name="_id"]'),
+					droppedFile  = null,
+					showFiles	 = function( file )
 					{
-						$label.text( files[ 0 ].name );
+						$label.text( file.name );
 					};
 
 
@@ -327,7 +329,7 @@ block scripts
 				// automatically submit the form on file select
 				$input.on( 'change', function( e )
 				{	
-	
+					droppedFile = null; // Get rid of the dropped file the user may have dropped previously.
 					if(validateFile(e.target.files[0])) {
 						showFiles( e.target.files );					
 						$form.trigger( 'submit' );
@@ -341,13 +343,19 @@ block scripts
 					$form
 					.addClass( 'has-advanced-upload' ) // letting the CSS part to know drag&drop is supported by the browser
 					.on( 'drag dragstart dragend dragover dragenter dragleave drop', function( e )
-					{
+					{	
+
 						// preventing the unwanted behaviours
 						e.preventDefault();
 						e.stopPropagation();
 					})
 					.on( 'dragover dragenter', function() //
 					{
+						// Disable drop if form already completed.
+						if( $form.hasClass("is-success") || $form.hasClass("is-uploading") ) {
+							return;
+						}
+
 						$form.addClass( 'is-dragover' );
 					})
 					.on( 'dragleave dragend drop', function()
@@ -356,16 +364,23 @@ block scripts
 					})
 					.on( 'drop', function( e )
 					{
-						droppedFiles = e.originalEvent.dataTransfer.files; // the files that were dropped
+						// Disable drop if form already completed.
+						if( $form.hasClass("is-success") || $form.hasClass("is-uploading") ) {
+							return;
+						}
 
-						if(droppedFiles.length > 1) {
+						var droppedFiles = e.originalEvent.dataTransfer.files; // the files that were dropped
 
+						if(droppedFiles.length > 1) {							
 							$form.addClass('is-error');
 							$errorMsg.text("You may only upload 1 file at a time.");
 						} else {
-							if(validateFile(droppedFiles[0])) {
-								showFiles( droppedFiles );						
-								$form.trigger( 'submit' ); // automatically submit the form on file drop								
+							droppedFile = droppedFiles[0];
+
+							if(validateFile(droppedFile)) {
+								console.log('file is fine')
+								showFiles( droppedFile );						
+								$form.trigger( 'submit' ); // automatically submit the form on file drop
 							}					
 						}					
 
@@ -393,18 +408,21 @@ block scripts
 
 
 						// gathering the form data
-						var ajaxData = new FormData( $form.get( 0 ) );
+							
+						console.log('g', $form.get(0))
 
-						if( droppedFiles )
-						{
-							$.each( droppedFiles, function( i, file )
-							{
-								ajaxData.append( $input.attr( 'name' ), file );
-							});
+						var ajaxData;
+						if( droppedFile ) {
+							ajaxData = new FormData();
+							ajaxData.append( $input.attr("name"), droppedFile );	
+						} else {
+							ajaxData = new FormData( $form.get( 0 ) );						
 						}
 
+						console.log(ajaxData);
 						
 						var csrfToken = $csrfToken.val();					
+						var wippid    = $wippid.val();					
 
 						// ajax request
 						$.ajax(
@@ -437,7 +455,7 @@ block scripts
 							cache:			false,
 							contentType:	false,
 							processData:	false,
-							headers: { 'csrf-token': csrfToken },
+							headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
 							complete: function()
 							{
 								$form.removeClass( 'is-uploading' );
@@ -448,6 +466,15 @@ block scripts
 								$form.addClass( data.success == true ? 'is-success' : 'is-error' );
 								if( !data.success ) {
 									$errorMsg.text( data.error );
+								} else {
+									var details = "<table><tbody>";
+									for(var i = 0; i < data.details.length; i++) {
+										var k = Object.keys(data.details[i])[0];
+										var v = data.details[i][k];
+										details += "<tr><td><b>" + k + ":</b></td><td>" + v + "</td><tr/>";
+									}
+									details += "</tbody></table>"
+									$successDets.html(details); // remove final <br/> tag.
 								}
 							},
 							error: function()

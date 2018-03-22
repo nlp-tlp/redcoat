@@ -133,6 +133,9 @@ UserSchema.methods.removeSelfFromAllProjects = function(done) {
   });
 }
 
+
+
+
 UserSchema.pre('save', function(next) {
 
   var t = this;

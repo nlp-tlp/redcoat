@@ -223,7 +223,7 @@
 			background-color: #0f3c4b;
 		}
 
-	i.upload-icon {
+	i.upload-icon, i.check-icon {
 		font-size: 90px;
 		text-align: center;
 		display: block;
@@ -240,6 +240,9 @@
 			text-align: center;
 			z-index: -10;
 		}
+	}
+	i.check-icon:after {
+		content: "\f00c";
 	}
 
 
@@ -292,5 +295,52 @@
 	.box.is-uploading .progress-bar-container {
 		display: block;
 	}
+
+
+	.box__success {
+
+		width: 100%;
+
+		> * {
+			vertical-align: middle;
+		}
+
+		.box__success_left {
+			display: table-cell;
+			width: 40%;
+			padding-right: 30px;
+			box-sizing: border-box;
+			.check-icon {
+				float: right;
+				font-size: 110px;
+			}
+		}
+		.box__success_right {
+			display: table-cell;
+			width: 60%;	
+			padding-left: 30px;
+			box-sizing: border-box;
+
+			.box__success_message {
+				float: left;
+				.box__success_details {
+					margin: 0 auto;
+					margin-top: 20px;
+					text-align: left;
+					table {
+						margin: 0 auto;
+						td {
+							padding: 0 10px;
+						}
+					}
+				}
+			}
+
+		}
+	}
+	.box.is-success .box__success {
+		display: table;
+	}
+
 
 }
