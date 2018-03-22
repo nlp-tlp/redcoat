@@ -86,17 +86,22 @@ WipProjectSchema.statics.verifyWippid = function(user_id, wippid, done) {
 
 /* Common methods */
 
+WipProjectSchema.methods.cascadeDelete = cf.cascadeDelete;
 WipProjectSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists;
 
 // Removes this wip_project's documents and metadata and saves it.
 // TODO: Make it delete associated WipDocumentGroups.
 WipProjectSchema.methods.deleteDocumentsAndMetadataAndSave = function(next) {  
-  delete this.documents;
-  delete this.file_metadata;
-  this.documents = [];
-  this.file_metadata = {};
-  this.save(function(err, wipp) {
-    next(err, wipp);
+  var t = this;
+
+  delete t.file_metadata;
+  t.file_metadata = {};
+
+  WipDocumentGroup.remove({ wip_project_id: t._id }, function(err) { // No associated objects so it's OK to use remove this way (no pre-remove hooks)
+    if(err) { return next(err); }
+    t.save(function(err, wipp) {
+      next(err, wipp);
+    });
   });
 }
 
@@ -126,7 +131,6 @@ WipProjectSchema.methods.fileMetadataToArray = function() {
   arr = [];
   var stringy = JSON.parse(JSON.stringify(this.file_metadata));
   for(var k in stringy) {  
-    console.log(k);
     arr.push({ [k]: stringy[k] });
   }
   return arr;
@@ -168,26 +172,6 @@ WipProjectSchema.methods.createWipDocumentGroupsFromString = function(str, done)
         done(null, number_of_lines, number_of_tokens);
       });
     })
-
-
-    // Remove the current documents (it should be done before this function is called, but just in case)
-    //delete t.documents;
-    //t.documents = [];  
-    //console.log('pushing to docs') 
-    //t.documents = tokenized_sentences;
-    /*for(var i = 0; i < tokenized_sentences.length; i++) {
-      if(i % 1000 == 0) { console.log("" + i + " / " + tokenized_sentences.length)}
-      t.documents.push(tokenized_sentences[i]);
-
-    }*/
-    //console.log('validating')
-    // t.validate(function(err) {
-    //   var e = null;
-    //   if(err.errors.documents) {
-    //     e = { errors: { documents: err.errors.documents.message } };
-    //   }
-    //   done(e);
-    // });
   });
 }
 
@@ -253,10 +237,9 @@ WipProjectSchema.pre('save', function(next) {
   })
 });
 
+// Cascade delete for wip_project, so all associated wip_document_groups are deleted when a wip_project is deleted.
 WipProjectSchema.pre('remove', function(next) {
-  // TODO: Cascade delete, to delete existing WIP Document Groups
-  // TODO: Call the cascade delete method when uploading a new file
-  next();
+  this.cascadeDelete(WipDocumentGroup, {wip_project_id: this._id}, next);
 });
 
 /* Model */

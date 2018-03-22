@@ -107,8 +107,7 @@ router.get('/setup-project', csrfProtection, isLoggedIn, function(req, res, next
       if(err) { next(err); return; }
       if(wip_project) {
         console.log("Existing WIP Project found.");
-        console.log("Documents in WIP Project (first 3):", wip_project.documents.slice(0, 3));
-        if(wip_project.documents.length > 0) {
+        if(wip_project.file_metadata["Filename"] != undefined) {
           renderPage(wip_project, JSON.stringify(wip_project.fileMetadataToArray()));
         } else {
           renderPage(wip_project, "null");
@@ -160,6 +159,7 @@ router.post('/upload-tokenized', parseForm, csrfProtection, isLoggedIn, function
     } else {
 
       wip_project.deleteDocumentsAndMetadataAndSave(function(err, wip_project) {
+        if (err) throw err;
 
         var responded = false;
         var numberOfLines = 0;
@@ -231,7 +231,7 @@ router.post('/upload-tokenized', parseForm, csrfProtection, isLoggedIn, function
                     if (err) throw err;
                   });
 
-                  console.log("New Documents (first 3):", wip_project.documents.slice(0, 3));              
+                  //console.log("New Documents (first 3):", wip_project.documents.slice(0, 3));              
                   //numberOfLines = wip_project.documents.length;
                   //numberOfTokens = [].concat.apply([], wip_project.documents).length;
 

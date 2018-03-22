@@ -1,6 +1,6 @@
 var mongoose = require('mongoose');
 
-DOCUMENT_GROUP_TOTAL_MAXCOUNT = 10000; // Number of groups that can be in a project.
+DOCUMENT_GROUP_TOTAL_MAXCOUNT = 11000; // Number of groups that can be in a project.
 
 USERS_PER_PROJECT_MAXCOUNT = 100;
 PROJECTS_PER_USER_MAXCOUNT = 20;

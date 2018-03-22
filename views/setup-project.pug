@@ -305,6 +305,7 @@ block scripts
 					$successDets = $form.find( '.box__success_details' ),
 					$csrfToken   = $form.find( 'input[name="_csrf"]'),
 					$wippid      = $form.find( 'input[name="_id"]'),
+					$uploading   = $form.find( '.box__uploading'),
 					droppedFile  = null,
 					showFiles	 = function( file )
 					{
@@ -451,16 +452,18 @@ block scripts
 				// if the form was submitted
 
 		        var progressBar = $(this).find('.progress-bar-fill')
+		        var progressBarContainer = $(this).find('.progress-bar-container')
 		        var progressPercent = $(this).find('.progress-percent-complete')
 
 				$form.on( 'submit', function( e )
 				{				
 					// preventing the duplicate submissions if the current one is in progress
 					if( $form.hasClass( 'is-uploading' ) ) return false;
-
+					progressBarContainer.removeClass("fade-out");
+					
 
 					$form.addClass( 'is-uploading' ).removeClass( 'is-error' );
-
+					$uploading.html("<i class=\"fa fa-spinner fa-spin\"></i>&nbsp;Uploading…");
 
 					if( isAdvancedUpload ) // ajax file upload for modern browsers
 					{
@@ -483,7 +486,7 @@ block scripts
 						
 						
 
-
+						var tokenizingTimeout;
 
 						// ajax request
 						$.ajax(
@@ -501,7 +504,16 @@ block scripts
 								    progressPercent.html("" + percentComplete + "%")
 
 								    if (percentComplete === 100) {
+								    	$uploading.html("<i class=\"fa fa-spinner fa-spin\"></i>&nbsp;Tokenizing…");
+								    	progressBarContainer.addClass("fade-out");
+								    	window.setTimeout(function() {
+								    		progressBar.css("width", "0%");
+								    	}, 500);
+								    	tokenizingTimeout = window.setTimeout(function() {
+								    		console.log('heres johnny')
+								    		$uploading.html("<i class=\"fa fa-spinner fa-spin\"></i>&nbsp;Tokenizing…<br/><span class=\"tokenization-time-info\">Tokenization is taking some time as your dataset is quite large.<br/>Please feel free to complete the rest of the form while tokenization is running.</span>");
 
+								    	}, 2000);
 								    }
 
 								  }
@@ -523,6 +535,7 @@ block scripts
 							},
 							success: function( data )
 							{
+								window.clearTimeout(tokenizingTimeout);
 								console.log(data);
 								
 								if( !data.success ) {

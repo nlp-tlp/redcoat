@@ -28,6 +28,10 @@ describe('WIP Projects', function() {
 
   describe("user_id (2)", function() {
 
+    after(function(done) {
+      cf.dropMongooseDb(done);
+    });
+
     var user1, user2;
 
     before(function(done) {
@@ -96,6 +100,51 @@ describe('WIP Projects', function() {
   });
 
 
+  describe("Cascade delete", function() {
+    //
+    afterEach(function(done) {
+      cf.dropMongooseDb(done);
+    })
+
+    it("should correctly delete all associated WipDocumentGroups when deleted", function(done) {
+      this.timeout(3000);
+      var sents1 = "";
+      var sents2 = "";
+      for(var i = 0; i < 1951; i++) {
+        sents1 += "hello there\n";
+        sents2 += "whats up\n";
+      }
+      var user1 = cf.createValidUser();
+      var user2 = cf.createValidUser();
+
+      var wip1 = new WipProject({user_id: user1._id, file_metadata: { "Filename": "test1.txt"} });
+      var wip2 = new WipProject({user_id: user2._id, file_metadata: { "Filename": "test2.txt"} });
+
+      cf.registerUsers([user1, user2], function(err) { expect(err).to.not.exist; }, function() {
+        cf.saveMany([wip1, wip2], function(err) { expect(err).to.not.exist; }, function() {
+          wip1.createWipDocumentGroupsFromString(sents1, function(err, number_of_lines, number_of_tokens) {
+            expect(err).to.not.exist;
+            expect(wip1.file_metadata["Filename"]).to.eql("test1.txt");
+            wip2.createWipDocumentGroupsFromString(sents2, function(err, number_of_lines, number_of_tokens) {
+              WipDocumentGroup.count(function(err, count) {
+                expect(count).to.equal(392);
+                wip1.remove(function(err) {
+                  WipProject.count(function(err, count) {
+                    expect(count).to.equal(1);
+                    WipDocumentGroup.count(function(err, count) {
+                      expect(count).to.equal(196);   
+                      done();               
+                    });
+                  });
+                });
+              });
+            });        
+          });
+        });
+      });
+    });
+  });
+
   describe("Instance methods", function() {
 
     var wip;
@@ -107,9 +156,11 @@ describe('WIP Projects', function() {
 
     beforeEach(function(done) {
       wip = new WipProject(); done();
-    })
+    });
 
-
+    after(function(done) {
+      cf.dropMongooseDb(done);
+    });
 
 
 
@@ -199,35 +250,50 @@ describe('WIP Projects', function() {
 
     });
 
-    // describe("createDocumentsFromString", function() {
 
-    //   it("should correctly create an array of documents from a string, assign them to the documents field, and validate them", function(done) {        
-    //     var sents = "hello there my name is michael.\n\nwhat's going on?";
-    //     wip.createDocumentsFromString(sents, function(err) {
-    //       expect(wip.documents).to.eql(correctly_tokenized_sents);
-    //       expect(err).to.not.exist;
-    //       done();
-    //     });
-    //   });
+    describe("deleteDocumentsAndMetadataAndSave", function() {
 
-    //   it("should return an error when given a string containing a document with a token that is too long", function(done) {
-    //     var sents = cf.createStringOfLength(1500) + " there\nhow are you?\n";
-    //     wip.createDocumentsFromString(sents, function(err) {
-    //       expect(err.errors.documents).to.exist;
-    //       done();
-    //     });
-    //   });
-    //   it("should return an error when given a string containing too many documents", function(done) {
-    //     var sents = "";
-    //     for(var i = 0; i < 100050; i++) {
-    //       sents += "hello there\n";
-    //     }
-    //     wip.createDocumentsFromString(sents, function(err) {
-    //       expect(err.errors.documents).to.exist;
-    //       done();
-    //     });
-    //   });
-    // });
+      after(function(done) {
+        cf.dropMongooseDb(done);
+      })
+
+      it("should correctly delete all associated WipDocumentGroups (but not unassociated ones) and clear the file_metadata field", function(done) {
+        this.timeout(3000);
+        var sents1 = "";
+        var sents2 = "";
+        for(var i = 0; i < 1951; i++) {
+          sents1 += "hello there\n";
+          sents2 += "whats up\n";
+        }
+        var user1 = cf.createValidUser();
+        var user2 = cf.createValidUser();
+
+        var wip1 = new WipProject({user_id: user1._id, file_metadata: { "Filename": "test1.txt"} });
+        var wip2 = new WipProject({user_id: user2._id, file_metadata: { "Filename": "test2.txt"} });
+
+        cf.registerUsers([user1, user2], function(err) { expect(err).to.not.exist; }, function() {
+          cf.saveMany([wip1, wip2], function(err) { expect(err).to.not.exist; }, function() {
+            wip1.createWipDocumentGroupsFromString(sents1, function(err, number_of_lines, number_of_tokens) {
+              expect(err).to.not.exist;
+              expect(wip1.file_metadata["Filename"]).to.eql("test1.txt");
+              wip2.createWipDocumentGroupsFromString(sents2, function(err, number_of_lines, number_of_tokens) {
+                WipDocumentGroup.count(function(err, count) {
+                  expect(count).to.equal(392);
+                  wip1.deleteDocumentsAndMetadataAndSave(function(err, wip) {
+                    expect(err).to.not.exist;
+                    expect(wip.file_metadata["Filename"]).to.eql(undefined);
+                    WipDocumentGroup.count(function(err, count) {
+                      expect(count).to.equal(196);
+                      done();
+                    });
+                  });
+                });
+              });        
+            });
+          });
+        });
+      });
+    }); 
   });
 });
 
