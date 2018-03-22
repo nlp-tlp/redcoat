@@ -1,7 +1,0 @@
-- list all tokens, multiple corrections still equals one word (ip gets counted once)
-- weight precision higher than recall for the f1 score
-- different features in each set, i.e. more spelling errors, more domain terms
-- short section explaining distribution of terms . characterise datasets it works on
-- ask wei about using word embeddings, spellchecker
-
-how is babby form?

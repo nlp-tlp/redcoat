@@ -220,9 +220,9 @@ describe('WIP Projects', function() {
       });
 
       it("should return an error when given a string containing too many documents", function(done) {
-        this.timeout(3000);
+        this.timeout(4000);
         var sents = "";
-        for(var i = 0; i < 100050; i++) {
+        for(var i = 0; i < 120050; i++) {
           sents += "hello there\n";
         }
         wip.createWipDocumentGroupsFromString(sents, function(err) {
@@ -232,7 +232,7 @@ describe('WIP Projects', function() {
       });
 
       it("should correctly create WipDocumentGroups from a string when that string contains nearly 100,000 documents", function(done) {
-        this.timeout(3000);
+        this.timeout(4000);
         var sents = "";
         for(var i = 0; i < 99951; i++) {
           sents += "hello there\n";
@@ -258,7 +258,7 @@ describe('WIP Projects', function() {
       })
 
       it("should correctly delete all associated WipDocumentGroups (but not unassociated ones) and clear the file_metadata field", function(done) {
-        this.timeout(3000);
+        this.timeout(4000);
         var sents1 = "";
         var sents2 = "";
         for(var i = 0; i < 1951; i++) {
