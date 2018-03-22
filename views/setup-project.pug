@@ -25,10 +25,6 @@ block content
 				li.not-yet-started
 					span 
 						i.fa.fa-check
-						| Administrator Account
-				li.not-yet-started
-					span 
-						i.fa.fa-check
 						| Submission
 		div#setup-questions
 			article#project-details.article-heading
@@ -53,7 +49,7 @@ block content
 				h1 Dataset				
 				div.form-section
 					p Please upload your  data using the form below.
-					p The dataset must be saved as a <code>.txt</code> file. Each token within your data must be separated by a newline, and each record must be separated by an additional newline. <a href="/files/example_dataset.txt" download>Click here</a> to download a small example file.
+					p The dataset must be saved as a <code>.txt</code> file. Each token within your data must be separated by a space, and each document must be on a new line. <a href="/files/example_dataset.txt" download>Click here</a> to download a small example file.
 					
 					- var action = 'upload-tokenized'
 					include partials/upload_widget
@@ -259,12 +255,35 @@ block scripts
 
 		'use strict';
 
-		var MAX_FILESIZE = 1 * 1024 * 1024; // 1mb for now.
+		var MAX_FILESIZE = !{max_filesize_mb} * 1024 * 1024; // 1mb for now.
+
+		var file_metadata = !{file_metadata};
+
+		console.log(file_metadata);
+
 
 
 
 		;( function( $, window, document, undefined )
 		{
+
+			function renderSuccessBox(metadata, form_ele, success_details_ele) {
+				form_ele.addClass( 'is-success' );
+				console.log(success_details_ele)
+				var details = "<table><tbody>";
+				for(var i = 0; i < metadata.length; i++) {
+					var k = Object.keys(metadata[i])[0];
+					var v = metadata[i][k];
+					details += "<tr><td><b>" + k + ":</b></td><td>" + v + "</td><tr/>";
+				}
+				details += "</tbody></table>"
+				success_details_ele.html(details); // remove final <br/> tag.
+			}
+
+			if(file_metadata) renderSuccessBox(file_metadata, $("#form-upload-tokenized"), $("#form-upload-tokenized").find('.box__success_details'));
+
+
+
 			// feature detection for drag&drop upload
 
 			var isAdvancedUpload = function()
@@ -292,17 +311,54 @@ block scripts
 						$label.text( file.name );
 					};
 
+					var csrfToken = $csrfToken.val();					
+					var wippid    = $wippid.val();
 
 				function validateFile(file) {
 					var a = checkFilesize(file);
 					var b = checkFiletype(file);
+
+					if(!(a && b)) {
+						$form.addClass( 'is-uploading' ).removeClass( 'is-error' );
+
+						var errMsg;
+						if(!a) { errMsg = "File must be less than #{max_filesize_mb}mb in size." }
+						if(!b) { errMsg = "File must be a plain text file (.txt)." }
+
+						// Send a message to the server to delete the documents of the project if client-side validation failed.
+
+						$.ajax(
+						{
+							url: 			$form.attr( 'action' ) + '-reset',
+							type:			$form.attr( 'method' ),
+							data: 			{},
+							dataType:		'json',
+							cache:			false,
+							contentType:	false,
+							processData:	false,
+							headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
+							complete: function()
+							{
+								$form.removeClass( 'is-uploading' );
+							},
+							success: function( data )
+							{
+								$form.addClass('is-error');
+								$errorMsg.text(errMsg);		
+							},
+							error: function()
+							{								
+								alert( 'Error. Please, contact the webmaster!' );
+							}
+						});
+					}
+
 					return a && b;
 				}
 
 				function checkFilesize(file) {
 					if(file.size > MAX_FILESIZE) {
-						$form.addClass('is-error');
-						$errorMsg.text("File must be less than 1mb in size.");
+						return false;
 					} else {
 						return true;
 					}
@@ -310,8 +366,7 @@ block scripts
 
 				function checkFiletype(file) {
 					if(file.type != "text/plain") {
-						$form.addClass('is-error');
-						$errorMsg.text("File must be a plain text file (.txt).");					
+						return false;									
 					} else {
 						return true;
 					}
@@ -329,6 +384,7 @@ block scripts
 				// automatically submit the form on file select
 				$input.on( 'change', function( e )
 				{	
+					$form.removeClass( 'is-error is-success' );
 					droppedFile = null; // Get rid of the dropped file the user may have dropped previously.
 					if(validateFile(e.target.files[0])) {
 						showFiles( e.target.files );					
@@ -364,8 +420,9 @@ block scripts
 					})
 					.on( 'drop', function( e )
 					{
+
 						// Disable drop if form already completed.
-						if( $form.hasClass("is-success") || $form.hasClass("is-uploading") ) {
+						if( $form.hasClass("is-success") || $form.hasClass("is-uploading") ) {							
 							return;
 						}
 
@@ -389,15 +446,18 @@ block scripts
 				}
 
 
+
+
 				// if the form was submitted
 
 		        var progressBar = $(this).find('.progress-bar-fill')
 		        var progressPercent = $(this).find('.progress-percent-complete')
 
 				$form.on( 'submit', function( e )
-				{
+				{				
 					// preventing the duplicate submissions if the current one is in progress
 					if( $form.hasClass( 'is-uploading' ) ) return false;
+
 
 					$form.addClass( 'is-uploading' ).removeClass( 'is-error' );
 
@@ -421,8 +481,9 @@ block scripts
 
 						console.log(ajaxData);
 						
-						var csrfToken = $csrfToken.val();					
-						var wippid    = $wippid.val();					
+						
+
+
 
 						// ajax request
 						$.ajax(
@@ -463,18 +524,12 @@ block scripts
 							success: function( data )
 							{
 								console.log(data);
-								$form.addClass( data.success == true ? 'is-success' : 'is-error' );
+								
 								if( !data.success ) {
+									$form.addClass( 'is-error' );
 									$errorMsg.text( data.error );
 								} else {
-									var details = "<table><tbody>";
-									for(var i = 0; i < data.details.length; i++) {
-										var k = Object.keys(data.details[i])[0];
-										var v = data.details[i][k];
-										details += "<tr><td><b>" + k + ":</b></td><td>" + v + "</td><tr/>";
-									}
-									details += "</tbody></table>"
-									$successDets.html(details); // remove final <br/> tag.
+									renderSuccessBox(data.details, $form, $successDets);
 								}
 							},
 							error: function()
@@ -507,7 +562,6 @@ block scripts
 				$restart.on( 'click', function( e )
 				{
 					e.preventDefault();
-					$form.removeClass( 'is-error is-success' );
 					$input.trigger( 'click' );
 				});
 

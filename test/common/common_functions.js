@@ -3,6 +3,7 @@ var rid = require('mongoose').Types.ObjectId;
 var Project = require('../../models/project');
 var User = require('../../models/user');
 var DocumentGroup = require('../../models/document_group');
+var WipDocumentGroup = require('../../models/wip_document_group');
 var DocumentGroupAnnotation = require('../../models/document_group_annotation');
 
 var options = {
@@ -149,9 +150,9 @@ function createValidProjectOrWIPP(model, n_labels, user_id) {
     project_name: "New Project"
   });
 
-  if(model.collection.name == "wipprojects") {
-    proj.documents.push(["Valid", "document"]);
-  }
+  // if(model.collection.name == "wipprojects") {
+  //   proj.documents.push(["Valid", "document"]);
+  // }
 
   for(var i = 0; i < n_labels; i++) {
     var valid_label = { label: "test-" + i, abbreviation: "b-" + i, color: "#" + ("000000" + i).substr(-6, 6) }
@@ -191,6 +192,14 @@ function createValidDocumentGroup(n_docs, project_id) {
   return doc_group;
 }
 
+function createValidWipDocumentGroup(n_docs, wip_project_id) {
+  var wip_doc_group = new WipDocumentGroup({ 
+    wip_project_id: wip_project_id,
+    documents: createValidDocuments(n_docs) 
+  });
+  return wip_doc_group;
+}
+
 function createValidDocumentGroupAnnotation(n_labels, user_id, document_group_id) {
   var doc_group_annotation = new DocumentGroupAnnotation({ 
     user_id: user_id,
@@ -208,7 +217,7 @@ function createStringOfLength(n) {
 // Creates a document that is too long (more than 200 tokens)
 function createTooLongDocument() {
   var doc = []
-  for(var i = 0; i < 250; i++) {
+  for(var i = 0; i < 2500; i++) {
     doc.push("word");
   }
   return doc;
@@ -233,6 +242,7 @@ module.exports = {
     createValidUser:                    createValidUser,
     createValidDocuments:               createValidDocuments,
     createValidDocumentGroup:           createValidDocumentGroup,
+    createValidWipDocumentGroup:        createValidWipDocumentGroup,
     createValidDocumentGroupAnnotation: createValidDocumentGroupAnnotation,
     createStringOfLength:               createStringOfLength,
     createTooLongDocument:              createTooLongDocument,

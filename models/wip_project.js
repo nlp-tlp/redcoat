@@ -4,6 +4,7 @@ var cf = require("./common/common_functions")
 
 var natural = require('natural');
 var tokenizer = new natural.TreebankWordTokenizer();
+ObjectId = require('mongodb').ObjectID;
 
 // A model for storing projects that are "work in progress" (WIP). 
 // When a user wants to create a new project, a WipProject will be created.
@@ -31,11 +32,24 @@ var WipProjectSchema = new Schema({
   valid_labels: cf.fields.valid_labels,
 
   // All documents in the project.
-  documents: cf.fields.all_documents,
+  // documents: cf.fields.all_documents,
 
   // The users who will be annotating the project.
   user_ids: cf.fields.user_ids,
 
+  // Some metadata about the WIP Project.
+  file_metadata: {
+    
+    'Filename': {
+      type: String,
+      minlength: 0,
+      maxlength: 255,
+    },
+  
+    'Number of documents': Number,
+    'Number of tokens': Number,
+    'Average tokens/document': Number
+  }
 }, {
   timestamps: { 
     createdAt: "created_at",
@@ -54,9 +68,38 @@ WipProjectSchema.statics.findWipByUserId = function(uid, done) {
   });
 }
 
+// Verifies a 'wippid' (WIP id). The WIP id will be placed in a header, and this function verifies that the person who created
+// this WIP is the user with id user_id. (it should be called with the value of req.headers.wippid and logged_in_user._id).
+WipProjectSchema.statics.verifyWippid = function(user_id, wippid, done) {
+  try {
+  var wippid = ObjectId(wippid);
+  } catch(err) { 
+    done(err); return;
+  } 
+  WipProject.findWipByUserId(user_id, function(err, wip_project) {
+    if(!wip_project._id.equals(wippid))
+      done(err, null);
+    else 
+      done(err, wip_project);
+  });
+}
+
 /* Common methods */
 
 WipProjectSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists;
+
+// Removes this wip_project's documents and metadata and saves it.
+WipProjectSchema.methods.deleteDocumentsAndMetadataAndSave = function(next) {  
+  delete this.documents;
+  delete this.file_metadata;
+  this.documents = [];
+  this.file_metadata = {};
+  this.save(function(err, wipp) {
+    next(err, wipp);
+  });
+}
+
+
 
 
 // Validates that the user_id field is unique.
@@ -68,6 +111,26 @@ WipProjectSchema.methods.verifyUserIdIsUnique = function(next) {
   })
 }
 
+// Sets the metadata of this wip_project based on a nested js object.
+WipProjectSchema.methods.setFileMetadata = function(md) {
+  this.file_metadata = {};
+  for(var k in md) {
+    var v = md[k];
+    this.file_metadata[k] = v;    
+  }
+}
+
+// Converts this wip_project's metadata to an array that can be displayed on a form in order.
+WipProjectSchema.methods.fileMetadataToArray = function() {
+  arr = [];
+  var stringy = JSON.parse(JSON.stringify(this.file_metadata));
+  for(var k in stringy) {  
+    console.log(k);
+    arr.push({ [k]: stringy[k] });
+  }
+  return arr;
+}
+
 
 
 // Creates an array of documents from a given string, assigns them to this wip_project's documents array, and validates the documents field.
@@ -77,10 +140,15 @@ WipProjectSchema.methods.createDocumentsFromString = function(str, done) {
     if(err) { done(err); return; }
     // Remove the current documents (it should be done before this function is called, but just in case)
     delete t.documents;
-    t.documents = [];
-    for(var i = 0; i < tokenized_sentences.length; i++) {
+    t.documents = [];  
+    //console.log('pushing to docs') 
+    t.documents = tokenized_sentences;
+    /*for(var i = 0; i < tokenized_sentences.length; i++) {
+      if(i % 1000 == 0) { console.log("" + i + " / " + tokenized_sentences.length)}
       t.documents.push(tokenized_sentences[i]);
-    }
+
+    }*/
+    //console.log('validating')
     t.validate(function(err) {
       var e = null;
       if(err.errors.documents) {
@@ -101,12 +169,15 @@ WipProjectSchema.methods.tokenizeString = function(str, done) {
   var e = null;
 
   try {
+    //console.log("Tokenizing...")
     for(var i = 0; i < sents.length; i++) {
       var ts = tokenizer.tokenize(sents[i]); 
+      //if(i % 1000 == 0) { console.log("" + i + " / " + sents.length)}
       if(ts.length > 0) {
         tokenized_sentences.push(ts);      
       }  
     }
+    //console.log("done")
   } catch(err) { e = err; }
   done(e, tokenized_sentences);
 }
@@ -143,11 +214,18 @@ WipProjectSchema.pre('save', function(next) {
         next(new Error("user_id must remain the same as it was when the WIP Project was created."))
       } else {
         next(err);  
+
+
       }      
     }
   })
 });
 
+WipProjectSchema.pre('remove', function(next) {
+  // TODO: Cascade delete, to delete existing WIP Document Groups
+  // TODO: Call the cascade delete method when uploading a new file
+  next();
+});
 
 /* Model */
 

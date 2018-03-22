@@ -320,7 +320,7 @@
 			width: 60%;	
 			padding-left: 30px;
 			box-sizing: border-box;
-
+			text-align: left;
 			.box__success_message {
 				float: left;
 				.box__success_details {
@@ -328,11 +328,17 @@
 					margin-top: 20px;
 					text-align: left;
 					table {
-						margin: 0 auto;
-						td {
-							padding: 0 10px;
+						width: 100%;
+						td:first-child {
+							padding-right: 10px;
+						}
+						td:nth-child(2) {
+							padding-left: 10px;
 						}
 					}
+				}
+				.box__success_restart {
+					margin-top: 20px;
 				}
 			}
 

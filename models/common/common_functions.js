@@ -1,12 +1,12 @@
 var mongoose = require('mongoose');
 
-DOCUMENT_GROUP_TOTAL_MAXCOUNT = 1000; // Number of groups that can be in a project.
+DOCUMENT_GROUP_TOTAL_MAXCOUNT = 10000; // Number of groups that can be in a project.
 
 USERS_PER_PROJECT_MAXCOUNT = 100;
 PROJECTS_PER_USER_MAXCOUNT = 20;
 DOCUMENT_MAXCOUNT          = 10;
 DOCUMENT_MAX_TOKEN_LENGTH  = 100;
-DOCUMENT_MAX_TOKEN_COUNT   = 200;
+DOCUMENT_MAX_TOKEN_COUNT   = 1000;
 ABBREVIATION_MAXLENGTH     = 20;
 
 PROJECT_NAME_MAXLENGTH 				= 50;
@@ -131,7 +131,7 @@ var validateDocumentTokenCountMin = function(arr, done) {
 var validateDocumentTokenCountMax = function(arr, done) {
   for(var i = 0; i < arr.length; i++) {
   	if(arr[i].length > DOCUMENT_MAX_TOKEN_COUNT) {
-  		msg = "Error on line " + (i+1) + ": document cannot contain more than " + DOCUMENT_MAX_TOKEN_COUNT + " tokens.";
+  		msg = "Error on line " + (i+1) + ": document cannot contain more than " + DOCUMENT_MAX_TOKEN_COUNT + " tokens." + arr[i] + "";
     	done(false, msg);
     	return;
     }	    
@@ -204,14 +204,14 @@ documentValidation = [
   { validator: function(arr, done) { validateDocumentTokenCountMax( arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
 ]; 
 
-allDocumentValidation = [
-  { validator: validateDocumentCountMin,       msg: 'Your file does not appear to contain any lines.'},
-  { validator: validateDocumentTotalCountMax,  msg: 'Please ensure your file contains less than ' + DOCUMENT_TOTAL_MAXCOUNT + ' lines.' },
-  { validator: function(arr, done) { validateDocumentTokenLengthMin(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
-  { validator: function(arr, done) { validateDocumentTokenLengthMax(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
-  { validator: function(arr, done) { validateDocumentTokenCountMin( arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
-  { validator: function(arr, done) { validateDocumentTokenCountMax( arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
-]; 
+// allDocumentValidation = [
+//   { validator: validateDocumentCountMin,       msg: 'Your file does not appear to contain any lines.'},
+//   { validator: validateDocumentTotalCountMax,  msg: 'Please ensure your file contains less than ' + DOCUMENT_TOTAL_MAXCOUNT + ' lines.' },
+//   { validator: function(arr, done) { validateDocumentTokenLengthMin(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+//   { validator: function(arr, done) { validateDocumentTokenLengthMax(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+//   { validator: function(arr, done) { validateDocumentTokenCountMin( arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+//   { validator: function(arr, done) { validateDocumentTokenCountMax( arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+// ]; 
 
 
 
@@ -337,10 +337,10 @@ module.exports = {
 	    validate: documentValidation
 		},
 
-		all_documents: {
-			type: [[String]],
-			validate: allDocumentValidation,
-		},
+		// all_documents: {
+		// 	type: [[String]],
+		// 	validate: allDocumentValidation,
+		// },
 
 		valid_labels:	{
 		    type: [

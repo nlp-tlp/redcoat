@@ -274,8 +274,7 @@ function runDocumentTests(model, done) {
       obj.validate(function(err) { expect(err.errors.documents).to.exist; done(); });
     });
     it('should fail validation if it has too many documents', function(done) { 
-      var maxcount = model.collection.name == "documentgroups" ? 12 : 10050;
-      var obj = new model({ documents: cf.createValidDocuments(maxcount) } );
+      var obj = new model({ documents: cf.createValidDocuments(12) } );
       obj.validate(function(err) { expect(err.errors.documents).to.exist; done(); });
     });
     it('should pass validation for documents if it has a suitable number of valid documents', function(done) { 

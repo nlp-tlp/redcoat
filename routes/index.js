@@ -15,7 +15,8 @@ var util = require('util')
 
 var bodyParser = require('body-parser')
 
-ObjectId = require('mongodb').ObjectID;
+var MAX_FILESIZE_MB = 25;
+
 
 // create a new user called michael
 /*var michael = new User({
@@ -98,8 +99,8 @@ router.get('/setup-project', csrfProtection, isLoggedIn, function(req, res, next
 
     // If they don't, create a new one
 
-    function renderPage(wip_project) {
-       res.render('setup-project', { wip_project_id: wip_project._id, csrfToken: req.csrfToken(), path: req.path, title: "Set up project" });
+    function renderPage(wip_project, file_metadata) {
+       res.render('setup-project', { wip_project_id: wip_project._id, file_metadata: file_metadata, csrfToken: req.csrfToken(), path: req.path, title: "Set up project", max_filesize_mb: MAX_FILESIZE_MB });
     }
 
     WipProject.findWipByUserId(testuser._id, function(err, wip_project) {
@@ -107,12 +108,16 @@ router.get('/setup-project', csrfProtection, isLoggedIn, function(req, res, next
       if(wip_project) {
         console.log("Existing WIP Project found.");
         console.log("Documents in WIP Project (first 3):", wip_project.documents.slice(0, 3));
-        renderPage(wip_project);
+        if(wip_project.documents.length > 0) {
+          renderPage(wip_project, JSON.stringify(wip_project.fileMetadataToArray()));
+        } else {
+          renderPage(wip_project, "null");
+        }        
       } else {
         console.log("No existing WIP Project found - creating a new one.")
         wip_project = new WipProject({ user_id: testuser._id });
         wip_project.save(function(err, wip_project) {
-          renderPage(wip_project); 
+          renderPage(wip_project, "null"); 
         });   
       }
    
@@ -120,6 +125,23 @@ router.get('/setup-project', csrfProtection, isLoggedIn, function(req, res, next
   //});
   
 
+});
+
+// Posting here will cause the WIP Project's documents and file metadata to be reset.
+// This method is necessary because without it, a user who submits an invalid file after
+// submitting a valid one will think their documents have been lost when they'd actually
+// still be there, and would appear after refreshing the setup page.
+router.post('/upload-tokenized-reset', parseForm, csrfProtection, isLoggedIn, function(req, res) {
+
+  WipProject.verifyWippid(testuser._id, req.headers.wippid, function(err, wip_project) {
+    if(!wip_project) { console.log("incorrect user"); res.send({ "success": false }); }
+    else {
+      wip_project.deleteDocumentsAndMetadataAndSave(function(err, wip_project) {
+        console.log("pinged")
+        res.send({ "success": true });
+      });     
+    }
+  });
 });
 
 
@@ -131,116 +153,128 @@ router.post('/upload-tokenized', parseForm, csrfProtection, isLoggedIn, function
   //res.send({"success": false, "error": "You cannot upload a new dataset as you have already uploaded one."})
   //return;
 
-  console.log("POST FOUND")
 
-  // Get the id of the WIP Project.
-  try {
-  var wippid = ObjectId(req.headers.wippid);
-  } catch(e) { 
-    console.log(e);
-  } 
-  // Verify wip_project with wippid exists, and belongs to the logged in user
-  WipProject.findWipByUserId(testuser._id, function(err, wip_project) {
-    console.log(wip_project._id, wippid)
-    if(!wip_project._id.equals(wippid)) {
+  WipProject.verifyWippid(testuser._id, req.headers.wippid, function(err, wip_project) {
+    if(!wip_project) {
       res.send({ "success": false, "error": "The project you are attempting to create does not appear to belong to your user account." });
     } else {
 
-      var responded = false;
-      var numberOfLines = 0;
-      var numberOfTokens = 0;
-      var filename = null;
+      wip_project.deleteDocumentsAndMetadataAndSave(function(err, wip_project) {
 
-      var form = new formidable.IncomingForm({"maxFileSize": 1 * 1024 * 1024}); // 1mb
+        var responded = false;
+        var numberOfLines = 0;
+        var numberOfTokens = 0;
+        var filename = null;
 
-      // parse the incoming request containing the form data
-      form.parse(req);
+        var form = new formidable.IncomingForm({"maxFileSize": MAX_FILESIZE_MB * 1024 * 1024}); // 25mb
 
-      // store all uploads in the /uploads directory - cannot use it
-      form.uploadDir = path.join(__dirname, '../db/tmp');
+        // parse the incoming request containing the form data
+        form.parse(req);
 
-      // form.on('fileBegin', function(field, file) {
-      //     responded = false;
-      //     var fileType = file.type;
-      //     console.log(fileType)
-      //     if (fileType != 'text/plain') {
-      //       this.emit('error', new Error("File must be a plain text file."));
-      //     }
-      // });
+        // store all uploads in the /uploads directory - cannot use it
+        form.uploadDir = path.join(__dirname, '../db/tmp');
 
-      // every time a file has been uploaded successfully,
-      // read it and tokenize it
-      form.on('file', function(field, file) {
-        filename = file.name;
-        var f = this;  
+        // form.on('fileBegin', function(field, file) {
+        //     responded = false;
+        //     var fileType = file.type;
+        //     console.log(fileType)
+        //     if (fileType != 'text/plain') {
+        //       this.emit('error', new Error("File must be a plain text file."));
+        //     }
+        // });
 
-        // Ensure filetype is correct
-        var fileType = file.type;        
-        if (fileType != 'text/plain') {
-          this.emit('error', new Error("File must be a plain text file."));
-          return;
-        }
-        
+        // every time a file has been uploaded successfully,
+        // read it and tokenize it
+        form.on('file', function(field, file) {
+          filename = file.name;
+          var f = this;  
 
-        // Tokenize the file with the WipProject.
-        var str = fs.readFileSync(file.path, 'utf-8');
-        wip_project.createDocumentsFromString(str, function(err) {
+          // Ensure filetype is correct
+          var fileType = file.type;        
+          if (fileType != 'text/plain') {
+            this.emit('error', new Error("File must be a plain text file."));
+            return;
+          }
+          
 
-          if(err) { 
-            f.emit('error', new Error(err.errors.documents));
-          } else {
+          // Tokenize the file with the WipProject.
+          var str = fs.readFileSync(file.path, 'utf-8');
+          wip_project.createDocumentsFromString(str, function(err) {
 
-            wip_project.save(function(err, wip_project) {
-              if(err) { 
-                f.emit('error', err);
-              } else {
-                // Delete the file after reading is complete.
-                fs.unlink(file.path, (err) => {
-                  if (err) throw err;
-                });
+            if(err) { 
+              f.emit('error', new Error(err.errors.documents));
+              fs.unlink(file.path, (err) => {
+                if (err) throw err;
+              });
+            } else {
 
 
-                console.log("New Documents (first 3):", wip_project.documents.slice(0, 3));              
-                numberOfLines = wip_project.documents.length;
-                numberOfTokens = [].concat.apply([], wip_project.documents).length;
+              numberOfLines = wip_project.documents.length;
+              numberOfTokens = [].concat.apply([], wip_project.documents).length;
 
-                f.emit('end_uploading'); // Only send out signal once the WipProject has been updated.
+              wip_project.setFileMetadata({
+                "Filename": filename ,
+                "Number of documents": numberOfLines,
+                "Number of tokens" : numberOfTokens,
+                "Average tokens/document" : parseFloat((numberOfTokens / numberOfLines).toFixed(2))
+              });
+
+
+              
+
+              wip_project.save(function(err, wip_project) {
+                if(err) { 
+                  f.emit('error', err);
+                } else {
+                  // Delete the file after reading is complete.
+                  fs.unlink(file.path, (err) => {
+                    if (err) throw err;
+                  });
+
+                  console.log("New Documents (first 3):", wip_project.documents.slice(0, 3));              
+                  //numberOfLines = wip_project.documents.length;
+                  //numberOfTokens = [].concat.apply([], wip_project.documents).length;
+
+
+                  f.emit('end_uploading'); // Only send out signal once the WipProject has been updated.
+                }
+              });
+            }
+          });
+
+
+
+        });
+
+        // log any errors that occur
+        form.on('error', function(err) {
+
+            console.log(err);
+            if(!responded) {
+
+              // If err.message is the one about filesize being too large, change it to a nicer message.
+              if(err.message.substr(0, 20) == 'maxFileSize exceeded') {
+                err.message = "The file was too large. Please ensure it is less than 1mb.";
               }
-            });
+
+
+              res.send({ "success": false, "error": err.message });
+              res.end();
+              responded = true;
+              
+              
+            }   
+        });
+
+        // once all the files have been uploaded, send a response to the client
+        form.on('end_uploading', function() {
+          if(!responded){
+            res.send({'success': true, details: wip_project.fileMetadataToArray() });
           }
         });
 
 
-
       });
-
-      // log any errors that occur
-      form.on('error', function(err) {
-
-          console.log(err);
-          if(!responded) {
-
-            // If err.message is the one about filesize being too large, change it to a nicer message.
-            if(err.message.substr(0, 20) == 'maxFileSize exceeded') {
-              err.message = "The file was too large. Please ensure it is less than 1mb.";
-            }
-
-
-            res.send({ "success": false, "error": err.message });
-            res.end();
-            responded = true;
-            
-            
-          }   
-      });
-
-      // once all the files have been uploaded, send a response to the client
-      form.on('end_uploading', function() {
-        if(!responded){
-          res.send({'success': true, details: [ {"Filename": filename }, { "Number of Lines": numberOfLines }, { "Number of tokens" : numberOfTokens }, {"Average tokens/line" : (numberOfTokens / numberOfLines).toFixed(2) } ] });
-        }
-      });
-
     }
 
   });

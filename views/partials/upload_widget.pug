@@ -1,5 +1,5 @@
 div.upload-widget
-	form.box(class="js" method='post', action=action, novalidate='')
+	form.box(id="form-" + action, class="js" method='post', action=action, novalidate='')
 		.box__input
 			i.fa.fa-upload.upload-icon
 			input(type="hidden", name="_csrf", value="" + csrfToken)
@@ -18,11 +18,14 @@ div.upload-widget
 				.box__success_message
 					| Your file has been successfully uploaded.
 					.box__success_details
+					.box__success_restart
+						| <a href="#" class="box__restart" role="button">Click here</a> to upload a different file.
 		.box__error
 			| Error: 
 			span
 			| 
-			a.box__restart(href='#', role='button') Try again.
+			br 
+			<a class="box__restart" href='#' role='button'>Click here</a> to try again.
 		.progress-bar-container
 			.progress-bar
 			.progress-bar-fill
