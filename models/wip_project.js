@@ -1,7 +1,7 @@
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
 var cf = require("./common/common_functions")
-
+var WipDocumentGroup = require('./wip_document_group')
 var natural = require('natural');
 var tokenizer = new natural.TreebankWordTokenizer();
 ObjectId = require('mongodb').ObjectID;
@@ -89,6 +89,7 @@ WipProjectSchema.statics.verifyWippid = function(user_id, wippid, done) {
 WipProjectSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists;
 
 // Removes this wip_project's documents and metadata and saves it.
+// TODO: Make it delete associated WipDocumentGroups.
 WipProjectSchema.methods.deleteDocumentsAndMetadataAndSave = function(next) {  
   delete this.documents;
   delete this.file_metadata;
@@ -132,30 +133,61 @@ WipProjectSchema.methods.fileMetadataToArray = function() {
 }
 
 
+// A tiny schema used to validate an array of documents. It makes more sense than validating all the document groups after they've been created.
+var DocumentArraySchema = new Schema({
+  documents: cf.fields.all_documents,
+});
+var DocumentArray = mongoose.model('DocumentArray', DocumentArraySchema);
+
 
 // Creates an array of documents from a given string, assigns them to this wip_project's documents array, and validates the documents field.
-WipProjectSchema.methods.createDocumentsFromString = function(str, done) {
+WipProjectSchema.methods.createWipDocumentGroupsFromString = function(str, done) {
   var t = this;
-  t.tokenizeString(str, function(err, tokenized_sentences) {
+  t.tokenizeString(str, function(err, tokenized_sentences, number_of_tokens) {
     if(err) { done(err); return; }
+    var number_of_lines  = tokenized_sentences.length;
+    var number_of_tokens = [].concat.apply([], tokenized_sentences).length;
+
+    document_array = new DocumentArray( {documents: tokenized_sentences });
+    document_array.validate(function(err, document_array) {
+      if(err) { done(err); return; }
+
+      var doc_chunks = (array, chunk_size) => Array(Math.ceil(array.length / chunk_size)).fill().map((_, index) => index * chunk_size).map(begin => array.slice(begin, begin + chunk_size));
+      var chunk_size = cf.DOCUMENT_MAXCOUNT;
+    
+      docgroups = doc_chunks(tokenized_sentences, chunk_size);
+
+      docgroupsToCreate = [];
+      for (i in docgroups) {
+        docgroupsToCreate.push(new WipDocumentGroup( { wip_project_id : t._id, documents: docgroups[i] } ));
+      }
+
+      // Bypassses validation as it was already done before.         
+      WipDocumentGroup.collection.insert(docgroupsToCreate, function(err, docgroups) {
+        if(err) { done(err); return; }
+        done(null, number_of_lines, number_of_tokens);
+      });
+    })
+
+
     // Remove the current documents (it should be done before this function is called, but just in case)
-    delete t.documents;
-    t.documents = [];  
+    //delete t.documents;
+    //t.documents = [];  
     //console.log('pushing to docs') 
-    t.documents = tokenized_sentences;
+    //t.documents = tokenized_sentences;
     /*for(var i = 0; i < tokenized_sentences.length; i++) {
       if(i % 1000 == 0) { console.log("" + i + " / " + tokenized_sentences.length)}
       t.documents.push(tokenized_sentences[i]);
 
     }*/
     //console.log('validating')
-    t.validate(function(err) {
-      var e = null;
-      if(err.errors.documents) {
-        e = { errors: { documents: err.errors.documents.message } };
-      }
-      done(e);
-    });
+    // t.validate(function(err) {
+    //   var e = null;
+    //   if(err.errors.documents) {
+    //     e = { errors: { documents: err.errors.documents.message } };
+    //   }
+    //   done(e);
+    // });
   });
 }
 

@@ -199,7 +199,7 @@ router.post('/upload-tokenized', parseForm, csrfProtection, isLoggedIn, function
 
           // Tokenize the file with the WipProject.
           var str = fs.readFileSync(file.path, 'utf-8');
-          wip_project.createDocumentsFromString(str, function(err) {
+          wip_project.createWipDocumentGroupsFromString(str, function(err, numberOfLines, numberOfTokens) {
 
             if(err) { 
               f.emit('error', new Error(err.errors.documents));
@@ -209,8 +209,8 @@ router.post('/upload-tokenized', parseForm, csrfProtection, isLoggedIn, function
             } else {
 
 
-              numberOfLines = wip_project.documents.length;
-              numberOfTokens = [].concat.apply([], wip_project.documents).length;
+              // numberOfLines = wip_project.documents.length;
+              // numberOfTokens = [].concat.apply([], wip_project.documents).length;
 
               wip_project.setFileMetadata({
                 "Filename": filename ,

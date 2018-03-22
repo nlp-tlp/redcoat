@@ -204,14 +204,14 @@ documentValidation = [
   { validator: function(arr, done) { validateDocumentTokenCountMax( arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
 ]; 
 
-// allDocumentValidation = [
-//   { validator: validateDocumentCountMin,       msg: 'Your file does not appear to contain any lines.'},
-//   { validator: validateDocumentTotalCountMax,  msg: 'Please ensure your file contains less than ' + DOCUMENT_TOTAL_MAXCOUNT + ' lines.' },
-//   { validator: function(arr, done) { validateDocumentTokenLengthMin(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
-//   { validator: function(arr, done) { validateDocumentTokenLengthMax(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
-//   { validator: function(arr, done) { validateDocumentTokenCountMin( arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
-//   { validator: function(arr, done) { validateDocumentTokenCountMax( arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
-// ]; 
+allDocumentValidation = [
+  { validator: validateDocumentCountMin,       msg: 'Your file does not appear to contain any lines.'},
+  { validator: validateDocumentTotalCountMax,  msg: 'Please ensure your file contains less than ' + DOCUMENT_TOTAL_MAXCOUNT + ' lines.' },
+  { validator: function(arr, done) { validateDocumentTokenLengthMin(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+  { validator: function(arr, done) { validateDocumentTokenLengthMax(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+  { validator: function(arr, done) { validateDocumentTokenCountMin( arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+  { validator: function(arr, done) { validateDocumentTokenCountMax( arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+]; 
 
 
 
@@ -337,10 +337,10 @@ module.exports = {
 	    validate: documentValidation
 		},
 
-		// all_documents: {
-		// 	type: [[String]],
-		// 	validate: allDocumentValidation,
-		// },
+		all_documents: {
+			type: [[String]],
+			validate: allDocumentValidation,
+		},
 
 		valid_labels:	{
 		    type: [

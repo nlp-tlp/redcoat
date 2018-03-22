@@ -17,7 +17,7 @@ describe('WIP Document Groups', function() {
     cf.disconnectFromMongoose(done);
   });
 
-  /* project_id */
+  /* wip_project_id */
 
   describe("wip_project_id", function() {
 

@@ -26,6 +26,7 @@ WipDocumentGroupSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExist
 
 /* Middleware */
 
+// May not be used ... too slow?
 WipDocumentGroupSchema.pre('save', function(next) {
 
   // 1. Verify associated exists
