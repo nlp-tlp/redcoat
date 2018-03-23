@@ -36,11 +36,11 @@ block content
 						input(type="hidden", name="_id", value="" + wip_project_id)
 						div#project-name-form.form-group
 							label(for="input-project-name") Project Name (required)
-							input(id="input-project-name" placeholder="Project Name" autofocus required)
+							input(id="input-project-name" maxlength="100" placeholder="Project Name" autofocus required)
 							div.form-help The name of the project.
 						div#project-description-form.form-group
 							label(for="input-project-description") Project Description (optional)
-							input(id="input-project-description" tabindex="-1" placeholder="Project Description")
+							input(id="input-project-description" maxlength="500" tabindex="-1" placeholder="Project Description")
 							div.form-help A short description of the project.
 						//div.submit-row
 						//	input(type="submit" value="Next: Upload Dataset")

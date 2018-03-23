@@ -14,7 +14,7 @@ function runProjectNameTests(model, done) {
       proj.validate(function(err) { expect(err.errors.project_name).to.exist; done(); });
     });
     it('should fail validation if the name is too long', function(done) { 
-      var proj = new model({ project_name: cf.createStringOfLength(51) }); // 51 chars
+      var proj = new model({ project_name: cf.createStringOfLength(101) }); 
       proj.validate(function(err) { expect(err.errors.project_name).to.exist; done(); });
     });
     it('should fail validation if the name is blank', function(done) { 
