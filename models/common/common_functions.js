@@ -89,7 +89,7 @@ var validateDocumentTokenLengthMin = function(arr, done) {
   for(var i = 0; i < arr.length; i++) {
     for(var j = 0; j < arr[i].length; j++) {
       if(arr[i][j].length == 0) {
-        msg = "Error on line " + (i+1) + ", token " + (j+1) + " (\"" + arr[i][j] + "\"): token must have length greater than 0.";
+        msg = "Error on line <%" + i + "%>, token \"" + arr[i][j] + "\": token must have length greater than 0.";
         done(false, msg);
         return;
       }
@@ -104,7 +104,7 @@ var validateDocumentTokenLengthMax = function(arr, done) {
   for(var i = 0; i < arr.length; i++) {
     for(var j = 0; j < arr[i].length; j++) {
       if(arr[i][j].length > DOCUMENT_MAX_TOKEN_LENGTH) {
-        msg = "Error on line " + (i+1) + ", token " + (j+1) + ": all tokens in the document must be less than " + DOCUMENT_MAX_TOKEN_LENGTH + " characters long.";
+        msg = "Error on line <%" + i + "%>, token \"" + arr[i][j].substr(0, 7) + "...\": all tokens in the document must be less than " + DOCUMENT_MAX_TOKEN_LENGTH + " characters long.";
         done(false, msg);
         return;
       }
@@ -119,7 +119,7 @@ var validateDocumentTokenLengthMax = function(arr, done) {
 var validateDocumentTokenCountMin = function(arr, done) {
   for(var i = 0; i < arr.length; i++) {
   	if(arr[i].length == 0) {
-  		msg = "Error on line " + (i+1) + ": document cannot be empty.";
+  		msg = "Error on line <%" + i + "%>: document cannot be empty.";
     	done(false, msg);
     	return;
     }	    
@@ -131,7 +131,7 @@ var validateDocumentTokenCountMin = function(arr, done) {
 var validateDocumentTokenCountMax = function(arr, done) {
   for(var i = 0; i < arr.length; i++) {
   	if(arr[i].length > DOCUMENT_MAX_TOKEN_COUNT) {
-  		msg = "Error on line " + (i+1) + ": document cannot contain more than " + DOCUMENT_MAX_TOKEN_COUNT + " tokens." + arr[i] + "";
+  		msg = "Error on line <%" + i + "%>: document cannot contain more than " + DOCUMENT_MAX_TOKEN_COUNT + " tokens." + arr[i] + "";
     	done(false, msg);
     	return;
     }	    

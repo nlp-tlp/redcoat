@@ -147,14 +147,21 @@ var DocumentArray = mongoose.model('DocumentArray', DocumentArraySchema);
 // Creates an array of documents from a given string, assigns them to this wip_project's documents array, and validates the documents field.
 WipProjectSchema.methods.createWipDocumentGroupsFromString = function(str, done) {
   var t = this;
-  t.tokenizeString(str, function(err, tokenized_sentences, number_of_tokens) {
+  t.tokenizeString(str, function(err, tokenized_sentences, line_indexes) {
     if(err) { done(err); return; }
     var number_of_lines  = tokenized_sentences.length;
     var number_of_tokens = [].concat.apply([], tokenized_sentences).length;
 
     document_array = new DocumentArray( {documents: tokenized_sentences });
     document_array.validate(function(err, document_array) {
-      if(err) { done(err); return; }
+      if(err) { 
+        var em = err.errors.documents.message;
+        // Replace the error message with the correct line index in the file, using line_indexes.
+        var eml = parseInt(em.slice(em.indexOf("<%") + 2, em.indexOf("%>")));       
+        err.errors.documents.message = err.errors.documents.message.replace("<%" + eml + "%>", line_indexes[eml.toString()]);
+        done(err); 
+        return;
+      }
 
       var doc_chunks = (array, chunk_size) => Array(Math.ceil(array.length / chunk_size)).fill().map((_, index) => index * chunk_size).map(begin => array.slice(begin, begin + chunk_size));
       var chunk_size = cf.DOCUMENT_MAXCOUNT;
@@ -183,6 +190,8 @@ WipProjectSchema.methods.tokenizeString = function(str, done) {
   var sents = str.split("\n");
   var tokenized_sentences = [];
   var e = null;
+  var line_indexes = {}; // A dictionary to keep track of the indexes of lines that are blank. This ensures the validation gives the correct line numbers for any errors that may arise later.
+  var blank_line_count = 0;
 
   try {
     //console.log("Tokenizing...")
@@ -190,12 +199,16 @@ WipProjectSchema.methods.tokenizeString = function(str, done) {
       var ts = tokenizer.tokenize(sents[i]); 
       //if(i % 1000 == 0) { console.log("" + i + " / " + sents.length)}
       if(ts.length > 0) {
-        tokenized_sentences.push(ts);      
-      }  
+        tokenized_sentences.push(ts);  
+        var ind = i - blank_line_count;
+        line_indexes[ind] = i + 1;  
+      } else {
+        blank_line_count += 1
+      }          
     }
     //console.log("done")
   } catch(err) { e = err; }
-  done(e, tokenized_sentences);
+  done(e, tokenized_sentences, line_indexes);
 }
 
 // Adds the creator of the project to its user_ids (as the creator should always be able to annotate the project).

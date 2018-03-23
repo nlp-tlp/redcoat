@@ -128,6 +128,13 @@ div#setup-questions {
 	line-height: 180%;
 	div.saved-notification {
 		margin-bottom: 110px;
+		opacity: 0;
+		transition: opacity 0.2s ease;
+		pointer-events: none;
+		&.show {
+			opacity: 1;
+			pointer-events: auto;
+		}
 	}
 	div.saved-notification p {
 		i {

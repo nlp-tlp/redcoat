@@ -54,6 +54,8 @@ block content
 					- var action = 'upload-tokenized'
 					include partials/upload_widget
 
+				div#saved-notification-upload-tokenized.saved-notification
+					p <i class="fa fa-check"></i> This section has been saved.
 
 			article#dataset.article-heading.not-scrolled-to
 				h1 Entity Categories
@@ -255,7 +257,7 @@ block scripts
 
 		'use strict';
 
-		var MAX_FILESIZE = !{max_filesize_mb} * 1024 * 1024; // 1mb for now.
+		var MAX_FILESIZE = !{max_filesize_mb} * 1024 * 1024;
 
 		var file_metadata = !{file_metadata};
 
@@ -267,7 +269,7 @@ block scripts
 		;( function( $, window, document, undefined )
 		{
 
-			function renderSuccessBox(metadata, form_ele, success_details_ele) {
+			function renderSuccessBox(metadata, form_ele, success_details_ele, saved_notification_ele) {
 				form_ele.addClass( 'is-success' );
 				console.log(success_details_ele)
 				var details = "<table><tbody>";
@@ -278,9 +280,10 @@ block scripts
 				}
 				details += "</tbody></table>"
 				success_details_ele.html(details); // remove final <br/> tag.
+				saved_notification_ele.addClass('show');
 			}
 
-			if(file_metadata) renderSuccessBox(file_metadata, $("#form-upload-tokenized"), $("#form-upload-tokenized").find('.box__success_details'));
+			if(file_metadata) renderSuccessBox(file_metadata, $("#form-upload-tokenized"), $("#form-upload-tokenized").find('.box__success_details'), $("#saved-notification-upload-tokenized"));
 
 
 
@@ -307,6 +310,7 @@ block scripts
 					$wippid      = $form.find( 'input[name="_id"]'),
 					$uploading   = $form.find( '.box__uploading'),
 					droppedFile  = null,
+					$savedNotif  = $("#saved-notification-"  + $form.attr( 'action' )),
 					showFiles	 = function( file )
 					{
 						$label.text( file.name );
@@ -318,6 +322,7 @@ block scripts
 				function validateFile(file) {
 					var a = checkFilesize(file);
 					var b = checkFiletype(file);
+					$savedNotif.removeClass("show");
 
 					if(!(a && b)) {
 						$form.addClass( 'is-uploading' ).removeClass( 'is-error' );
@@ -542,7 +547,7 @@ block scripts
 									$form.addClass( 'is-error' );
 									$errorMsg.text( data.error );
 								} else {
-									renderSuccessBox(data.details, $form, $successDets);
+									renderSuccessBox(data.details, $form, $successDets, $savedNotif);
 								}
 							},
 							error: function()
