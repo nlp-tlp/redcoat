@@ -6,19 +6,19 @@ block content
 		nav#sidenav
 
 			ul.setup-stages#nav-setup-stages
-				li 
+				li#li-project-details 
 					span 						
 						| Project Details
 						i.fa.fa-check
-				li.not-yet-started
+				li#li-upload-tokenized.not-yet-started
 					span 
 						i.fa.fa-check
 						| Dataset
-				li.not-yet-started
+				li#li-entity-categories.not-yet-started
 					span 
 						i.fa.fa-check
 						| Entity Categories
-				li.not-yet-started
+				li#li-distribution.not-yet-started
 					span 
 						i.fa.fa-check
 						| Distribution
@@ -31,18 +31,20 @@ block content
 				h1 Project Details				
 				div.form-section
 					p Please enter the details of your project below.
-					form
-						div.form-group
-							label(for="input-project-name") Project Name*
+					form#project-details-form
+						input(type="hidden", name="_csrf", value="" + csrfToken)
+						input(type="hidden", name="_id", value="" + wip_project_id)
+						div#project-name-form.form-group
+							label(for="input-project-name") Project Name (required)
 							input(id="input-project-name" placeholder="Project Name" autofocus required)
 							div.form-help The name of the project.
-						div.form-group
-							label(for="input-project-name") Project Description
-							input(id="input-project-name" placeholder="Project Description")
+						div#project-description-form.form-group
+							label(for="input-project-description") Project Description (optional)
+							input(id="input-project-description" tabindex="-1" placeholder="Project Description")
 							div.form-help A short description of the project.
 						//div.submit-row
 						//	input(type="submit" value="Next: Upload Dataset")
-				div.saved-notification
+				div#saved-notification-project-details.saved-notification
 					p <i class="fa fa-check"></i> This section has been saved.
 						
 			article#dataset.article-heading.not-scrolled-to
@@ -156,6 +158,7 @@ block scripts
 
 
 
+
 		// Scroll to headings when clicking on nav
 		$($("#nav-setup-stages").children()).on("click", function() {
 			$('html, body').animate({scrollTop: $($(".article-heading")[$(this).index()]).offset().top - 100}, 500);
@@ -252,24 +255,114 @@ block scripts
 
 	script.
 
-		// Drag and drop code and css found here:
-		// https://css-tricks.com/examples/DragAndDropFileUploading/
-
 		'use strict';
 
 		var MAX_FILESIZE = !{max_filesize_mb} * 1024 * 1024;
-
 		var file_metadata = !{file_metadata};
 
-		console.log(file_metadata);
 
 
 
 
+		
+
+
+		// Drag and drop code and css found here:
+		// https://css-tricks.com/examples/DragAndDropFileUploading/
 		;( function( $, window, document, undefined )
 		{
 
-			function renderSuccessBox(metadata, form_ele, success_details_ele, saved_notification_ele) {
+			function uploadNameDesc() {
+				var csrfToken   = $("#project-details-form").find( 'input[name="_csrf"]').val();
+				var wippid      = $("#project-details-form").find( 'input[name="_id"]').val();
+
+
+
+				var pn = $("#project-name-form input").val();
+				var pd = $("#project-description-form input").val();
+				var o = {
+					"name": pn,
+					"desc": pd
+				}
+				console.log(pn, pd, o)
+
+				console.log("Saved");
+				$.ajax(
+				{
+					url: 			'upload-namedesc',
+					type:			'POST',
+					data: 			o,
+					dataType: 		"json",
+					headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
+					complete: function()
+					{
+						//$form.removeClass( 'is-uploading' );
+					},
+					success: function( data )
+					{
+						console.log("done");
+						if($("#project-name-form input").val().length > 0) {
+							$("#saved-notification-project-details").addClass("show");
+							$("#li-project-details").addClass("completed");
+						}
+					},
+					error: function()
+					{								
+						alert( 'Error. Please, contact the webmaster!' );
+					}
+				});				
+
+			}
+
+
+			var existingProjName = "#{project_name}";
+			var existingProjDesc = "#{project_desc}";
+			if(existingProjName.length > 0) {
+				$("#saved-notification-project-details").addClass("show");
+				$("#li-project-details").addClass("completed");				
+				$("#project-name-form input").val(existingProjName);
+				$("#project-description-form").addClass("show");
+				$("#project-description-form input").attr("tabindex", "0");
+			}
+			if(existingProjDesc.length > 0) {
+				$("#project-description-form input").val(existingProjDesc);
+			}
+
+
+			// Project Name/Description
+			var projnameTimeout;
+
+
+
+			$("#input-project-name").on('keyup', function() {	// Show the description box after the user types something in the Project Name box.
+				$("#saved-notification-project-details").removeClass("show");
+				$("#li-project-details").removeClass("completed");
+				if($(this).val().length > 0) {
+					$("#project-description-form").addClass("show");
+					$("#project-description-form input").attr("tabindex", "0");
+				} else {
+					$("#project-description-form").removeClass("show");
+					$("#project-description-form input").attr("tabindex", "-1");
+				}
+				window.clearTimeout(projnameTimeout);
+				projnameTimeout = window.setTimeout(uploadNameDesc, 1000);
+			});
+
+			$("#input-project-description").on('keyup', function() {
+				$("#saved-notification-project-details").removeClass("show");
+				$("#li-project-details").removeClass("completed");
+				window.clearTimeout(projnameTimeout);
+				projnameTimeout = window.setTimeout(uploadNameDesc, 1000);
+			});
+
+
+
+
+
+
+
+
+			function renderSuccessBox(metadata, form_ele, success_details_ele, sidenav_li_ele, saved_notification_ele) {
 				form_ele.addClass( 'is-success' );
 				console.log(success_details_ele)
 				var details = "<table><tbody>";
@@ -281,9 +374,10 @@ block scripts
 				details += "</tbody></table>"
 				success_details_ele.html(details); // remove final <br/> tag.
 				saved_notification_ele.addClass('show');
+				sidenav_li_ele.addClass('completed');
 			}
 
-			if(file_metadata) renderSuccessBox(file_metadata, $("#form-upload-tokenized"), $("#form-upload-tokenized").find('.box__success_details'), $("#saved-notification-upload-tokenized"));
+			if(file_metadata) renderSuccessBox(file_metadata, $("#form-upload-tokenized"), $("#form-upload-tokenized").find('.box__success_details'), $("#li-upload-tokenized"), $("#saved-notification-upload-tokenized"));
 
 
 
@@ -311,6 +405,7 @@ block scripts
 					$uploading   = $form.find( '.box__uploading'),
 					droppedFile  = null,
 					$savedNotif  = $("#saved-notification-"  + $form.attr( 'action' )),
+					$sidenavLi   = $("#li-"  + $form.attr( 'action' )),
 					showFiles	 = function( file )
 					{
 						$label.text( file.name );
@@ -322,6 +417,7 @@ block scripts
 				function validateFile(file) {
 					var a = checkFilesize(file);
 					var b = checkFiletype(file);
+					$sidenavLi.removeClass("completed");
 					$savedNotif.removeClass("show");
 
 					if(!(a && b)) {
@@ -547,7 +643,7 @@ block scripts
 									$form.addClass( 'is-error' );
 									$errorMsg.text( data.error );
 								} else {
-									renderSuccessBox(data.details, $form, $successDets, $savedNotif);
+									renderSuccessBox(data.details, $form, $successDets, $sidenavLi, $savedNotif);
 								}
 							},
 							error: function()

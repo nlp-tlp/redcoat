@@ -99,24 +99,25 @@ router.get('/setup-project', csrfProtection, isLoggedIn, function(req, res, next
 
     // If they don't, create a new one
 
-    function renderPage(wip_project, file_metadata) {
-       res.render('setup-project', { wip_project_id: wip_project._id, file_metadata: file_metadata, csrfToken: req.csrfToken(), path: req.path, title: "Set up project", max_filesize_mb: MAX_FILESIZE_MB });
+    function renderPage(wip_project, project_name, project_desc, file_metadata) {
+       res.render('setup-project', { wip_project_id: wip_project._id, project_name: project_name, project_desc: project_desc, file_metadata: file_metadata, csrfToken: req.csrfToken(), path: req.path, title: "Set up project", max_filesize_mb: MAX_FILESIZE_MB });
     }
 
     WipProject.findWipByUserId(testuser._id, function(err, wip_project) {
       if(err) { next(err); return; }
       if(wip_project) {
         console.log("Existing WIP Project found.");
+        console.log(wip_project.project_description)
         if(wip_project.file_metadata["Filename"] != undefined) {
-          renderPage(wip_project, JSON.stringify(wip_project.fileMetadataToArray()));
+          renderPage(wip_project, wip_project.project_name, wip_project.project_description, JSON.stringify(wip_project.fileMetadataToArray()));
         } else {
-          renderPage(wip_project, "null");
+          renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null");
         }        
       } else {
         console.log("No existing WIP Project found - creating a new one.")
         wip_project = new WipProject({ user_id: testuser._id });
         wip_project.save(function(err, wip_project) {
-          renderPage(wip_project, "null"); 
+          renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null"); 
         });   
       }
    
@@ -124,6 +125,33 @@ router.get('/setup-project', csrfProtection, isLoggedIn, function(req, res, next
   //});
   
 
+});
+
+router.post('/upload-namedesc', parseForm, csrfProtection, isLoggedIn, function(req, res) {
+
+  WipProject.verifyWippid(testuser._id, req.headers.wippid, function(err, wip_project) {
+    if(!wip_project) { console.log("incorrect user"); res.send({ "success": false }); }
+    else {
+
+      wip_project.project_name = req.body.name.length > 0 ? req.body.name : null;
+      wip_project.project_description = req.body.desc.length > 0 ? req.body.desc : null;
+
+      wip_project.save(function(err) {
+        if(err) { console.log(err); res.send( { "success": false} ); }
+        else {
+          console.log("pingud");
+          res.send({ "success": true });
+        }
+
+      });
+
+
+      //wip_project.deleteDocumentsAndMetadataAndSave(function(err, wip_project) {
+      //  console.log("pinged")
+      //  res.send({ "success": true });
+      //});     
+    }
+  });
 });
 
 // Posting here will cause the WIP Project's documents and file metadata to be reset.
@@ -249,7 +277,6 @@ router.post('/upload-tokenized', parseForm, csrfProtection, isLoggedIn, function
         // log any errors that occur
         form.on('error', function(err) {
 
-            console.log(err);
             if(!responded) {
 
               // If err.message is the one about filesize being too large, change it to a nicer message.

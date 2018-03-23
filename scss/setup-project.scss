@@ -244,6 +244,18 @@ div#setup-questions {
 		div.form-group {
 			margin: 40px 0;
 		}
+
+		#project-description-form {
+			//transform: translate(0, 15px);
+			opacity: 0.2;
+			pointer-events: none;
+			transition: opacity 0.3s ease;
+			&.show {
+				//transform: translate(0, 0);
+				opacity: 1;
+				pointer-events: auto;
+			}
+		}
 		/*div.form-file-upload {
 			height: 70px;
 			input[type="file"] {

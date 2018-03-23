@@ -131,7 +131,7 @@ var validateDocumentTokenCountMin = function(arr, done) {
 var validateDocumentTokenCountMax = function(arr, done) {
   for(var i = 0; i < arr.length; i++) {
   	if(arr[i].length > DOCUMENT_MAX_TOKEN_COUNT) {
-  		msg = "Error on line <%" + i + "%>: document cannot contain more than " + DOCUMENT_MAX_TOKEN_COUNT + " tokens." + arr[i] + "";
+  		msg = "Error on line <%" + i + "%>: document cannot contain more than " + DOCUMENT_MAX_TOKEN_COUNT + " tokens.";
     	done(false, msg);
     	return;
     }	    
