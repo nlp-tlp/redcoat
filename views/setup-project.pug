@@ -185,6 +185,13 @@ block scripts
 
 				this.name = name || "";
 				this.abbreviation = abbreviation || "";
+
+				if (color) {
+					var templateColour = true;
+				} else {
+					var templateColour = false;
+				}
+
 				this.color = color || colorList.pop();
 				var originalColor = this.color;
 				var id = id || labelId;
@@ -219,7 +226,9 @@ block scripts
 
 				// Clicking delete button will delete this row
 				$("#ec-del-" + this.id).on('click', function() {
-					colorList.push(originalColor)
+					if(templateColour) {
+						colorList.push(originalColor);
+					}
 					$("#ec-tr-" + id).remove();
 				});
 
