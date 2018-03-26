@@ -341,6 +341,20 @@ div#setup-questions {
 
 	}
 
+
+	#new-ec-button {
+		width: 100%;
+	
+		text-align: center;
+		color: #222;
+		padding: 15px;
+		display: block;
+		&:hover {
+			color: #444;
+			text-decoration: none;
+		}
+	
+	}
 	table#entity-categories-table {
 		width: 100%;
 		border-collapse: collapse;

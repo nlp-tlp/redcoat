@@ -101,7 +101,9 @@ block content
 											th Colour
 											th
 									tbody
-							
+								a#new-ec-button(href="#")
+									<i class="fa fa-plus-circle"></i>&nbsp;&nbsp;Create new label
+
 
 			article#dataset.article-heading.not-scrolled-to
 				h1 Distribution
@@ -147,7 +149,7 @@ block scripts
 	script.
 
 		var colorInd = 0;
-		var colorList = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff", "#ffbfaf", "#c6ffcb", "CC99FF"]; 
+		var colorList = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff", "#ffbfaf", "#c6ffcb", "CC99FF"].reverse(); 
 
 		var colorPalette = [];
 		
@@ -170,37 +172,57 @@ block scripts
 		console.log(colorPalette)
 
 		var $ect_tbody = $("#entity-categories-table tbody");
+		var labelId = 0;
+		var colorId = 0;
 
 		class ValidLabelInput {
 
-			constructor(id, name, abbreviation, color) {
-				this.id = id || 0;
+			constructor(name, abbreviation, color, id) {
+				labelId++;
+				colorId++;
+
+
+
 				this.name = name || "";
 				this.abbreviation = abbreviation || "";
-				this.color = color || "";
+				this.color = color || colorList.pop();
+				var originalColor = this.color;
+				var id = id || labelId;
+				this.id = id;
+
+
+
 
 				$ect_tbody.append(" \
-				<tr> \
+				<tr id=\"ec-tr-" + this.id + "\"> \
 					<td> \
-						<input id=\"ec-" + id + "-name\"> \
+						<input id=\"ec-" + this.id + "-name\" value=\"" + this.name + "\"> \
 					</td> \
 					<td> \
-						<input id=\"ec-" + id + "-abbreviation\"> \
+						<input id=\"ec-" + this.id + "-abbreviation\" value=\"" + this.abbreviation + "\"> \
 					</td> \
 					<td> \
-						<input id=\"ec-" + id + "-color\" type=\"color\"> \
+						<input id=\"ec-" + this.id + "-color\" type=\"color\"> \
 					</td> \
 					<td> \
-						<a class=\"delete-button\" tabindex=\"-1\"><i class=\"fa fa-close\"></i></a> \
+						<a id=\"ec-del-" + this.id  + "\" class=\"delete-button\" tabindex=\"-1\"><i class=\"fa fa-close\"></i></a> \
 					</td> \
 				</tr> \
 				");
 
-				$("#ec-" + id + "-color").spectrum({
-					color: color,
+				// Color picker from Spectrum
+				$("#ec-" + this.id + "-color").spectrum({
+					color: this.color,
 					showPalette: true,
 					palette: colorPalette
 				});
+
+				// Clicking delete button will delete this row
+				$("#ec-del-" + this.id).on('click', function() {
+					colorList.push(originalColor)
+					$("#ec-tr-" + id).remove();
+				});
+
 
 			}		
 		}
@@ -208,15 +230,29 @@ block scripts
 
 
 
+		var labelId = 0;
 		function createDefaultLabels() {
 			for(var i = 0; i < 4; i++) {
-				var c = colorList[colorInd];
-				var vli = new ValidLabelInput(i, "", "", c);
-				colorInd++;
+				var vli = new ValidLabelInput();
 			}
 		}
 
-		createDefaultLabels();
+		function create4NERLabels() {
+			var nerLabels = ["Person", "Organisation", "Location", "Miscellaneous"];
+			var nerAbbrev = ["PER", "ORG", "LOC", "MISC"];
+			for(var i = 0; i < 4; i++) {
+				var vli = new ValidLabelInput(nerLabels[i], nerAbbrev[i]);
+			}
+		}
+
+		create4NERLabels();
+
+
+		$("#new-ec-button").on('click', function(e) {
+			e.preventDefault();
+			var vli = new ValidLabelInput();
+	
+		});
 
 
 		//- $("input[type=\"color\"").spectrum({
