@@ -1,5 +1,10 @@
 extends layout
 
+block head
+	<script src='/javascripts/spectrum.js'></script>
+	<link rel='stylesheet' href='/stylesheets/spectrum.css' />
+
+
 block content
 
 	section#setup-menu
@@ -88,28 +93,15 @@ block content
 							p Note: you can press Tab to jump to the next item in the form.
 
 							form
-								table.entity-categories-table
+								table#entity-categories-table
 									thead
 										tr
 											th Category
 											th Abbreviation
 											th Colour
+											th
 									tbody
-										tr
-											td
-												input(id="ec-1")
-											td
-												input(id="ec-2")
-											td
-												input(id="ec-3")
-										tr
-											td
-												input(id="ec-4")
-											td
-												input(id="ec-5")
-											td
-												input(id="ec-6")
-
+							
 
 			article#dataset.article-heading.not-scrolled-to
 				h1 Distribution
@@ -154,9 +146,96 @@ block content
 block scripts
 	script.
 
+		var colorInd = 0;
+		var colorList = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff", "#ffbfaf", "#c6ffcb", "CC99FF"]; 
+
+		var colorPalette = [];
 		
 
+		function chunk (arr, len) {
 
+		  var chunks = [],
+		      i = 0,
+		      n = arr.length;
+
+		  while (i < n) {
+		    chunks.push(arr.slice(i, i += len));
+		  }
+
+		  return chunks;
+		}
+
+		colorPalette = chunk(colorList, 3);
+
+		console.log(colorPalette)
+
+		var $ect_tbody = $("#entity-categories-table tbody");
+
+		class ValidLabelInput {
+
+			constructor(id, name, abbreviation, color) {
+				this.id = id || 0;
+				this.name = name || "";
+				this.abbreviation = abbreviation || "";
+				this.color = color || "";
+
+				$ect_tbody.append(" \
+				<tr> \
+					<td> \
+						<input id=\"ec-" + id + "-name\"> \
+					</td> \
+					<td> \
+						<input id=\"ec-" + id + "-abbreviation\"> \
+					</td> \
+					<td> \
+						<input id=\"ec-" + id + "-color\" type=\"color\"> \
+					</td> \
+					<td> \
+						<a class=\"delete-button\" tabindex=\"-1\"><i class=\"fa fa-close\"></i></a> \
+					</td> \
+				</tr> \
+				");
+
+				$("#ec-" + id + "-color").spectrum({
+					color: color,
+					showPalette: true,
+					palette: colorPalette
+				});
+
+			}		
+		}
+
+
+
+
+		function createDefaultLabels() {
+			for(var i = 0; i < 4; i++) {
+				var c = colorList[colorInd];
+				var vli = new ValidLabelInput(i, "", "", c);
+				colorInd++;
+			}
+		}
+
+		createDefaultLabels();
+
+
+		//- $("input[type=\"color\"").spectrum({
+		//- 	color: "#f1f1f1"
+		//- });
+
+
+		//- $("input[type=\"color\"").each(function(e) {
+		//- 	var tid = $(this).attr('id');
+		//- 	var label = $("#label-" + tid);
+		//- 	label.css('background-color', "" + $(this).val());
+		//- });
+
+		
+		//- $("input[type=\"color\"").on('change', function(e) {
+		//- 	var tid = $(this).attr('id');
+		//- 	var label = $("#label-" + tid);
+		//- 	label.css('background-color', "" + $(this).val());
+		//- });
 
 
 		// Scroll to headings when clicking on nav

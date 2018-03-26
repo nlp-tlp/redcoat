@@ -58,13 +58,13 @@ function isLoggedIn(req, res, next) {
 }
 
 // (for now) create a new User for the wip_project to belong to
-// user = new User({
-//   username: "Pingu99",
-//   email: "pingu@nootnoot99.com",
-// });
-// User.register(user, "password", function(err, user) {
-//   console.log(err, "REGISTERED PINGU99");
-// })
+ // user = new User({
+ //   username: "Pingu99",
+ //   email: "pingu@nootnoot99.com",
+ // });
+ // User.register(user, "password", function(err, user) {
+ //   console.log(err, "REGISTERED PINGU99");
+ // })
 
 var testuser;
 User.findOne({ username: "Pingu99" }, function(err, user) {
