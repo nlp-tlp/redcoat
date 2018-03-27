@@ -349,9 +349,15 @@ div#setup-questions {
 		color: #222;
 		padding: 15px;
 		display: block;
+		position: relative;
 		&:hover {
 			color: #444;
 			text-decoration: none;
+		}
+		&.disabled {
+			pointer-events: none;
+			opacity: 0.2;
+			text-decoration: line-through;
 		}
 	
 	}

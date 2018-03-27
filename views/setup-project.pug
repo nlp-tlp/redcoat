@@ -86,9 +86,9 @@ block content
 						
 
 					div#entity-categories-list.subsection.subsection-hidden
-						h3 List entity categories
+						h3 List entity classes
 						div.pad
-							p Please enter your entity categories into the form below.
+							p Please enter your entity classes into the form below.
 							p The "Abbreviation" will determine what is written in the output file after annotation, while the "Colour" will determine the colour of the tag during annotation.
 							p Note: you can press Tab to jump to the next item in the form.
 
@@ -96,13 +96,13 @@ block content
 								table#entity-categories-table
 									thead
 										tr
-											th Category
+											th Class Name
 											th Abbreviation
 											th Colour
 											th
 									tbody
 								a#new-ec-button(href="#")
-									<i class="fa fa-plus-circle"></i>&nbsp;&nbsp;Create new label
+									<i class="fa fa-plus-circle"></i>&nbsp;&nbsp;Create new entity class
 
 
 			article#dataset.article-heading.not-scrolled-to
@@ -149,7 +149,7 @@ block scripts
 	script.
 
 		var colorInd = 0;
-		var colorList = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff", "#ffbfaf", "#c6ffcb", "CC99FF"].reverse(); 
+		var colorList = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff", "#ffbfaf", "#c6ffcb", "CC99FF", "#9999FF", "#FF99FF", "#FC99FC", "#FBAFBA", "#C6FFFF"].reverse(); 
 
 		var colorPalette = [];
 		
@@ -171,32 +171,29 @@ block scripts
 
 		console.log(colorPalette)
 
+		var MAX_VALID_LABELS = 20;
+
 		var $ect_tbody = $("#entity-categories-table tbody");
 		var labelId = 0;
 		var colorId = 0;
+		var validLabelObjs = new Set();
 
 		class ValidLabelInput {
 
-			constructor(name, abbreviation, color, id) {
+			constructor(name, abbreviation, id) {
 				labelId++;
 				colorId++;
 
-
+				var t = this;
 
 				this.name = name || "";
 				this.abbreviation = abbreviation || "";
-
-				if (color) {
-					var templateColour = true;
-				} else {
-					var templateColour = false;
-				}
-
-				this.color = color || colorList.pop();
+				this.color = colorList.pop();
 				var originalColor = this.color;
 				var id = id || labelId;
 				this.id = id;
 
+				validLabelObjs.add(t);
 
 
 
@@ -219,16 +216,16 @@ block scripts
 
 				// Color picker from Spectrum
 				$("#ec-" + this.id + "-color").spectrum({
-					color: this.color,
+					color: originalColor,
 					showPalette: true,
 					palette: colorPalette
 				});
 
 				// Clicking delete button will delete this row
 				$("#ec-del-" + this.id).on('click', function() {
-					if(templateColour) {
-						colorList.push(originalColor);
-					}
+					colorList.unshift(originalColor);
+					validLabelObjs.delete(t);
+					$("#new-ec-button").removeClass("disabled");
 					$("#ec-tr-" + id).remove();
 				});
 
@@ -259,8 +256,14 @@ block scripts
 
 		$("#new-ec-button").on('click', function(e) {
 			e.preventDefault();
+			
 			var vli = new ValidLabelInput();
-	
+			if(validLabelObjs.size == MAX_VALID_LABELS) {
+				$(this).addClass("disabled");
+
+			};
+			
+
 		});
 
 
