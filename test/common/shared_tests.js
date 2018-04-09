@@ -234,11 +234,12 @@ function runProjectValidLabelsTests(model, done) {
         { label: "ok",   abbreviation: "fine", color: "#222222" } ] });
       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
     });
-    it('should fail validation if valid_labels contains more than one of the same color', function(done) { 
+    it('should pass validation if valid_labels contains more than one of the same color', function(done) { 
       var proj = new model( { valid_labels: [ 
-        { label: "fine", abbreviation: "fine", color: "#111111" },
-        { label: "fine",   abbreviation: "fine", color: "#111111" } ] });
-      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
+        { label: "fine1", abbreviation: "fine1", color: "#111111" },
+        { label: "fine2",   abbreviation: "fine2", color: "#111111" } ] });
+
+      proj.validate(function(err) { expect(err.errors.valid_labels).to.not.exist; done(); });
     });
 
     /* Protected terms */

@@ -186,7 +186,7 @@ validLabelsValidation = [
   { validator: validateValidLabelsCountMax, msg: "Must have " + VALID_LABEL_MAXCOUNT + " or fewer labels." },
   { validator: validateValidLabelsHaveUniqueLabels, msg: "Labels must be unique." },
   { validator: validateValidLabelsHaveUniqueAbbreviations, msg: "Abbreviations must be unique." },
-  { validator: validateValidLabelsHaveUniqueColors, msg: "Colors must be unique." },
+//  { validator: validateValidLabelsHaveUniqueColors, msg: "Colors must be unique." },
   { validator: validateValidLabelsNoRestrictedLabels, msg: "Labels and abbreviations cannot be 'O' (it is reserved for non-entities)." }
 ];
 
