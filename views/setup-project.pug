@@ -7,6 +7,8 @@ block head
 
 block content
 
+
+
 	section#setup-menu
 		nav#sidenav
 
@@ -37,8 +39,6 @@ block content
 				div.form-section
 					p Please enter the details of your project below.
 					form#project-details-form
-						input(type="hidden", name="_csrf", value="" + csrfToken)
-						input(type="hidden", name="_id", value="" + wip_project_id)
 						div#project-name-form.form-group
 							label(for="input-project-name") Project Name (required)
 							input(id="input-project-name" maxlength="100" placeholder="Project Name" autofocus required)
@@ -96,6 +96,7 @@ block content
 								table#entity-categories-table
 									thead
 										tr
+											th
 											th Class Name
 											th Abbreviation
 											th Colour
@@ -103,7 +104,8 @@ block content
 									tbody
 								a#new-ec-button(href="#")
 									<i class="fa fa-plus-circle"></i>&nbsp;&nbsp;Create new entity class
-
+				div#saved-notification-entity-categories.saved-notification
+					p <i class="fa fa-check"></i> This section has been saved.
 
 			article#dataset.article-heading.not-scrolled-to
 				h1 Distribution
@@ -148,14 +150,86 @@ block content
 block scripts
 	script.
 
-		var colorInd = 0;
-		var colorList = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff", "#ffbfaf", "#c6ffcb", "CC99FF", "#9999FF", "#FF99FF", "#FC99FC", "#FBAFBA", "#C6FFFF"].reverse(); 
+		var csrfToken   = "!{csrfToken}";
+		var wippid      = "!{wip_project_id}";
+		var safeToValidate = true;
+		var uploadingLabels = false;
 
-		var colorPalette = [];
+		function uploadValidLabels() {
+
+			console.log("Uploading labels...");
+
+			uploadingLabels = true;
+
+			validLabelData = [];
+			for(var i = 0; i < validLabelObjs.length; i++) {
+				validLabelData.push({
+					label: validLabelObjs[i].name,
+					abbreviation: validLabelObjs[i].abbreviation,
+					color: validLabelObjs[i].color
+				});
+
+			}
+			console.log(validLabelData, "data")
+
+			//console.log("Saved");
+			$.ajax(
+			{
+				url: 			'upload-validlabels',
+				type:			'POST',
+				data: 			{validLabelData},
+				dataType: 		"json",
+				headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
+				complete: function()
+				{
+					//$form.removeClass( 'is-uploading' );
+				},
+				success: function( data )
+				{
+					//if($("#project-name-form input").val().length > 0) {
+
+					if(safeToValidate) {
+						$("#saved-notification-entity-categories").addClass("show");
+						$("#li-entity-categories").addClass("completed");
+						console.log("Safe to validate")
+					} else {
+						console.log("Not safe to validate (changed since pinged)")
+						window.clearTimeout(validlabelsTimeout);
+						validlabelsTimeout = window.setTimeout(uploadValidLabels, 1000);						
+						safeToValidate = true;
+					}
+					uploadingLabels = false;
+					
+
+					//}
+				},
+				error: function()
+				{								
+					alert( 'Error. Please, contact the webmaster!' );
+				}
+			});	
+		}
+
+		function setValidLabelsTimeout() {			
+			$("#saved-notification-entity-categories").removeClass("show");
+			$("#li-entity-categories").removeClass("completed");	
+			if(uploadingLabels) 		
+				safeToValidate = false;			
+			window.clearTimeout(validlabelsTimeout);
+			validlabelsTimeout = window.setTimeout(uploadValidLabels, 1000);
+		}
+
+
+
+		// Valid Labels
+		var validlabelsTimeout;
+
 		
 
-		function chunk (arr, len) {
 
+
+		// Set up color palette
+		function chunk (arr, len) {
 		  var chunks = [],
 		      i = 0,
 		      n = arr.length;
@@ -163,20 +237,22 @@ block scripts
 		  while (i < n) {
 		    chunks.push(arr.slice(i, i += len));
 		  }
-
 		  return chunks;
 		}
+		var colorInd = 0;
+		var colorList = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff", "#ffbfaf", "#c6ffcb", "CC99FF", "#9999FF", "#FF99FF", "#FC99FC", "#FBAFBA", "#C6FFFF"].reverse(); 
+		var colorPalette = chunk(colorList, 3);
 
-		colorPalette = chunk(colorList, 3);
-
-		console.log(colorPalette)
+		
 
 		var MAX_VALID_LABELS = 20;
 
 		var $ect_tbody = $("#entity-categories-table tbody");
 		var labelId = 0;
 		var colorId = 0;
-		var validLabelObjs = new Set();
+		var validLabelObjs = new Array();
+
+
 
 		class ValidLabelInput {
 
@@ -191,14 +267,16 @@ block scripts
 				this.color = colorList.pop();
 				var originalColor = this.color;
 				var id = id || labelId;
-				this.id = id;
+				this.id = id;				
+				this.valid = this.name != "";
 
-				validLabelObjs.add(t);
+				validLabelObjs.push(t);
 
-
+				var startingValidity = this.valid ? "valid-row" : "";
 
 				$ect_tbody.append(" \
-				<tr id=\"ec-tr-" + this.id + "\"> \
+				<tr class=\"" + startingValidity + "\" id=\"ec-tr-" + this.id + "\"> \
+					<td id=\"ec-valid-" + this.id + "\"><i class=\"fa fa-check\"></i></td> \
 					<td> \
 						<input id=\"ec-" + this.id + "-name\" value=\"" + this.name + "\"> \
 					</td> \
@@ -209,25 +287,53 @@ block scripts
 						<input id=\"ec-" + this.id + "-color\" type=\"color\"> \
 					</td> \
 					<td> \
-						<a id=\"ec-del-" + this.id  + "\" class=\"delete-button\" tabindex=\"-1\"><i class=\"fa fa-close\"></i></a> \
+						<a id=\"ec-del-" + this.id  + "\" class=\"delete-button\" tabindex=\"-1\"><i class=\"fa fa-trash\"></i></a> \
 					</td> \
 				</tr> \
 				");
+
+				$("#ec-" + this.id + "-name").focus();
 
 				// Color picker from Spectrum
 				$("#ec-" + this.id + "-color").spectrum({
 					color: originalColor,
 					showPalette: true,
-					palette: colorPalette
+					palette: colorPalette,
+					change: function() {
+						t.color = $(this).spectrum('get').toHexString();
+						$("#ec-tr-" + t.id).removeClass("valid-row");
+						setValidLabelsTimeout();
+					}
 				});
 
 				// Clicking delete button will delete this row
 				$("#ec-del-" + this.id).on('click', function() {
 					colorList.unshift(originalColor);
-					validLabelObjs.delete(t);
+					for(var i = 0; i < validLabelObjs.length; i++) {
+						if(validLabelObjs[i] == t) {
+							validLabelObjs.splice(i, 1);
+							break;
+						}
+					}
+					
 					$("#new-ec-button").removeClass("disabled");
 					$("#ec-tr-" + id).remove();
+					setValidLabelsTimeout();
 				});
+
+				
+				$("#ec-" + t.id + "-name").on('keyup', function() {
+					t.name = $(this).val();
+					$("#ec-tr-" + t.id).removeClass("valid-row");
+					setValidLabelsTimeout();
+				});
+				$("#ec-" + t.id + "-abbreviation").on('keyup', function() {
+					t.abbreviation = $(this).val();
+					$("#ec-tr-" + t.id).removeClass("valid-row");
+					setValidLabelsTimeout();
+				});				
+
+
 
 
 			}		
@@ -256,6 +362,7 @@ block scripts
 
 		$("#new-ec-button").on('click', function(e) {
 			e.preventDefault();
+			setValidLabelsTimeout();
 			
 			var vli = new ValidLabelInput();
 			if(validLabelObjs.size == MAX_VALID_LABELS) {
@@ -286,207 +393,106 @@ block scripts
 		//- });
 
 
-		// Scroll to headings when clicking on nav
-		$($("#nav-setup-stages").children()).on("click", function() {
-			$('html, body').animate({scrollTop: $($(".article-heading")[$(this).index()]).offset().top - 100}, 500);
+	script(src="/javascripts/setup_project/page_scrolling.js")
+
+
+	// Project Name/Description
+	script.
+
+		function uploadNameDesc() {
+
+
+			var pn = $("#project-name-form input").val();
+			var pd = $("#project-description-form input").val();
+			var o = {
+				"name": pn,
+				"desc": pd
+			}
+			console.log(pn, pd, o)
+
+			console.log("Saved");
+			$.ajax(
+			{
+				url: 			'upload-namedesc',
+				type:			'POST',
+				data: 			o,
+				dataType: 		"json",
+				headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
+				complete: function()
+				{
+					//$form.removeClass( 'is-uploading' );
+				},
+				success: function( data )
+				{
+					console.log("done");
+					if($("#project-name-form input").val().length > 0) {
+						$("#saved-notification-project-details").addClass("show");
+						$("#li-project-details").addClass("completed");
+					}
+				},
+				error: function()
+				{								
+					alert( 'Error. Please, contact the webmaster!' );
+				}
+			});				
+
+		}
+
+
+		var existingProjName = "#{project_name}";
+		var existingProjDesc = "#{project_desc}";
+		if(existingProjName.length > 0) {
+			$("#saved-notification-project-details").addClass("show");
+			$("#li-project-details").addClass("completed");				
+			$("#project-name-form input").val(existingProjName);
+			$("#project-description-form").addClass("show");
+			$("#project-description-form input").attr("tabindex", "0");
+		}
+		if(existingProjDesc.length > 0) {
+			$("#project-description-form input").val(existingProjDesc);
+		}
+
+
+		// Project Name/Description
+		var projnameTimeout;
+
+		$("#input-project-name").on('keyup', function() {	// Show the description box after the user types something in the Project Name box.
+			$("#saved-notification-project-details").removeClass("show");
+			$("#li-project-details").removeClass("completed");
+			if($(this).val().length > 0) {
+				$("#project-description-form").addClass("show");
+				$("#project-description-form input").attr("tabindex", "0");
+			} else {
+				$("#project-description-form").removeClass("show");
+				$("#project-description-form input").attr("tabindex", "-1");
+			}
+			window.clearTimeout(projnameTimeout);
+			projnameTimeout = window.setTimeout(uploadNameDesc, 1000);
 		});
 
-		$(document).on('scroll', function() {
-
-			$(".article-heading.scrolled-to").each(function() {
-
-			    if($(document).scrollTop()<$(this).position().top - 250){
-			    	
-			    	$(this).addClass("not-scrolled-to")
-			    	$(this).removeClass("scrolled-to")
-
-			    	$($("#nav-setup-stages").children()[$(this).index() - 1]).removeClass("scrolled-past")
-			    	$($("#nav-setup-stages").children()[$(this).index()]).addClass("not-yet-started")
-			       
-			    }			
-
-			})
-
-			$(".article-heading.not-scrolled-to").each(function() {
-			    if($(document).scrollTop()>=$(this).position().top - 250){
-			    	
-			    	$(this).removeClass("not-scrolled-to")
-			    	$(this).addClass("scrolled-to")
-
-			    	$($("#nav-setup-stages").children()[$(this).index() - 1]).addClass("scrolled-past")
-			    	$($("#nav-setup-stages").children()[$(this).index()]).removeClass("not-yet-started")
-			       
-			    }
-
-
-			})
-
-
-		})
-
-
-
-
-
-		$("#entity-categories-list-button").on("click", function() {
-			$("#entity-categories-list").slideDown(500)
-			$("#entity-categories-ner").slideUp(500)
-			$("#ec-1").focus();
-
-			$("#entity-categories-ner-button").addClass("fade-out");			
-			$("#entity-categories-list-button").removeClass("fade-out");
+		$("#input-project-description").on('keyup', function() {
+			$("#saved-notification-project-details").removeClass("show");
+			$("#li-project-details").removeClass("completed");
+			window.clearTimeout(projnameTimeout);
+			projnameTimeout = window.setTimeout(uploadNameDesc, 1000);
 		});
-
-
-		$("#entity-categories-ner-button").on("click", function() {
-			$("#entity-categories-ner").slideDown(500)
-			$("#entity-categories-list").slideUp(500)
-
-			$("#entity-categories-list-button").addClass("fade-out");			
-			$("#entity-categories-ner-button").removeClass("fade-out");
-		});
-
-
-		$("#already-tokenized-data-button").on("click", function() {
-			$("#already-tokenized-data").slideDown(500)
-			$("#untokenized-data").slideUp(500)
-
-			$("#untokenized-data-button").addClass("fade-out");			
-			$("#already-tokenized-data-button").removeClass("fade-out");
-		});
-
-		$("#untokenized-data-button").on("click", function() {
-			$("#untokenized-data").slideDown(500)
-			$("#already-tokenized-data").slideUp(500)
-
-			$("#already-tokenized-data-button").addClass("fade-out");
-			$("#untokenized-data-button").removeClass("fade-out");
-		});
-
-		/*$("#actually-already-tokenized-data-button").on("click", function() {
-			$("#untokenized-data").addClass("subsection-hidden");
-			$("#already-tokenized-data-button").removeClass("fade-out");
-			$("#already-tokenized-data-button").click()			
-		});
-
-		$("#actually-untokenized-data-button").on("click", function() {
-			$("#already-tokenized-data").addClass("subsection-hidden");
-			$("#untokenized-data-button").removeClass("fade-out");
-			$("#untokenized-data-button").click()			
-		});*/
-		
-
-
 	
 
 
+	// Upload widget
 	script.
 
 		'use strict';
 
 		var MAX_FILESIZE = !{max_filesize_mb} * 1024 * 1024;
 		var file_metadata = !{file_metadata};
-
-
-
-
-
-		
+	
 
 
 		// Drag and drop code and css found here:
 		// https://css-tricks.com/examples/DragAndDropFileUploading/
 		;( function( $, window, document, undefined )
 		{
-
-			function uploadNameDesc() {
-				var csrfToken   = $("#project-details-form").find( 'input[name="_csrf"]').val();
-				var wippid      = $("#project-details-form").find( 'input[name="_id"]').val();
-
-
-
-				var pn = $("#project-name-form input").val();
-				var pd = $("#project-description-form input").val();
-				var o = {
-					"name": pn,
-					"desc": pd
-				}
-				console.log(pn, pd, o)
-
-				console.log("Saved");
-				$.ajax(
-				{
-					url: 			'upload-namedesc',
-					type:			'POST',
-					data: 			o,
-					dataType: 		"json",
-					headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
-					complete: function()
-					{
-						//$form.removeClass( 'is-uploading' );
-					},
-					success: function( data )
-					{
-						console.log("done");
-						if($("#project-name-form input").val().length > 0) {
-							$("#saved-notification-project-details").addClass("show");
-							$("#li-project-details").addClass("completed");
-						}
-					},
-					error: function()
-					{								
-						alert( 'Error. Please, contact the webmaster!' );
-					}
-				});				
-
-			}
-
-
-			var existingProjName = "#{project_name}";
-			var existingProjDesc = "#{project_desc}";
-			if(existingProjName.length > 0) {
-				$("#saved-notification-project-details").addClass("show");
-				$("#li-project-details").addClass("completed");				
-				$("#project-name-form input").val(existingProjName);
-				$("#project-description-form").addClass("show");
-				$("#project-description-form input").attr("tabindex", "0");
-			}
-			if(existingProjDesc.length > 0) {
-				$("#project-description-form input").val(existingProjDesc);
-			}
-
-
-			// Project Name/Description
-			var projnameTimeout;
-
-
-
-			$("#input-project-name").on('keyup', function() {	// Show the description box after the user types something in the Project Name box.
-				$("#saved-notification-project-details").removeClass("show");
-				$("#li-project-details").removeClass("completed");
-				if($(this).val().length > 0) {
-					$("#project-description-form").addClass("show");
-					$("#project-description-form input").attr("tabindex", "0");
-				} else {
-					$("#project-description-form").removeClass("show");
-					$("#project-description-form input").attr("tabindex", "-1");
-				}
-				window.clearTimeout(projnameTimeout);
-				projnameTimeout = window.setTimeout(uploadNameDesc, 1000);
-			});
-
-			$("#input-project-description").on('keyup', function() {
-				$("#saved-notification-project-details").removeClass("show");
-				$("#li-project-details").removeClass("completed");
-				window.clearTimeout(projnameTimeout);
-				projnameTimeout = window.setTimeout(uploadNameDesc, 1000);
-			});
-
-
-
-
-
-
 
 
 			function renderSuccessBox(metadata, form_ele, success_details_ele, sidenav_li_ele, saved_notification_ele) {
@@ -527,8 +533,6 @@ block scripts
 					$errorMsg	 = $form.find( '.box__error span' ),
 					$restart	 = $form.find( '.box__restart' ),
 					$successDets = $form.find( '.box__success_details' ),
-					$csrfToken   = $form.find( 'input[name="_csrf"]'),
-					$wippid      = $form.find( 'input[name="_id"]'),
 					$uploading   = $form.find( '.box__uploading'),
 					droppedFile  = null,
 					$savedNotif  = $("#saved-notification-"  + $form.attr( 'action' )),
@@ -538,8 +542,6 @@ block scripts
 						$label.text( file.name );
 					};
 
-					var csrfToken = $csrfToken.val();					
-					var wippid    = $wippid.val();
 
 				function validateFile(file) {
 					var a = checkFilesize(file);

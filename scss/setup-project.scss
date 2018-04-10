@@ -366,6 +366,9 @@ div#setup-questions {
 		border-collapse: collapse;
 
 		//border: 2px solid #ddd;
+		tr:not(.valid-row) > td:first-child > i.fa-check {
+			display: none;
+		}
 		tr {
 
 			th, td {
@@ -386,7 +389,7 @@ div#setup-questions {
 					border-bottom: 2px solid #f2f2f2;
 					transition: none;
 					&:focus, &:active {
-						border-bottom: 2px solid #ccc !important;
+						border-bottom: 2px solid #bbb !important;
 					}
 				}
 			}
@@ -401,41 +404,56 @@ div#setup-questions {
 			th, td {
 				width: 22.5%;
 			}
-			th:nth-child(3), td:nth-child(3) {
+
+			td:first-child i.fa-check {		
+				//display: none;		
+				color: darken(rgb(78, 172, 96), 6);
+			}
+			// td:first-child i.fa-close {
+			// 	color: lighten(rgb(185, 12, 5), 6);
+			// }
+			th:nth-child(4), td:nth-child(4) {
 				border-right: 1px solid #ddd;
 			}
-			th:first-child, td:first-child {
+			th:nth-child(2), td:nth-child(2) {
 				width: 50%;
 				border-left: 1px solid #ddd;
 			}
-			th:last-child, td:last-child {
+
+
+			th:last-child, td:last-child, th:first-child, td:first-child {
 				width: 5%;
 				background: none;
 				border: none;
 				border-left: 1px solid #ddd;
 				text-align: center;
 			}	
-
+			th:first-child, td:first-child {
+				border-left: none;
+			}
 			a.delete-button {
 				width: 36px;
 				height: 36px;
 				text-align: center;
-				border: 1px solid #ddd;
-				background: white;
+				border: 2px solid #ddd;
+				background: none;
 				outline: none;
 				margin-top: -2px;
 				display: block;
 				//color: rgb(185, 12, 5);
-				color: #222;
+				color: #333;
+				border-radius: 50%;
 				&:hover {
 					color: white;
 					background: lighten(rgb(185, 12, 5), 6);
+					border: 2px solid darken(rgb(185, 12, 5), 3);
 					
 				}
 				&:active {
 					color: white;
 					transform: translate(1px, 1px);
 					background: rgb(185, 12, 5);
+					border: 2px solid darken(rgb(185, 12, 5), 3);
 				}
 
 			}

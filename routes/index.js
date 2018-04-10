@@ -127,6 +127,21 @@ router.get('/setup-project', csrfProtection, isLoggedIn, function(req, res, next
 
 });
 
+
+router.post('/upload-validlabels', parseForm, csrfProtection, isLoggedIn, function(req, res) {
+  WipProject.verifyWippid(testuser._id, req.headers.wippid, function(err, wip_project) {
+    if(!wip_project) { console.log("incorrect user"); res.send({ "success": false }); }
+    else {
+      console.log(req.body.validLabelData)
+      setTimeout(function() {
+        res.send( { "success" : true });
+      }, 1000);
+      
+    }
+  });
+});
+
+
 router.post('/upload-namedesc', parseForm, csrfProtection, isLoggedIn, function(req, res) {
 
   WipProject.verifyWippid(testuser._id, req.headers.wippid, function(err, wip_project) {
