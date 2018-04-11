@@ -176,7 +176,7 @@ var validateArrayHasUniqueValues = function(arr) {
 
 
 
-
+// A special validation function that provides useful error messages for displaying on the setup page.
 var validateValidLabels = function(arr, done) {
 
   // Validate that no tokens in the document are of length 0.
@@ -191,6 +191,7 @@ var validateValidLabels = function(arr, done) {
     return msg;
   };
 
+  // Validate that all items are unique.
   var validateItemsAreUnique = function(arr, item_name) {
     var msg = [];
     items_seen = new Set();
@@ -233,6 +234,9 @@ userIdsValidation = [
 ];
 
 validLabelsValidation = [
+  { validator: validateValidLabelsHaveLabelAbbreviationAndColor, msg: "All labels must have a corresponding abbreviation and color."  },
+
+
   // { validator: function(arr, done) { validateNoItemsAreBlank(arr, "label", function(result, msg) { done(result, msg); })}, isAsync: true },
   // { validator: function(arr, done) { validateNoItemsAreBlank(arr, "abbreviation", function(result, msg) { done(result, msg); })}, isAsync: true },
   // { validator: function(arr, done) { validateItemsAreUnique(arr, "label", function(result, msg) { done(result, msg); })}, isAsync: true },
@@ -240,7 +244,6 @@ validLabelsValidation = [
   { validator: function(arr, done) { validateValidLabels(arr, function(result, msg) { done(result, msg); })}, isAsync: true },
 
 
-  //{ validator: validateValidLabelsHaveLabelAbbreviationAndColor, msg: "All labels must have a corresponding abbreviation and color."  },
   { validator: validateValidLabelsCountMin, msg: "Must have one or more labels." },
   { validator: validateValidLabelsCountMax, msg: "Must have " + VALID_LABEL_MAXCOUNT + " or fewer labels." },
   //{ validator: validateValidLabelsHaveUniqueLabels, msg: "Labels must be unique." },
