@@ -34,6 +34,9 @@ block content
 						i.fa.fa-check
 						| Submission
 		div#setup-questions
+			div#error-banner
+				<i class="fa fa-exclamation-triangle"></i>&nbsp;&nbsp; There was a problem communicating with the server. Data entered into the form may not be saved.
+
 			article#project-details.article-heading
 				h1 Project Details				
 				div.form-section
@@ -148,6 +151,19 @@ block content
 
 
 block scripts
+
+	script.
+
+		var errorBannerTimeout;
+
+		function displayServerErrorBanner() {
+			$("#error-banner").addClass("show");
+			errorBannerTimeout = window.setTimeout(function() {
+				$("#error-banner").removeClass("show");
+			}, 5000);
+		}
+
+
 	script.
 
 		var csrfToken   = "!{csrfToken}";
@@ -201,7 +217,7 @@ block scripts
 							} else {
 								validLabelObjs[i].markAsInvalid();
 								for(var j = 0; j < data.errors[i].length; j++) {
-									validLabelObjs[i].markError(data.errors[i][j]);
+									validLabelObjs[i].markError(data.errors[i][j].item_name, data.errors[i][j].message);
 								}
 								
 							}
@@ -236,7 +252,7 @@ block scripts
 				},
 				error: function()
 				{								
-					alert( 'Error. Please, contact the webmaster!' );
+					displayServerErrorBanner();
 				}
 			});	
 		}
@@ -353,14 +369,17 @@ block scripts
 				});
 
 				
-				$("#ec-" + t.id + "-label").on('keyup', function() {
+				$("#ec-" + t.id + "-label").on('input', function() {
+					$(this).removeAttr("title");
 					t.label = $(this).val();
 					$(this).removeClass("has_error");
 					$("#ec-tr-" + t.id).removeClass("valid-row");
 					setValidLabelsTimeout();
 				});
-				$("#ec-" + t.id + "-abbreviation").on('keyup', function() {
+				$("#ec-" + t.id + "-abbreviation").on('input', function() {
+					$(this).removeAttr("title");
 					t.abbreviation = $(this).val();
+					$(this).removeClass("has_error");
 					$("#ec-tr-" + t.id).removeClass("valid-row");
 					setValidLabelsTimeout();
 				});				
@@ -372,17 +391,17 @@ block scripts
 
 
 			markAsValid() {
-				console.log($("#ec-tr-" + this.id))
 				$("#ec-tr-" + this.id).addClass("valid-row");
 			}
 			markAsInvalid() {
 				$("#ec-tr-" + this.id).removeClass("valid-row");
 			}
 
-			markError(item_name) {
+			markError(item_name, error_message) {
 				var field = $("#ec-" + this.id + "-" + item_name); 
 				if(field.val().length > 0) {
 					field.addClass("has_error");
+					field.prop('title', error_message);
 				}
 			}
 
@@ -481,7 +500,7 @@ block scripts
 				},
 				error: function()
 				{								
-					alert( 'Error. Please, contact the webmaster!' );
+					displayServerErrorBanner();
 				}
 			});				
 
@@ -505,7 +524,8 @@ block scripts
 		// Project Name/Description
 		var projnameTimeout;
 
-		$("#input-project-name").on('keyup', function() {	// Show the description box after the user types something in the Project Name box.
+		$("#input-project-name").on('input', function() {	// Show the description box after the user types something in the Project Name box.
+			
 			$("#saved-notification-project-details").removeClass("show");
 			$("#li-project-details").removeClass("completed");
 
@@ -520,7 +540,7 @@ block scripts
 			projnameTimeout = window.setTimeout(uploadNameDesc, 1000);
 		});
 
-		$("#input-project-description").on('keyup', function() {
+		$("#input-project-description").on('input', function() {
 			$("#saved-notification-project-details").removeClass("show");
 			$("#li-project-details").removeClass("completed");
 			window.clearTimeout(projnameTimeout);
@@ -629,7 +649,7 @@ block scripts
 							},
 							error: function()
 							{								
-								alert( 'Error. Please, contact the webmaster!' );
+								displayServerErrorBanner();
 							}
 						});
 					}
@@ -827,7 +847,7 @@ block scripts
 							},
 							error: function()
 							{								
-								alert( 'Error. Please, contact the webmaster!' );
+								displayServerErrorBanner();
 							}
 						});
 					}

@@ -185,7 +185,7 @@ var validateValidLabels = function(arr, done) {
     var msg = [];
     for(var i = 0; i < arr.length; i++) {
       if(!validateNotBlank(arr[i][item_name])) {
-        msg.push(i + ": [" + item_name + "]: Error: " + item_name + " must not be blank.");
+        msg.push(i + ": [" + item_name + "] Error: " + item_name + " must not be blank.");
       }
     }
     return msg;
@@ -197,7 +197,7 @@ var validateValidLabels = function(arr, done) {
     items_seen = new Set();
     for(var i = 0; i < arr.length; i++) {
       if(items_seen.has(arr[i][item_name])) {
-        msg.push(i + ": [" + item_name + "]: Error: " + item_name + " must be unique.");
+        msg.push(i + ": [" + item_name + "] Error: " + item_name + " must be unique.");
       } else {
         items_seen.add(arr[i][item_name]);
       }

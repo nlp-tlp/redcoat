@@ -78,7 +78,6 @@ exports.index = function(req, res, next) {
 // Upload the name and description of the project.
 exports.upload_name_desc = function(req, res, next) {
 
-  console.log('hello')
 
   wip_project = res.locals.wip_project;
 
@@ -98,7 +97,6 @@ exports.upload_name_desc = function(req, res, next) {
   wip_project.save(function(err) {
     if(err) { console.log(err); res.send( { "success": false} ); }
     else {
-      console.log("pingud");
       res.send({ "success": true });
     }
   });
@@ -119,11 +117,10 @@ exports.upload_valid_labels = function(req, res, next) {
 
         //console.log("VALID LABEL ERRORS:");
 
-        console.log(err.errors.valid_labels.message)
+        //console.log(err.errors.valid_labels.message)
 
         //var em = err.errors.valid_labels.message;
         //var error_label = parseInt(em.slice(em.indexOf("<%") + 2, em.indexOf("%>")));
-
 
 
         var err_lines = err.errors.valid_labels.message.split("\n");
@@ -134,30 +131,24 @@ exports.upload_valid_labels = function(req, res, next) {
         for(var i = 0; i < err_lines.length; i++) {
           var ind = parseInt(err_lines[i].slice(0, err_lines[i].indexOf(":")));
           var item_name = err_lines[i].slice(err_lines[i].indexOf("[") + 1, err_lines[i].indexOf("]"))
-          errors[ind].push(item_name);
+          var error_message = err_lines[i].slice(err_lines[i].indexOf("] ") + 2, err_lines[i].length);
+          errors[ind].push({ item_name: item_name, message: error_message });
 
         }
-        console.log(errors);
+        console.log(errors);   
 
         res.send( { "success": false, "errors": errors });
 
         //console.log("ERROR:", error_label);
+      } else {
+
+        setTimeout(function() {
+          res.send( { "success" : true });
+        }, 1000);
+
       }
 
-
-
-    } else {
-
-
-
-      setTimeout(function() {
-        res.send( { "success" : true });
-      }, 1000);
-
-
     }
-
-
 
   });
 
