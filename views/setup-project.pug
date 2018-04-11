@@ -29,13 +29,14 @@ block content
 					span 
 						i.fa.fa-check
 						| Distribution
-				li.not-yet-started
+				li#li-submission.not-yet-started
 					span 
 						i.fa.fa-check
 						| Submission
+		div#error-banner
+			<i class="fa fa-exclamation-triangle"></i>&nbsp;&nbsp; There was a problem communicating with the server. Data entered into the form may not be saved.
 		div#setup-questions
-			div#error-banner
-				<i class="fa fa-exclamation-triangle"></i>&nbsp;&nbsp; There was a problem communicating with the server. Data entered into the form may not be saved.
+
 
 			article#project-details.article-heading
 				h1 Project Details				
@@ -55,7 +56,7 @@ block content
 				div#saved-notification-project-details.saved-notification
 					p <i class="fa fa-check"></i> This section has been saved.
 						
-			article#dataset.article-heading.not-scrolled-to
+			article#upload-tokenized.article-heading.not-scrolled-to
 				h1 Dataset				
 				div.form-section
 					p Please upload your  data using the form below.
@@ -67,7 +68,7 @@ block content
 				div#saved-notification-upload-tokenized.saved-notification
 					p <i class="fa fa-check"></i> This section has been saved.
 
-			article#dataset.article-heading.not-scrolled-to
+			article#entity-categories.article-heading.not-scrolled-to
 				h1 Entity Categories
 				div.form-section
 					p Please determine how you would prefer to list the entity categories (such as "Person" and "Organisation") in your data.
@@ -110,7 +111,7 @@ block content
 				div#saved-notification-entity-categories.saved-notification
 					p <i class="fa fa-check"></i> This section has been saved.
 
-			article#dataset.article-heading.not-scrolled-to
+			article#distribution.article-heading.not-scrolled-to
 				h1 Distribution
 				div.form-section
 					p Please determine how you would like to distribute the annotation task.
@@ -138,7 +139,7 @@ block content
 			//- 				input(id="input-project-name" type="password" placeholder="")
 
 
-			article#dataset.article-heading.not-scrolled-to
+			article#submission.article-heading.not-scrolled-to
 				h1 Submission
 				div.form-section
 					p Once you have completed the form, please click the submit button below to set up the project.
@@ -287,7 +288,7 @@ block scripts
 		  return chunks;
 		}
 		var colorInd = 0;
-		var colorList = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff", "#ffbfaf", "#c6ffcb", "CC99FF", "#9999FF", "#FF99FF", "#FC99FC", "#FBAFBA", "#C6FFFF"].reverse(); 
+		var colorList = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC44", "#fbafff", "#ffbfaf", "#c6ffcb", "CC99FF", "#9999FF", "#FF99FF", "#FC9999", "#FBAFBA", "#C6FFFF"].reverse(); 
 		var colorPalette = chunk(colorList, 3);
 
 		
@@ -312,17 +313,15 @@ block scripts
 				this.label = label || "";
 				this.abbreviation = abbreviation || "";
 				this.color = colorList.pop();
-				var originalColor = this.color;
+				this.originalColor = this.color;
 				var id = id || labelId;
 				this.id = id;				
 				this.valid = this.label != "";
 
 				validLabelObjs.push(t);
 
-				var startingValidity = this.valid ? "valid-row" : "";
-
 				$ect_tbody.append(" \
-				<tr class=\"" + startingValidity + "\" id=\"ec-tr-" + this.id + "\"> \
+				<tr id=\"ec-tr-" + this.id + "\"> \
 					<td id=\"ec-valid-" + this.id + "\"><i class=\"fa fa-check\"></i></td> \
 					<td> \
 						<input id=\"ec-" + this.id + "-label\" value=\"" + this.label + "\"> \
@@ -343,7 +342,7 @@ block scripts
 
 				// Color picker from Spectrum
 				$("#ec-" + this.id + "-color").spectrum({
-					color: originalColor,
+					color: t.originalColor,
 					showPalette: true,
 					palette: colorPalette,
 					change: function() {
@@ -355,7 +354,7 @@ block scripts
 
 				// Clicking delete button will delete this row
 				$("#ec-del-" + this.id).on('click', function() {
-					colorList.unshift(originalColor);
+					t.unshiftColor();			
 					for(var i = 0; i < validLabelObjs.length; i++) {
 						if(validLabelObjs[i] == t) {
 							validLabelObjs.splice(i, 1);
@@ -389,6 +388,15 @@ block scripts
 
 			}
 
+			unshiftColor() {
+				colorList.unshift(this.originalColor);
+			}
+
+
+			// Deletes this label by clicking the trash button.
+			deleteLabel() {
+				$("#ec-del-" + this.id).click();
+			}
 
 			markAsValid() {
 				$("#ec-tr-" + this.id).addClass("valid-row");
@@ -415,6 +423,17 @@ block scripts
 			for(var i = 0; i < 4; i++) {
 				var vli = new ValidLabelInput();
 			}
+			setValidLabelsTimeout();
+		}
+
+
+		function deleteAllLabels() {
+			for(var i = 0; i < validLabelObjs.length; i++) {
+				validLabelObjs[i].unshiftColor();
+			}
+			validLabelObjs = [];
+			$("#entity-categories-table tbody").empty();
+			
 		}
 
 		function create4NERLabels() {
@@ -423,9 +442,13 @@ block scripts
 			for(var i = 0; i < 4; i++) {
 				var vli = new ValidLabelInput(nerLabels[i], nerAbbrev[i]);
 			}
+			// Validate the labels right after they're created.
+			setValidLabelsTimeout();
 		}
 
-		create4NERLabels();
+
+
+		//create4NERLabels();
 
 
 		$("#new-ec-button").on('click', function(e) {
@@ -440,6 +463,28 @@ block scripts
 			
 
 		});
+
+
+		$("#entity-categories-list-button").on("click", function() {			
+			deleteAllLabels();
+			createDefaultLabels();			
+			$("#entity-categories-list").slideDown(500)
+			$("#entity-categories-table input")[0].focus();
+			$("#entity-categories-ner-button").addClass("fade-out");			
+			$("#entity-categories-list-button").removeClass("fade-out");
+		});
+
+
+		$("#entity-categories-ner-button").on("click", function() {			
+			deleteAllLabels();
+			create4NERLabels();
+			$("#entity-categories-list").slideDown(500)
+			$("#entity-categories-table input")[0].focus();
+			$("#entity-categories-list-button").addClass("fade-out");			
+			$("#entity-categories-ner-button").removeClass("fade-out");
+		});
+
+
 
 
 		//- $("input[type=\"color\"").spectrum({

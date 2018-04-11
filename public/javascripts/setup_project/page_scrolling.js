@@ -8,7 +8,11 @@ $(document).on('scroll', function() {
 
 	$(".article-heading.scrolled-to").each(function() {
 
+
+
 	    if($(document).scrollTop()<$(this).position().top - 250){
+
+
 	    	
 	    	$(this).addClass("not-scrolled-to")
 	    	$(this).removeClass("scrolled-to")
@@ -22,7 +26,8 @@ $(document).on('scroll', function() {
 
 	$(".article-heading.not-scrolled-to").each(function() {
 	    if($(document).scrollTop()>=$(this).position().top - 250){
-	    	
+
+    	
 	    	$(this).removeClass("not-scrolled-to")
 	    	$(this).addClass("scrolled-to")
 
@@ -37,23 +42,7 @@ $(document).on('scroll', function() {
 
 });
 
-$("#entity-categories-list-button").on("click", function() {
-	$("#entity-categories-list").slideDown(500)
-	$("#entity-categories-ner").slideUp(500)
-	$("#ec-1").focus();
 
-	$("#entity-categories-ner-button").addClass("fade-out");			
-	$("#entity-categories-list-button").removeClass("fade-out");
-});
-
-
-$("#entity-categories-ner-button").on("click", function() {
-	$("#entity-categories-ner").slideDown(500)
-	$("#entity-categories-list").slideUp(500)
-
-	$("#entity-categories-list-button").addClass("fade-out");			
-	$("#entity-categories-ner-button").removeClass("fade-out");
-});
 
 
 $("#already-tokenized-data-button").on("click", function() {
