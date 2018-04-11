@@ -189,6 +189,7 @@ block scripts
 			}
 			console.log(validLabelData, "data")
 
+
 			//console.log("Saved");
 			$.ajax(
 			{
@@ -228,11 +229,12 @@ block scripts
 					}
 
 					else {
-						for(var i = 0; i < validLabelObjs.length; i++) {
-							validLabelObjs[i].markAsValid();
-						}
+
 						console.log("no errors")
 						if(safeToValidate) {
+							for(var i = 0; i < validLabelObjs.length; i++) {
+								validLabelObjs[i].markAsValid();
+							}
 							$("#saved-notification-entity-categories").addClass("show");
 							$("#li-entity-categories").addClass("completed");
 							console.log("Safe to validate")
@@ -324,10 +326,10 @@ block scripts
 				<tr id=\"ec-tr-" + this.id + "\"> \
 					<td id=\"ec-valid-" + this.id + "\"><i class=\"fa fa-check\"></i></td> \
 					<td> \
-						<input id=\"ec-" + this.id + "-label\" value=\"" + this.label + "\"> \
+						<input id=\"ec-" + this.id + "-label\" maxlength=\"20\" value=\"" + this.label + "\"> \
 					</td> \
 					<td> \
-						<input id=\"ec-" + this.id + "-abbreviation\" value=\"" + this.abbreviation + "\"> \
+						<input id=\"ec-" + this.id + "-abbreviation\" maxlength=\"20\" value=\"" + this.abbreviation + "\"> \
 					</td> \
 					<td> \
 						<input id=\"ec-" + this.id + "-color\" type=\"color\"> \

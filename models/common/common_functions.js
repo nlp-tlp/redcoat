@@ -40,17 +40,7 @@ var validateValidLabelsHaveLabelAbbreviationAndColor = function(valid_labels) {
 //   return new Set(allColors).size == allColors.length;
 // }
 
-var validateValidLabelsNoRestrictedLabels = function(valid_labels) {
-  allLabels  = valid_labels.map(value => value.label);
-  allAbbrevs = valid_labels.map(value => value.abbreviation);
-  for(var i = 0; i < allLabels.length; i++) {
-    if(allLabels[i].toLowerCase() == "o") return false;
-  }
-  for(var i = 0; i < allAbbrevs.length; i++) {
-    if(allAbbrevs[i].toLowerCase() == "o") return false;
-  }
-  return true;
-}
+
 
 var validateValidLabelsCountMin = function(valid_labels) {
   return valid_labels.length > 0;
@@ -205,6 +195,17 @@ var validateValidLabels = function(arr, done) {
     return msg;
   }
 
+  // Validates that no labels or abbreviations contain the protected "O" class.
+  var validateItemsHaveNoRestrictedTerms = function(arr, item_name) {
+    var msg = [];
+    for(var i = 0; i < arr.length; i++) {
+      if(arr[i][item_name].toLowerCase() == "o") {
+        msg.push(i + ": [" + item_name + "] Error: " + item_name + " cannot be 'o' or 'O'.");
+      }
+    }
+    return msg;
+  }  
+
 
   var msg = [];
 
@@ -212,6 +213,8 @@ var validateValidLabels = function(arr, done) {
   msg.push(validateNoItemsAreBlank(arr, "abbreviation"));
   msg.push(validateItemsAreUnique(arr, "label"));
   msg.push(validateItemsAreUnique(arr, "abbreviation"));
+  msg.push(validateItemsHaveNoRestrictedTerms(arr, "label"));
+  msg.push(validateItemsHaveNoRestrictedTerms(arr, "abbreviation"));
 
 
   // TODO: Check for restricted labels as well (O)
@@ -242,8 +245,6 @@ validLabelsValidation = [
   // { validator: function(arr, done) { validateItemsAreUnique(arr, "label", function(result, msg) { done(result, msg); })}, isAsync: true },
   // { validator: function(arr, done) { validateItemsAreUnique(arr, "abbreviation", function(result, msg) { done(result, msg); })}, isAsync: true },
   { validator: function(arr, done) { validateValidLabels(arr, function(result, msg) { done(result, msg); })}, isAsync: true },
-
-
   { validator: validateValidLabelsCountMin, msg: "Must have one or more labels." },
   { validator: validateValidLabelsCountMax, msg: "Must have " + VALID_LABEL_MAXCOUNT + " or fewer labels." },
   //{ validator: validateValidLabelsHaveUniqueLabels, msg: "Labels must be unique." },

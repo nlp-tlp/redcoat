@@ -110,37 +110,49 @@ exports.upload_valid_labels = function(req, res, next) {
 
 
   wip_project.valid_labels = req.body.validLabelData;
+  if(!req.body.validLabelData)
+    wip_project.valid_labels = [];
+  console.log(req.body.validLabelData)
   wip_project.validate(function(err) {
 
     if(err) {
       if(err.errors.valid_labels) {
 
+        console.log(err.errors.valid_labels)
         //console.log("VALID LABEL ERRORS:");
 
         //console.log(err.errors.valid_labels.message)
 
         //var em = err.errors.valid_labels.message;
         //var error_label = parseInt(em.slice(em.indexOf("<%") + 2, em.indexOf("%>")));
+        var errors;
+        try {
+          var err_lines = err.errors.valid_labels.message.split("\n");
+          errors = new Array(wip_project.valid_labels.length); // One error per line
+          for(var i = 0; i < errors.length; i++) {
+            errors[i] = [];
+          }    
+          for(var i = 0; i < err_lines.length; i++) {
+            var ind = parseInt(err_lines[i].slice(0, err_lines[i].indexOf(":")));
+            var item_name = err_lines[i].slice(err_lines[i].indexOf("[") + 1, err_lines[i].indexOf("]"))
+            var error_message = err_lines[i].slice(err_lines[i].indexOf("] ") + 2, err_lines[i].length);
+            errors[ind].push({ item_name: item_name, message: error_message });
 
+          }
+          console.log(errors);  
 
-        var err_lines = err.errors.valid_labels.message.split("\n");
-        var errors = new Array(wip_project.valid_labels.length); // One error per line
-        for(var i = 0; i < errors.length; i++) {
-          errors[i] = [];
-        }    
-        for(var i = 0; i < err_lines.length; i++) {
-          var ind = parseInt(err_lines[i].slice(0, err_lines[i].indexOf(":")));
-          var item_name = err_lines[i].slice(err_lines[i].indexOf("[") + 1, err_lines[i].indexOf("]"))
-          var error_message = err_lines[i].slice(err_lines[i].indexOf("] ") + 2, err_lines[i].length);
-          errors[ind].push({ item_name: item_name, message: error_message });
-
+        } catch(e) {
+          // Other errors, such as none or too many labels
+          errors = err.errors.valid_labels;
         }
-        console.log(errors);   
+ 
 
         res.send( { "success": false, "errors": errors });
 
         //console.log("ERROR:", error_label);
       } else {
+
+        console.log(wip_project.valid_labels)
 
         setTimeout(function() {
           res.send( { "success" : true });
