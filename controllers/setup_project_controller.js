@@ -108,6 +108,8 @@ exports.upload_valid_labels = function(req, res, next) {
 
   //console.log(req.body.validLabelData);
 
+  setTimeout(function() {
+
 
   wip_project.valid_labels = req.body.validLabelData;
   if(!req.body.validLabelData)
@@ -154,15 +156,14 @@ exports.upload_valid_labels = function(req, res, next) {
 
         console.log(wip_project.valid_labels)
 
-        setTimeout(function() {
-          res.send( { "success" : true });
-        }, 1000);
+        res.send( { "success" : true });
 
       }
 
     }
 
   });
+  }, 1400);
 
 
 }

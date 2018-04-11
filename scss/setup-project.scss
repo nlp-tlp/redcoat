@@ -389,6 +389,17 @@ div#setup-questions {
 		tr:not(.valid-row) > td:first-child > i.fa-check {
 			display: none;
 		}
+		tr.row-validating > td:first-child > i.fa-check {
+			display: none;
+		}
+		tr > td:first-child > i.fa-circle-o-notch {
+			display: none;
+			opacity: 0.3;
+
+		}
+		tr.row-validating > td:first-child > i.fa-circle-o-notch {			
+			display: block;
+		}
 		tr {
 
 			th, td {
@@ -414,7 +425,10 @@ div#setup-questions {
 					}
 					&.has_error {
 						background: lighten(rgb(185, 12, 5), 55);
-						border-bottom: 2px solid darken(rgb(185, 12, 5), 3) !important;
+						border-bottom: 2px solid lighten(rgb(185, 12, 5), 55) !important;
+						&:focus, &:active {
+							border-bottom: 2px solid rgb(185, 12, 5) !important;
+						}
 					}
 				
 				}

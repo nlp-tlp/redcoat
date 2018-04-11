@@ -172,6 +172,10 @@ block scripts
 		var safeToValidate = true;
 		var uploadingLabels = false;
 
+		var rowValidatingTimeout;
+
+
+
 		function uploadValidLabels() {
 
 			console.log("Uploading labels...");
@@ -189,6 +193,12 @@ block scripts
 			}
 			console.log(validLabelData, "data")
 
+			var trs = $("#entity-categories-table tr");
+			rowValidatingTimeout = window.setTimeout(function() {
+				trs.addClass("row-validating");
+			}, 500);
+			
+
 
 			//console.log("Saved");
 			$.ajax(
@@ -205,10 +215,11 @@ block scripts
 				success: function( data )
 				{
 					//if($("#project-name-form input").val().length > 0) {
-
-
+					window.clearTimeout(rowValidatingTimeout);
+					
 
 					if(data.errors) {
+						trs.removeClass("row-validating");
 						console.log(data.errors);
 
 
@@ -230,8 +241,9 @@ block scripts
 
 					else {
 
-						console.log("no errors")
+						console.log("no errors")						
 						if(safeToValidate) {
+							trs.removeClass("row-validating");
 							for(var i = 0; i < validLabelObjs.length; i++) {
 								validLabelObjs[i].markAsValid();
 							}
@@ -324,7 +336,7 @@ block scripts
 
 				$ect_tbody.append(" \
 				<tr id=\"ec-tr-" + this.id + "\"> \
-					<td id=\"ec-valid-" + this.id + "\"><i class=\"fa fa-check\"></i></td> \
+					<td id=\"ec-valid-" + this.id + "\"><i class=\"fa fa-check\"></i><i class=\"fa fa-spin fa-circle-o-notch\"></i></td> \
 					<td> \
 						<input id=\"ec-" + this.id + "-label\" maxlength=\"20\" value=\"" + this.label + "\"> \
 					</td> \
@@ -374,7 +386,7 @@ block scripts
 					$(this).removeAttr("title");
 					t.label = $(this).val();
 					$(this).removeClass("has_error");
-					$("#ec-tr-" + t.id).removeClass("valid-row");
+					$("#ec-tr-" + t.id).removeClass("valid-row");					
 					setValidLabelsTimeout();
 				});
 				$("#ec-" + t.id + "-abbreviation").on('input', function() {
