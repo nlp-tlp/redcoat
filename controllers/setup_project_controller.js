@@ -7,7 +7,6 @@ var MAX_FILESIZE_MB = 25;
 var fs = require('fs')
 var util = require('util')
 var path = require('path');
-var extend = require('util')._extend
 
 // Verifies that the WIP Project ID is the same as the logged in user's WIP Project Id.
 // This middleware function should be used for every POST request on the Setup Project page.
@@ -109,10 +108,60 @@ exports.upload_name_desc = function(req, res, next) {
 exports.upload_valid_labels = function(req, res, next) {
   wip_project = res.locals.wip_project;
 
-  console.log(req.body.validLabelData)
-  setTimeout(function() {
-    res.send( { "success" : true });
-  }, 1000);
+  //console.log(req.body.validLabelData);
+
+
+  wip_project.valid_labels = req.body.validLabelData;
+  wip_project.validate(function(err) {
+
+    if(err) {
+      if(err.errors.valid_labels) {
+
+        //console.log("VALID LABEL ERRORS:");
+
+        console.log(err.errors.valid_labels.message)
+
+        //var em = err.errors.valid_labels.message;
+        //var error_label = parseInt(em.slice(em.indexOf("<%") + 2, em.indexOf("%>")));
+
+
+
+        var err_lines = err.errors.valid_labels.message.split("\n");
+        var errors = new Array(wip_project.valid_labels.length); // One error per line
+        for(var i = 0; i < errors.length; i++) {
+          errors[i] = [];
+        }    
+        for(var i = 0; i < err_lines.length; i++) {
+          var ind = parseInt(err_lines[i].slice(0, err_lines[i].indexOf(":")));
+          var item_name = err_lines[i].slice(err_lines[i].indexOf("[") + 1, err_lines[i].indexOf("]"))
+          errors[ind].push(item_name);
+
+        }
+        console.log(errors);
+
+        res.send( { "success": false, "errors": errors });
+
+        //console.log("ERROR:", error_label);
+      }
+
+
+
+    } else {
+
+
+
+      setTimeout(function() {
+        res.send( { "success" : true });
+      }, 1000);
+
+
+    }
+
+
+
+  });
+
+
 }
 
 // Reset the WIP Project's documents and file metadata.

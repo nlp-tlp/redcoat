@@ -3,6 +3,7 @@ var router = express.Router();
 var WipProject = require('../models/wip_project');
 var User = require('../models/user');
 var setupProjectController = require("../controllers/setup_project_controller");
+var extend = require('util')._extend
 
 //const fileType = require('file-type');
 //var formidable = require('formidable');

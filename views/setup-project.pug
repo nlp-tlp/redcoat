@@ -164,7 +164,7 @@ block scripts
 			validLabelData = [];
 			for(var i = 0; i < validLabelObjs.length; i++) {
 				validLabelData.push({
-					label: validLabelObjs[i].name,
+					label: validLabelObjs[i].label,
 					abbreviation: validLabelObjs[i].abbreviation,
 					color: validLabelObjs[i].color
 				});
@@ -188,16 +188,47 @@ block scripts
 				{
 					//if($("#project-name-form input").val().length > 0) {
 
-					if(safeToValidate) {
-						$("#saved-notification-entity-categories").addClass("show");
-						$("#li-entity-categories").addClass("completed");
-						console.log("Safe to validate")
-					} else {
-						console.log("Not safe to validate (changed since pinged)")
-						window.clearTimeout(validlabelsTimeout);
-						validlabelsTimeout = window.setTimeout(uploadValidLabels, 1000);						
-						safeToValidate = true;
+
+
+					if(data.errors) {
+						console.log(data.errors);
+
+
+						for(var i = 0; i < data.errors.length; i++) {
+
+							if(data.errors[i].length == 0) {
+								validLabelObjs[i].markAsValid();
+							} else {
+								validLabelObjs[i].markAsInvalid();
+								for(var j = 0; j < data.errors[i].length; j++) {
+									validLabelObjs[i].markError(data.errors[i][j]);
+								}
+								
+							}
+
+						}
+
 					}
+
+					else {
+						for(var i = 0; i < validLabelObjs.length; i++) {
+							validLabelObjs[i].markAsValid();
+						}
+						console.log("no errors")
+						if(safeToValidate) {
+							$("#saved-notification-entity-categories").addClass("show");
+							$("#li-entity-categories").addClass("completed");
+							console.log("Safe to validate")
+						} else {
+							console.log("Not safe to validate (changed since pinged)")
+							window.clearTimeout(validlabelsTimeout);
+							validlabelsTimeout = window.setTimeout(uploadValidLabels, 1000);						
+							safeToValidate = true;
+						}
+
+
+					}
+
 					uploadingLabels = false;
 					
 
@@ -256,19 +287,19 @@ block scripts
 
 		class ValidLabelInput {
 
-			constructor(name, abbreviation, id) {
+			constructor(label, abbreviation, id) {
 				labelId++;
 				colorId++;
 
 				var t = this;
 
-				this.name = name || "";
+				this.label = label || "";
 				this.abbreviation = abbreviation || "";
 				this.color = colorList.pop();
 				var originalColor = this.color;
 				var id = id || labelId;
 				this.id = id;				
-				this.valid = this.name != "";
+				this.valid = this.label != "";
 
 				validLabelObjs.push(t);
 
@@ -278,7 +309,7 @@ block scripts
 				<tr class=\"" + startingValidity + "\" id=\"ec-tr-" + this.id + "\"> \
 					<td id=\"ec-valid-" + this.id + "\"><i class=\"fa fa-check\"></i></td> \
 					<td> \
-						<input id=\"ec-" + this.id + "-name\" value=\"" + this.name + "\"> \
+						<input id=\"ec-" + this.id + "-label\" value=\"" + this.label + "\"> \
 					</td> \
 					<td> \
 						<input id=\"ec-" + this.id + "-abbreviation\" value=\"" + this.abbreviation + "\"> \
@@ -292,7 +323,7 @@ block scripts
 				</tr> \
 				");
 
-				$("#ec-" + this.id + "-name").focus();
+				$("#ec-" + this.id + "-label").focus();
 
 				// Color picker from Spectrum
 				$("#ec-" + this.id + "-color").spectrum({
@@ -322,8 +353,9 @@ block scripts
 				});
 
 				
-				$("#ec-" + t.id + "-name").on('keyup', function() {
-					t.name = $(this).val();
+				$("#ec-" + t.id + "-label").on('keyup', function() {
+					t.label = $(this).val();
+					$(this).removeClass("has_error");
 					$("#ec-tr-" + t.id).removeClass("valid-row");
 					setValidLabelsTimeout();
 				});
@@ -336,7 +368,24 @@ block scripts
 
 
 
-			}		
+			}
+
+
+			markAsValid() {
+				console.log($("#ec-tr-" + this.id))
+				$("#ec-tr-" + this.id).addClass("valid-row");
+			}
+			markAsInvalid() {
+				$("#ec-tr-" + this.id).removeClass("valid-row");
+			}
+
+			markError(item_name) {
+				var field = $("#ec-" + this.id + "-" + item_name); 
+				if(field.val().length > 0) {
+					field.addClass("has_error");
+				}
+			}
+
 		}
 
 

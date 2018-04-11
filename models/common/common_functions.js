@@ -27,18 +27,18 @@ var validateValidLabelsHaveLabelAbbreviationAndColor = function(valid_labels) {
   return true;
 }
 
-var validateValidLabelsHaveUniqueLabels = function(valid_labels) {
-  allLabels = valid_labels.map(value => value.label);
-  return new Set(allLabels).size == allLabels.length;
-}
-var validateValidLabelsHaveUniqueAbbreviations = function(valid_labels) {
-  allAbbrevs = valid_labels.map(value => value.abbreviation);
-  return new Set(allAbbrevs).size == allAbbrevs.length;
-}
-var validateValidLabelsHaveUniqueColors = function(valid_labels) {
-  allColors = valid_labels.map(value => value.color);
-  return new Set(allColors).size == allColors.length;
-}
+// var validateValidLabelsHaveUniqueLabels = function(valid_labels) {
+//   allLabels = valid_labels.map(value => value.label);
+//   return new Set(allLabels).size == allLabels.length;
+// }
+// var validateValidLabelsHaveUniqueAbbreviations = function(valid_labels) {
+//   allAbbrevs = valid_labels.map(value => value.abbreviation);
+//   return new Set(allAbbrevs).size == allAbbrevs.length;
+// }
+// var validateValidLabelsHaveUniqueColors = function(valid_labels) {
+//   allColors = valid_labels.map(value => value.color);
+//   return new Set(allColors).size == allColors.length;
+// }
 
 var validateValidLabelsNoRestrictedLabels = function(valid_labels) {
   allLabels  = valid_labels.map(value => value.label);
@@ -176,18 +176,77 @@ var validateArrayHasUniqueValues = function(arr) {
 
 
 
+
+var validateValidLabels = function(arr, done) {
+
+  // Validate that no tokens in the document are of length 0.
+  var validateNoItemsAreBlank = function(arr, item_name) {
+    
+    var msg = [];
+    for(var i = 0; i < arr.length; i++) {
+      if(!validateNotBlank(arr[i][item_name])) {
+        msg.push(i + ": [" + item_name + "]: Error: " + item_name + " must not be blank.");
+      }
+    }
+    return msg;
+  };
+
+  var validateItemsAreUnique = function(arr, item_name) {
+    var msg = [];
+    items_seen = new Set();
+    for(var i = 0; i < arr.length; i++) {
+      if(items_seen.has(arr[i][item_name])) {
+        msg.push(i + ": [" + item_name + "]: Error: " + item_name + " must be unique.");
+      } else {
+        items_seen.add(arr[i][item_name]);
+      }
+    }
+    return msg;
+  }
+
+
+  var msg = [];
+
+  msg.push(validateNoItemsAreBlank(arr, "label"));
+  msg.push(validateNoItemsAreBlank(arr, "abbreviation"));
+  msg.push(validateItemsAreUnique(arr, "label"));
+  msg.push(validateItemsAreUnique(arr, "abbreviation"));
+
+
+  // TODO: Check for restricted labels as well (O)
+
+  var msg = [].concat.apply([], msg);
+
+  if(msg.length > 0) {
+    return done(false, msg.join("\n"));
+  } else {
+    return done(true);
+  }
+}
+
+
+
+
+
 userIdsValidation = [
   { validator: validateArrayHasUniqueValues },
 ];
 
 validLabelsValidation = [
-  { validator: validateValidLabelsHaveLabelAbbreviationAndColor, msg: "All labels must have a corresponding abbreviation and color."  },
+  // { validator: function(arr, done) { validateNoItemsAreBlank(arr, "label", function(result, msg) { done(result, msg); })}, isAsync: true },
+  // { validator: function(arr, done) { validateNoItemsAreBlank(arr, "abbreviation", function(result, msg) { done(result, msg); })}, isAsync: true },
+  // { validator: function(arr, done) { validateItemsAreUnique(arr, "label", function(result, msg) { done(result, msg); })}, isAsync: true },
+  // { validator: function(arr, done) { validateItemsAreUnique(arr, "abbreviation", function(result, msg) { done(result, msg); })}, isAsync: true },
+  { validator: function(arr, done) { validateValidLabels(arr, function(result, msg) { done(result, msg); })}, isAsync: true },
+
+
+  //{ validator: validateValidLabelsHaveLabelAbbreviationAndColor, msg: "All labels must have a corresponding abbreviation and color."  },
   { validator: validateValidLabelsCountMin, msg: "Must have one or more labels." },
   { validator: validateValidLabelsCountMax, msg: "Must have " + VALID_LABEL_MAXCOUNT + " or fewer labels." },
-  { validator: validateValidLabelsHaveUniqueLabels, msg: "Labels must be unique." },
-  { validator: validateValidLabelsHaveUniqueAbbreviations, msg: "Abbreviations must be unique." },
+  //{ validator: validateValidLabelsHaveUniqueLabels, msg: "Labels must be unique." },
+  //{ validator: validateValidLabelsHaveUniqueAbbreviations, msg: "Abbreviations must be unique." },
 //  { validator: validateValidLabelsHaveUniqueColors, msg: "Colors must be unique." },
-  { validator: validateValidLabelsNoRestrictedLabels, msg: "Labels and abbreviations cannot be 'O' (it is reserved for non-entities)." }
+  //{ validator: validateValidLabelsNoRestrictedLabels, msg: "Labels and abbreviations cannot be 'O' (it is reserved for non-entities)." }
 ];
 
 colorValidation = [
@@ -345,8 +404,8 @@ module.exports = {
 		valid_labels:	{
 		    type: [
 		      { 
-		        label:        { type: String, minlength: 1, maxlength: LABEL_MAXLENGTH, validate: validateNotBlank },
-		        abbreviation: { type: String, minlength: 1, maxlength: ABBREVIATION_MAXLENGTH,  validate: validateNotBlank },
+		        label:        { type: String, maxlength: LABEL_MAXLENGTH },//, minlength: 1}, //, maxlength: LABEL_MAXLENGTH, validate: validateNotBlank },
+		        abbreviation: { type: String, maxlength: ABBREVIATION_MAXLENGTH }, //,  validate: validateNotBlank },
 		        color:        { type: String, validate: colorValidation }
 		      }
 		    ],

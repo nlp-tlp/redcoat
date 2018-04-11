@@ -389,8 +389,14 @@ div#setup-questions {
 					border-bottom: 2px solid #f2f2f2;
 					transition: none;
 					&:focus, &:active {
+						background: #f2f2f2;
 						border-bottom: 2px solid #bbb !important;
 					}
+					&.has_error {
+						background: lighten(rgb(185, 12, 5), 55);
+						border-bottom: 2px solid darken(rgb(185, 12, 5), 3) !important;
+					}
+				
 				}
 			}
 			td {
