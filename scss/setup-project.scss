@@ -389,6 +389,11 @@ div#setup-questions {
 		tr:not(.valid-row) > td:first-child > i.fa-check {
 			display: none;
 		}
+		tr:not(.valid-row):not(.row-validating) > td:first-child > i.fa-check {
+			display: block;
+			visibility: hidden;
+			pointer-events: none;
+		}
 		tr.row-validating > td:first-child > i.fa-check {
 			display: none;
 		}
@@ -456,7 +461,7 @@ div#setup-questions {
 				border-right: 1px solid #ddd;
 			}
 			th:nth-child(2), td:nth-child(2) {
-				width: 50%;
+				width: 47.5%;
 				border-left: 1px solid #ddd;
 			}
 
@@ -468,6 +473,9 @@ div#setup-questions {
 				border-left: 1px solid #ddd;
 				text-align: center;
 			}	
+			th:first-child, td:first-child {
+				width: 7.5%;
+			}
 			th:first-child, td:first-child {
 				border-left: none;
 			}

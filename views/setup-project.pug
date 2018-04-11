@@ -219,22 +219,26 @@ block scripts
 					
 
 					if(data.errors) {
-						trs.removeClass("row-validating");
-						console.log(data.errors);
 
 
-						for(var i = 0; i < data.errors.length; i++) {
+						if(safeToValidate) {
+							trs.removeClass("row-validating");
+							console.log(data.errors);
 
-							if(data.errors[i].length == 0) {
-								validLabelObjs[i].markAsValid();
-							} else {
-								validLabelObjs[i].markAsInvalid();
-								for(var j = 0; j < data.errors[i].length; j++) {
-									validLabelObjs[i].markError(data.errors[i][j].item_name, data.errors[i][j].message);
+
+							for(var i = 0; i < data.errors.length; i++) {
+
+								if(data.errors[i].length == 0) {
+									validLabelObjs[i].markAsValid();
+								} else {
+									validLabelObjs[i].markAsInvalid();
+									for(var j = 0; j < data.errors[i].length; j++) {
+										validLabelObjs[i].markError(data.errors[i][j].item_name, data.errors[i][j].message);
+									}
+									
 								}
-								
-							}
 
+							}
 						}
 
 					}
@@ -260,10 +264,7 @@ block scripts
 
 					}
 
-					uploadingLabels = false;
-					
-
-					//}
+					uploadingLabels = false;				
 				},
 				error: function()
 				{								
@@ -276,7 +277,8 @@ block scripts
 			$("#saved-notification-entity-categories").removeClass("show");
 			$("#li-entity-categories").removeClass("completed");	
 			if(uploadingLabels) 		
-				safeToValidate = false;			
+				safeToValidate = false;		
+			console.log("setting timeout")	
 			window.clearTimeout(validlabelsTimeout);
 			validlabelsTimeout = window.setTimeout(uploadValidLabels, 1000);
 		}
