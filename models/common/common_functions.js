@@ -169,52 +169,88 @@ var validateArrayHasUniqueValues = function(arr) {
 // A special validation function that provides useful error messages for displaying on the setup page.
 var validateValidLabels = function(arr, done) {
 
-  // Validate that no tokens in the document are of length 0.
-  var validateNoItemsAreBlank = function(arr, item_name) {
+  // // Validate that no tokens in the document are of length 0.
+  // var validateNoItemsAreBlank = function(arr, item_name) {
     
-    var msg = [];
-    for(var i = 0; i < arr.length; i++) {
-      if(!validateNotBlank(arr[i][item_name])) {
-        msg.push(i + ": [" + item_name + "] Error: " + item_name + " must not be blank.");
-      }
-    }
-    return msg;
-  };
+  //   var msg = [];
+  //   for(var i = 0; i < arr.length; i++) {
+  //     if(!validateNotBlank(arr[i][item_name])) {
+  //       msg.push(i + ": [" + item_name + "] Error: " + item_name + " must not be blank.");
+  //     }
+  //   }
+  //   return msg;
+  // };
 
-  // Validate that all items are unique.
-  var validateItemsAreUnique = function(arr, item_name) {
-    var msg = [];
-    items_seen = new Set();
-    for(var i = 0; i < arr.length; i++) {
-      if(items_seen.has(arr[i][item_name])) {
-        msg.push(i + ": [" + item_name + "] Error: " + item_name + " must be unique.");
-      } else {
-        items_seen.add(arr[i][item_name]);
-      }
-    }
-    return msg;
-  }
+  // // Validate that all items are unique.
+  // var validateItemsAreUnique = function(arr, item_name) {
+  //   var msg = [];
+  //   items_seen = new Set();
+  //   for(var i = 0; i < arr.length; i++) {
+  //     if(items_seen.has(arr[i][item_name])) {
+  //       msg.push(i + ": [" + item_name + "] Error: " + item_name + " must be unique.");
+  //     } else {
+  //       items_seen.add(arr[i][item_name]);
+  //     }
+  //   }
+  //   return msg;
+  // }
 
-  // Validates that no labels or abbreviations contain the protected "O" class.
-  var validateItemsHaveNoRestrictedTerms = function(arr, item_name) {
-    var msg = [];
-    for(var i = 0; i < arr.length; i++) {
-      if(arr[i][item_name].toLowerCase() == "o") {
-        msg.push(i + ": [" + item_name + "] Error: " + item_name + " cannot be 'o' or 'O'.");
-      }
-    }
-    return msg;
-  }  
+  // // Validates that no labels or abbreviations contain the protected "O" class.
+  // var validateItemsHaveNoRestrictedTerms = function(arr, item_name) {
+  //   var msg = [];
+  //   for(var i = 0; i < arr.length; i++) {
+  //     if(arr[i][item_name].toLowerCase() == "o") {
+  //       msg.push(i + ": [" + item_name + "] Error: " + item_name + " cannot be 'o' or 'O'.");
+  //     }
+  //   }
+  //   return msg;
+  // }  
 
 
   var msg = [];
+  var labelsSeen = new Set();
+  var abbrevsSeen = new Set();
 
-  msg.push(validateNoItemsAreBlank(arr, "label"));
-  msg.push(validateNoItemsAreBlank(arr, "abbreviation"));
-  msg.push(validateItemsAreUnique(arr, "label"));
-  msg.push(validateItemsAreUnique(arr, "abbreviation"));
-  msg.push(validateItemsHaveNoRestrictedTerms(arr, "label"));
-  msg.push(validateItemsHaveNoRestrictedTerms(arr, "abbreviation"));
+  function validate(valid_label, items_seen, item_name) {
+
+    if(!validateNotBlank(valid_label[item_name])) {
+      msg.push(i + ": [" + item_name + "] Error: " + item_name + " must not be blank.");
+    }
+    if(items_seen.has(valid_label[item_name])) {
+      msg.push(i + ": [" + item_name + "] Error: " + item_name + " must be unique.");
+    } else {
+      items_seen.add(valid_label[item_name])
+    }
+    if(valid_label[item_name].toLowerCase() == "o") {
+      msg.push(i + ": [" + item_name + "] Error: " + item_name + " cannot be 'o' or 'O'.");
+    } 
+    if(item_name == "label") {
+      if(valid_label[item_name].length > LABEL_MAXLENGTH) {
+        msg.push(i + ": [" + item_name + "] Error: " + item_name + " must be less than " + LABEL_MAXLENGTH + " characters long.");
+      }
+    }
+    if(item_name == "abbreviation") {
+      if(valid_label[item_name].length > ABBREVIATION_MAXLENGTH) {
+        msg.push(i + ": [" + item_name + "] Error: " + item_name + " must be less than " + ABBREVIATION_MAXLENGTH + " characters long.");
+      }
+    }    
+
+  }
+
+  for(var i = 0; i < arr.length; i++) {
+    // Labels
+    validate(arr[i], labelsSeen, "label");
+    validate(arr[i], abbrevsSeen, "abbreviation");
+
+  }  
+
+
+  // msg.push(validateNoItemsAreBlank(arr, "label"));
+  // msg.push(validateNoItemsAreBlank(arr, "abbreviation"));
+  // msg.push(validateItemsAreUnique(arr, "label"));
+  // msg.push(validateItemsAreUnique(arr, "abbreviation"));
+  // msg.push(validateItemsHaveNoRestrictedTerms(arr, "label"));
+  // msg.push(validateItemsHaveNoRestrictedTerms(arr, "abbreviation"));
 
 
   // TODO: Check for restricted labels as well (O)
@@ -408,9 +444,9 @@ module.exports = {
 		valid_labels:	{
 		    type: [
 		      { 
-		        label:        { type: String, maxlength: LABEL_MAXLENGTH },//, minlength: 1}, //, maxlength: LABEL_MAXLENGTH, validate: validateNotBlank },
-		        abbreviation: { type: String, maxlength: ABBREVIATION_MAXLENGTH }, //,  validate: validateNotBlank },
-		        color:        { type: String, validate: colorValidation }
+		        label:        { type: String },
+		        abbreviation: { type: String },
+		        color:        { type: String, validate: colorValidation } // TODO: Move this out and put it in validLabelsValidation
 		      }
 		    ],
 		    validate: validLabelsValidation
