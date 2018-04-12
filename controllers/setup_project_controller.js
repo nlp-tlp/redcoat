@@ -3,6 +3,9 @@ var formidable = require('formidable');
 var User = require('../models/user');
 var bodyParser = require('body-parser')
 
+var escape = require('escape-html');
+
+
 var MAX_FILESIZE_MB = 25;
 var fs = require('fs')
 var util = require('util')
@@ -44,20 +47,35 @@ exports.index = function(req, res, next) {
 
     // If they don't, create a new one
 
-    function renderPage(wip_project, project_name, project_desc, file_metadata) {
-       res.render('setup-project', { wip_project_id: wip_project._id, project_name: project_name, project_desc: project_desc, file_metadata: file_metadata, csrfToken: req.csrfToken(), path: req.path, title: "Set up project", max_filesize_mb: MAX_FILESIZE_MB });
+    function renderPage(wip_project, project_name, project_desc, file_metadata, valid_labels) {
+       res.render('setup-project', { wip_project_id: wip_project._id, project_name: project_name, project_desc: project_desc, file_metadata: file_metadata, valid_labels: valid_labels, csrfToken: req.csrfToken(), path: req.path, title: "Set up project", max_filesize_mb: MAX_FILESIZE_MB });
     }
 
     WipProject.findWipByUserId(testuser._id, function(err, wip_project) {
       if(err) { next(err); return; }
       if(wip_project) {
         console.log("Existing WIP Project found.");
-        console.log(wip_project.project_description)
-        if(wip_project.file_metadata["Filename"] != undefined) {
-          renderPage(wip_project, wip_project.project_name, wip_project.project_description, JSON.stringify(wip_project.fileMetadataToArray()));
+
+        var valid_labels = [];
+        if(wip_project.valid_labels) {
+          for(var i = 0; i < wip_project.valid_labels.length; i++) {
+            valid_labels.push({ label: escape(wip_project.valid_labels[i].label), abbreviation: wip_project.valid_labels[i].abbreviation, color: wip_project.valid_labels[i].color });
+          }
         } else {
-          renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null");
-        }        
+          valid_labels = null;
+        }
+        renderPage(wip_project,
+                   wip_project.project_name,
+                   wip_project.project_description,
+                   wip_project.file_metadata["Filename"] != undefined ? JSON.stringify(wip_project.fileMetadataToArray()) : "null",
+                   JSON.stringify(valid_labels));
+
+
+        // if(wip_project.file_metadata["Filename"] != undefined) {
+        //   renderPage(wip_project, wip_project.project_name, wip_project.project_description, JSON.stringify(wip_project.fileMetadataToArray()), wip_project.valid_labels ? wip_project.valid_labels : "null");
+        // } else {
+        //   renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", wip_project.valid_labels ? wip_project.valid_labels : "null");
+        // }        
       } else {
         console.log("No existing WIP Project found - creating a new one.")
         wip_project = new WipProject({ user_id: testuser._id });
@@ -80,6 +98,8 @@ exports.upload_name_desc = function(req, res, next) {
 
 
   wip_project = res.locals.wip_project;
+
+  console.log(req.body.name)
 
   wip_project.project_name = req.body.name.length > 0 ? req.body.name : null;
   wip_project.project_description = req.body.desc.length > 0 ? req.body.desc : null;
@@ -149,15 +169,24 @@ exports.upload_valid_labels = function(req, res, next) {
         }
  
 
-        res.send( { "success": false, "errors": errors });
+        // Reset the valid_labels if invalid to prevent weird behaviour on refresh
+        wip_project.valid_labels = null;
+        wip_project.save(function(err) {
+          if(err) { console.log(err); res.send( { "success": false} ); }
+          else {
+           res.send( { "success": false, "errors": errors });
+          }
+        });       
 
         //console.log("ERROR:", error_label);
       } else {
 
-        console.log(wip_project.valid_labels)
-
-        res.send( { "success" : true });
-
+        wip_project.save(function(err) {
+          if(err) { console.log(err); res.send( { "success": false} ); }
+          else {
+            res.send({ "success": true });
+          }
+        });
       }
 
     }

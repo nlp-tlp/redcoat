@@ -313,6 +313,9 @@ div#setup-questions {
 
 
 		}
+		::placeholder {
+			color: #aaa;
+		}
 		input[type="submit"] {
 			font-weight: bold;
 			background: none;
@@ -386,6 +389,9 @@ div#setup-questions {
 		border-collapse: collapse;
 
 		//border: 2px solid #ddd;
+
+
+
 		tr:not(.valid-row) > td:first-child > i.fa-check {
 			display: none;
 		}
@@ -405,6 +411,20 @@ div#setup-questions {
 		tr.row-validating > td:first-child > i.fa-circle-o-notch {			
 			display: block;
 		}
+
+		tr:not(.row-validating).error-row > td:first-child > i.fa-check,
+		tr:not(.row-validating).error-row > td:first-child > i.fa-circle-o-notch {
+			display: none;
+		}
+		tr > td:first-child > i.fa-close {
+			display: none;
+		}
+		tr:not(.row-validating).error-row > td:first-child > i.fa-close {
+			color: lighten(rgb(185, 12, 5), 6);
+			display: block;
+		}
+
+
 		tr {
 
 			th, td {
@@ -578,3 +598,40 @@ div#setup-questions {
 
 }
 
+
+
+form#distribute-emails-form {
+	display: table;
+
+}
+
+div#distribute-emails-validation {
+	width: 7%;
+	display: table-cell;
+	color: darken(rgb(78, 172, 96), 6);
+	padding: 12px 0;
+	box-sizing: border-box;
+	vertical-align: top;
+	font-size: 24px;
+	line-height: 32px;
+	text-align: center;
+	i {
+		&.fa-close {
+			color: lighten(rgb(185, 12, 5), 6)
+		}
+		&.hide {
+			display: none;
+		}
+	}
+}
+
+div#setup-questions textarea#distribute-emails-textarea {
+	width: 93%;
+	display: table-cell;
+	line-height: 32px;
+	white-space: pre;
+	overflow-wrap: normal;
+	overflow-x: scroll;
+	font-size: 24px;
+	margin: 0;
+}

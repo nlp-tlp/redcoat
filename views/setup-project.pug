@@ -118,12 +118,18 @@ block content
 					blockquote
 						a(id="distribute-self-button" class="subsection-open-button") I'll annotate the data myself. I may invite other users to help annotate later.
 					blockquote
-						a(id="distribute-self-button" class="subsection-open-button") I have a list of the email addresses of people who will annotate my data.
-				//- blockquote
-				//-		a(id="distribute-self-codes-button" class="subsection-open-button") I'd like a list of codes that I will send to the annotators myself.
-					blockquote
-						a(id="distribute-email-button" class="subsection-open-button") I'd like the server to email codes to the annotators automatically.		
-
+						a(id="distribute-to-emails-button" class="subsection-open-button") I have a list of the email addresses of people who will annotate my data.
+			
+					div#distribute-self.subsection.subsection-hidden
+						h3 Self Annotation
+						p OK then.
+					div#distribute-to-emails.subsection
+						//.subsection-hidden
+						h3 Distribute via Email
+						p Please enter a list of emails below. An invitation to annotate your dataset will be sent to every valid email address.
+						form#distribute-emails-form
+							div#distribute-emails-validation
+							textarea#distribute-emails-textarea(rows="10", wrap="off"  cols="254" placeholder="example1@example.com\nexample2@example.com")
 
 
 			//- article#dataset.article-heading.not-scrolled-to
@@ -153,6 +159,7 @@ block content
 
 block scripts
 
+
 	script.
 
 		var errorBannerTimeout;
@@ -163,6 +170,64 @@ block scripts
 				$("#error-banner").removeClass("show");
 			}, 5000);
 		}
+
+
+	script(src="/javascripts/setup_project/jquery.autosize.js")
+
+	script.
+
+
+
+
+		// A simple email validation regex.
+		validateEmailRegex = function(val) {
+		  return (/.+\@.+\..+/i.test(val) && val.length <= 254);
+		}
+
+		var dev = $("#distribute-emails-validation");
+		var det = $("#distribute-emails-textarea")
+
+		var emailsValidatingTimeout;
+
+		function uploadEmails() {
+			console.log("pretending to upload emails...");
+			var emails = det.val().split("\n");
+			var validEmails = new Set();
+			var devHtml = "";
+			for(var i = 0; i < emails.length; i++) {
+				if(validateEmailRegex(emails[i])) {
+					devHtml += "<i class=\"fa fa-check\" title=\"This is a valid email address.\"></i><br/>\n"
+					validEmails.add(emails[i]);
+				} else {
+					devHtml += "<i class=\"fa fa-close " + (emails[i].length == 0 ? "hide" : "") + "\" title=\"This is not a valid email address.\"></i><br/>\n"
+				}
+			}
+
+			dev.html(devHtml);
+			console.log(validEmails);
+
+			
+
+		}
+		
+			
+		det.autosize( {
+			minRows: 10,
+
+		});   
+
+		det.on('input', function(e) {
+			// Remove validation mark from line user edited
+			var ln = $(this).val().substr(0, $(this)[0].selectionStart).split("\n").length;
+
+			var c = dev.children("i")
+			if(c[ln-1])
+				$(c[ln-1]).addClass("hide");
+			console.log(ln);
+			window.clearTimeout(emailsValidatingTimeout);
+			emailsValidatingTimeout = window.setTimeout(uploadEmails, 1000);
+		})
+		
 
 
 	script.
@@ -278,7 +343,6 @@ block scripts
 			$("#li-entity-categories").removeClass("completed");	
 			if(uploadingLabels) 		
 				safeToValidate = false;		
-			console.log("setting timeout")	
 			window.clearTimeout(validlabelsTimeout);
 			validlabelsTimeout = window.setTimeout(uploadValidLabels, 1000);
 		}
@@ -320,7 +384,7 @@ block scripts
 
 		class ValidLabelInput {
 
-			constructor(label, abbreviation, id) {
+			constructor(label, abbreviation, color, id) {
 				labelId++;
 				colorId++;
 
@@ -328,8 +392,10 @@ block scripts
 
 				this.label = label || "";
 				this.abbreviation = abbreviation || "";
-				this.color = colorList.pop();
+				this.color = color || colorList.pop();
 				this.originalColor = this.color;
+				this.colorInPalette = !color;
+				
 				var id = id || labelId;
 				this.id = id;				
 				this.valid = this.label != "";
@@ -338,12 +404,12 @@ block scripts
 
 				$ect_tbody.append(" \
 				<tr id=\"ec-tr-" + this.id + "\"> \
-					<td id=\"ec-valid-" + this.id + "\"><i class=\"fa fa-check\"></i><i class=\"fa fa-spin fa-circle-o-notch\"></i></td> \
+					<td id=\"ec-valid-" + this.id + "\"><i class=\"fa fa-check\" title=\"This is a valid entity category.\"></i><i class=\"fa fa-close\" title=\"This is not a valid entity category.\"></i><i class=\"fa fa-spin fa-circle-o-notch\"></i></td> \
 					<td> \
-						<input id=\"ec-" + this.id + "-label\" maxlength=\"20\" value=\"" + this.label + "\"> \
+						<input id=\"ec-" + this.id + "-label\" maxlength=\"200\" value=\"" + this.label + "\"> \
 					</td> \
 					<td> \
-						<input id=\"ec-" + this.id + "-abbreviation\" maxlength=\"20\" value=\"" + this.abbreviation + "\"> \
+						<input id=\"ec-" + this.id + "-abbreviation\" maxlength=\"200\" value=\"" + this.abbreviation + "\"> \
 					</td> \
 					<td> \
 						<input id=\"ec-" + this.id + "-color\" type=\"color\"> \
@@ -364,6 +430,7 @@ block scripts
 					change: function() {
 						t.color = $(this).spectrum('get').toHexString();
 						$("#ec-tr-" + t.id).removeClass("valid-row");
+						$("#ec-tr-" + t.id).removeClass("error-row");
 						setValidLabelsTimeout();
 					}
 				});
@@ -388,7 +455,8 @@ block scripts
 					$(this).removeAttr("title");
 					t.label = $(this).val();
 					$(this).removeClass("has_error");
-					$("#ec-tr-" + t.id).removeClass("valid-row");					
+					$("#ec-tr-" + t.id).removeClass("valid-row");
+					$("#ec-tr-" + t.id).removeClass("error-row");					
 					setValidLabelsTimeout();
 				});
 				$("#ec-" + t.id + "-abbreviation").on('input', function() {
@@ -396,6 +464,7 @@ block scripts
 					t.abbreviation = $(this).val();
 					$(this).removeClass("has_error");
 					$("#ec-tr-" + t.id).removeClass("valid-row");
+					$("#ec-tr-" + t.id).removeClass("error-row");
 					setValidLabelsTimeout();
 				});				
 
@@ -405,7 +474,8 @@ block scripts
 			}
 
 			unshiftColor() {
-				colorList.unshift(this.originalColor);
+				if(this.colorInPalette)
+					colorList.unshift(this.originalColor);
 			}
 
 
@@ -416,9 +486,11 @@ block scripts
 
 			markAsValid() {
 				$("#ec-tr-" + this.id).addClass("valid-row");
+				$("#ec-tr-" + this.id).removeClass("error-row");
 			}
 			markAsInvalid() {
 				$("#ec-tr-" + this.id).removeClass("valid-row");
+				$("#ec-tr-" + this.id).removeClass("error-row");
 			}
 
 			markError(item_name, error_message) {
@@ -426,6 +498,7 @@ block scripts
 				if(field.val().length > 0) {
 					field.addClass("has_error");
 					field.prop('title', error_message);
+					$("#ec-tr-" + this.id).addClass("error-row");
 				}
 			}
 
@@ -440,6 +513,16 @@ block scripts
 				var vli = new ValidLabelInput();
 			}
 			setValidLabelsTimeout();
+		}
+
+		function createLabelsFromArray(arr) {
+			for(var i = 0; i < arr.length; i++) {
+				var vli = new ValidLabelInput(arr[i].label, arr[i].abbreviation, arr[i].color)
+				vli.markAsValid();
+			}
+
+			$("#saved-notification-entity-categories").addClass("show");
+			$("#li-entity-categories").addClass("completed");
 		}
 
 
@@ -502,6 +585,36 @@ block scripts
 
 
 
+	script.
+
+
+		//var bullshit = [{"label":"}]; <ript>hehehe","abbreviation":"PER","color":"#99FFCC"},{"label":"Organisation","abbreviation":"ORG","color":"#FFCCCC"},{"label":"Location","abbreviation":"LOC","color":"#CCCCFF"},{"label":"Miscellaneous","abbreviation":"MISC","color":"#CCFF99"}];
+      
+      
+
+		// Check whether valid_labels has already been created 
+		var existingValidLabels = !{valid_labels};
+
+		if(existingValidLabels) {
+
+			// Check if using NER template
+			var isNER = (existingValidLabels.length == 4
+				&& existingValidLabels[0].label == "Person"
+				&& existingValidLabels[1].label == "Organisation"
+				&& existingValidLabels[2].label == "Location"
+				&& existingValidLabels[3].label == "Miscellaneous"
+			)
+			$("#entity-categories-list").slideDown(500)
+			if(isNER) {
+				$("#entity-categories-list-button").addClass("fade-out");			
+				$("#entity-categories-ner-button").removeClass("fade-out");			
+			} else {
+				$("#entity-categories-ner-button").addClass("fade-out");			
+				$("#entity-categories-list-button").removeClass("fade-out");
+			}
+
+			createLabelsFromArray(existingValidLabels);
+		}
 
 		//- $("input[type=\"color\"").spectrum({
 		//- 	color: "#f1f1f1"
@@ -615,9 +728,12 @@ block scripts
 
 		'use strict';
 
+		var test = "hello\" there";
+
 		var MAX_FILESIZE = !{max_filesize_mb} * 1024 * 1024;
 		var file_metadata = !{file_metadata};
 	
+
 
 
 		// Drag and drop code and css found here:

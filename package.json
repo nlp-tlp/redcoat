@@ -32,6 +32,7 @@
   },
   "homepage": "https://github.com/Michael-Stewart-Webdev/annotation-tool#readme",
   "dependencies": {
+    "autosize": "^4.0.1",
     "bcrypt": "^1.0.3",
     "body-parser": "^1.18.2",
     "browser-refresh-client": "^1.1.4",
@@ -40,7 +41,10 @@
     "cookie-parser": "^1.4.3",
     "csurf": "^1.9.0",
     "debug": "^3.1.0",
+    "escape-html": "^1.0.3",
     "express": "^4.16.1",
+    "express-sanitize-escape": "^1.1.0",
+    "express-sanitizer": "^1.0.4",
     "font-awesome": "^4.7.0",
     "formidable": "^1.2.0",
     "fs": "0.0.1-security",

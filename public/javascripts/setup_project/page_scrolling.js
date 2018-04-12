@@ -72,3 +72,19 @@ $("#actually-untokenized-data-button").on("click", function() {
 	$("#untokenized-data-button").removeClass("fade-out");
 	$("#untokenized-data-button").click()			
 });*/
+
+$("#distribute-self-button").on("click", function() {
+	$("#distribute-self").slideDown(500)
+	$("#distribute-to-emails").slideUp(500)
+
+	$("#distribute-to-emails-button").addClass("fade-out");			
+	$("#distribute-self-button").removeClass("fade-out");
+});
+
+$("#distribute-to-emails-button").on("click", function() {
+	$("#distribute-to-emails").slideDown(500)
+	$("#distribute-self").slideUp(500)
+
+	$("#distribute-self-button").addClass("fade-out");			
+	$("#distribute-to-emails-button").removeClass("fade-out");
+});

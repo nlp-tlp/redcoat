@@ -14,6 +14,7 @@ var mongoose = require('mongoose')
 mongoose.connect('mongodb://localhost/redcoat-db-dev', function(err) {
   if(err) { console.log("\x1b[31m" + err.message); }
 });
+var expressSanitizer = require('express-sanitizer');
 
 //var users = require('./routes/users');
 
@@ -42,6 +43,7 @@ app.locals.pretty = true;
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(expressSanitizer());
 /*app.use(
    sassMiddleware({
        src: __dirname + '/scss', 
