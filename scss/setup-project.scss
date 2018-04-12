@@ -28,6 +28,14 @@ nav#sidenav {
 		pointer-events: auto;
 		opacity: 1;
 	}
+	a#close-error-banner {
+		float: right;
+		color: #222;
+		opacity: 0.8;
+		&:hover, &:active, &:focus {
+			opacity: 1;
+		}
+	}
 }
 
 nav#sidenav {

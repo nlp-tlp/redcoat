@@ -34,7 +34,7 @@ block content
 						i.fa.fa-check
 						| Submission
 		div#error-banner
-			<i class="fa fa-exclamation-triangle"></i>&nbsp;&nbsp; There was a problem communicating with the server. Data entered into the form may not be saved.
+			<i class="fa fa-exclamation-triangle"></i>&nbsp;&nbsp; There was a problem communicating with the server. Data entered into the form may not be saved.<a href="#" id="close-error-banner"><i class="fa fa-close"></i></a>
 		div#setup-questions
 
 
@@ -165,16 +165,17 @@ block scripts
 
 
 	script.
-
 		var errorBannerTimeout;
-
 		function displayServerErrorBanner() {
 			$("#error-banner").addClass("show");
-			errorBannerTimeout = window.setTimeout(function() {
-				$("#error-banner").removeClass("show");
-			}, 5000);
+			//errorBannerTimeout = window.setTimeout(function() {
+				
+			//}, 5000);
 		}
-
+		$("#close-error-banner").on('click', function(e) {
+			e.preventDefault();
+			$("#error-banner").removeClass("show");
+		})
 
 	script(src="/javascripts/setup_project/jquery.autosize.js")
 
@@ -245,7 +246,8 @@ block scripts
 					//$form.removeClass( 'is-uploading' );
 				},
 				success: function( data )
-				{
+				{					
+					$("#error-banner").removeClass("show");
 					console.log("done")
 					// Only display the 'saved' notification if there is at least one valid email.
 
@@ -395,6 +397,7 @@ block scripts
 				},
 				success: function( data )
 				{
+					$("#error-banner").removeClass("show");
 					//if($("#project-name-form input").val().length > 0) {
 					window.clearTimeout(rowValidatingTimeout);
 					
@@ -782,6 +785,7 @@ block scripts
 				},
 				success: function( data )
 				{
+					$("#error-banner").removeClass("show");
 					console.log("done");
 					if($("#project-name-form input").val().length > 0 && $("#project-name-form input")[0].checkValidity()) {
 						$("#saved-notification-project-details").addClass("show");
@@ -938,6 +942,7 @@ block scripts
 							},
 							success: function( data )
 							{
+								$("#error-banner").removeClass("show");
 								$form.addClass('is-error');
 								$errorMsg.text(errMsg);		
 							},
@@ -1129,6 +1134,7 @@ block scripts
 							},
 							success: function( data )
 							{
+								$("#error-banner").removeClass("show");
 								window.clearTimeout(tokenizingTimeout);
 								console.log(data);
 								
