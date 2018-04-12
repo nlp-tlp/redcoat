@@ -218,7 +218,7 @@ WipProjectSchema.methods.tokenizeString = function(str, done) {
 // Adds the creator of the project to its user_ids (as the creator should always be able to annotate the project).
 WipProjectSchema.methods.addCreatorToUsers = cf.addCreatorToUsers;
 
-WipProjectSchema.methods.removeDuplicateEmails = cf.removeDuplicateEmails;
+WipProjectSchema.methods.removeInvalidAndDuplicateEmails = cf.removeInvalidAndDuplicateEmails;
 
 
 /* Middleware */
@@ -226,11 +226,7 @@ WipProjectSchema.methods.removeDuplicateEmails = cf.removeDuplicateEmails;
 WipProjectSchema.pre('validate', function(next) {
   var t = this;
   // Add the creator of the project to the list of user_ids, so that they can annotate it too if they want to.
-  t.addCreatorToUsers(function() {
-
-    // Remove all duplicates in the user_emails array, in case the creator accidentally wrote the same one twice.
-    t.removeDuplicateEmails(next);
-  });
+  t.addCreatorToUsers(next);
 
 
 
@@ -242,25 +238,33 @@ WipProjectSchema.pre('save', function(next) {
 
   // 1. Validate admin exists
   var User = require('./user')
-  t.verifyAssociatedExists(User, this.user_id, function(err) {
+  t.verifyAssociatedExists(User, t.user_id, function(err) {
     if(err) { next(err); return }
     //next()
-    // 2. Verify that no other WIP Project has the same user_id as this one (only one WIP Project per user), provided this is a new WIP Project.
-    if (t.isNew) {
-      t.verifyUserIdIsUnique(function(err) {
-        next(err);
-      })
-    } else {
-      // Ensure user_id hasn't been modified.
-      if (t.isModified('user_id')) {
-        next(new Error("user_id must remain the same as it was when the WIP Project was created."))
+
+    // 2. Remove invalid and duplicate emails.
+    t.removeInvalidAndDuplicateEmails(function() {
+      
+      // 3. Verify that no other WIP Project has the same user_id as this one (only one WIP Project per user), provided this is a new WIP Project.
+      if (t.isNew) {
+        t.verifyUserIdIsUnique(function(err) {
+          next(err);
+        })
       } else {
-        next(err);  
 
+        
 
-      }      
-    }
-  })
+        
+
+          // Ensure user_id hasn't been modified.
+          if (t.isModified('user_id')) {
+            next(new Error("user_id must remain the same as it was when the WIP Project was created."))
+          } else {
+            next(err); 
+          }
+      }
+    });
+  });
 });
 
 // Cascade delete for wip_project, so all associated wip_document_groups are deleted when a wip_project is deleted.

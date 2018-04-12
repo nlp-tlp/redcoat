@@ -619,19 +619,37 @@ div#distribute-emails-validation {
 		&.fa-close {
 			color: lighten(rgb(185, 12, 5), 6)
 		}
+		&.fa-exclamation-triangle {
+			color: #ffd05b;
+		}
 		&.hide {
 			display: none;
 		}
 	}
 }
 
-div#setup-questions textarea#distribute-emails-textarea {
+div#setup-questions div#distribute-emails-textarea-container {
 	width: 93%;
 	display: table-cell;
+
+}
+div#setup-questions textarea#distribute-emails-textarea {
 	line-height: 32px;
 	white-space: pre;
 	overflow-wrap: normal;
 	overflow-x: scroll;
-	font-size: 24px;
 	margin: 0;
+	font-size: 24px;
+}
+div#setup-questions #distribute-emails-count-container {
+	color: #777;
+}
+#distribute-emails-count.too-many {
+	color: lighten(rgb(185, 12, 5), 6);
+}
+#distribute-emails-warning {
+	display: none;
+	&.show {
+		display: inline;
+	}
 }

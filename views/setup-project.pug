@@ -129,8 +129,12 @@ block content
 						p Please enter a list of emails below, one per line. An invitation to annotate your dataset will be sent to every valid email address via Redcoat's mail server.
 						form#distribute-emails-form
 							div#distribute-emails-validation
-							textarea#distribute-emails-textarea(rows="10", wrap="off"  cols="254" placeholder="example1@example.com\nexample2@example.com")
-
+							div#distribute-emails-teextarea-container
+								textarea#distribute-emails-textarea(rows="10", wrap="off"  cols="254" placeholder="example1@example.com\nexample2@example.com")
+								div#distribute-emails-count-container
+									<span id="distribute-emails-count">0</span>/#{max_emails} unique emails entered.<span id="distribute-emails-warning"> Only the first 10 email addresses entered will be sent invitations.</span>						
+				div#saved-notification-distribution.saved-notification
+					p <i class="fa fa-check"></i> This section has been saved.
 
 			//- article#dataset.article-heading.not-scrolled-to
 			//- 	h1 Administrator Account
@@ -181,47 +185,131 @@ block scripts
 		  return (/.+\@.+\..+/i.test(val) && val.length <= 254);
 		}
 
+		var MAX_EMAILS = !{max_emails};
+
 		var dev = $("#distribute-emails-validation");
 		var det = $("#distribute-emails-textarea")
 
 		var emailsValidatingTimeout;
 		var uploadingEmails = false;
 
+		var safeToValidateEmails = true;
+
 		function uploadEmails() {
-			console.log("pretending to upload emails...");
-			var emails = det.val().split("\n");
+
+
 			var devHtml = "";
+			var emails = det.val().split("\n");
+
+			console.log("Validating emails...");
+
+			
+			var emails = det.val().split("\n");
+			var validEmails = new Set();
+			
+			for(var i = 0; i < emails.length; i++) {
+				if(validateEmailRegex(emails[i])) {
+					validEmails.add(emails[i]);
+					if(validEmails.size > MAX_EMAILS) {
+						devHtml += "<i class=\"fa fa-exclamation-triangle\" title=\"You may only enter up to " + MAX_EMAILS + " unique emails.\"></i><br/>\n"
+					} else{
+						devHtml += "<i class=\"fa fa-check\" title=\"This is a valid email address.\"></i><br/>\n"
+					}
+
+					
+					
+				} else {
+					devHtml += "<i class=\"fa fa-close " + (emails[i].length == 0 ? "hide" : "") + "\" title=\"This is not a valid email address.\"></i><br/>\n"
+				}
+			}
+			dev.html(devHtml)
+			$("#distribute-emails-count").html(validEmails.size);
+			$("#distribute-emails-count").removeClass("too-many");
+			$("#distribute-emails-warning").removeClass("show");
+			if(validEmails.size > MAX_EMAILS) {
+				$("#distribute-emails-count").addClass("too-many");
+				$("#distribute-emails-warning").addClass("show");
+			}
 
 
 
+			$.ajax(
+			{
+				url: 			'upload-emails',
+				type:			'POST',
+				data: 			{emails},
+				dataType: 		"json",
+				headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
+				complete: function()
+				{
+					//$form.removeClass( 'is-uploading' );
+				},
+				success: function( data )
+				{
+					console.log("done")
+					// Only display the 'saved' notification if there is at least one valid email.
+
+					if((dev).find("i.fa-check").length > 0) {
+						$("#saved-notification-distribution").addClass("show");
+						$("#li-distribution").addClass("completed");
+					}
 
 
 
-			//- var validEmails = new Set();
-			//- var devHtml = "";
-			//- for(var i = 0; i < emails.length; i++) {
-			//- 	if(validateEmailRegex(emails[i])) {
-			//- 		devHtml += "<i class=\"fa fa-check\" title=\"This is a valid email address.\"></i><br/>\n"
-			//- 		validEmails.add(emails[i]);
-			//- 	} else {
-			//- 		devHtml += "<i class=\"fa fa-close " + (emails[i].length == 0 ? "hide" : "") + "\" title=\"This is not a valid email address.\"></i><br/>\n"
-			//- 	}
-			//- }
+					//if($("#project-name-form input").val().length > 0) {
+					//window.clearTimeout(rowValidatingTimeout);
+					//- if(safeToValidateEmails) {
+					//- 	if(data.errors) {	
+					//- 		console.log(data.errors);						
+					//- 		for(var i = 0; i < data.errors.length; i++) {
+					//- 			if(data.errors[i].length == 0) {
+					//- 				devHtml += "<i class=\"fa fa-check\" title=\"This is a valid email address.\"></i><br/>\n";
+					//- 			} else {
+					//- 				devHtml += "<i class=\"fa fa-close " + (emails[i].length == 0 ? "hide" : "") + "\" title=\"This is not a valid email address.\"></i><br/>\n"
+					//- 			}
+					//- 		}
+					//- 	} else {
+					//- 		for(var i = 0; i < emails.length; i++) {
+					//- 			devHtml += "<i class=\"fa fa-check\" title=\"This is a valid email address.\"></i><br/>\n";
+					//- 		}
+					//- 	}						
+					//- 	dev.html(devHtml);
+					//- } else {
+					//- 	console.log("Not safe to validate emails (changed since pinged)")
+					//- 	window.clearTimeout(emailsValidatingTimeout);
+					//- 	validlabelsTimeout = window.setTimeout(uploadEmails, 1000);						
+					//- 	safeToValidateEmails = true;						
+					//- }
+					//- uploadingEmails = false;
 
-			dev.html(devHtml);
-			console.log(validEmails);
+
+
+					// Add the 'saved' thing
+
+				},
+				error: function()
+				{								
+					displayServerErrorBanner();
+				}
+			});				
+
+
+
+			
+			//console.log(validEmails);
 
 			
 
 		}
 		
 			
-		det.autosize( {
-			minRows: 10,
-
-		});   
+	 
 
 		det.on('input', function(e) {
+
+			$("#saved-notification-distribution").removeClass("show");
+			$("#li-distribution").removeClass("completed");	
+		
 			// Remove validation mark from line user edited
 			var ln = $(this).val().substr(0, $(this)[0].selectionStart).split("\n").length;
 
@@ -235,6 +323,28 @@ block scripts
 		})
 
 
+		// Populate the textarea when emails already entered previously
+
+		var existingEmails   = !{user_emails};
+		if(existingEmails) {
+			var existingEmailsStr = existingEmails.join("\n");
+			det.val(existingEmailsStr);
+			$("#saved-notification-distribution").addClass("show");
+			$("#li-distribution").addClass("completed");
+			//det.trigger('input');		
+			var devHtml = "";
+			for(var i = 0; i < existingEmails.length; i++) {
+				devHtml += "<i class=\"fa fa-check\" title=\"This is a valid email address.\"></i><br/>\n"	
+			}
+			$("#distribute-emails-count").html(existingEmails.length);
+			dev.html(devHtml)
+
+		}
+
+		det.autosize( {
+			minRows: 10,
+
+		});  
 
 	script.
 
@@ -410,7 +520,7 @@ block scripts
 
 				$ect_tbody.append(" \
 				<tr id=\"ec-tr-" + this.id + "\"> \
-					<td id=\"ec-valid-" + this.id + "\"><i class=\"fa fa-check\" title=\"This is a valid entity category.\"></i><i class=\"fa fa-close\" title=\"This is not a valid entity category.\"></i><i class=\"fa fa-spin fa-circle-o-notch\"></i></td> \
+					<td id=\"ec-valid-" + this.id + "\"><i class=\"fa fa-check\" title=\"This is a valid entity category.\"></i><i class=\"fa fa-close\" title=\"This is not a valid entity class.\"></i><i class=\"fa fa-spin fa-circle-o-notch\"></i></td> \
 					<td> \
 						<input id=\"ec-" + this.id + "-label\" maxlength=\"200\" value=\"" + this.label + "\"> \
 					</td> \
@@ -738,6 +848,7 @@ block scripts
 
 		var MAX_FILESIZE = !{max_filesize_mb} * 1024 * 1024;
 		var file_metadata = !{file_metadata};
+
 	
 
 

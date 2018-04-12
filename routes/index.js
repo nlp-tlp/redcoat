@@ -85,6 +85,7 @@ buildBasicRoute('/test-page',         'test-page', 	    { title: 'Test page' });
 router.get('/setup-project',           csrfProtection, isLoggedIn, setupProjectController.index);
 router.post('/upload-namedesc',        parseForm, csrfProtection, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_name_desc);
 router.post('/upload-validlabels',     parseForm, csrfProtection, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_valid_labels);
+router.post('/upload-emails',          parseForm, csrfProtection, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_emails);
 router.post('/upload-tokenized-reset', parseForm, csrfProtection, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_tokenized_reset);
 router.post('/upload-tokenized',       parseForm, csrfProtection, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_tokenized);
 

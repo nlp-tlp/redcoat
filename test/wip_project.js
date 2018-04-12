@@ -75,9 +75,23 @@ describe('WIP Projects', function() {
 
   describe("user_emails", function() {
 
-    var wipp = new WipProject();
+    afterEach(function(done) {
+      cf.dropMongooseDb(done);
+    });
 
-    it("should pass validation if all emails are valid", function(done) {
+    var wipp;
+    var user;
+
+
+    beforeEach(function(done) {
+      user = cf.createValidUser();
+      wipp = new WipProject();
+      wipp.user_id = user;
+      cf.registerUsers([user], function(err) { }, done);
+    })
+
+
+    it("should correctly set user_emails if all emails are valid", function(done) {
 
       var emails = [
         "test@test.com",
@@ -85,57 +99,56 @@ describe('WIP Projects', function() {
         "pingu@pingu.com"
       ]
       wipp.user_emails = emails;
-      wipp.validate(function(err) {
-        expect(err.errors.user_emails).to.not.exist;
+      wipp.save(function(err, wip_project) {
+        expect(wip_project.user_emails.length).to.equal(3);
         done();
       });
     });
 
-    it("should fail to validate if one email is blank", function(done) {      
+    it("should correctly set user_emails if one email is blank", function(done) {      
       var emails = [
         "test@test.com",
         "   ",
         "pingu@pingu.com"
       ]
       wipp.user_emails = emails;
-      wipp.validate(function(err) {
-        expect(err.errors.user_emails).to.exist;
+      wipp.save(function(err, wip_project) {
+        expect(wip_project.user_emails.length).to.equal(2);
         done();
       });
     });
 
-    it("should fail to validate if one email is invalid", function(done) {      
+    it("should correctly set user_emails if one email is invalid", function(done) {      
       var emails = [
         "test@test.com",
         "noo0oot",
         "pingu@pingu.com"
       ]
       wipp.user_emails = emails;
-      wipp.validate(function(err) {
-        expect(err.errors.user_emails).to.exist;
+      wipp.save(function(err, wip_project) {
+        expect(wip_project.user_emails.length).to.equal(2);
         done();
       });
     });
-    it("should fail to validate if it contains too many emails", function(done) {      
+    it("should correctly set user_emails if it contains too many emails", function(done) {      
       var emails = [];
       for(var i = 0; i < 230; i++) {
         emails.push("a" + i + "@a.com");
       }
       wipp.user_emails = emails;
-      wipp.validate(function(err) {
-        expect(err.errors.user_emails).to.exist;
+      wipp.save(function(err, wip_project) {
+        expect(wip_project.user_emails.length).to.equal(100);
         done();
       });
     });
-    it("should pass validation if it contains too many emails, but the emails are duplicates", function(done) {      
+    it("should correctly set user_emails if it contains too many emails, but the emails are duplicates", function(done) {      
       var emails = [];
       for(var i = 0; i < 230; i++) {
         emails.push("a@a.com");
       }
       wipp.user_emails = emails;
-      wipp.validate(function(err) {
-        expect(err.errors.user_emails).to.not.exist;
-        expect(wipp.user_emails.length).to.equal(1)
+      wipp.save(function(err, wip_project) {
+        expect(wip_project.user_emails.length).to.equal(1);
         done();
       });
     });

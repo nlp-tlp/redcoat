@@ -281,10 +281,10 @@ function validateEmails(arr, done) {
 
   for(var i = 0; i < arr.length; i++) {
     if(!validateNotBlank(arr[i])) {
-      msg.push(i + ": Error: Email cannot be blank.");
+      msg.push(i + ": [email] Error: Email cannot be blank.");
     }
     if(!validateEmailRegex(arr[i])) {
-      msg.push(i + ": Error: Email must be a valid email.")
+      msg.push(i + ": [email] Error: Email must be a valid email.")
     }
   }
   if(msg.length > 0) {
@@ -302,9 +302,9 @@ emailValidation = [
   { validator: validateEmailRegex,  msg: "Email must be a valid email address." },
 ];
 
-emailsValidation = [
-  { validator: function(arr, done) { validateEmails(arr, function(result, msg) { done(result, msg); })}, isAsync: true },
-]
+// emailsValidation = [
+//   { validator: function(arr, done) { validateEmails(arr, function(result, msg) { done(result, msg); })}, isAsync: true },
+// ]
 
 
 userIdsValidation = [
@@ -438,9 +438,18 @@ module.exports = {
 	  }
 	},
 
-  removeDuplicateEmails: function(next) {
+  // Removes invalid and duplicate emails, and truncates the list of emails to n = USERS_PER_PROJECT_MAXCOUNT
+  removeInvalidAndDuplicateEmails: function(next) {
     if(this.user_emails) {
-      this.user_emails = Array.from(new Set(this.user_emails));
+      var emails_set = Array.from(new Set(this.user_emails));
+      var valid_emails = [];
+      for(var i = 0; i < emails_set.length; i++) {
+        if(validateEmailRegex(emails_set[i]) && emails_set[i].length <= 254) {
+          if(i < USERS_PER_PROJECT_MAXCOUNT)
+            valid_emails.push(emails_set[i]);
+        }
+      }
+      this.user_emails = valid_emails;
     } 
     next();   
   },
@@ -489,7 +498,7 @@ module.exports = {
 
     emails: {
       type: [String],
-      validate: emailsValidation,
+      //validate: emailsValidation, // No validation necessary
     },
 
 		documents: {
