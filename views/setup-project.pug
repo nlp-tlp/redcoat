@@ -126,7 +126,7 @@ block content
 					div#distribute-to-emails.subsection
 						//.subsection-hidden
 						h3 Distribute via Email
-						p Please enter a list of emails below. An invitation to annotate your dataset will be sent to every valid email address.
+						p Please enter a list of emails below, one per line. An invitation to annotate your dataset will be sent to every valid email address via Redcoat's mail server.
 						form#distribute-emails-form
 							div#distribute-emails-validation
 							textarea#distribute-emails-textarea(rows="10", wrap="off"  cols="254" placeholder="example1@example.com\nexample2@example.com")
@@ -176,11 +176,8 @@ block scripts
 
 	script.
 
-
-
-
 		// A simple email validation regex.
-		validateEmailRegex = function(val) {
+		var validateEmailRegex = function(val) {
 		  return (/.+\@.+\..+/i.test(val) && val.length <= 254);
 		}
 
@@ -188,20 +185,28 @@ block scripts
 		var det = $("#distribute-emails-textarea")
 
 		var emailsValidatingTimeout;
+		var uploadingEmails = false;
 
 		function uploadEmails() {
 			console.log("pretending to upload emails...");
 			var emails = det.val().split("\n");
-			var validEmails = new Set();
 			var devHtml = "";
-			for(var i = 0; i < emails.length; i++) {
-				if(validateEmailRegex(emails[i])) {
-					devHtml += "<i class=\"fa fa-check\" title=\"This is a valid email address.\"></i><br/>\n"
-					validEmails.add(emails[i]);
-				} else {
-					devHtml += "<i class=\"fa fa-close " + (emails[i].length == 0 ? "hide" : "") + "\" title=\"This is not a valid email address.\"></i><br/>\n"
-				}
-			}
+
+
+
+
+
+
+			//- var validEmails = new Set();
+			//- var devHtml = "";
+			//- for(var i = 0; i < emails.length; i++) {
+			//- 	if(validateEmailRegex(emails[i])) {
+			//- 		devHtml += "<i class=\"fa fa-check\" title=\"This is a valid email address.\"></i><br/>\n"
+			//- 		validEmails.add(emails[i]);
+			//- 	} else {
+			//- 		devHtml += "<i class=\"fa fa-close " + (emails[i].length == 0 ? "hide" : "") + "\" title=\"This is not a valid email address.\"></i><br/>\n"
+			//- 	}
+			//- }
 
 			dev.html(devHtml);
 			console.log(validEmails);
@@ -226,8 +231,9 @@ block scripts
 			console.log(ln);
 			window.clearTimeout(emailsValidatingTimeout);
 			emailsValidatingTimeout = window.setTimeout(uploadEmails, 1000);
+			uploadingEmails = true;
 		})
-		
+
 
 
 	script.

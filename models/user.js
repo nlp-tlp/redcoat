@@ -4,7 +4,7 @@ var cf = require("./common/common_functions");
 const passportLocalMongoose = require('passport-local-mongoose');
 
 
-EMAIL_MAXLENGTH    = 254;
+
 USERNAME_MAXLENGTH = 50;
 PASSWORD_MAXLENGTH = 1000;
 
@@ -23,17 +23,6 @@ validatePassword = function(pw, done) {
   }
 }
 
-// A simple email validation regex.
-validateEmailRegex = function(val) {
-  return /.+\@.+\..+/i.test(val);
-}
-
-
-
-emailValidation = [
-  { validator: cf.validateNotBlank, msg: "Email cannot be blank." },
-  { validator: validateEmailRegex,  msg: "Email must be a valid email address." },
-];
 
 
 
@@ -43,15 +32,9 @@ passwordValidation = [
 
 // create a schema
 var UserSchema = new Schema({
-  email: { 
-    type: String,
-    required: true,
-    unique: true,
-    minlength: 1,
-    lowercase: true,
-    maxlength: EMAIL_MAXLENGTH,
-    validate: emailValidation
-  },
+  
+  email: cf.fields.email,
+
   username: {
     type: String,
     required: true,

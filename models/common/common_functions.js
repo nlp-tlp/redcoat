@@ -11,10 +11,12 @@ ABBREVIATION_MAXLENGTH     = 20;
 
 PROJECT_NAME_MAXLENGTH 				= 100;
 PROJECT_DESCRIPTION_MAXLENGTH = 500; // Max length of a project description.
-VALID_LABEL_MAXCOUNT   				= 200;
-LABEL_MAXLENGTH        				= 200;
+VALID_LABEL_MAXCOUNT   				= 20;
+LABEL_MAXLENGTH        				= 20;
 
 DOCUMENT_TOTAL_MAXCOUNT   = DOCUMENT_GROUP_TOTAL_MAXCOUNT * DOCUMENT_MAXCOUNT;
+
+EMAIL_MAXLENGTH    = 254;
 
 /* Validation */
 
@@ -265,7 +267,44 @@ var validateValidLabels = function(arr, done) {
 }
 
 
+// A simple email validation regex.
+validateEmailRegex = function(val) {
+  return /.+\@.+\..+/i.test(val);
+}
 
+function validateEmails(arr, done) {
+  var msg = [];
+
+  if(arr.length > USERS_PER_PROJECT_MAXCOUNT) {
+    return done(false, "Email list must contain " + USERS_PER_PROJECT_MAXCOUNT + " emails or fewer.")
+  }
+
+  for(var i = 0; i < arr.length; i++) {
+    if(!validateNotBlank(arr[i])) {
+      msg.push(i + ": Error: Email cannot be blank.");
+    }
+    if(!validateEmailRegex(arr[i])) {
+      msg.push(i + ": Error: Email must be a valid email.")
+    }
+  }
+  if(msg.length > 0) {
+    return done(false, msg.join("\n"));
+  } else {
+    return done(true);
+  }  
+
+
+}
+
+
+emailValidation = [
+  { validator: validateNotBlank, msg: "Email cannot be blank." },
+  { validator: validateEmailRegex,  msg: "Email must be a valid email address." },
+];
+
+emailsValidation = [
+  { validator: function(arr, done) { validateEmails(arr, function(result, msg) { done(result, msg); })}, isAsync: true },
+]
 
 
 userIdsValidation = [
@@ -334,6 +373,7 @@ module.exports = {
 	validateLabelAbbreviationLengthMin: validateLabelAbbreviationLengthMin,
 	validateLabelAbbreviationLengthMax: validateLabelAbbreviationLengthMax,
 	validateArrayHasUniqueValues : validateArrayHasUniqueValues,
+  emailValidation: emailValidation,
 
 	// Set the updated_at and created_at fields.
 	setCurrentDate: function() {
@@ -398,6 +438,13 @@ module.exports = {
 	  }
 	},
 
+  removeDuplicateEmails: function(next) {
+    if(this.user_emails) {
+      this.user_emails = Array.from(new Set(this.user_emails));
+    } 
+    next();   
+  },
+
 	fields: {
 	  
 	  user_id: {
@@ -430,6 +477,20 @@ module.exports = {
 	    validate: validateNotBlank
 	  },
 
+    email: { 
+      type: String,
+      required: true,
+      unique: true,
+      minlength: 1,
+      lowercase: true,
+      maxlength: EMAIL_MAXLENGTH,
+      validate: emailValidation
+    },
+
+    emails: {
+      type: [String],
+      validate: emailsValidation,
+    },
 
 		documents: {
 	    type: [[String]],

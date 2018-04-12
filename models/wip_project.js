@@ -37,6 +37,8 @@ var WipProjectSchema = new Schema({
   // The users who will be annotating the project.
   user_ids: cf.fields.user_ids,
 
+  user_emails: cf.fields.emails,
+
   // Some metadata about the WIP Project.
   file_metadata: {
     
@@ -216,12 +218,21 @@ WipProjectSchema.methods.tokenizeString = function(str, done) {
 // Adds the creator of the project to its user_ids (as the creator should always be able to annotate the project).
 WipProjectSchema.methods.addCreatorToUsers = cf.addCreatorToUsers;
 
+WipProjectSchema.methods.removeDuplicateEmails = cf.removeDuplicateEmails;
+
 
 /* Middleware */
 
 WipProjectSchema.pre('validate', function(next) {
+  var t = this;
   // Add the creator of the project to the list of user_ids, so that they can annotate it too if they want to.
-  this.addCreatorToUsers(next);
+  t.addCreatorToUsers(function() {
+
+    // Remove all duplicates in the user_emails array, in case the creator accidentally wrote the same one twice.
+    t.removeDuplicateEmails(next);
+  });
+
+
 
 
 });

@@ -158,7 +158,7 @@ function runProjectValidLabelsTests(model, done) {
     }); 
     it('should fail validation if valid_labels contains a label that is too long', function(done) { 
       var proj = new model( { valid_labels: [ { label: cf.createStringOfLength(30), abbreviation: "fine", color: "#111111" }] });
-      proj.validate(function(err) { expect(err.errors['valid_labels.0.label']).to.exist; done(); });
+      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
     });  
     it('should fail validation if valid_labels contains a label that is blank', function(done) { 
       var proj = new model( { valid_labels: [ { label: "   ", abbreviation: "fine", color: "#111111" }] });
@@ -172,7 +172,7 @@ function runProjectValidLabelsTests(model, done) {
     }); 
     it('should fail validation if valid_labels contains an abbreviation that is too long', function(done) { 
       var proj = new model( { valid_labels: [ { label: "fine", abbreviation: cf.createStringOfLength(30), color: "#111111" }] });
-      proj.validate(function(err) { expect(err.errors['valid_labels.0.abbreviation']).to.exist; done(); });
+      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
     });  
     it('should fail validation if valid_labels contains an abbreviation that is blank', function(done) { 
       var proj = new model( { valid_labels: [ { label: "fine", abbreviation: "     ", color: "#111111" }] });
