@@ -328,7 +328,7 @@ block scripts
 		// Populate the textarea when emails already entered previously
 
 		var existingEmails   = !{user_emails};
-		if(existingEmails) {
+		if(existingEmails && existingEmails.length > 0) {
 			var existingEmailsStr = existingEmails.join("\n");
 			det.val(existingEmailsStr);
 			$("#saved-notification-distribution").addClass("show");

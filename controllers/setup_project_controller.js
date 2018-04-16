@@ -173,7 +173,7 @@ exports.upload_emails = function(req, res, next) {
 exports.upload_valid_labels = function(req, res, next) {
   wip_project = res.locals.wip_project;
 
-  //console.log(req.body.validLabelData);
+  console.log('labels', req.body.validLabelData);
 
   setTimeout(function() {
 
@@ -183,6 +183,9 @@ exports.upload_valid_labels = function(req, res, next) {
     wip_project.valid_labels = [];
   console.log(req.body.validLabelData)
   wip_project.validate(function(err) {
+
+
+    var errors = null;
 
     if(err) {
       if(err.errors.valid_labels) {
@@ -207,25 +210,21 @@ exports.upload_valid_labels = function(req, res, next) {
 
         // Reset the valid_labels if invalid to prevent weird behaviour on refresh
         wip_project.valid_labels = null;
-        wip_project.save(function(err) {
-          if(err) { console.log(err); res.send( { "success": false} ); }
-          else {
-           res.send( { "success": false, "errors": errors });
-          }
-        });       
+      
 
         //console.log("ERROR:", error_label);
-      } else {
-
-        wip_project.save(function(err) {
-          if(err) { console.log(err); res.send( { "success": false} ); }
-          else {
-            res.send({ "success": true });
-          }
-        });
       }
 
     }
+
+    
+    wip_project.save(function(err) {
+      if(errors) {
+        res.send( { "success": false, "errors": errors });
+      } else {
+        res.send({ "success": true });
+      }
+    });
 
   });
   }, 1400);
