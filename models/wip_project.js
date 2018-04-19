@@ -3,6 +3,7 @@ var Schema = mongoose.Schema;
 var cf = require("./common/common_functions")
 var WipDocumentGroup = require('./wip_document_group')
 var Project = require("./project")
+var DocumentGroup = require("./document_group")
 var natural = require('natural');
 var tokenizer = new natural.TreebankWordTokenizer();
 var clone = require('clone');
@@ -257,39 +258,65 @@ WipProjectSchema.methods.convertToProject = function(done) {
     p.user_id = t.user_id;
     p.project_name = t.project_name;
 
-
+    // Copy all of the relevant fields over.
     for(var i = 0; i < sharedFields.length; i++) {
       var k = sharedFields[i];
       p[k] = t[k];
     }
 
-    console.log("Projecttttt:", p);
-
 
 
     /* TODO:
 
+       Create all the document_groups from the associated WipDocumentGroups.
        For each email, create a User (if they are not already registered).
        Email an invitation out to each user (a 'please register' for the non-registered users).
-       Create all the document_groups from the associated WipDocumentGroups.
 
     */
 
+    try {
+
+    // Convert all the WipDocumentGroups into DocumentGroups
+    t.getWipDocumentGroups(function(err, wip_document_groups) {
 
 
-    p.save(function(err, project) {
       if(err) { return done(err); }
-      console.log(err);
 
+      var docgroupsToCreate = [];
+      var removeIds = []; // A list of ids of wipdocumentgroups to be removed
 
-      // Remove this WIP Project after completion.
-      WipProject.remove({_id: t._id}, function(err) {
-        if(err) { return done(err); }
-        done(null, project);
-      })
-      
-    })
-  });
+      for(var i = 0; i < wip_document_groups.length; i++) {
+        var w = wip_document_groups[i];
+        docgroupsToCreate.push(new DocumentGroup( { project_id : w.wip_project_id, documents: w.documents, _id: w._id } ));
+        removeIds.push(w._id);
+      }
+
+      console.log(docgroupsToCreate, removeIds)
+
+      // Insert all docgroups at once.       
+      DocumentGroup.collection.insert(docgroupsToCreate, function(err, docgroups) {
+
+        // Remove all this wip project's wip document groups after completion.
+        WipDocumentGroup.remove({ _id: { $in: removeIds } }, function(err) {     
+
+          if(err) { return done(err); }            
+
+          // Remove this WIP Project after completion.
+          WipProject.remove({_id: t._id}, function(err) {
+            if(err) { return done(err); }
+
+            // Save the project
+            p.save(function(err, project) {
+              console.log(err);
+              if(err) { done(err); return; }
+              done(null, project);
+            });
+          });
+        });
+      });
+    });
+  } catch(e) { console.log(e); }
+  })
 
 }
 

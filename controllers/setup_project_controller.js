@@ -391,22 +391,16 @@ exports.submit_new_project_form = function(req, res, next) {
 
   console.log("hello there")
   wip_project = res.locals.wip_project;
-  wip_project.getWipDocumentGroups(function(err, wip_document_groups) {
+  wip_document_groups = [];
+  wip_project.convertToProject(function(err, project) {
+    //console.log(err);
 
-
-
-      wip_project.convertToProject(function(err, project) {
-        //console.log(err);
-
-        if(err) {
-          console.log(err);
-          res.render("temp-render-form", {err: err });
-        } else {
-          res.render("temp-render-form", {project: JSON.stringify(project, null, 4), wip_project: JSON.stringify(wip_project, null, 4), n_wip_document_groups: wip_document_groups.length, wip_document_groups: JSON.stringify(wip_document_groups.splice(0, 1), null, 4), path: req.path});
-        }
-
-
-      });
+    if(err) {
+      console.log(err);
+      res.render("temp-render-form", {err: err });
+    } else {
+      res.render("temp-render-form", {project: JSON.stringify(project, null, 4), wip_project: JSON.stringify(wip_project, null, 4), n_wip_document_groups: wip_document_groups.length, wip_document_groups: JSON.stringify(wip_document_groups.splice(0, 1), null, 4), path: req.path});
+    }
 
 
   });
