@@ -127,6 +127,7 @@ function runProjectUserIdsTests(model, done) {
       proj1.validate(function(err) { 
         expect(err).to.not.exist;
         proj1.save(function(err, proj) {
+          console.log(proj);
           expect(proj.user_ids).to.include(user1._id); 
           done();
         });

@@ -5,6 +5,7 @@ block head
 	<link rel='stylesheet' href='/stylesheets/spectrum.css' />
 
 
+
 block content
 
 
@@ -132,7 +133,7 @@ block content
 							div#distribute-emails-teextarea-container
 								textarea#distribute-emails-textarea(rows="10", wrap="off"  cols="254" placeholder="example1@example.com\nexample2@example.com")
 								div#distribute-emails-count-container
-									<span id="distribute-emails-count">0</span>/#{max_emails} unique emails entered.<span id="distribute-emails-warning"> Only the first 10 email addresses entered will be sent invitations.</span>						
+									<span id="distribute-emails-count">0</span>/#{max_emails} unique emails entered.<span id="distribute-emails-warning"> Only the first #{max_emails} email addresses entered will be sent invitations.</span>						
 				div#saved-notification-distribution.saved-notification
 					p <i class="fa fa-check"></i> This section has been saved.
 
@@ -153,8 +154,10 @@ block content
 				h1 Submission
 				div.form-section
 					p Once you have completed the form, please click the submit button below to set up the project.
-					form
+					form(action="testtt", method="post")
 						div.submit-row
+							input(type="hidden" name="_wippid" value="" + wip_project_id )
+							input(type="hidden" name="_csrf" value="" + csrfToken )
 							input(type="submit" value="Submit and create project")
 
 			div(style="height: 600px")
@@ -714,7 +717,7 @@ block scripts
 		// Check whether valid_labels has already been created 
 		var existingValidLabels = !{valid_labels};
 
-		if(existingValidLabels) {
+		if(existingValidLabels && existingValidLabels.length > 0) {
 
 			// Check if using NER template
 			var isNER = (existingValidLabels.length == 4

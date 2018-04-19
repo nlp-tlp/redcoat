@@ -2,6 +2,7 @@ var WipProject = require('../models/wip_project');
 var formidable = require('formidable');
 var User = require('../models/user');
 var bodyParser = require('body-parser')
+var extend = require('util')._extend
 
 var escape = require('escape-html');
 
@@ -16,7 +17,11 @@ var path = require('path');
 // This middleware function should be used for every POST request on the Setup Project page.
 exports.verifyWippid = function(req, res, next) {
   testuser = res.locals.user;
-  WipProject.verifyWippid(testuser._id, req.headers.wippid, function(err, wip_project) {
+
+  //console.log(req.body["_wippid"], res.locals.user, "BODY")
+  var wippid = req.headers.wippid || req.body["_wippid"];
+
+  WipProject.verifyWippid(testuser._id, wippid, function(err, wip_project) {
     if(!wip_project) { console.log("incorrect user"); res.send({ "success": false }); }
     else {
       res.locals.wip_project = wip_project;
@@ -30,16 +35,19 @@ exports.verifyWippid = function(req, res, next) {
 // The setup_project page.
 exports.index = function(req, res, next) {
 
-  // // (for now) create a new User for the wip_project to belong to
-  // user = new User({
-  //   username: "Pingu-" + Math.random().toString(36).substring(4),
-  //   email: "pingu@nootnoot-" + Math.random().toString(36).substring(4) + ".com",
-  // });
- 
-  //var user = req.user;
+  res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
 
-  //User.authenticate ......
-  //User.register(user, "password", function(err, user) {
+
+  // // (for now) create a new User for the wip_project to belong to
+  //  user = new User({
+  //    username: "Pingu99",
+  //    email: "pingu@nootnoot-" + Math.random().toString(36).substring(4) + ".com",
+  //  });
+ 
+  // //var user = req.user;
+
+  // //User.authenticate ......
+  // User.register(user, "password", function(err, user) {})
   //User.findOne({ username: "Pingu99" }, function(err, user) {
     var testuser = res.locals.user;
     console.log("username:", testuser.username, "email:", testuser.email);
@@ -53,7 +61,7 @@ exports.index = function(req, res, next) {
     }
 
     WipProject.findWipByUserId(testuser._id, function(err, wip_project) {
-      if(err) { next(err); return; }
+      if(err) { console.log("E", err); next(err); return; }
       if(wip_project) {
         console.log("Existing WIP Project found.");
 
@@ -70,8 +78,8 @@ exports.index = function(req, res, next) {
                    wip_project.project_name,
                    wip_project.project_description,
                    wip_project.file_metadata["Filename"] != undefined ? JSON.stringify(wip_project.fileMetadataToArray()) : "null",
-                   JSON.stringify(valid_labels),
-                   JSON.stringify(wip_project.user_emails));
+                   valid_labels ? JSON.stringify(valid_labels) : "null",
+                   wip_project.user_emails ? JSON.stringify(wip_project.user_emails) : "null");
 
 
         // if(wip_project.file_metadata["Filename"] != undefined) {
@@ -107,22 +115,27 @@ exports.upload_name_desc = function(req, res, next) {
   wip_project.project_name = req.body.name.length > 0 ? req.body.name : null;
   wip_project.project_description = req.body.desc.length > 0 ? req.body.desc : null;
 
-  err = wip_project.validateSync();
-
-  // If the user enters an invalid project name or description, reset it before saving.
-  if(err.errors.project_name) {
-    wip_project.project_name = null;
-  }
-  if(err.errors.project_description) {
-     wip_project.project_description = null;
-  }
-
-  wip_project.save(function(err) {
-    if(err) { console.log(err); res.send( { "success": false} ); }
-    else {
-      res.send({ "success": true });
+  wip_project.validate(function(err) {
+    if(err) {
+      // If the user enters an invalid project name or description, reset it before saving.
+      if(err.errors.project_name) {
+        wip_project.project_name = null;
+      }
+      if(err.errors.project_description) {
+         wip_project.project_description = null;
+      }
     }
+
+    wip_project.save(function(err) {
+      if(err) { console.log(err); res.send( { "success": false} ); }
+      else {
+        res.send({ "success": true });
+      }
+    });
+
   });
+
+
 }
 
 // Returns an errors object
@@ -368,4 +381,37 @@ exports.upload_tokenized = function(req, res, next) {
 
 
   });
+}
+
+
+
+exports.submit_new_project_form = function(req, res, next) {
+
+
+
+  console.log("hello there")
+  wip_project = res.locals.wip_project;
+  wip_project.getWipDocumentGroups(function(err, wip_document_groups) {
+
+
+
+      wip_project.convertToProject(function(err, project) {
+        //console.log(err);
+
+        if(err) {
+          console.log(err);
+          res.render("temp-render-form", {err: err });
+        } else {
+          res.render("temp-render-form", {project: JSON.stringify(project, null, 4), wip_project: JSON.stringify(wip_project, null, 4), n_wip_document_groups: wip_document_groups.length, wip_document_groups: JSON.stringify(wip_document_groups.splice(0, 1), null, 4), path: req.path});
+        }
+
+
+      });
+
+
+  });
+
+  
+
+
 }

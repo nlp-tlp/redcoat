@@ -89,4 +89,6 @@ router.post('/upload-emails',          parseForm, csrfProtection, isLoggedIn, se
 router.post('/upload-tokenized-reset', parseForm, csrfProtection, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_tokenized_reset);
 router.post('/upload-tokenized',       parseForm, csrfProtection, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_tokenized);
 
+router.post('/testtt',                 parseForm, csrfProtection, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.submit_new_project_form);
+
 module.exports = router

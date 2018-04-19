@@ -37,6 +37,7 @@
     "body-parser": "^1.18.2",
     "browser-refresh-client": "^1.1.4",
     "chai": "^4.1.2",
+    "clone": "^1.0.4",
     "concurrently": "^3.5.0",
     "cookie-parser": "^1.4.3",
     "csurf": "^1.9.0",

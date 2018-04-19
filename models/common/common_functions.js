@@ -57,7 +57,7 @@ var validateValidHexColor = function(col) {
 
 // Returns true if a string is not blank (filled with whitespace).
 var validateNotBlank = function(str) {
-		return '' != str.replace(/^\s+/, '').replace(/\s+$/, '')
+		return str == null || ('' != str.replace(/^\s+/, '').replace(/\s+$/, ''))
 };
 
 
@@ -397,8 +397,8 @@ module.exports = {
 		//model.findById(asso_arr[0], function(err, f) {
 		//	console.log(err, f);
 		//})
+
 		model.count( { _id: { $in : asso_arr } } , function(err, count) {
-			//console.log(count, len)
 			if(len != count) {
 				next( { "association": new Error("All associated " + model.collection.collectionName + " records must exist in database.") });
 			} else {
@@ -425,17 +425,19 @@ module.exports = {
 	},
 
 	// Adds the creator of the project (or WIP Project) to its list of user_ids if it is not there.
-	addCreatorToUsers: function(next) {
+	addCreatorToUsers: function() {
 	  //if(this.user_ids == undefined) {
 	   // this.user_ids = [];
+
 	  //}
-	  var s = new Set(this.user_ids);
-	  if(s.has(this.user_id)) {
-	    next();
-	  } else {
-	    this.user_ids.push(this.user_id);
-	    next();
-	  }
+	  // var s = new Set(this.user_ids);
+   //  console.log("SSSS:", s)
+	  // if(s.has(str(this.user_id))) {
+	  //   next();
+	  // } else {
+    if(!this.user_ids) { this.user_ids = []; }
+	  this.user_ids.push(this.user_id);
+	  // }
 	},
 
   // Removes invalid and duplicate emails, and truncates the list of emails to n = USERS_PER_PROJECT_MAXCOUNT
@@ -530,6 +532,18 @@ module.exports = {
 	    validate: userIdsValidation,
 	    default: []
 	  },
+
+    file_metadata: {      
+      'Filename': {
+        type: String,
+        minlength: 0,
+        maxlength: 255,
+      },
+    
+      'Number of documents': Number,
+      'Number of tokens': Number,
+      'Average tokens/document': Number
+    }
 
 	}
 }

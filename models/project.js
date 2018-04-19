@@ -32,6 +32,10 @@ var ProjectSchema = new Schema({
   // The users who are annotating the project.
   user_ids: cf.fields.user_ids,
 
+
+  // Some metadata about the Project.
+  file_metadata: cf.fields.file_metadata,
+
 }, {
   timestamps: { 
     createdAt: "created_at",
@@ -71,12 +75,19 @@ ProjectSchema.methods.addCreatorToUsers = cf.addCreatorToUsers;
 /* Middleware */
 
 ProjectSchema.pre('validate', function(next) {
-  // Add the creator of the project to the list of user_ids, so that they can annotate it too if they want to.
-  this.addCreatorToUsers(next);
+  var t = this;
+  next();
 });
 
 ProjectSchema.pre('save', function(next) {
   var t = this;
+
+  // If the project is new, addCreatorToUsers.
+  if (t.isNew) {
+    if(t.user_ids && t.user_ids.length == 0) {
+      t.addCreatorToUsers();
+    }
+  }
 
   // 1. Validate admin exists
   var User = require('./user')
@@ -84,9 +95,7 @@ ProjectSchema.pre('save', function(next) {
     if(err) { next(err); return; }
 
     // 2. Validate all users in the user_ids array exist.
-    t.verifyAssociatedObjectsExist(User, t.user_ids, function(err) {
-      next(err);
-    });
+    t.verifyAssociatedObjectsExist(User, t.user_ids, next);
   });
 });
 

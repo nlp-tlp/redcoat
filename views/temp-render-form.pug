@@ -1,0 +1,29 @@
+extends layout
+
+block head
+	<script src='/javascripts/spectrum.js'></script>
+	<link rel='stylesheet' href='/stylesheets/spectrum.css' />
+
+
+block content
+
+
+	if !err
+
+		h1 Project that was saved
+
+		pre!= project
+
+		h1 WIP_Project that was converted
+
+		pre!= wip_project
+
+		br
+
+		h1 Document Groups to be saved
+		p(style="color: #aaa; font-style: italic; margin-top: -15px; margin-bottom: 25px;") Note: #{n_wip_document_groups} Wip Document Groups in total (only one shown).
+		pre!= wip_document_groups
+	else
+		h1 An error occurred while attempting to create the Project:
+
+		p.error!= err

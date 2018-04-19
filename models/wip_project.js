@@ -2,8 +2,10 @@ var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
 var cf = require("./common/common_functions")
 var WipDocumentGroup = require('./wip_document_group')
+var Project = require("./project")
 var natural = require('natural');
 var tokenizer = new natural.TreebankWordTokenizer();
+var clone = require('clone');
 ObjectId = require('mongodb').ObjectID;
 
 // A model for storing projects that are "work in progress" (WIP). 
@@ -40,18 +42,7 @@ var WipProjectSchema = new Schema({
   user_emails: cf.fields.emails,
 
   // Some metadata about the WIP Project.
-  file_metadata: {
-    
-    'Filename': {
-      type: String,
-      minlength: 0,
-      maxlength: 255,
-    },
-  
-    'Number of documents': Number,
-    'Number of tokens': Number,
-    'Average tokens/document': Number
-  }
+  file_metadata: cf.fields.file_metadata,
 }, {
   timestamps: { 
     createdAt: "created_at",
@@ -66,6 +57,7 @@ WipProjectSchema.set('validateBeforeSave', false);
 WipProjectSchema.statics.findWipByUserId = function(uid, done) {
   WipProject.findOne( { user_id : uid }, function(err, wip_project) {
     if(err) { done(err); return; }
+    console.log(wip_project)
     done(null, wip_project);
   });
 }
@@ -78,7 +70,9 @@ WipProjectSchema.statics.verifyWippid = function(user_id, wippid, done) {
   } catch(err) { 
     done(err); return;
   } 
+
   WipProject.findWipByUserId(user_id, function(err, wip_project) {
+    if(!wip_project) { return done(err, null)}
     if(!wip_project._id.equals(wippid))
       done(err, null);
     else 
@@ -215,6 +209,90 @@ WipProjectSchema.methods.tokenizeString = function(str, done) {
   done(e, tokenized_sentences, number_of_tokens, line_indexes);
 }
 
+// Returns a list of this WipProject's document groups.
+WipProjectSchema.methods.getWipDocumentGroups = function(done) {
+  var t = this;
+  WipDocumentGroup.find({ wip_project_id: t._id}, function(err, wip_document_groups) {
+    done(err, wip_document_groups);
+  });
+}
+
+// Convert this WipProject to a Project and delete the WipProject.
+// Also convert all associated WipDocumentGroups to DocumentGroups.
+WipProjectSchema.methods.convertToProject = function(done) {
+  var t = this;
+
+
+  // Initialise the new Project
+  var p = new Project();
+
+  console.log('hi')
+  // Ensure WIP Project validates correctly before proceeding (the user will be prompted to fix their form if it's not valid)
+  t.validate(function(err) {
+    if(err) { return done(err); }
+
+
+    // Determine the fields shared between WipProject and Project so that they may be copied from one to the other.
+    var WipProjectSchemaPaths = new Set();
+    var ProjectSchemaPaths    = new Set();
+
+    for(var k in WipProject.schema.paths) {
+      WipProjectSchemaPaths.add(k);
+    }
+
+    for(var k in Project.schema.paths) {
+      ProjectSchemaPaths.add(k);
+    }
+
+    var sharedFields = [... WipProjectSchemaPaths].filter(x => ProjectSchemaPaths.has(x));
+
+    console.log("WIP PROJECT")
+    console.log(WipProjectSchemaPaths)
+    console.log("PROJECT")
+    console.log(ProjectSchemaPaths)
+    console.log("SHARED")
+    console.log(sharedFields);
+
+
+    p.user_id = t.user_id;
+    p.project_name = t.project_name;
+
+
+    for(var i = 0; i < sharedFields.length; i++) {
+      var k = sharedFields[i];
+      p[k] = t[k];
+    }
+
+    console.log("Projecttttt:", p);
+
+
+
+    /* TODO:
+
+       For each email, create a User (if they are not already registered).
+       Email an invitation out to each user (a 'please register' for the non-registered users).
+       Create all the document_groups from the associated WipDocumentGroups.
+
+    */
+
+
+
+    p.save(function(err, project) {
+      if(err) { return done(err); }
+      console.log(err);
+
+
+      // Remove this WIP Project after completion.
+      WipProject.remove({_id: t._id}, function(err) {
+        if(err) { return done(err); }
+        done(null, project);
+      })
+      
+    })
+  });
+
+}
+
 // Adds the creator of the project to its user_ids (as the creator should always be able to annotate the project).
 WipProjectSchema.methods.addCreatorToUsers = cf.addCreatorToUsers;
 
@@ -225,16 +303,16 @@ WipProjectSchema.methods.removeInvalidAndDuplicateEmails = cf.removeInvalidAndDu
 
 WipProjectSchema.pre('validate', function(next) {
   var t = this;
-  // Add the creator of the project to the list of user_ids, so that they can annotate it too if they want to.
-  t.addCreatorToUsers(next);
-
-
-
-
+  next();
 });
 
 WipProjectSchema.pre('save', function(next) {
   var t = this;
+
+  // If the project is new, addCreatorToUsers.
+  if (t.isNew) {
+    t.addCreatorToUsers();
+  }
 
   // 1. Validate admin exists
   var User = require('./user')
