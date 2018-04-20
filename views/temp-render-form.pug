@@ -14,15 +14,17 @@ block content
 
 		pre!= project
 
+		h1 Document Groups that were saved
+		p(style="color: #aaa; font-style: italic; margin-top: -15px; margin-bottom: 25px;") Note: #{n_document_groups} Document Groups in total (only one shown).
+		pre!= document_groups
+
 		h1 WIP_Project that was converted
 
 		pre!= wip_project
 
 		br
 
-		h1 Document Groups to be saved
-		p(style="color: #aaa; font-style: italic; margin-top: -15px; margin-bottom: 25px;") Note: #{n_wip_document_groups} Wip Document Groups in total (only one shown).
-		pre!= wip_document_groups
+
 	else
 		h1 An error occurred while attempting to create the Project:
 

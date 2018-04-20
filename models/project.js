@@ -51,6 +51,10 @@ ProjectSchema.methods.verifyAssociatedObjectsExist = cf.verifyAssociatedObjectsE
 
 /* Instance methods */
 
+ProjectSchema.methods.getDocumentGroups = function(next) {
+  return DocumentGroup.find({ project_id: this._id }).exec(next);  
+}
+
 // Sorts the project's document groups in ascending order of the number of times they have been annotated.
 ProjectSchema.methods.sortDocumentGroupsByTimesAnnotated = function(next) {
   return DocumentGroup.find({ project_id: this._id }).sort('times_annotated').exec(next);
@@ -74,10 +78,10 @@ ProjectSchema.methods.addCreatorToUsers = cf.addCreatorToUsers;
 
 /* Middleware */
 
-ProjectSchema.pre('validate', function(next) {
-  var t = this;
-  next();
-});
+// ProjectSchema.pre('validate', function(next) {
+//   var t = this;
+//   next();
+// });
 
 ProjectSchema.pre('save', function(next) {
   var t = this;
@@ -101,8 +105,9 @@ ProjectSchema.pre('save', function(next) {
 
 // Cascade delete for project, so all associated document groups are deleted when a project is deleted.
 ProjectSchema.pre('remove', function(next) {
+  var t = this;
   var DocumentGroup = require('./document_group')
-  this.cascadeDelete(DocumentGroup, {project_id: this._id}, next);
+  t.cascadeDelete(DocumentGroup, {project_id: t._id}, next);
 });
 
 

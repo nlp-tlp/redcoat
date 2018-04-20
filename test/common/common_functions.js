@@ -3,7 +3,6 @@ var rid = require('mongoose').Types.ObjectId;
 var Project = require('../../models/project');
 var User = require('../../models/user');
 var DocumentGroup = require('../../models/document_group');
-var WipDocumentGroup = require('../../models/wip_document_group');
 var DocumentGroupAnnotation = require('../../models/document_group_annotation');
 
 var options = {
@@ -192,14 +191,6 @@ function createValidDocumentGroup(n_docs, project_id) {
   return doc_group;
 }
 
-function createValidWipDocumentGroup(n_docs, wip_project_id) {
-  var wip_doc_group = new WipDocumentGroup({ 
-    wip_project_id: wip_project_id,
-    documents: createValidDocuments(n_docs) 
-  });
-  return wip_doc_group;
-}
-
 function createValidDocumentGroupAnnotation(n_labels, user_id, document_group_id) {
   var doc_group_annotation = new DocumentGroupAnnotation({ 
     user_id: user_id,
@@ -242,7 +233,6 @@ module.exports = {
     createValidUser:                    createValidUser,
     createValidDocuments:               createValidDocuments,
     createValidDocumentGroup:           createValidDocumentGroup,
-    createValidWipDocumentGroup:        createValidWipDocumentGroup,
     createValidDocumentGroupAnnotation: createValidDocumentGroupAnnotation,
     createStringOfLength:               createStringOfLength,
     createTooLongDocument:              createTooLongDocument,

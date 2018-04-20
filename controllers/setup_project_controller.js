@@ -35,7 +35,9 @@ exports.verifyWippid = function(req, res, next) {
 // The setup_project page.
 exports.index = function(req, res, next) {
 
-  res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
+  res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+  res.header('Expires', '-1');
+  res.header('Pragma', 'no-cache');
 
 
   // // (for now) create a new User for the wip_project to belong to
@@ -91,7 +93,7 @@ exports.index = function(req, res, next) {
         console.log("No existing WIP Project found - creating a new one.")
         wip_project = new WipProject({ user_id: testuser._id });
         wip_project.save(function(err, wip_project) {
-          renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null"); 
+          renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", "null", "null"); 
         });   
       }
    
@@ -191,6 +193,7 @@ exports.upload_valid_labels = function(req, res, next) {
   setTimeout(function() {
 
 
+
   wip_project.valid_labels = req.body.validLabelData;
   if(!req.body.validLabelData)
     wip_project.valid_labels = [];
@@ -222,7 +225,7 @@ exports.upload_valid_labels = function(req, res, next) {
  
 
         // Reset the valid_labels if invalid to prevent weird behaviour on refresh
-        wip_project.valid_labels = null;
+        wip_project.valid_labels = [];
       
 
         //console.log("ERROR:", error_label);
@@ -233,14 +236,16 @@ exports.upload_valid_labels = function(req, res, next) {
     
     wip_project.save(function(err) {
       if(errors) {
+        console.log("ERRORS", errors)
         res.send( { "success": false, "errors": errors });
       } else {
+
         res.send({ "success": true });
       }
     });
 
   });
-  }, 1400);
+  }, 10);
 }
 
 // Reset the WIP Project's documents and file metadata.
@@ -306,7 +311,7 @@ exports.upload_tokenized = function(req, res, next) {
 
       // Tokenize the file with the WipProject.
       var str = fs.readFileSync(file.path, 'utf-8');
-      wip_project.createWipDocumentGroupsFromString(str, function(err, numberOfLines, numberOfTokens) {
+      wip_project.createDocumentGroupsFromString(str, function(err, numberOfLines, numberOfTokens) {
 
         if(err) { 
           f.emit('error', new Error(err.errors.documents));
@@ -391,16 +396,28 @@ exports.submit_new_project_form = function(req, res, next) {
 
   console.log("hello there")
   wip_project = res.locals.wip_project;
-  wip_document_groups = [];
   wip_project.convertToProject(function(err, project) {
     //console.log(err);
-
     if(err) {
       console.log(err);
       res.render("temp-render-form", {err: err });
+      return;
     } else {
-      res.render("temp-render-form", {project: JSON.stringify(project, null, 4), wip_project: JSON.stringify(wip_project, null, 4), n_wip_document_groups: wip_document_groups.length, wip_document_groups: JSON.stringify(wip_document_groups.splice(0, 1), null, 4), path: req.path});
+      project.getDocumentGroups(function(err2, document_groups) {
+        if(err) {
+          console.log(err);
+          res.render("temp-render-form", {err: err });
+        } else {
+          res.render("temp-render-form", {project: JSON.stringify(project, null, 4), wip_project: JSON.stringify(wip_project, null, 4), n_document_groups: document_groups.length, document_groups: JSON.stringify(document_groups.splice(0, 1), null, 4), path: req.path});
+        }
+
+
+      })
+
     }
+
+
+
 
 
   });

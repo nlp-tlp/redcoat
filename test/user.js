@@ -200,7 +200,7 @@ describe('Users', function() {
   })
 
 
-  describe("cascade delete", function() {
+  describe("Cascade delete", function() {
 
 
     var user1, user2, projs, p1_id, p2_id, doc_groups, doc_group_annotations;
@@ -216,8 +216,11 @@ describe('Users', function() {
                   cf.createValidProject(7,  user2._id),
                   cf.createValidProject(18, user2._id),
                   ];
+      projs[0].user_ids.push(user1._id);
       projs[0].user_ids.push(user2._id);
       projs[1].user_ids.push(user1._id);
+      projs[1].user_ids.push(user2._id);
+
       p1_id = projs[0]._id;
       p2_id = projs[1]._id;
       doc_groups = [
@@ -253,6 +256,7 @@ describe('Users', function() {
 
     it('should delete all associated document groups and document_group_annotations when deleted', function(done) {
       // Deleting user1 should remove project 0, docgroup 0 and 1, and doc_group_annotations 0, 1, 2, and 3.
+     
       User.findById(user1, function(err, user) {
         user.remove(function(err) { 
           Project.count({}, function(err, count) {
@@ -269,7 +273,7 @@ describe('Users', function() {
             });
           });
         });      
-      });
+      })
     });
   });
 

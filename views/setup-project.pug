@@ -400,12 +400,14 @@ block scripts
 				},
 				success: function( data )
 				{
+
 					$("#error-banner").removeClass("show");
 					//if($("#project-name-form input").val().length > 0) {
 					window.clearTimeout(rowValidatingTimeout);
 					
 
 					if(data.errors) {
+						console.log("hello", data)
 
 
 						if(safeToValidate) {
@@ -426,6 +428,8 @@ block scripts
 								}
 
 							}
+						} else {
+							safeToValidate = true;
 						}
 
 					}
@@ -709,13 +713,10 @@ block scripts
 
 	script.
 
-
-		//var bullshit = [{"label":"}]; <ript>hehehe","abbreviation":"PER","color":"#99FFCC"},{"label":"Organisation","abbreviation":"ORG","color":"#FFCCCC"},{"label":"Location","abbreviation":"LOC","color":"#CCCCFF"},{"label":"Miscellaneous","abbreviation":"MISC","color":"#CCFF99"}];
-      
       
 
 		// Check whether valid_labels has already been created 
-		var existingValidLabels = !{valid_labels};
+		var existingValidLabels = !{valid_labels}
 
 		if(existingValidLabels && existingValidLabels.length > 0) {
 

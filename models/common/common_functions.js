@@ -21,6 +21,7 @@ EMAIL_MAXLENGTH    = 254;
 /* Validation */
 
 var validateValidLabelsHaveLabelAbbreviationAndColor = function(valid_labels) {
+  if(!valid_labels) { return true; }
   for(var i = 0; i < valid_labels.length; i++ ) {
     if(valid_labels[i].label == undefined || valid_labels[i].abbreviation == undefined || valid_labels[i].color == undefined ) {
       return false;
@@ -45,10 +46,10 @@ var validateValidLabelsHaveLabelAbbreviationAndColor = function(valid_labels) {
 
 
 var validateValidLabelsCountMin = function(valid_labels) {
-  return valid_labels.length > 0;
+  return valid_labels && valid_labels.length > 0;
 }
 var validateValidLabelsCountMax = function(valid_labels) {
-  return valid_labels.length <= VALID_LABEL_MAXCOUNT;
+  return valid_labels && valid_labels.length <= VALID_LABEL_MAXCOUNT;
 }
 
 var validateValidHexColor = function(col) {
@@ -312,6 +313,8 @@ userIdsValidation = [
 ];
 
 validLabelsValidation = [
+  { validator: validateValidLabelsCountMin, msg: "Must have one or more labels." },
+  { validator: validateValidLabelsCountMax, msg: "Must have " + VALID_LABEL_MAXCOUNT + " or fewer labels." },
   { validator: validateValidLabelsHaveLabelAbbreviationAndColor, msg: "All labels must have a corresponding abbreviation and color."  },
 
 
@@ -320,8 +323,7 @@ validLabelsValidation = [
   // { validator: function(arr, done) { validateItemsAreUnique(arr, "label", function(result, msg) { done(result, msg); })}, isAsync: true },
   // { validator: function(arr, done) { validateItemsAreUnique(arr, "abbreviation", function(result, msg) { done(result, msg); })}, isAsync: true },
   { validator: function(arr, done) { validateValidLabels(arr, function(result, msg) { done(result, msg); })}, isAsync: true },
-  { validator: validateValidLabelsCountMin, msg: "Must have one or more labels." },
-  { validator: validateValidLabelsCountMax, msg: "Must have " + VALID_LABEL_MAXCOUNT + " or fewer labels." },
+
   //{ validator: validateValidLabelsHaveUniqueLabels, msg: "Labels must be unique." },
   //{ validator: validateValidLabelsHaveUniqueAbbreviations, msg: "Abbreviations must be unique." },
 //  { validator: validateValidLabelsHaveUniqueColors, msg: "Colors must be unique." },
@@ -410,7 +412,7 @@ module.exports = {
 	// 'query' will look something like {project_id: this._id}
 	cascadeDelete: function(model, query, next) {
 	  var asso_id = asso_id;
-	  model.find(query, function(err, objs) {		  	
+	  model.find(query, function(err, objs) {		  
 	    function deleteObjs(objs, done) {
 	    	if(objs.length == 0) { return done(); }		    	
 		    obj = objs.pop()
@@ -519,9 +521,9 @@ module.exports = {
 		        label:        { type: String },
 		        abbreviation: { type: String },
 		        color:        { type: String, validate: colorValidation } // TODO: Move this out and put it in validLabelsValidation
-		      }
+		      },          
 		    ],
-		    validate: validLabelsValidation
+		    validate: validLabelsValidation,
 	  },
 
 		user_ids: {

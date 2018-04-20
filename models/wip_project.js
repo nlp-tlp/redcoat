@@ -1,7 +1,7 @@
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
 var cf = require("./common/common_functions")
-var WipDocumentGroup = require('./wip_document_group')
+//var WipDocumentGroup = require('./wip_document_group')
 var Project = require("./project")
 var DocumentGroup = require("./document_group")
 var natural = require('natural');
@@ -38,7 +38,7 @@ var WipProjectSchema = new Schema({
   // documents: cf.fields.all_documents,
 
   // The users who will be annotating the project.
-  user_ids: cf.fields.user_ids,
+  //user_ids: cf.fields.user_ids,
 
   user_emails: cf.fields.emails,
 
@@ -58,7 +58,6 @@ WipProjectSchema.set('validateBeforeSave', false);
 WipProjectSchema.statics.findWipByUserId = function(uid, done) {
   WipProject.findOne( { user_id : uid }, function(err, wip_project) {
     if(err) { done(err); return; }
-    console.log(wip_project)
     done(null, wip_project);
   });
 }
@@ -87,14 +86,13 @@ WipProjectSchema.methods.cascadeDelete = cf.cascadeDelete;
 WipProjectSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists;
 
 // Removes this wip_project's documents and metadata and saves it.
-// TODO: Make it delete associated WipDocumentGroups.
 WipProjectSchema.methods.deleteDocumentsAndMetadataAndSave = function(next) {  
   var t = this;
 
   delete t.file_metadata;
   t.file_metadata = {};
 
-  WipDocumentGroup.remove({ wip_project_id: t._id }, function(err) { // No associated objects so it's OK to use remove this way (no pre-remove hooks)
+  DocumentGroup.remove({ project_id: t._id }, function(err) { // No associated objects so it's OK to use remove this way (no pre-remove hooks)
     if(err) { return next(err); }
     t.save(function(err, wipp) {
       next(err, wipp);
@@ -142,7 +140,7 @@ var DocumentArray = mongoose.model('DocumentArray', DocumentArraySchema);
 
 
 // Creates an array of documents from a given string, assigns them to this wip_project's documents array, and validates the documents field.
-WipProjectSchema.methods.createWipDocumentGroupsFromString = function(str, done) {
+WipProjectSchema.methods.createDocumentGroupsFromString = function(str, done) {
   var t = this;
   t.tokenizeString(str, function(err, tokenized_sentences, number_of_tokens, line_indexes) {
     if(err) { done(err); return; }
@@ -167,11 +165,11 @@ WipProjectSchema.methods.createWipDocumentGroupsFromString = function(str, done)
 
       docgroupsToCreate = [];
       for (i in docgroups) {
-        docgroupsToCreate.push(new WipDocumentGroup( { wip_project_id : t._id, documents: docgroups[i] } ));
+        docgroupsToCreate.push(new DocumentGroup( { project_id : t._id, documents: docgroups[i] } ));
       }
 
       // Bypassses validation as it was already done before.         
-      WipDocumentGroup.collection.insert(docgroupsToCreate, function(err, docgroups) {
+      DocumentGroup.collection.insert(docgroupsToCreate, function(err, docgroups) {
         if(err) { done(err); return; }
         done(null, number_of_lines, number_of_tokens);
       });
@@ -192,10 +190,8 @@ WipProjectSchema.methods.tokenizeString = function(str, done) {
   var number_of_tokens = 0;
 
   try {
-    //console.log("Tokenizing...")
     for(var i = 0; i < sents.length; i++) {
       var ts = tokenizer.tokenize(sents[i]); 
-      //if(i % 1000 == 0) { console.log("" + i + " / " + sents.length)}
       if(ts.length > 0) {
         tokenized_sentences.push(ts);  
         var ind = i - blank_line_count;
@@ -205,55 +201,42 @@ WipProjectSchema.methods.tokenizeString = function(str, done) {
         blank_line_count += 1
       }          
     }
-    //console.log("done")
   } catch(err) { e = err; }
   done(e, tokenized_sentences, number_of_tokens, line_indexes);
 }
 
 // Returns a list of this WipProject's document groups.
-WipProjectSchema.methods.getWipDocumentGroups = function(done) {
+WipProjectSchema.methods.getDocumentGroups = function(done) {
   var t = this;
-  WipDocumentGroup.find({ wip_project_id: t._id}, function(err, wip_document_groups) {
-    done(err, wip_document_groups);
+  DocumentGroup.find({ project_id: t._id}, function(err, document_groups) {
+    done(err, document_groups);
   });
 }
 
 // Convert this WipProject to a Project and delete the WipProject.
-// Also convert all associated WipDocumentGroups to DocumentGroups.
 WipProjectSchema.methods.convertToProject = function(done) {
   var t = this;
-
 
   // Initialise the new Project
   var p = new Project();
 
-  console.log('hi')
   // Ensure WIP Project validates correctly before proceeding (the user will be prompted to fix their form if it's not valid)
   t.validate(function(err) {
     if(err) { return done(err); }
-
 
     // Determine the fields shared between WipProject and Project so that they may be copied from one to the other.
     var WipProjectSchemaPaths = new Set();
     var ProjectSchemaPaths    = new Set();
 
     for(var k in WipProject.schema.paths) {
-      WipProjectSchemaPaths.add(k);
+      WipProjectSchemaPaths.add(k.split(".")[0]); // The split is done primarily for file_metadata, which doesn't work without it.
     }
 
     for(var k in Project.schema.paths) {
-      ProjectSchemaPaths.add(k);
+      ProjectSchemaPaths.add(k.split(".")[0]);
     }
 
-    var sharedFields = [... WipProjectSchemaPaths].filter(x => ProjectSchemaPaths.has(x));
-
-    console.log("WIP PROJECT")
-    console.log(WipProjectSchemaPaths)
-    console.log("PROJECT")
-    console.log(ProjectSchemaPaths)
-    console.log("SHARED")
-    console.log(sharedFields);
-
+    var sharedFields = [... WipProjectSchemaPaths].filter(x => ProjectSchemaPaths.has(x)); // The set intersection.
 
     p.user_id = t.user_id;
     p.project_name = t.project_name;
@@ -264,60 +247,49 @@ WipProjectSchema.methods.convertToProject = function(done) {
       p[k] = t[k];
     }
 
-
-
     /* TODO:
 
-       Create all the document_groups from the associated WipDocumentGroups.
        For each email, create a User (if they are not already registered).
        Email an invitation out to each user (a 'please register' for the non-registered users).
 
     */
 
-    try {
 
-    // Convert all the WipDocumentGroups into DocumentGroups
-    t.getWipDocumentGroups(function(err, wip_document_groups) {
-
+    
+    t.getDocumentGroups(function(err, document_groups) {
 
       if(err) { return done(err); }
 
-      var docgroupsToCreate = [];
-      var removeIds = []; // A list of ids of wipdocumentgroups to be removed
+      // var docgroupsToCreate = [];
+      // var removeIds = []; // A list of ids of wipdocumentgroups to be removed
 
-      for(var i = 0; i < wip_document_groups.length; i++) {
-        var w = wip_document_groups[i];
-        docgroupsToCreate.push(new DocumentGroup( { project_id : w.wip_project_id, documents: w.documents, _id: w._id } ));
-        removeIds.push(w._id);
+      // for(var i = 0; i < wip_document_groups.length; i++) {
+      //   var w = wip_document_groups[i];
+      //   docgroupsToCreate.push(new DocumentGroup( { project_id : w.wip_project_id, documents: w.documents, _id: w._id } ));
+      //   removeIds.push(w._id);
+      // }
+
+      if(document_groups.length == 0) {
+        // This seems the most appropriate place for the error. It can't be done in pre-save because wip_project and project should be saveable without any doc groups.
+        return done(new Error("Please ensure the project has at least one document group."));
+      } else if(document_groups.length > cf.DOCUMENT_GROUP_TOTAL_MAXCOUNT) {
+        return done(new Error("A project may only have up to " + cf.DOCUMENT_GROUP_TOTAL_MAXCOUNT + " document groups."));
       }
 
-      console.log(docgroupsToCreate, removeIds)
 
-      // Insert all docgroups at once.       
-      DocumentGroup.collection.insert(docgroupsToCreate, function(err, docgroups) {
-
-        // Remove all this wip project's wip document groups after completion.
-        WipDocumentGroup.remove({ _id: { $in: removeIds } }, function(err) {     
-
-          if(err) { return done(err); }            
-
-          // Remove this WIP Project after completion.
-          WipProject.remove({_id: t._id}, function(err) {
-            if(err) { return done(err); }
-
-            // Save the project
-            p.save(function(err, project) {
-              console.log(err);
-              if(err) { done(err); return; }
-              done(null, project);
-            });
-          });
-        });
+      // Save the project
+      p.save(function(err, project) {
+        if(err) { return done(err) }
+        try {
+        // Remove this WIP Project after completion. (also removes all associated wip document groups via cascade)
+        t.remove(function(err) {
+          if(err) { done(err); return; }
+          done(null, project);
+        });  
+        } catch(e) { console.log(e) }         
       });
     });
-  } catch(e) { console.log(e); }
-  })
-
+  });
 }
 
 // Adds the creator of the project to its user_ids (as the creator should always be able to annotate the project).
@@ -372,9 +344,18 @@ WipProjectSchema.pre('save', function(next) {
   });
 });
 
-// Cascade delete for wip_project, so all associated wip_document_groups are deleted when a wip_project is deleted.
+// Cascade delete for wip_project, so all associated document_groups are deleted when a wip_project is deleted.
 WipProjectSchema.pre('remove', function(next) {
-  this.cascadeDelete(WipDocumentGroup, {wip_project_id: this._id}, next);
+  var t = this;
+  // Only cascade delete if a project with the same id as this wip_project doesn't exist
+  Project.findById(t._id, function(err, proj) {
+    if(!proj) {
+       t.cascadeDelete(DocumentGroup, {project_id: t._id}, next);
+    } else {
+      next();
+    }
+  })
+ 
 });
 
 /* Model */

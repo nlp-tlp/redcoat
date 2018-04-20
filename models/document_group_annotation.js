@@ -104,7 +104,7 @@ DocumentGroupAnnotationSchema.methods.verifyUserIdListedInProjectUserIds = funct
     Project.findById(doc_group.project_id, function(err, proj) {
       if(err) { done(err); return; }
       if(!proj.projectHasUser(t.user_id)) {
-        e = new Error("Project's used_ids must include user_id.");
+        e = new Error("Project's user_ids must include user_id.");
         e.name = "UserNotInProjectError";
         done(e);        
       } else { 

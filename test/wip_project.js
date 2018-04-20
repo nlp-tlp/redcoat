@@ -4,7 +4,6 @@ var Project = require('../models/project');
 var WipProject = require('../models/wip_project');
 var User = require('../models/user');
 var DocumentGroup = require('../models/document_group');
-var WipDocumentGroup = require('../models/wip_document_group');
 var DocumentGroupAnnotation = require('../models/document_group_annotation');
 var rid = require('mongoose').Types.ObjectId;
 var st = require('./common/shared_tests');
@@ -69,7 +68,6 @@ describe('WIP Projects', function() {
   });
 
 
-  st.runProjectUserIdsTests(WipProject);
   st.runProjectValidLabelsTests(WipProject);
 
 
@@ -189,7 +187,7 @@ describe('WIP Projects', function() {
       cf.dropMongooseDb(done);
     })
 
-    it("should correctly delete all associated WipDocumentGroups when deleted", function(done) {
+    it("should correctly delete all associated DocumentGroups when deleted", function(done) {
       this.timeout(3000);
       var sents1 = "";
       var sents2 = "";
@@ -205,16 +203,16 @@ describe('WIP Projects', function() {
 
       cf.registerUsers([user1, user2], function(err) { expect(err).to.not.exist; }, function() {
         cf.saveMany([wip1, wip2], function(err) { expect(err).to.not.exist; }, function() {
-          wip1.createWipDocumentGroupsFromString(sents1, function(err, number_of_lines, number_of_tokens) {
+          wip1.createDocumentGroupsFromString(sents1, function(err, number_of_lines, number_of_tokens) {
             expect(err).to.not.exist;
             expect(wip1.file_metadata["Filename"]).to.eql("test1.txt");
-            wip2.createWipDocumentGroupsFromString(sents2, function(err, number_of_lines, number_of_tokens) {
-              WipDocumentGroup.count(function(err, count) {
+            wip2.createDocumentGroupsFromString(sents2, function(err, number_of_lines, number_of_tokens) {
+              DocumentGroup.count(function(err, count) {
                 expect(count).to.equal(392);
                 wip1.remove(function(err) {
                   WipProject.count(function(err, count) {
                     expect(count).to.equal(1);
-                    WipDocumentGroup.count(function(err, count) {
+                    DocumentGroup.count(function(err, count) {
                       expect(count).to.equal(196);   
                       done();               
                     });
@@ -276,16 +274,16 @@ describe('WIP Projects', function() {
         cf.dropMongooseDb(done);
       })
 
-      it("should correctly create WipDocumentGroups for every 10 documents in a string, and validate them", function(done) {        
+      it("should correctly create DocumentGroups for every 10 documents in a string, and validate them", function(done) {        
         var sents1 = "hello there my name is michael.\n\nwhat's going on?\nthree\nfour\nfive\nsix\nseven\neight\nnine\nten\neleven\ntwelve";       
 
-        wip.createWipDocumentGroupsFromString(sents1, function(err) {
-          WipDocumentGroup.count( { wip_project_id : wip._id} , function(err, count) {
+        wip.createDocumentGroupsFromString(sents1, function(err) {
+          DocumentGroup.count( { project_id : wip._id} , function(err, count) {
             expect(count).to.equal(2);
             
             wip2 = new WipProject();
-            wip2.createWipDocumentGroupsFromString(sents, function(err) {
-              WipDocumentGroup.findOne( {wip_project_id: wip2._id}, function(err, doc) {
+            wip2.createDocumentGroupsFromString(sents, function(err) {
+              DocumentGroup.findOne( {project_id: wip2._id}, function(err, doc) {
                 expect(doc.documents).to.eql(correctly_tokenized_sents);
                 done();
               });
@@ -296,7 +294,7 @@ describe('WIP Projects', function() {
 
       it("should return an error when given a string containing a document with a token that is too long", function(done) {
         var sents = cf.createStringOfLength(1500) + " there\nhow are you?\n";
-        wip.createWipDocumentGroupsFromString(sents, function(err) {
+        wip.createDocumentGroupsFromString(sents, function(err) {
           expect(err.errors.documents).to.exist;
           done();
         });
@@ -308,23 +306,23 @@ describe('WIP Projects', function() {
         for(var i = 0; i < 120050; i++) {
           sents += "hello there\n";
         }
-        wip.createWipDocumentGroupsFromString(sents, function(err) {
+        wip.createDocumentGroupsFromString(sents, function(err) {
           expect(err.errors.documents).to.exist;
           done();
         });
       });
 
-      it("should correctly create WipDocumentGroups from a string when that string contains nearly 100,000 documents", function(done) {
+      it("should correctly create DocumentGroups from a string when that string contains nearly 100,000 documents", function(done) {
         this.timeout(4000);
         var sents = "";
         for(var i = 0; i < 99951; i++) {
           sents += "hello there\n";
         }
-        wip.createWipDocumentGroupsFromString(sents, function(err, number_of_lines, number_of_tokens) {
+        wip.createDocumentGroupsFromString(sents, function(err, number_of_lines, number_of_tokens) {
           expect(err).to.not.exist;
           expect(number_of_lines).to.equal(99951);
           expect(number_of_tokens).to.equal(99951 * 2);
-          WipDocumentGroup.count( { wip_project_id : wip._id} , function(err, count) {
+          DocumentGroup.count( { project_id : wip._id} , function(err, count) {
             expect(count).to.equal(9996);
             done();
           });          
@@ -340,7 +338,7 @@ describe('WIP Projects', function() {
         cf.dropMongooseDb(done);
       })
 
-      it("should correctly delete all associated WipDocumentGroups (but not unassociated ones) and clear the file_metadata field", function(done) {
+      it("should correctly delete all associated DocumentGroups (but not unassociated ones) and clear the file_metadata field", function(done) {
         this.timeout(4000);
         var sents1 = "";
         var sents2 = "";
@@ -356,16 +354,16 @@ describe('WIP Projects', function() {
 
         cf.registerUsers([user1, user2], function(err) { expect(err).to.not.exist; }, function() {
           cf.saveMany([wip1, wip2], function(err) { expect(err).to.not.exist; }, function() {
-            wip1.createWipDocumentGroupsFromString(sents1, function(err, number_of_lines, number_of_tokens) {
+            wip1.createDocumentGroupsFromString(sents1, function(err, number_of_lines, number_of_tokens) {
               expect(err).to.not.exist;
               expect(wip1.file_metadata["Filename"]).to.eql("test1.txt");
-              wip2.createWipDocumentGroupsFromString(sents2, function(err, number_of_lines, number_of_tokens) {
-                WipDocumentGroup.count(function(err, count) {
+              wip2.createDocumentGroupsFromString(sents2, function(err, number_of_lines, number_of_tokens) {
+                DocumentGroup.count(function(err, count) {
                   expect(count).to.equal(392);
                   wip1.deleteDocumentsAndMetadataAndSave(function(err, wip) {
                     expect(err).to.not.exist;
                     expect(wip.file_metadata["Filename"]).to.eql(undefined);
-                    WipDocumentGroup.count(function(err, count) {
+                    DocumentGroup.count(function(err, count) {
                       expect(count).to.equal(196);
                       done();
                     });
