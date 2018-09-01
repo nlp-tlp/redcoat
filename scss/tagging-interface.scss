@@ -1,12 +1,3 @@
-body {
-	font-family: "Open Sans", sans-serif;
-	padding: 0;
-	margin: 0;
-
-}
-input, button {
-	font-family: "Open Sans", sans-serif;
-}
 main {
 	width: 1152px;
 	max-width: 100%;
@@ -158,8 +149,6 @@ main {
 // }
 
 button#save-to-file {
-	font-family: "Open Sans", sans-serif;
-
 	box-sizing: border-box;
 	cursor: pointer;
 	text-align: center;	

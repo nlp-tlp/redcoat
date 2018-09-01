@@ -8,44 +8,40 @@ block content
 
 		article#project-details.article-heading
 
-			h1 Dashboard
-			p Welcome, #{user.username}!.
-
-
-			h2 Your projects
+			h1 Your projects
 			div.pad
 				each proj in projects
-					table.dashboard-project
-						thead
-							tr
-								th(colspan="3")
-									=proj.project_name						
-						tbody
-							tr
-								td(colspan="3")
-									table
-										thead 
-											tr 
-												th 
-													span Description 
-												th 
-													span # Annotators 
-												th 
-													span Progress 
-										tbody 
-											tr
-												td 	<span class="desc">#{proj.project_description}</span>
-												td 	#{proj.user_ids.length}
-												td  <span class="progress-bar"><span class="inner" data-width="30%"><span class="done"></span>/<span class="total"></span></span>
-											tr 
-												td(colspan="3")
-													ul.metadata 
-														li Filename: #{proj.file_metadata.Filename}
-														li Number of Documents: <span class="num-docs">#{proj.file_metadata['Number of documents']}</span>
-														li Number of tokens: #{proj.file_metadata["Number of tokens"]}
-														li Average tokens/document: #{proj.file_metadata["Average tokens/document"]}
+					a.dashboard-hover(href="projects/" + proj._id + "/tagging")
+						table.dashboard-project
+							thead
+								tr
+									th(colspan="3")
+										=proj.project_name						
+							tbody
+								tr
+									td(colspan="3")
+										table
+											thead 
+												tr 
+													th 
+														span Description 
+													th 
+														span # Annotators 
+													th 
+														span Progress 
+											tbody 
+												tr
+													td 	<span class="desc">#{proj.project_description || "(No description)"}</span>
+													td 	#{proj.user_ids.length}
+													td  <span class="progress-bar"><span class="inner" data-width="30%">&nbsp;&nbsp;<span class="done"></span>/<span class="total"></span></span>
+												tr 
+													td(colspan="3")
+														ul.metadata 
+															li Filename: #{proj.file_metadata.Filename}
+															li Number of documents: <span class="num-docs">#{proj.file_metadata['Number of documents']}</span>
+															li Number of tokens: #{proj.file_metadata["Number of tokens"]}
+															li Average tokens/document: #{proj.file_metadata["Average tokens/document"]}
 
-					hr
 
 									
 block scripts

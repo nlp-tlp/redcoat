@@ -1,29 +1,39 @@
 @import "mixins";
 
+#dashboard a.dashboard-hover {
+	&:hover {
+		text-decoration: none;
+	}
+	text-decoration: none;
+}
+
 table.dashboard-project {
 
+	color: #222;
 
-
-	margin-top: 40px;
+	
 	border-collapse: collapse;
 	width: 100%;
-	border: 2px solid rgba(0, 0, 0, 0);
+	border: 1px solid #ddd;
+	box-sizing: border-box;
+	margin-top: 40px;
 	&:hover {
-		border: 2px solid $primary-blue;
+		border: 1px solid $primary-red;
 		cursor: pointer;
 	}
 
 	th {
-		padding: 18px 24px;
+		padding: 12px 24px;
 		background: white;
 		border-bottom: 1px solid #ccc;
 	}
 
 	table {
 		width: 100%;
+		background: #f6f6f6;
 
 		td, th {
-			padding: 18px 24px;
+			padding: 12px 24px;
 			text-align: center;
 		}
 		th {
@@ -39,9 +49,9 @@ table.dashboard-project {
 			padding: 0;
 			margin-bottom: 6px;
 		}
-		td {
+		td, th {
 			padding-top: 6px;
-			padding-bottom: 12px;
+			padding-bottom: 6px;
 		}
 
 		tr td:nth-child(1), td th:nth-child(1) {
@@ -50,9 +60,6 @@ table.dashboard-project {
 		 tr td:nth-child(2), tr th:nth-child(2) {
 		 	width: 25%;
 		 }
-		tr td {
-			background: #f2f2f2;
-		}
 
 
 
@@ -77,18 +84,17 @@ table.dashboard-project {
 		}
 		span.progress-bar {
 			color: #eee;
-			border: 1px solid darken($primary-blue, 25);
+			border: 1px solid darken($primary-red-dark, 9);
 			display: inline-block;
 			width: 100%;
 			padding: 0;
 			text-align: left;
-			background: darken($primary-blue, 20);
+			background: darken($primary-red-dark, 7);
 			.inner {
 				transition: width 0.5s ease;
-				background: lighten($primary-blue, 10);
+				background: linear-gradient(lighten($primary-red-dark, 16), lighten($primary-red-dark, 10));
 				width: 0%;
-				border-right: 1px solid ligten($primary-blue, 4);
-				padding: 0 5px;
+				padding: 0;
 				display: inline-block;
 				text-align: center;
 			}

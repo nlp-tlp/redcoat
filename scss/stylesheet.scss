@@ -1,3 +1,7 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
+@import url('https://fonts.googleapis.com/css?family=Droid+Sans+Mono:400,700');
+
+
 @import "navbar";
 @import "setup-project";
 @import "mixins";
@@ -174,4 +178,22 @@ main {
 		width: 80%;
 		margin-left: 20%; 
 	}
+}
+body.homepage main {
+	width: 1152px;
+	margin: 0 auto;
+}
+
+nav#sidenav {
+	width: 17.5%;
+	background: $sidenav-color;
+	position: fixed;
+	left: 0;
+	top: 0;
+	height: 100%;
+	@if($sidenav-color == $primary-red-dark) {
+		border-right: 12px double $primary-gold;
+	}
+	//border-right: 12px double $primary-gold;
+	//max-width: 350px;
 }

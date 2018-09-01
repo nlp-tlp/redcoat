@@ -81,9 +81,11 @@ app.use(function(req, res, next) {
 
 var routes = require('./routes/index');
 var routes_user = require('./routes/user');
+var routes_project = require('./routes/project');
 
 app.use('/', routes);
 app.use('/', routes_user);
+app.use('/projects/', routes_project);
 
 
 

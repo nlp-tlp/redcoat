@@ -37,7 +37,6 @@ User.findOne({ username: "Pingu99" }, function(err, user) {
 var parseForm = bodyParser.urlencoded({ extended: false })
 
 
-
 // route middleware to make sure a user is logged in
 function isLoggedIn(req, res, next) {
 
@@ -50,6 +49,8 @@ function isLoggedIn(req, res, next) {
     //if they aren't redirect them to the home page
     res.redirect('/login');
 }
+
+
 
 // (for now) create a new User for the wip_project to belong to
  // user = new User({
@@ -80,7 +81,7 @@ function buildBasicRoute(path, action, variables) {
 
 router.get('/', function(req, res) {
   if(req.user) {
-    res.redirect('/dashboard');
+    res.redirect('/projects');
   } else {
     res.render('homepage', {title: "Welcome"});
   }
@@ -92,19 +93,9 @@ buildBasicRoute('/test-page',         'test-page',      { title: 'Test page' });
 
 //buildBasicRoute('/dashboard',         'dashboard',          { title: 'Test page' });
 
-router.get('/dashboard', isLoggedIn, function(req, res) {
-  req.user.getProjects(function(err, projects) {
-    console.log(err, projects);
-    if(err)
-      res.send(err);
-    else {
-      res.render('dashboard', { projects: projects })
-    }
-  });
-  
-});
 
-buildBasicRoute('/tagging',           'tagging', 	        { title: 'Test page' });
+
+//buildBasicRoute('/tagging',           'tagging', 	        { title: 'Test page' });
 
 
 router.get('/setup-project',           isLoggedIn, setupProjectController.index);

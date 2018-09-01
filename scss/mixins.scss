@@ -1,5 +1,7 @@
 @import "../node_modules/font-awesome/scss/font-awesome";
 
+
+
 $primary-color: #222222;
 
 $navbar-height: 50px;
@@ -7,3 +9,13 @@ $navbar-height: 50px;
 $primary-font: "Open Sans", sans-serif;
 
 $primary-blue: darken(rgb(46, 141, 191), 9);
+$primary-red: #f44242;
+$primary-red-dark: saturate(darken($primary-red, 38), 80);
+$primary-gold: #ffcc00;
+$primary-orange: rgb(250, 139, 91);
+
+$sidenav-color: #222;
+$sidenav-arrow-color: $primary-orange;
+
+//$sidenav-color: $primary-red-dark;
+//$sidenav-arrow-color: $primary-gold;

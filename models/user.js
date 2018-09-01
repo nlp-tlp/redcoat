@@ -93,7 +93,8 @@ UserSchema.methods.verifyEmailUnique = function(done) {
 UserSchema.methods.getProjects = function(done) {
   var tid = this._id;
   var Project = require('./project')
-  Project.find( { user_ids: { $elemMatch : { $eq : tid } } } , function(err, projs) {
+  Project.find( { user_ids: { $elemMatch : { $eq : tid } } } ).sort('-created_at').exec(function(err, projs) {
+    console.log("test'....")
     if(err) { done(new Error("There was an error attempting to run the find projects query.")); return; }
     else { done(null, projs); return; }
   });

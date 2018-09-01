@@ -59,7 +59,7 @@ exports.index = function(req, res, next) {
     // If they don't, create a new one
 
     function renderPage(wip_project, project_name, project_desc, file_metadata, valid_labels, user_emails) {
-       res.render('setup-project', { wip_project_id: wip_project._id, project_name: project_name, project_desc: project_desc, file_metadata: file_metadata, valid_labels: valid_labels, user_emails: user_emails, csrfToken: req.csrfToken(), path: req.path, title: "Set up project", max_filesize_mb: MAX_FILESIZE_MB, max_emails: USERS_PER_PROJECT_MAXCOUNT });
+       res.render('setup-project', { wip_project_id: wip_project._id, project_name: project_name, project_desc: project_desc, file_metadata: file_metadata, valid_labels: valid_labels, user_emails: user_emails, csrfToken: req.csrfToken(), path: req.path, title: "Setup project", max_filesize_mb: MAX_FILESIZE_MB, max_emails: USERS_PER_PROJECT_MAXCOUNT });
     }
 
     WipProject.findWipByUserId(testuser._id, function(err, wip_project) {

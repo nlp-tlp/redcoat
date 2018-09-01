@@ -1,14 +1,6 @@
 @import "mixins";
 
-nav#sidenav {
-	width: 17.5%;
-	background: #222;
-	position: fixed;
-	left: 0;
-	top: 0;
-	height: 100%;
-	//max-width: 350px;
-}
+
 #error-banner {
 	position: fixed;
 	top: 50px;
@@ -72,7 +64,7 @@ nav#sidenav {
 			position: relative;
 			cursor: pointer;
 			&:hover {
-				background: #2f2f2f;
+				background: lighten($sidenav-color, 5);
 				span {
 					color: white;
 				}
@@ -97,10 +89,10 @@ nav#sidenav {
 				}
 			}
 			&.not-yet-started {
-				color: rgba(255, 255, 255, 0.3);
+				color: rgba(255, 255, 255, 0.4);
 			}
 			&:not(.not-yet-started):after {
-				border-left: 4px solid rgb(250, 139, 91);
+				border-left: 4px solid $sidenav-arrow-color;
 				position: absolute;
 				left: 13px;
 				top: 0;
@@ -115,13 +107,13 @@ nav#sidenav {
 				//top: 50%;
 			}
 			&:not(.not-yet-started):not(.scrolled-past) {
-				background: #333;
+				background: lighten($sidenav-color, 7);
 				color: white;
 				font-weight: bold;
 			}
 			&:not(.not-yet-started):not(.scrolled-past):after {
 				height: 45%;
-				border-bottom: 4px solid rgb(250, 139, 91);
+				border-bottom: 4px solid $sidenav-arrow-color;
 			}
 			&:not(.not-yet-started):not(.scrolled-past):before {
 				//border-radius: 20%;
@@ -139,7 +131,7 @@ nav#sidenav {
 				height: 0;
 				border-style: solid;
 				border-width: 5px 0 5px 10px;
-				border-color: transparent transparent transparent rgb(250, 139, 91);
+				border-color: transparent transparent transparent $sidenav-arrow-color;
 
 
 			}
@@ -314,7 +306,7 @@ div#setup-questions, div#dashboard {
 			transition: border-color 0.2s ease;
 			&:focus {
 				outline: none;
-				border: 2px solid rgb(250, 139, 91);
+				border: 2px solid $primary-orange;
 			}
 
 

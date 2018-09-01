@@ -5,26 +5,6 @@ block head
 
 
 block content
-	//- nav#navbar
-	//- 	.navbar-left
-	//- 		#logo
-	//- 			| Annotator
-	//- 	#ending-notification Annotation complete.
-	//- 	#loading-notification Loading dataset...
-	//- 	#sentence-counter
-	//- 		| Showing group 
-	//- 		span#group-number ?
-	//- 		|	of 
-	//- 		span#group-total ?
-	//- 		| .
-	//- 	#saving-notification
-	//- 		| Saving to 
-	//- 		span#saving-filename ?
-	//- 	.navbar-right
-	//- 		input#jump-to-batch(name='jump-to-batch', type='number', placeholder='Jump to group...')
-	//- 		button#jump-to-batch-go Go
-	//- 		#jump-to-batch-error Please enter a valid group number.
-	//- 		button#save-to-file Save
 	nav#legend
 		h3 Legend
 		ul#legend-list
@@ -51,13 +31,13 @@ block content
 		#sentence-tagging
 
 block scripts
-	script(type='text/javascript', src='/javascripts/dummy_data/json_data.js')
+	//script(type='text/javascript', src='/javascripts/dummy_data/json_data.js')
 
 	script.
 
-		//data
-		//entity_classes
-		//entity_classes_abbr
+		var data = !{data};
+		var entity_classes = !{entity_classes}
+		var entity_classes_abbr = !{entity_classes_abbr}
 
 		
 		var tagClassNames = entity_classes_abbr // from the js file

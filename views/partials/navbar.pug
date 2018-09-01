@@ -3,6 +3,8 @@ nav#navbar
 		#logo
 			a(href="/")
 				| Redcoat
+	.navbar-centre
+		| #{title}
 	.navbar-right
 		if (!user)
 			div(class="dropdown-menu")
@@ -20,8 +22,9 @@ nav#navbar
 			//- 		li: a(href="/setup-project") <i class="fa fa-plus"></i>New project
 
 			div(class="dropdown-menu")
-				span <i class="fa fa-user"></i>Logged in as #{user.username} 
+				span <i class="fa fa-user"></i>&nbsp;&nbsp;Logged in as #{user.username} 
 					span(class="caret") &#9660;	
 				ul(class="dropdown-menu-items")
-					li: a(href="/") Profile
+					li: a(href="/projects") Dashboard
+					li: a(href="/setup-project") Setup project
 					li: a(href="/logout") Logout

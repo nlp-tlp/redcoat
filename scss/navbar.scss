@@ -19,8 +19,7 @@ nav#navbar .navbar-left {
 	position: absolute;
 	right: 0;
 	left: 0;	
-	width: 20%;			
-	margin-left: 12px;
+	width: 17.5%;			
 	display: table;
 	height: 100%;
 }
@@ -28,7 +27,11 @@ nav#navbar .navbar-left {
 	font-weight: bold;
 	vertical-align: middle;
 	display: table-cell;
+	width: 100%;
 	a {
+		padding: 12px 0;
+		display: block;
+		text-align: center;
 		text-decoration: none;
 		color: #eee;
 		&:hover {
@@ -68,6 +71,7 @@ nav .dropdown-menu:hover, nav #logo-link:hover #logo {
 	border-right: 1px solid #444;
 	color: white;
 }
+
 nav .dropdown-menu ul.dropdown-menu-items {
 	display: none;
 	position: absolute;
@@ -106,6 +110,17 @@ nav .dropdown-menu .dropdown-menu-items li:hover a {
 nav .dropdown-menu:hover .dropdown-menu-items {
 	display: block;
 
+}
+
+nav .navbar-centre {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 20%;
+	left: 40%;
+	text-align: center;
+	padding: 12px 0;
+	font-weight: bold;
 }
 
 button#save-to-file {

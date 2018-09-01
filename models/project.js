@@ -51,6 +51,30 @@ ProjectSchema.methods.verifyAssociatedObjectsExist = cf.verifyAssociatedObjectsE
 
 /* Instance methods */
 
+ProjectSchema.methods.getValidLabels = function() {
+  var r = [];
+  for(var i = 0; i < this.valid_labels.length; i++) {
+    r.push(this.valid_labels[i].label);
+  }
+  return r;
+}
+
+ProjectSchema.methods.getValidLabelColors = function() {
+  var r = [];
+  for(var i = 0; i < this.valid_labels.length; i++) {
+    r.push(this.valid_labels[i].color);
+  }
+  return r;
+}
+
+ProjectSchema.methods.getValidLabelsAbbr = function() {
+  var r = [];
+  for(var i = 0; i < this.valid_labels.length; i++) {
+    r.push(this.valid_labels[i].abbreviation);
+  }
+  return r;
+}
+
 ProjectSchema.methods.getDocumentGroups = function(next) {
   return DocumentGroup.find({ project_id: this._id }).exec(next);  
 }
