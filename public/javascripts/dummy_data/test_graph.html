@@ -30,10 +30,11 @@
 <body>
 <script src="d3/d3.min.js"></script>
 <script>
-
+  // Code for tree found here:
+  // https://bl.ocks.org/mbostock/4339083
 var margin = {top: 20, right: 120, bottom: 20, left: 120},
-    width = 1920 - margin.right - margin.left,
-    height = 1080 - margin.top - margin.bottom;
+    width = 1520 - margin.right - margin.left,
+    height = 950 - margin.top - margin.bottom;
 
 var i = 0,
     duration = 750,
@@ -47,11 +48,29 @@ var tree = d3.layout.tree()
 var diagonal = d3.svg.diagonal()
     .projection(function(d) { return [d.y, d.x]; });
 
+
+
+var zoom = d3.behavior.zoom()
+  .scaleExtent([0.25, 4])
+  .on("zoom", zoomed);
+
+
+
 var svg = d3.select("body").append("svg")
     .attr("width", width + margin.right + margin.left)
     .attr("height", height + margin.top + margin.bottom)
+    .call(zoom)
   .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+    
+
+var container = svg.append("g");
+
+  function zoomed() {
+    container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+  }
+
+
 
 var txt = 
 `accident_cause
@@ -252,11 +271,8 @@ unspecified_category`
     for(var i = 0; i < lines.length; i++) {
       var cleanLine = lines[i].replace(/\s/g, "");
       var newDepth  = lines[i].search(/\S/) + 1;
-      console.log(newDepth, cleanLine);
       if(newDepth < depth) {
-        console.log(parents.length);
         parents = parents.slice(0, newDepth);
-        console.log(parents.length)
       } else if (newDepth == depth + 1) {
         parents.push(node);
       } else if(newDepth > depth + 1){
@@ -318,14 +334,13 @@ function update(source) {
   var nodes = tree.nodes(root).reverse(),
       links = tree.links(nodes);
 
-
   
 
   // Normalize for fixed-depth.
   nodes.forEach(function(d) { d.y = d.depth * 180; });
 
   // Update the nodes…
-  var node = svg.selectAll("g.node")
+  var node = container.selectAll("g.node")
       .data(nodes, function(d) { return d.id || (d.id = ++i); });
 
   // Enter any new nodes at the parent's previous position.
@@ -335,9 +350,9 @@ function update(source) {
       .on("click", click);
 
   nodeEnter.append("circle")
-      .attr("r", 1e-6)
-      .style("fill", function(d, i) { return d._children ? d._color : "#fff"; })
-      .style("stroke", function(d, i) { return d._color; });
+      .attr("r", 1e-6 )
+      .style("fill", function(d) { return d._children ? d._color : "#fff"; })
+      .style("stroke", function(d) { return d._color; });
 
   nodeEnter.append("text")
       .attr("x", function(d) { return d.children || d._children ? -circleRadius*1.5 : circleRadius*1.5; })
@@ -353,8 +368,8 @@ function update(source) {
 
   nodeUpdate.select("circle")
       .attr("r", circleRadius)
-      .style("fill", function(d, i) { return d._children ? d._color : "#fff"; })
-      .style("stroke", function(d, i) { return d._color; });
+      .style("fill", function(d) { return d._children ? d._color : "#fff"; })
+      .style("stroke", function(d) { return d._color; });
 
   nodeUpdate.select("text")
       .style("fill-opacity", 1);
@@ -372,7 +387,7 @@ function update(source) {
       .style("fill-opacity", 1e-6);
 
   // Update the links…
-  var link = svg.selectAll("path.link")
+  var link = container.selectAll("path.link")
       .data(links, function(d) { return d.target.id; });
 
   // Enter any new links at the parent's previous position.
