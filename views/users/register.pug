@@ -1,0 +1,51 @@
+extends ../layout
+
+block content
+
+
+
+  div.user-form.form-box
+    .header
+      h1 Register
+    .body
+      form(action="/register",method="post")
+        if message
+          div.error-message <span class="error">Error:</span> #{message}
+
+        input(type="hidden", name="_csrf", value="" + csrfToken)
+        div
+          label Username
+          input(type="text",name="username", autofocus, placeholder="Username", value=formData.username)
+        div
+          label Email
+          input(type="email",name="email", placeholder="Email", required, value=formData.email)
+        div
+          label Password
+          input(id="password", type="password",name="password", placeholder="Password", required, value=formData.password)
+
+          label Password confirmation
+          input(id="password_confirmation", type="password",name="password_confirmation", required, placeholder="Password confirmation", value=formData.password_confirmation)
+
+        div.buttons
+          div
+            a.back-button(href="/") <i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back
+          div
+            input(type="submit",value="Register")
+  canvas#background(height="1080" width="1920")
+
+
+block scripts
+  script.
+    var password = document.getElementById("password")
+    , password_confirmation = document.getElementById("password_confirmation");
+
+    function validatePassword(){
+      if(password.value != password_confirmation.value) {
+        password_confirmation.setCustomValidity("Passwords don't match.");
+      } else {
+        password_confirmation.setCustomValidity('');
+      }
+    }
+
+    password.onchange = validatePassword;
+    password_confirmation.onkeyup = validatePassword;

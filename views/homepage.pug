@@ -5,15 +5,17 @@ block content
 		h1#h1-welcome(data-content="Redcoat") Redcoat
 		h2#h2-byline(data-content="Collaborative Annotation Tool") Collaborative Annotation Tool
 		div.buttons
-			a(href="setup-project")
-				div.button#setup-project-button
+			a(href="/register")
+				div.button#register-button
 					h2
 						//i.fa.fa-plus-circle
-						| Set up project
+						| Register
+			a(href="/login")
+				div.button#login-button
+					h2
+						//i.fa.fa-plus-circle
+						| Login
 	canvas#background(height="1080" width="1920")
-
-	
-
 
 block scripts
 	script.

@@ -41,12 +41,71 @@ nav#navbar .navbar-right {
 	position: absolute;
 	right: 0;
 	top: 0;	
-	margin-top: 5px;
-	margin-right: 8px;	
 	/*width: 190px;	*/	
 }
 nav#navbar .navbar-right input, nav#navbar .navbar-right button {
 	height: 36px;
+}
+nav .dropdown-menu {
+	font-size: 14px;
+	display: inline-block;
+	padding: 16px 25px;
+	min-width: 140px;
+	position: relative;
+	> span {
+		text-align: center;
+		display: block;
+	}
+	margin-right: -6px;
+	margin-top: 0px;
+	border-left: 1px solid rgba(0, 0, 0, 0);
+	border-right: 1px solid rgba(0, 0, 0, 0);
+}
+nav .dropdown-menu:hover, nav #logo-link:hover #logo {
+	background: #333;
+	cursor: pointer;
+	border-left: 1px solid #444;
+	border-right: 1px solid #444;
+	color: white;
+}
+nav .dropdown-menu ul.dropdown-menu-items {
+	display: none;
+	position: absolute;
+	top: 36px;
+	right: -1px;
+	width: 100%;
+	background: #fafafa;
+	padding: 0;
+	border: 1px solid #ccc;
+	border-top: 0;
+}
+nav .dropdown-menu .dropdown-menu-items li.separator {
+	background: #8ACFE6;
+	color: white;
+	padding: 7px 15px;
+	text-transform: uppercase;
+	text-align: center;
+	font-size: 0.9em;
+	cursor: default;
+}
+
+nav .dropdown-menu .dropdown-menu-items li {
+	display: block;
+}
+nav .dropdown-menu .dropdown-menu-items li a {
+	padding: 10px 15px;
+	color: #666;
+	font-size: 12px;
+	display: block;
+	text-decoration: none;
+}
+nav .dropdown-menu .dropdown-menu-items li:hover a {
+	color: #111;
+	background: #eee;
+}
+nav .dropdown-menu:hover .dropdown-menu-items {
+	display: block;
+
 }
 
 button#save-to-file {

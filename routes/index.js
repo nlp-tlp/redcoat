@@ -9,7 +9,7 @@ var extend = require('util')._extend
 //var formidable = require('formidable');
 
 var bodyParser = require('body-parser')
-var csrf = require('csurf')
+
 
 
 // create a new user called michael
@@ -34,7 +34,6 @@ User.findOne({ username: "Pingu99" }, function(err, user) {
 
 
 // setup route middlewares
-var csrfProtection = csrf({ cookie: true })
 var parseForm = bodyParser.urlencoded({ extended: false })
 
 
@@ -43,12 +42,13 @@ var parseForm = bodyParser.urlencoded({ extended: false })
 function isLoggedIn(req, res, next) {
 
     // if user is authenticated in the session, carry on 
-    //if (req.isAuthenticated())
-    res.locals.user = testuser;
+    if (req.isAuthenticated())
+    //res.locals.user = testuser;
         return next();
+    //next();
 
-    // if they aren't redirect them to the home page
-    //res.redirect('/');
+    //if they aren't redirect them to the home page
+    res.redirect('/login');
 }
 
 // (for now) create a new User for the wip_project to belong to
@@ -70,25 +70,50 @@ function isLoggedIn(req, res, next) {
 
 // A function for creating basic pages that don't have any Mongodb interactions.
 function buildBasicRoute(path, action, variables) {
-  router.get(path, csrfProtection, function(req, res, next) {
-    res.render(action, extend(variables, {csrfToken: req.csrfToken(), path: req.path}));  // Add the path to the response so it's easy to program the sidenav
+  router.get(path, function(req, res, next) {
+    res.render(action, extend(variables, {path: req.path}));  // Add the path to the response so it's easy to program the sidenav
   });
 }
 
 
 
 
-buildBasicRoute('/',                  'homepage', 	    { title: 'Welcome', homepage: true });
-buildBasicRoute('/test-page',         'test-page', 	    { title: 'Test page' });
+router.get('/', function(req, res) {
+  if(req.user) {
+    res.redirect('/dashboard');
+  } else {
+    res.render('homepage', {title: "Welcome"});
+  }
+});
 
 
-router.get('/setup-project',           csrfProtection, isLoggedIn, setupProjectController.index);
-router.post('/upload-namedesc',        parseForm, csrfProtection, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_name_desc);
-router.post('/upload-validlabels',     parseForm, csrfProtection, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_valid_labels);
-router.post('/upload-emails',          parseForm, csrfProtection, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_emails);
-router.post('/upload-tokenized-reset', parseForm, csrfProtection, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_tokenized_reset);
-router.post('/upload-tokenized',       parseForm, csrfProtection, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_tokenized);
 
-router.post('/testtt',                 parseForm, csrfProtection, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.submit_new_project_form);
+buildBasicRoute('/test-page',         'test-page',      { title: 'Test page' });
+
+//buildBasicRoute('/dashboard',         'dashboard',          { title: 'Test page' });
+
+router.get('/dashboard', isLoggedIn, function(req, res) {
+  req.user.getProjects(function(err, projects) {
+    console.log(err, projects);
+    if(err)
+      res.send(err);
+    else {
+      res.render('dashboard', { projects: projects })
+    }
+  });
+  
+});
+
+buildBasicRoute('/tagging',           'tagging', 	        { title: 'Test page' });
+
+
+router.get('/setup-project',           isLoggedIn, setupProjectController.index);
+router.post('/upload-namedesc',        parseForm, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_name_desc);
+router.post('/upload-validlabels',     parseForm, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_valid_labels);
+router.post('/upload-emails',          parseForm, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_emails);
+router.post('/upload-tokenized-reset', parseForm, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_tokenized_reset);
+router.post('/upload-tokenized',       parseForm, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_tokenized);
+
+router.post('/testtt',                 parseForm, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.submit_new_project_form);
 
 module.exports = router

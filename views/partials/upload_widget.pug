@@ -2,7 +2,6 @@ div.upload-widget
 	form.box(id="form-" + action, class="js" method='post', action=action, novalidate='')
 		.box__input
 			i.fa.fa-upload.upload-icon
-			input(type="hidden", name="_csrf", value="" + csrfToken)
 			input(type="hidden", name="_id", value="" + wip_project_id)
 			input(id="file-" + action, class="box__file", type='file', name='files[]', data-multiple-caption='{count} files selected')
 			label(for='file-' + action)

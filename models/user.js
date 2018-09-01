@@ -87,6 +87,8 @@ UserSchema.methods.verifyEmailUnique = function(done) {
   });
 }
 
+// Todo: Get all projects this user is the admin of.
+
 // Gets all projects the user is involved in.
 UserSchema.methods.getProjects = function(done) {
   var tid = this._id;

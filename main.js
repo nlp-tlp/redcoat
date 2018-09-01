@@ -3,7 +3,7 @@ var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
-
+const session = require('cookie-session');
 var cookieParser = require('cookie-parser')
 var csrf = require('csurf')
 
@@ -28,9 +28,9 @@ var path = require('path');
 
 var app = express();
 
-app.use(cookieParser())
 
-var routes = require('./routes/index');
+
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -43,8 +43,9 @@ app.locals.pretty = true;
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser())
 app.use(expressSanitizer());
-/*app.use(
+app.use(
    sassMiddleware({
        src: __dirname + '/scss', 
        dest: __dirname + '/public/stylesheets',
@@ -52,10 +53,42 @@ app.use(expressSanitizer());
        outputStyle: 'compressed',
        debug: true,       
    })
-); */
+);
+app.use(session({keys: ['kjdhkjhkukg', 'kufkg8fyukukfkuyf']}));
 app.use(express.static(path.join(__dirname, 'public')));
 
+
+app.use(passport.initialize());
+app.use(passport.session());
+// passport config
+var User = require('./models/user');
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+app.use(function(req, res, next) {
+  res.locals.user = req.user;
+  res.locals.path = req.path;
+  next(null, req, res);
+})
+
+app.use(csrf({ cookie: true }))
+
+app.use(function(req, res, next) {
+  res.locals.csrfToken = req.csrfToken();
+  next(null, req, res);
+})
+
+var routes = require('./routes/index');
+var routes_user = require('./routes/user');
+
 app.use('/', routes);
+app.use('/', routes_user);
+
+
+
+
+
 //app.use('/users', users);
 
 // catch 404 and forward to error handler
@@ -66,13 +99,6 @@ app.use(function(req, res, next) {
 });
 
 
-app.use(passport.initialize());
-app.use(passport.session());
-// passport config
-var User = require('./models/user');
-passport.use(new LocalStrategy(User.authenticate()));
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
 
 
 

@@ -1,0 +1,26 @@
+extends ../layout
+
+block content
+    div.user-form.form-box
+      .header
+        h1 Login
+      .body
+        if message
+          div.error-message <span class="error">Error:</span> #{message}
+
+        form(action="/login",method="post")
+          input(type="hidden", name="_csrf", value="" + csrfToken)
+          div
+            label Username
+            input(type="text",name="username" autofocus required, value=formData.username, placeholder="Username")
+
+          div
+            label Password
+            input(type="password",name="password" required, value=formData.password, placeholder="Password")
+
+          div.buttons
+            div
+              a.back-button(href="/") <i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back
+            div
+              input(type="submit",value="Login")
+    canvas#background(height="1080" width="1920")

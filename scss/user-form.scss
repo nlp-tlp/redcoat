@@ -1,0 +1,126 @@
+.form-box {
+	background: white;
+	margin-bottom: 30px;
+	margin-top: 30px;
+	h1 {
+		text-align: center
+	}
+
+	.header {
+		background: #f1f1f1;
+		padding: 5px 30px;
+	}
+	.body {
+		//padding: 5px 30px;
+	}
+}
+
+.user-form {
+	background: white;
+	width: 600px;
+	margin: 0 auto; 
+	margin-top: 20px;
+	.body {
+		padding: 20px 40px 10px 40px; 
+	}
+	.buttons {
+		display: table;
+		width: 100%;
+		> * {
+			display: table-cell;
+			width: 50%;
+			vertical-align: middle;
+		}
+	}
+	.back-button {
+		text-decoration: none;
+		color: #777;
+		font-size: 24px;
+		vertical-align: middle;
+		padding: 20px 40px;
+		&:hover {
+			color: #222;
+		}
+	}
+	input[type="submit"] {
+	}
+	form {
+		fieldset {
+			padding: 0 25px;
+		}
+		font-size: 16px;
+		label {
+			margin-bottom: 10px;
+			margin-top: 5px;
+			display: block;
+		}
+		input, textarea, button, select {
+			width: 100%;
+			padding: 12px;
+			box-sizing: border-box;
+			border: 1px solid #ccc;
+			margin-bottom: 25px;
+			font-size: 16px;
+			&:focus {
+				outline: none;
+				border: 1px solid rgba(250, 185, 5, 0.8);
+			}
+		}
+		select {
+			background: white;
+		}
+		input[type="submit"], button[type="submit"] {
+			border: 2px solid #ccc;
+			background: #fcfcfc;
+			padding: 10px 30px;
+			cursor: pointer;
+			position: relative;
+
+			transition: padding 0.2s ease;
+
+
+			color: #444;
+			width: auto;
+			margin: 0 auto;
+			display: block;
+			margin-top: 30px;
+			padding: 15px 40px;
+			margin-bottom: 30px;
+			font-size: 24px;
+			i {
+				font-size: 16px;
+			}
+
+			&:hover {
+				border: 2px solid rgba(250, 185, 5, 0.8);
+				padding-left: 45px;
+				padding-right: 35px;
+				background: lighten(rgba(250, 185, 5, 0.8), 7);
+				//box-shadow: 0 3px darken(rgba(250, 185, 5, 0.8), 15);
+			}
+			&:focus {
+				outline: 0;
+
+			}
+			&:active {
+				padding-left: 45px;
+				padding-right: 35px;
+				transform: translate(0, 3px);
+				outline: 0;
+				box-shadow: none;
+			}
+		}
+
+	}
+}
+
+.error-message {
+	border: 1px solid #ff5b67;
+	background: #ffbabf;
+	padding: 8px 12px;
+	color: #111;
+	margin-bottom: 20px;
+	.error {
+		font-weight: bold;
+	}
+}

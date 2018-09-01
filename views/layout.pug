@@ -14,14 +14,14 @@ html
 
 		block head
 
-		if homepage
+		if !user
 			body.homepage
 		else
 			body
 
 		include partials/navbar
 		div#main-container
-			main
+			main#main
 				if showLoadingScreen
 					div(id="loading-screen")
 						div(class="loading") Loading...			

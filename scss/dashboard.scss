@@ -1,0 +1,104 @@
+@import "mixins";
+
+table.dashboard-project {
+
+
+
+	margin-top: 40px;
+	border-collapse: collapse;
+	width: 100%;
+	border: 2px solid rgba(0, 0, 0, 0);
+	&:hover {
+		border: 2px solid $primary-blue;
+		cursor: pointer;
+	}
+
+	th {
+		padding: 18px 24px;
+		background: white;
+		border-bottom: 1px solid #ccc;
+	}
+
+	table {
+		width: 100%;
+
+		td, th {
+			padding: 18px 24px;
+			text-align: center;
+		}
+		th {
+			background: none;		
+			border: none;
+			span {
+				border-bottom: 1px solid #ddd;
+				padding: 0 30px;
+				padding-bottom: 4px;
+			}
+			font-size: 18px;
+			margin: 0;
+			padding: 0;
+			margin-bottom: 6px;
+		}
+		td {
+			padding-top: 6px;
+			padding-bottom: 12px;
+		}
+
+		tr td:nth-child(1), td th:nth-child(1) {
+			width: 30%;
+		}
+		 tr td:nth-child(2), tr th:nth-child(2) {
+		 	width: 25%;
+		 }
+		tr td {
+			background: #f2f2f2;
+		}
+
+
+
+		ul.metadata {
+			font-size: 14px;
+			color: #777;
+			padding: 0;
+			li {
+				display: inline-block;
+				padding: 0 10px;
+				&:not(:last-child):after {
+					margin: 0 20px 0 40px;
+					content: "|";
+					color: #ccc;
+
+				}
+			}
+		}
+
+		span.desc {
+			color: #555;
+		}
+		span.progress-bar {
+			color: #eee;
+			border: 1px solid darken($primary-blue, 25);
+			display: inline-block;
+			width: 100%;
+			padding: 0;
+			text-align: left;
+			background: darken($primary-blue, 20);
+			.inner {
+				transition: width 0.5s ease;
+				background: lighten($primary-blue, 10);
+				width: 0%;
+				border-right: 1px solid ligten($primary-blue, 4);
+				padding: 0 5px;
+				display: inline-block;
+				text-align: center;
+			}
+		}
+	}
+
+	
+
+
+
+
+
+}
