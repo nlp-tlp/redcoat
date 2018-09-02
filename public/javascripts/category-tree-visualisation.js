@@ -2,7 +2,7 @@
   // https://bl.ocks.org/mbostock/4339083
 var margin = {top: 20, right: 120, bottom: 20, left: 120},
     width = 1520 - margin.right - margin.left,
-    height = 650 - margin.top - margin.bottom;
+    height = 800 - margin.top - margin.bottom;
 
 var i = 0,
     duration = 750,
@@ -29,8 +29,8 @@ function buildTree(txt) {
 
   d3.select("#svg-entity-categories").html('');
   var svg = d3.select("#svg-entity-categories")
-      .attr("width", width + margin.right + margin.left)
-      .attr("height", height + margin.top + margin.bottom)
+      .attr("width", "100%")
+      .attr("height", "100%")
       .call(zoom)
     .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
@@ -39,7 +39,13 @@ function buildTree(txt) {
 
   var root = txt2json(txt);
 
-  var colors = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff"].reverse();
+  var currentColorIndex = 0;
+
+  var colors = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff"];
+
+
+  //var colors = ["#688024", "#9a35c9", "#5be34b", "#c75ff1", "#95d73f", "#5759e4", "#cbd429", "#8050c7", "#4db22c", "#d92eb3", "#6be279", "#e362db", "#b9d447", "#4957bc", "#eeca19", "#8878e8", "#99ad24", "#be79e4", "#3ab862", "#d84dac", "#3e8d29", "#a13ea2", "#84ba55", "#e64690", "#5ce0b2", "#e12e27", "#51d7df", "#e95314", "#5882e7", "#dac03e", "#80509f", "#e4a130", "#5e93df", "#e57e20", "#68cef1", "#ea5d3f", "#41b07e", "#e7386a", "#48b3a6", "#c62b3b", "#4aa1bc", "#ae4419", "#64a9de", "#a47e1c", "#ee83dd", "#35773e", "#ab367d", "#bacd6e", "#c66db8", "#aaa037", "#a089d5", "#e1be6a", "#4e61a1", "#e17e4a", "#3e8581", "#e55d62", "#6ba363", "#b83864", "#a1d393", "#e598e0", "#5a5d23", "#cc99d9", "#905d1c", "#babaee", "#d2944f", "#7a8bb8", "#9d4d2e", "#9cd5cd", "#a63c49", "#85ba96", "#de72a2", "#3b7a5e", "#d46c80", "#677e4f", "#955282", "#bcb472", "#725e7f", "#ecc38e", "#50748f", "#e38472", "#3d6362", "#e998b9", "#887e3e", "#e3b7e3", "#a27144", "#aac6de", "#8c4b59", "#c4c4a8", "#aa748b", "#7ca9a9", "#a5655b", "#d5c1d0", "#786353", "#e7baba", "#828c7b", "#d49299", "#a29a72", "#a591af", "#daa485", "#ac8b81"]
+
   root.x0 = height / 2;
   root.y0 = 0;
 
@@ -112,7 +118,8 @@ function buildTree(txt) {
 
 
   function assignColor(d) {
-    d._color = colors.length > 0 ? colors.pop() : "steelblue";
+    d._color = colors.length > 0 ? colors[currentColorIndex % colors.length] : "steelblue";
+    currentColorIndex++;
   }
 
   function assignColorsToChildren(d, i) {
@@ -375,9 +382,9 @@ function buildTree(txt) {
   }
 
   function deleteNode(d) {
-    if(d.parent == root) {
-      colors.push(d._color);
-    }
+    // if(d.parent == root) {
+    //   colors.push(d._color);
+    // }
     for (var ii = 0; ii < d.parent.children.length; ii++) {
       if (d.parent.children[ii].name === d.name) {
         d.parent.children.splice(ii, 1);
@@ -570,7 +577,7 @@ vehicle
   scraper
   grader
 unspecified_category`
-
+var txt = "example";
 // Converts text into JSON format for visualisation by the tree. The text may look something like:
 // category_1
 //  category_1_child_1

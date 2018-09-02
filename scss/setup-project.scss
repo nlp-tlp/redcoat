@@ -1,6 +1,12 @@
 @import "mixins";
 
-
+.blur {
+	filter: blur(2px);
+	pointer-events: none;
+}
+main, #navbar {
+	transition: filter 0.3s ease;
+}
 #error-banner {
 	position: fixed;
 	top: 50px;
@@ -34,6 +40,7 @@ nav#sidenav {
 	padding: 0 0px;
 	box-sizing: border-box;
 	padding-top: $navbar-height - 15;
+	box-shadow: -5px 5px 0px 0px $sidenav-color; // To prevent white edges when blurring
 	div.title {
 		color: white;
 		padding: 20px 14px;
@@ -138,7 +145,10 @@ nav#sidenav {
 		}
 	}
 }
-
+div.pad {
+	box-sizing: border-box;
+	padding: 0 20px;
+}
 
 
 div#setup-questions, div#dashboard {
@@ -252,10 +262,7 @@ div#setup-questions, div#dashboard {
 		}
 	}
 
-	div.pad {
-		box-sizing: border-box;
-		padding: 0 20px;
-	}
+
 	div.form-section {
 		padding: 0 20px;
 		box-sizing: border-box;
@@ -294,32 +301,8 @@ div#setup-questions, div#dashboard {
 			font-size: 20px;
 			margin-bottom: 5px;
 		}
-		select {
-			background: white;
-			cursor: pointer;
-		}
-		input:not([type="file"]), textarea, select {
-			box-sizing: border-box;
-			width: 95%;
-			padding: 10px;
-			color: #444;
-			font-family: $primary-font;
-			font-size: 20px;
-			margin: 10px 2.5%;
-			border: 2px solid #ddd;
-			transition: border-color 0.2s ease;
-			&:focus {
-				outline: none;
-				border: 2px solid $primary-orange;
-			}
 
 
-
-
-		}
-		::placeholder {
-			color: #aaa;
-		}
 		input[type="submit"] {
 			font-weight: bold;
 			background: none;
@@ -602,8 +585,28 @@ div#setup-questions, div#dashboard {
 
 }
 
-
-
+select {
+	background: white;
+	cursor: pointer;
+}
+input:not([type="file"]), textarea, select, button {
+	box-sizing: border-box;
+	width: 95%;
+	padding: 10px;
+	color: #444;
+	font-family: $primary-font;
+	font-size: 20px;
+	margin: 10px 2.5%;
+	border: 2px solid #ddd;
+	transition: border-color 0.2s ease;
+	&:focus {
+		outline: none;
+		border: 2px solid $primary-orange;
+	}
+}
+::placeholder {
+	color: #aaa;
+}
 form.special-textarea-form {
 	display: table;
 
@@ -724,6 +727,118 @@ div#setup-questions #distribute-emails-count-container, #entity-categories-count
 		.pad {
 			padding: 20px 60px;
 		}
+	}
+
+}
+
+
+
+
+#entity-categories-window {
+
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.2s ease;
+	&.show {
+		opacity: 1;
+		pointer-events: auto;
+	}
+	width: 92%;
+	height: 88%;
+	left: 4%;
+	top: 6%;
+	position: fixed;
+	background: white;
+	border: 2px solid #ddd;
+
+	.inner {
+		padding: 0px 0;
+		display: flex;
+		height: 100%;
+
+		h3 {
+			position: absolute;
+			padding: 0;
+			margin: 0;
+			top: 15px;
+			left: 0px;
+			width: 100%;
+			text-align: center;
+			color: #666;
+		
+		}		
+		.category-hierarchy {
+			background: #f6f6f6;
+			width: 30%;
+			padding: 20px 40px;
+			padding-top: 70px;
+			height: 100%;
+			box-sizing: border-box;
+			position: relative;
+			.special-textarea-validation {
+				background: #eee;
+				border: 2px solid #ddd;
+				border-right: none;
+			}
+			textarea {
+				margin: 0;
+				width: 100%;
+				display: flex;
+			}
+		}
+		.category-tree {
+			padding-top:50px;
+			box-sizing: border-box;
+			width: 70%;			
+			position: relative;
+		}
+		.close {
+			cursor: pointer;
+			position: absolute;
+			top: -5px;
+			right: 5px;
+			color: #777;
+			padding: 15px;
+			font-size: 32px;
+			&:hover {
+				color: $primary-blue;
+			}
+		}
+	}
+	label {
+		text-align: center;
+		color: #777;
+		width: 100%;
+		font-size: 18px;
+		margin-bottom: 3px;
+		font-weight: bold;
+	}
+	select {
+		width: 100%;
+		margin: 0;
+		margin-bottom: 10px;
+	}
+
+
+}
+
+button.large-button {
+	background: #eee;
+	width: 50%;
+	margin: 30px auto;
+	cursor: pointer;
+	padding: 20px;
+	width: 60%;
+	border: 2px solid #ccc;
+	transition: none;
+	display: block;
+	&:hover, &:focus {
+		background: $primary-blue;
+		color: white;
+		border: 2px solid darken($primary-blue, 7);
+	}
+	&:active {
+		transform: translate(0px, 2px);
 	}
 
 }

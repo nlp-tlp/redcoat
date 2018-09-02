@@ -75,6 +75,8 @@ block content
 					p Please determine the entity categories in your data using the form below.
 					p You may create new categories by entering them in the form below. To specify a parent category, place a space before the child category. The categories are visualised in the Category Tree, which you may also use to create your hierarchy if you prefer. You may also select from a list of presets, such as the standard 4-class Named Entity Recognition model.
 
+					button.large-button#button-create-entity-categories Create entity categories&nbsp;<i class="fa fa-external-link"></i>
+
 					//- div#entity-categories-file.subsection.subsection-hidden
 					//- 	h3 Entity categories from file
 					//- 	div.pad
@@ -95,34 +97,14 @@ block content
 					//- 		p Note: you can press Tab to jump to the next item in the form.
 
 					//- 		br
-					div#entity-categories-input-box
-						div.header
-							ul.tabs#er-tabs
-								li.active
-									a Text input
-								li
-									a Category tree
-								li
-									a Presets
-						div.body#er-body
-							
-							div
-								br
-								form#entity-categories-text-form.special-textarea-form
-									div#entity-categories-validation.special-textarea-validation
-									div.special-textarea-container
-										label Category Hierarchy
-										textarea.special-textarea#entity-categories-textarea(rows="10", wrap="off"  cols="254" placeholder="example_class_1\nexample_class_2\n   example_child_1\n   example_child_2\nexample_class_3")
-										div#entity-categories-count-container
-											<span id="entity-categories-count">0</span>/10000 entity categories entered.
-							svg#svg-entity-categories
-							div
-								div.pad
-									p If you do not have a unique category hierarchy, please select one of the presets below:
-									ul
-										li <a href="#">Named Entity Recognition</a>: 4 classes (Person, Location, Organisation, Misc).
-										li <a href="#">Fine-grained Entity Recognition</a>: 113 classes encompassing a wide range of entity types.
-								
+
+
+
+							//- p If you do not have a unique category hierarchy, please select one of the presets below:
+							//- ul
+							//- 	li <a href="#">Named Entity Recognition</a>: 4 classes (Person, Location, Organisation, Misc).
+							//- 	li <a href="#">Fine-grained Entity Recognition</a>: 113 classes encompassing a wide range of entity types.
+						
 
 					//- blockquote
 					//- 	a(id="entity-categories-list-button" class="subsection-open-button") I have a list of the entity classes present in my data.
@@ -196,7 +178,29 @@ block content
 
 			div(style="height: 600px")
 
+	div#entity-categories-window
 
+		div.inner
+			div.category-hierarchy
+				h3 Category Hierarchy
+				label Preset
+				select#entity-categories-preset
+					option(disabled selected value="no-preset") (no preset)
+					option(value="NER") NER (4 classes)
+					option(value="FIGER") FIGER (113 classes)
+				form#entity-categories-text-form.special-textarea-form
+					div#entity-categories-validation.special-textarea-validation
+					div.special-textarea-container
+						
+						textarea.special-textarea#entity-categories-textarea(rows="12", wrap="off"  cols="254" placeholder="example_class_1\nexample_class_2\n   example_child_1\n   example_child_2\nexample_class_3")
+						div#entity-categories-count-container
+
+
+
+			div.category-tree
+				h3 Category Tree
+				svg#svg-entity-categories
+			a.close <i class="fa fa-close"></i>
 
 block scripts
 
@@ -206,6 +210,29 @@ block scripts
 	script(src="/javascripts/setup_project/jquery.autosize.js")
 	
 	script.
+		csrfToken = "#{csrfToken}";
+		wippid = "#{wip_project_id}";
+
+	script.
+
+		presets = {
+			"NER": "Person\nOrganisation\nLocation\nMisc",
+			"FIGER": "person\n actor\n architect\n artist\n athletee\n author\n coach\n director\n doctor\n engineer\n monarch\n musician\n politician\n religious_leader\n soldier\n terrorist\norganization\n airline\n company\n educational_institution\n fraternity_sorority\n sports_league\n sports_team\n terrorist_organisation\n government_agency\n government\n political_party\n eeducational_department\n military\n news_agency\nlocation\n city\n country\n county\n province\n railway\n road\n bridge\n body_of_water\n island\n mountain\n glacier\n astral_body\n cemetary\n park\nproduct\n engine\n airplane\n car\n ship\n spacecraft\n train\n camera\n mobile_phone\n computer\n software\n game\n instrument\n weapon\nart\n film\n play\n written_work\n newspaper\n music\nevent\n attack\n election\n protest\n military_conflict\n natural_disaster\n sports_event\n terrorist_attack\n building\n airport\n dam\n hospital\n hotel\n library\n power_station\n restaurant\n sports_facility\n theater\ntime\ncolor\naward\neducational_degree\ntitle\nlaw\nethnicity\nlanguage\nreligion\ngod\nchemical_thing\nbiological_thing\nmedical_treatment\ndisease\nsymptom\ndrug\nbody_part\nliving_thing\nanimal\nfood\nwebsite\nbroadcast_network\nbroadcast_program\ntv_channel\ncurrency\nstock_exchange\nalgorithm\nprogramming_language\ntransit_system\ntransit_line"
+		}
+
+		function showEntityCategoriesWindow() {
+			$("#entity-categories-window").addClass("show");
+			$('#main > *:not(#entity-categories-window').addClass("blur");
+			$('#navbar').addClass("blur");
+		}
+		function hideEntityCategoriesWindow() {
+			$("#entity-categories-window").removeClass("show");
+			$('#main > *:not(#entity-categories-window').removeClass("blur");
+			$('#navbar').removeClass("blur");
+		}
+		$("#entity-categories-window .close").click(hideEntityCategoriesWindow);
+		$("#button-create-entity-categories").click(showEntityCategoriesWindow);
+
 		// Entity Categories box
 		$("#er-body > *").hide();
 		$("#er-body > *:nth-child(1)").show();
@@ -217,9 +244,14 @@ block scripts
 			$("#er-body > *").hide();
 			$("#er-body > *:nth-child(" + (i + 1) + ")").show();
 		});
-		$("#entity-categories-textarea").autosize( {
-			minRows: 10,
-		});  
+
+		$("#entity-categories-preset").change(function() {
+			var val = $(this).val();
+			var preset = presets[val];
+			$("#entity-categories-textarea").val(preset);
+			buildTree(preset);
+		});
+
 
 		var generatingTree = false;
 		var treeGeneratingTimeout;
@@ -228,11 +260,14 @@ block scripts
 		var ecv = $("#entity-categories-validation");
 
 		function generateTree() {
-			console.log('hello');
-			buildTree(ect.val());
+			buildTree(ect.val())//.replace(/\u00A0\u2022\u00A0/g, " "))
 		}
 
 		ect.on('input', function(e) {
+
+			$("#entity-categories-preset").val("no-preset")
+
+			ect.val(ect.val())//.replace(" ", "\u00A0\u2022\u00A0"))
 
 			//$("#saved-notification-distribution").removeClass("show");
 			//$("#li-distribution").removeClass("completed");	
