@@ -1,0 +1,153 @@
+/* Layout
+------------ */
+
+.d3-context-menu {
+	position: absolute;
+	min-width: 150px;
+	z-index: 1200;
+}
+
+.d3-context-menu ul,
+.d3-context-menu ul li {
+	margin: 0;
+	padding: 0;
+}
+
+.d3-context-menu ul {
+	list-style-type: none;
+	cursor: default;
+}
+
+.d3-context-menu ul li {
+	-webkit-touch-callout: none; /* iOS Safari */
+	-webkit-user-select: none;   /* Chrome/Safari/Opera */
+	-khtml-user-select: none;    /* Konqueror */
+	-moz-user-select: none;      /* Firefox */
+	-ms-user-select: none;       /* Internet Explorer/Edge */
+	user-select: none;
+}
+
+/*
+	Disabled
+*/
+
+.d3-context-menu ul li.is-disabled,
+.d3-context-menu ul li.is-disabled:hover {
+	cursor: not-allowed;
+}
+
+/*
+	Divider
+*/
+
+
+.d3-context-menu ul li.is-divider {
+	padding: 0;
+}
+
+/* Theming
+------------ */
+
+.d3-context-menu-theme {
+	background-color: #fff;
+	border-radius: 3px;
+
+	font-family: "Open Sans", sans-serif;
+	font-size: 14px;
+	opacity: 0.9;
+}
+
+.d3-context-menu-theme ul {
+	//margin: 4px 0;
+}
+
+.d3-context-menu-theme ul li {
+	padding: 8px 16px;
+	background-color: #f2f2f2;
+	border-left: 1px solid #d4d4d4;
+	border-right: 1px solid #d4d4d4;
+}
+.d3-context-menu-theme ul li:last-child {
+	border-bottom: 1px solid #d4d4d4;
+}
+
+.d3-context-menu-theme ul li:hover {
+	background-color: #4677f8;
+	color: #fefefe;	
+}
+.d3-context-menu-theme ul li:not(.is-header):hover {
+	cursor: pointer;
+}
+
+/*
+	Header
+*/
+
+.d3-context-menu-theme ul li.is-header,
+.d3-context-menu-theme ul li.is-header:hover {
+	background-color: #f2f2f2;
+	color: #222;
+	font-weight: bold;
+	border: 1px solid #ccc;
+	position: relative;
+}
+
+.d3-context-menu-theme ul li.is-header:before {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	content: "";
+	background: purple;
+	opacity: 0.2;
+	z-index: -1;
+}
+
+/*
+	Disabled
+*/
+
+.d3-context-menu-theme ul li.is-disabled,
+.d3-context-menu-theme ul li.is-disabled:hover {
+	background-color: #f2f2f2;
+	color: #888;
+}
+
+/*
+	Divider
+*/
+
+.d3-context-menu-theme ul li.is-divider:hover {
+	background-color: #f2f2f2;
+}
+
+.d3-context-menu-theme ul hr {
+	border: 0;
+	height: 0;
+	border-top: 1px solid rgba(0, 0, 0, 0.1);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+
+
+/* Form */
+
+.d3-context-menu form {
+	font-family: "Open Sans", sans-serif;
+	padding: 8px 16px;
+	font-size: 14px;
+	border: 1px solid #d4d4d4;
+	background: #f2f2f2;
+
+}
+.d3-context-menu form label {
+	display: block;
+	font-weight: bold;
+	margin-bottom: 8px;
+}
+.d3-context-menu form input {
+	font-size: 14px;
+	font-family: "Open Sans", sans-serif;
+	padding: 4px 8px;
+}

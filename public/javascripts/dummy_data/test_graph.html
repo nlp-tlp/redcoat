@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <head>
-<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet"> 
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet"> 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <meta charset="utf-8">
 <style>
 
@@ -14,9 +15,16 @@
   stroke-width: 1.5px;
 }
 
+.node.unnamed {
+  /*outline: 1px dashed #ddd;*/
+}
+
 .node text {
   font-size: 12px;
   font-family: "Open Sans", sans-serif;
+}
+.node text:hover {
+  text-decoration: underline;
 }
 
 .link {
@@ -26,9 +34,13 @@
 }
 
 </style>
+<link rel="stylesheet" href="css/d3-context-menu.css" />
+<script src="d3/d3.min.js"></script>
+<script src="../jquery-3.2.1.min.js"></script>
+<script src="d3/d3-context-menu.js"></script>
 </head>
 <body>
-<script src="d3/d3.min.js"></script>
+
 <script>
   // Code for tree found here:
   // https://bl.ocks.org/mbostock/4339083
@@ -40,7 +52,7 @@ var i = 0,
     duration = 750,
     root;
 
-var circleRadius = 12;
+var circleRadius = 16;
 
 var tree = d3.layout.tree()
     .size([height, width]);
@@ -301,20 +313,100 @@ unspecified_category`
 
   var root = txt2json(txt);
 
-  var colors = ["99FFCC", "FFCCCC", "CCCCFF", "CCFF99", "CCFFCC", "CCFFFF", "FFCC99", "FFCCFF", "FFFF99", "FFFFCC", "CCCC99", "fbafff"];
+  var colors = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff"];
   root.x0 = height / 2;
   root.y0 = 0;
+
+
+
+  function showInput(next) {
+    document.getElementsByClassName("d3-context-menu")[0].innerHTML = "<form id=\"new-node-form\"><label>Category name</label><input id='new-node-form-input' name='test'/><input type=\"submit\"/></form>";
+    $("#new-node-form-input").focus();
+    $("#new-node-form").on('submit', function(e) {
+      var name = $("#new-node-form-input").val();
+      e.preventDefault();
+      return next(name);
+    });
+    /*
+    window.setTimeout(function() {
+      var name = "test";
+      next(name);
+    }, 3000)*/
+    
+  }
+
+  // function removeChildren(d) {
+  //   if(d.children) {
+  //     d.children.forEach(removeChildren)
+  //   }
+  //   if(d._children) {
+  //     d._children.forEach(removeChildren)
+  //   }
+  //   d.children = null;
+  //   d._children = null;
+  
+  // }
+
+  // https://github.com/patorjk/d3-context-menu
+  var menu = [
+    {
+      title: function(d) { return d.name }
+    },
+    {
+      title: '<i class="fa fa-plus"></i>&nbsp;&nbsp;New child category',
+      action: function(d, i, next) {
+        var name = showInput(function(name) {
+          createNewNode(d, name);
+          next();
+        });
+        //elm.closeMenu();
+      }
+    },
+    {
+      title: '<i class="fa fa-edit"></i>&nbsp;&nbsp;Rename category',
+      action: function(d, i, next) {
+        var name = showInput(function(name) {
+          renameNode(d, name);
+          next();
+        });
+        //elm.closeMenu();
+      }
+    },
+    {
+      title: '<i class="fa fa-trash"></i>&nbsp;&nbsp;Delete category',
+      action: function(d, i, next) {
+        console.log(i, d.parent);
+        //removeChildren(d);
+        // Remove this element from parent
+        for (var ii = 0; ii < d.parent.children.length; ii++) {
+          if (d.parent.children[ii].name === d.name) {
+            d.parent.children.splice(ii, 1);
+            break;
+          }          
+        }
+        update(d);
+        next();
+      }
+    }
+  ]
+
 
   function assignColor(d, i) {
     d._color = colors[i];
   }
 
-  function collapse(d) {
-    if (d.children) {
-      d._children = d.children;
+  function assignColorsToChildren(d, i) {
+    if (d._children) {
       for(var i = 0; i < d._children.length; i++) {
         d._children[i]._color = d._color;
       }
+      d._children.forEach(assignColorsToChildren)
+    }
+  }
+
+  function collapse(d) {
+    if (d.children) {
+      d._children = d.children;
       d._children.forEach(collapse);
       d.children = null;
     }
@@ -323,10 +415,42 @@ unspecified_category`
 
   root.children.forEach(assignColor);
   root.children.forEach(collapse);
+  root.children.forEach(assignColorsToChildren);
   update(root);
 
 
 d3.select(self.frameElement).style("height", "800px");
+
+// https://css-tricks.com/snippets/javascript/lighten-darken-color/
+function LightenDarkenColor(col, amt) {
+  
+    var usePound = false;
+  
+    if (col[0] == "#") {
+        col = col.slice(1);
+        usePound = true;
+    }
+ 
+    var num = parseInt(col,16);
+ 
+    var r = (num >> 16) + amt;
+ 
+    if (r > 255) r = 255;
+    else if  (r < 0) r = 0;
+ 
+    var b = ((num >> 8) & 0x00FF) + amt;
+ 
+    if (b > 255) b = 255;
+    else if  (b < 0) b = 0;
+ 
+    var g = (num & 0x0000FF) + amt;
+ 
+    if (g > 255) g = 255;
+    else if (g < 0) g = 0;
+ 
+    return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16);
+  
+}
 
 function update(source) {
 
@@ -345,14 +469,19 @@ function update(source) {
 
   // Enter any new nodes at the parent's previous position.
   var nodeEnter = node.enter().append("g")
-      .attr("class", "node")
+      .attr("class", function(d) { return d.unnamed ? "node unnamed" : "node" })
       .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
-      .on("click", click);
+      
 
   nodeEnter.append("circle")
       .attr("r", 1e-6 )
       .style("fill", function(d) { return d._children ? d._color : "#fff"; })
-      .style("stroke", function(d) { return d._color; });
+      .style("stroke", function(d) { return d._color; })
+      .on("click", click)
+      .on('contextmenu', d3.contextMenu(menu, function(d) {
+        $(".d3-context-menu li.is-header").css("border-color", LightenDarkenColor(d._color, -20) || "#eee");
+        $(".d3-context-menu li.is-header").css("background", d._color || "#eee");
+      }));
 
   nodeEnter.append("text")
       .attr("x", function(d) { return d.children || d._children ? -circleRadius*1.5 : circleRadius*1.5; })
@@ -372,7 +501,9 @@ function update(source) {
       .style("stroke", function(d) { return d._color; });
 
   nodeUpdate.select("text")
-      .style("fill-opacity", 1);
+      .style("fill-opacity", 1)
+      .text(function(d) { return d.name; })
+
 
   // Transition exiting nodes to the parent's new position.
   var nodeExit = node.exit().transition()
@@ -430,5 +561,90 @@ function click(d) {
   }
   update(d);
 }
+
+function expand(d){   
+    var children = (d.children)?d.children:d._children;
+    if (d._children) {        
+        d.children = d._children;
+        d._children = null;       
+    }
+    if(children)
+      children.forEach(expand);
+}
+
+function expandAll(){
+    expand(root); 
+    update(root);
+}
+
+function collapseAll(){
+    root.children.forEach(collapse);
+    collapse(root);
+    update(root);
+    click(root);
+
+}
+
+function sortTree() {
+    tree.sort(function(a, b) {
+        return b.name.toLowerCase() < a.name.toLowerCase() ? 1 : -1;
+    });
+}
+sortTree();
+
+
+function createNewNode(selected, name) {
+
+    //Adding a new node (as a child) to selected Node (code snippet)
+    var newNode = {
+        name: name || "<New category>",
+        _color: selected._color,
+        unnamed: true
+      };
+
+    console.log(selected);
+    //Creates a Node from newNode object using d3.hierarchy(.)
+   // var newNode = d3.layout.hierarchy(newNode);
+
+    //later added some properties to Node like child,parent,depth
+    //newNode.parent = selected; 
+
+    //Selected is a node, to which we are adding the new node as a child
+    //If no child array, create an empty array
+
+    if(!selected._children && !selected.children) {
+      selected.children = [];
+    }
+
+
+    if(!selected._children){
+      selected.children.push(newNode);
+
+      //selected._children = [];
+      //selected.data._children = [];
+    } else {
+      selected._children.push(newNode);
+      click(selected);
+    }
+
+
+
+    //Push it to parent.children array  
+    //selected._children.push(newNode);
+
+   // console.log("Children:", selected._children.length);
+    //selected.data.children.push(newNode.data);
+
+    //Update tree
+    sortTree();
+    update(selected);
+}
+
+function renameNode(selected, name) {
+  selected.name = name;
+  sortTree();
+  update(selected);
+}
+
 
 </script>
