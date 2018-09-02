@@ -1,0 +1,33 @@
+
+.node {
+  cursor: pointer;
+}
+
+.node circle {
+  fill: #fff;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+.node.unnamed {
+  /*outline: 1px dashed #ddd;*/
+}
+
+.node text {
+  font-size: 12px;
+  font-family: "Open Sans", sans-serif;
+}
+.node text:hover {
+  text-decoration: underline;
+}
+
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
+#svg-entity-categories {
+  background: #fafafa;
+  width: 100%;
+}

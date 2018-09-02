@@ -294,7 +294,11 @@ div#setup-questions, div#dashboard {
 			font-size: 20px;
 			margin-bottom: 5px;
 		}
-		input:not([type="file"]), textarea {
+		select {
+			background: white;
+			cursor: pointer;
+		}
+		input:not([type="file"]), textarea, select {
 			box-sizing: border-box;
 			width: 95%;
 			padding: 10px;
@@ -600,12 +604,12 @@ div#setup-questions, div#dashboard {
 
 
 
-form#distribute-emails-form {
+form.special-textarea-form {
 	display: table;
 
 }
 
-div#distribute-emails-validation {
+div.special-textarea-validation {
 	width: 7%;
 	display: table-cell;
 	color: darken(rgb(78, 172, 96), 6);
@@ -628,20 +632,21 @@ div#distribute-emails-validation {
 	}
 }
 
-div#setup-questions div#distribute-emails-textarea-container {
+div#setup-questions div.special-textarea-container {
 	width: 93%;
 	display: table-cell;
 
 }
-div#setup-questions textarea#distribute-emails-textarea {
+div#setup-questions textarea.special-textarea {
 	line-height: 32px;
 	white-space: pre;
 	overflow-wrap: normal;
 	overflow-x: scroll;
 	margin: 0;
 	font-size: 24px;
+
 }
-div#setup-questions #distribute-emails-count-container {
+div#setup-questions #distribute-emails-count-container, #entity-categories-count-container {
 	color: #777;
 }
 #distribute-emails-count.too-many {
@@ -652,4 +657,73 @@ div#setup-questions #distribute-emails-count-container {
 	&.show {
 		display: inline;
 	}
+}
+
+#entity-categories-text-form {
+	margin: 0;
+	margin-bottom: 40px;
+}
+
+
+
+
+
+
+#entity-categories-input-box {
+	.header {
+		ul.tabs {
+			user-select: none;
+			padding: 0;
+			margin: 0;
+			display: flex;
+			li {
+				display: inline-block;
+				border: 1px solid #ddd;
+				border-top: 2px solid #ddd;
+				border-bottom: none;
+				background: #e7e7e7;
+				margin: 0;
+				padding: 0;
+				position: relative;
+				a {
+					padding: 10px 30px;
+					font-size: 18px;
+					color: #222;
+					display: block;
+					text-decoration: none;
+				}
+				&:first-child {
+					border-left: 2px solid #ddd;
+				}
+				&:last-child {
+					border-right: 2px solid #ddd;
+				}
+				&.active {
+					background: #fafafa;
+					&:before {
+						height: 4px;
+						bottom: -2px;
+						left: 0;
+						width: 100%;
+						pointer-events: none;
+						position: absolute;
+						background: #fafafa;
+						content: " ";
+					}
+				}
+				&:not(.active):hover {
+					background: #f1f1f1;
+				}
+			}
+		}
+	}
+	.body {
+		display: flex;
+		background: #fafafa;
+		border: 2px solid #ddd;
+		.pad {
+			padding: 20px 60px;
+		}
+	}
+
 }

@@ -24,14 +24,14 @@ exports.register = function(req, res, next) {
         return;
       }
       passport.authenticate('local')(req,res, function() {
-        res.redirect('/dashboard');
+        res.redirect('/projects');
       });      
     });
   }
 
 exports.loginPage = function(req, res) {
   if(req.user)
-    res.redirect('/dashboard');
+    res.redirect('/projects');
   res.render('users/login', {formData: {}, title: "Login"});
 }
 
@@ -49,7 +49,7 @@ exports.login = function(req, res, next) {
       });
     }
     req.logIn(user, function(err) {
-      return res.redirect('/dashboard');
+      return res.redirect('/projects');
     });     
     
   })(req, res, next); 
