@@ -27,11 +27,12 @@ describe('Document Group Annotations', function() {
   function setUpObjects() {
 
     var proj = cf.createValidProject(1, user1._id);
-    proj.valid_labels = [
-        { label: "test-1", abbreviation: "TEST-1", color: "#000001" },
-        { label: "test-2", abbreviation: "TEST-2", color: "#000002" },
-        { label: "test-3", abbreviation: "TEST-3", color: "#000003" },
-    ];
+    // proj.valid_labels = [
+    //     { label: "person", abbreviation: "person", color: "#000001" },
+    //     { label: "test-2", abbreviation: "TEST-2", color: "#000002" },
+    //     { label: "test-3", abbreviation: "TEST-3", color: "#000003" },
+    // ];
+    //proj.category_hierarchy = "person\nTEST-2\nTEST-3\nTEST-4";
     var doc_group = cf.createValidDocumentGroup(2, proj._id);
     return {proj: proj, doc_group: doc_group};
   }
@@ -155,11 +156,11 @@ describe('Document Group Annotations', function() {
           user_id: user1._id,
           document_group_id: doc_group._id,
           labels: [
-            [ "O", "TEST-1", "TEST-1", "TEST-1", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "TEST-2", "TEST-3", "TEST-2",
-              "O", "TEST-1", "TEST-1", "TEST-1", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "TEST-2", "TEST-3", "TEST-1"
+            [ "O", "person", "person", "person", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "organisation", "organisation", "location",
+              "O", "person", "person", "person", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "misc", "person", "person"
             ],
-            [ "O", "TEST-1", "TEST-1", "TEST-1", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "TEST-2", "TEST-3", "TEST-3",
-              "O", "TEST-1", "TEST-1", "TEST-1", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "TEST-2", "TEST-3", "TEST-1", "TEST-9"
+            [ "O", "person", "person", "person", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "misc", "person", "person",
+              "O", "person", "person", "person", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "location", "person", "person", "TEST-9"
             ]
           ]
         })
@@ -186,7 +187,7 @@ describe('Document Group Annotations', function() {
           labels: [
             ["O", "O", "O", "O", "O"],
             ["O", "O", "O"],
-            ["O", "O", "TEST-1", "O"],
+            ["O", "O", "person", "O"],
             ["O"]
           ]
         });     
@@ -241,9 +242,9 @@ describe('Document Group Annotations', function() {
           user_id: user1._id,
           document_group_id: doc_group._id,
           labels: [
-            ["O", "O", "TEST-1", "O", "O"],
+            ["O", "O", "person", "O", "O"],
             ["O", "O", "O"],
-            ["O", "TEST-2", "O", "O"]
+            ["O", "location", "O", "O"]
           ]
         });     
         doc_group_ann.save(function(err) {

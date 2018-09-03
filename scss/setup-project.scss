@@ -803,6 +803,12 @@ div#setup-questions #distribute-emails-count-container, #entity-categories-count
 			&:hover {
 				color: $primary-blue;
 			}
+			span {
+				font-size: 18px;
+				vertical-align: middle;
+				display: inline-block;
+				margin-top: -6px;
+			}
 		}
 	}
 	label {

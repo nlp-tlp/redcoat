@@ -589,6 +589,7 @@ var txt = "example";
 function txt2json(text) {
   var lines = text.split('\n');  
   var depth = 0; // Current indentation
+  // var slashData = [];
   var root = {
     "name": "entity",
     "children": []
@@ -607,6 +608,12 @@ function txt2json(text) {
     }
     depth = newDepth;
 
+    // parentNames = [];
+    // for(var i = 0; i < parents.length; i++) {
+    //   parentNames.push(parents[i].name)
+    // }
+    // slashData.push(parentNames.join("/") + cleanLine);
+
     node = {"name": cleanLine, "children": []};
     if(parents.length > 0)
       parents[parents.length-1]["children"].push(node);
@@ -623,7 +630,43 @@ function txt2json(text) {
     }
   }
   removeEmptyChildren(root);
+  // console.log(slashData);
+
   return root;
 }
 
 buildTree(txt);
+
+
+// Converts 'space' notation to 'slash' notation, e.g.
+// person
+//  president
+//   president_of_us
+//  burgerflipper
+// ... becomes ->
+// person
+// person/president
+// person/president/president_of_us
+// person/burgerflipper
+function txt2slash(text) {
+  var lines = text.split('\n');  
+  var slashData = [];
+  var depth = 1;
+  var parents = [];
+  var prev = "";
+  for(var i = 0; i < lines.length; i++) {
+    var cleanLine = lines[i].replace(/\s/g, "");
+    var newDepth  = lines[i].search(/\S/) + 1;
+    if(newDepth < depth){
+      parents = parents.slice(newDepth, parents.length);
+    } else if (newDepth == depth + 1) {
+      parents.push(prev);
+    } else if(newDepth > depth + 1) {
+      return new Error("Unparsable tree.");
+    }
+    depth = newDepth;
+    prev = cleanLine;
+    slashData.push(parents.join("/") + (parents.length > 0 ? "/" : "") + cleanLine);
+  }
+  return slashData;
+}

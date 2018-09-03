@@ -49,12 +49,16 @@ router.get('/:id/tagging', isLoggedIn, function(req, res) {
       if(err)
         res.send(err);
       else {
+        try {
         res.render('tagging', { 
           data: JSON.stringify(docgroups[0].documents),
-          entity_classes: JSON.stringify(proj.getValidLabels()),
-          entity_classes_abbr: JSON.stringify(proj.getValidLabelsAbbr()),
-          colors: JSON.stringify(proj.getValidLabelColors()),
+          entity_classes: JSON.stringify(proj.category_hierarchy),
+          entity_classes_abbr: JSON.stringify(proj.category_hierarchy),
+          //colors: JSON.stringify(proj.getValidLabelColors()),
           title: "Dashboard" })
+      } catch(e) {
+        console.log(e)
+      }
       }
     });
     

@@ -27,11 +27,16 @@ var ProjectSchema = new Schema({
   project_description: cf.fields.project_description,
 
   // The valid labels to use for annotation within the project.
-  valid_labels: cf.fields.valid_labels,
+  //valid_labels: cf.fields.valid_labels,
+
+  // The category hierarchy of the project, stored as a string. "name\nperson\norganisation\n business" etc
+  category_hierarchy: cf.fields.category_hierarchy,
+
+  // An array of all of the labels in the category hierarchy.
+  //valid_labels: cf.fields.valid_labels,
 
   // The users who are annotating the project.
   user_ids: cf.fields.user_ids,
-
 
   // Some metadata about the Project.
   file_metadata: cf.fields.file_metadata,
@@ -51,28 +56,39 @@ ProjectSchema.methods.verifyAssociatedObjectsExist = cf.verifyAssociatedObjectsE
 
 /* Instance methods */
 
-ProjectSchema.methods.getValidLabels = function() {
-  var r = [];
-  for(var i = 0; i < this.valid_labels.length; i++) {
-    r.push(this.valid_labels[i].label);
-  }
-  return r;
-}
+// ProjectSchema.methods.getValidLabels = function() {
+//   var r = [];
+//   for(var i = 0; i < this.valid_labels.length; i++) {
+//     r.push(this.valid_labels[i].label);
+//   }
+//   return r;
+// }
 
-ProjectSchema.methods.getValidLabelColors = function() {
-  var r = [];
-  for(var i = 0; i < this.valid_labels.length; i++) {
-    r.push(this.valid_labels[i].color);
-  }
-  return r;
-}
+// ProjectSchema.methods.getValidLabelColors = function() {
+//   var r = [];
+//   for(var i = 0; i < this.valid_labels.length; i++) {
+//     r.push(this.valid_labels[i].color);
+//   }
+//   return r;
+// }
 
-ProjectSchema.methods.getValidLabelsAbbr = function() {
-  var r = [];
-  for(var i = 0; i < this.valid_labels.length; i++) {
-    r.push(this.valid_labels[i].abbreviation);
-  }
-  return r;
+// ProjectSchema.methods.getValidLabelsAbbr = function() {
+//   var r = [];
+//   for(var i = 0; i < this.valid_labels.length; i++) {
+//     r.push(this.valid_labels[i].abbreviation);
+//   }
+//   return r;
+// }
+
+
+
+// Returns a set of the labels in the category hierarchy, without spaces or newlines.
+// ProjectSchema.methods.getLabelSet = function() {
+//   return new Set(this.category_hierarchy.replace(/ /g, "").split("\n"));
+// }
+
+ProjectSchema.methods.getCategoryHierarchy = function() {
+  return this.category_hierarchy;
 }
 
 ProjectSchema.methods.getDocumentGroups = function(next) {

@@ -68,7 +68,7 @@ describe('WIP Projects', function() {
   });
 
 
-  st.runProjectValidLabelsTests(WipProject);
+  //st.runProjectValidLabelsTests(WipProject);
 
 
   describe("user_emails", function() {

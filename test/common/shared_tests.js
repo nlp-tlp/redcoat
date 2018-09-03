@@ -148,124 +148,124 @@ function runProjectUserIdsTests(model, done) {
   });
 }
 
-function runProjectValidLabelsTests(model, done) {
-  describe("valid_labels", function() {
+// function runProjectValidLabelsTests(model, done) {
+//   describe("valid_labels", function() {
 
-    /* Label errors */
-    it('should fail validation if valid_labels contains a label that is too short', function(done) { 
-      var proj = new model( { valid_labels: [ { label: "", abbreviation: "fine", color: "#111111" }] });
-      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
-    }); 
-    it('should fail validation if valid_labels contains a label that is too long', function(done) { 
-      var proj = new model( { valid_labels: [ { label: cf.createStringOfLength(30), abbreviation: "fine", color: "#111111" }] });
-      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
-    });  
-    it('should fail validation if valid_labels contains a label that is blank', function(done) { 
-      var proj = new model( { valid_labels: [ { label: "   ", abbreviation: "fine", color: "#111111" }] });
-      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
-    });  
+//     /* Label errors */
+//     it('should fail validation if valid_labels contains a label that is too short', function(done) { 
+//       var proj = new model( { valid_labels: [ { label: "", abbreviation: "fine", color: "#111111" }] });
+//       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
+//     }); 
+//     it('should fail validation if valid_labels contains a label that is too long', function(done) { 
+//       var proj = new model( { valid_labels: [ { label: cf.createStringOfLength(30), abbreviation: "fine", color: "#111111" }] });
+//       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
+//     });  
+//     it('should fail validation if valid_labels contains a label that is blank', function(done) { 
+//       var proj = new model( { valid_labels: [ { label: "   ", abbreviation: "fine", color: "#111111" }] });
+//       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
+//     });  
 
-    /* Abbreviation errors */
-    it('should fail validation if valid_labels contains an abbreviation that is too short', function(done) { 
-      var proj = new model( { valid_labels: [ { label: "fine", abbreviation: "", color: "#111111" }] });
-      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
-    }); 
-    it('should fail validation if valid_labels contains an abbreviation that is too long', function(done) { 
-      var proj = new model( { valid_labels: [ { label: "fine", abbreviation: cf.createStringOfLength(30), color: "#111111" }] });
-      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
-    });  
-    it('should fail validation if valid_labels contains an abbreviation that is blank', function(done) { 
-      var proj = new model( { valid_labels: [ { label: "fine", abbreviation: "     ", color: "#111111" }] });
-      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
-    }); 
+//     /* Abbreviation errors */
+//     it('should fail validation if valid_labels contains an abbreviation that is too short', function(done) { 
+//       var proj = new model( { valid_labels: [ { label: "fine", abbreviation: "", color: "#111111" }] });
+//       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
+//     }); 
+//     it('should fail validation if valid_labels contains an abbreviation that is too long', function(done) { 
+//       var proj = new model( { valid_labels: [ { label: "fine", abbreviation: cf.createStringOfLength(30), color: "#111111" }] });
+//       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
+//     });  
+//     it('should fail validation if valid_labels contains an abbreviation that is blank', function(done) { 
+//       var proj = new model( { valid_labels: [ { label: "fine", abbreviation: "     ", color: "#111111" }] });
+//       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
+//     }); 
 
-    /* Color errors */
-    it('should fail validation if valid_labels contains an color that is not a color', function(done) { 
-      var proj1 = new model( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "#111" }] });
-      var proj2 = new model( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "red" }] });
-      var proj3 = new model( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "" }] });
-      var proj4 = new model( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "#1234g4" }] });
-      var proj5 = new model( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "" }] });
-      var proj6 = new model( { valid_labels: [ { label: "fine", abbreviation: "fine", color: " #111" }] });
-      var proj7 = new model( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "   " }] });
-      cf.validateMany([proj1, proj2, proj3, proj4, proj5, proj6, proj7], function(err) { expect(err.errors['valid_labels.0.color']).to.exist }, done);
-    }); 
-    it('should pass validation for color if valid_labels contains a valid color', function(done) { 
-      var proj = new model( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "#111111" }] });
-      proj.validate(function(err) { expect(err.errors['valid_labels.0.color']).to.not.exist; done(); });
-    }); 
+//     /* Color errors */
+//     it('should fail validation if valid_labels contains an color that is not a color', function(done) { 
+//       var proj1 = new model( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "#111" }] });
+//       var proj2 = new model( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "red" }] });
+//       var proj3 = new model( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "" }] });
+//       var proj4 = new model( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "#1234g4" }] });
+//       var proj5 = new model( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "" }] });
+//       var proj6 = new model( { valid_labels: [ { label: "fine", abbreviation: "fine", color: " #111" }] });
+//       var proj7 = new model( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "   " }] });
+//       cf.validateMany([proj1, proj2, proj3, proj4, proj5, proj6, proj7], function(err) { expect(err.errors['valid_labels.0.color']).to.exist }, done);
+//     }); 
+//     it('should pass validation for color if valid_labels contains a valid color', function(done) { 
+//       var proj = new model( { valid_labels: [ { label: "fine", abbreviation: "fine", color: "#111111" }] });
+//       proj.validate(function(err) { expect(err.errors['valid_labels.0.color']).to.not.exist; done(); });
+//     }); 
    
-    /* Missing attributes */
-    it('should fail validation if valid_labels contains a valid_label with no label', function(done) { 
-      var proj = new model( { valid_labels: [ { abbreviation: "xxx", color: "#111111" }] });
-      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
-    });
-    it('should fail validation if valid_labels contains a valid_label with no abbreviation', function(done) { 
-      var proj = new model( { valid_labels: [ { label: "fine", color: "#111111" }] });
-      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
-    });
-    it('should fail validation if valid_labels contains a valid_label with no color', function(done) { 
-      var proj = new model( { valid_labels: [ { label: "fine", abbreviation: "xxx" }] });
-      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
-    });
-    it('should fail validation if it has 0 valid_labels', function(done) { 
-      var proj = new model();
-      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); })
-    });
-    it('should fail validation if it has more than 20 valid_labels', function(done) { 
-      var valid_label = { label: "test", abbreviation: "fine" }
-      var proj = new model( { valid_labels: [ ] });
-      for(var i = 0; i < 21; i++) {
-        proj.valid_labels.push(valid_label);
-      }
-      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
-    });   
+//     /* Missing attributes */
+//     it('should fail validation if valid_labels contains a valid_label with no label', function(done) { 
+//       var proj = new model( { valid_labels: [ { abbreviation: "xxx", color: "#111111" }] });
+//       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
+//     });
+//     it('should fail validation if valid_labels contains a valid_label with no abbreviation', function(done) { 
+//       var proj = new model( { valid_labels: [ { label: "fine", color: "#111111" }] });
+//       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
+//     });
+//     it('should fail validation if valid_labels contains a valid_label with no color', function(done) { 
+//       var proj = new model( { valid_labels: [ { label: "fine", abbreviation: "xxx" }] });
+//       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
+//     });
+//     it('should fail validation if it has 0 valid_labels', function(done) { 
+//       var proj = new model();
+//       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); })
+//     });
+//     it('should fail validation if it has more than 20 valid_labels', function(done) { 
+//       var valid_label = { label: "test", abbreviation: "fine" }
+//       var proj = new model( { valid_labels: [ ] });
+//       for(var i = 0; i < 21; i++) {
+//         proj.valid_labels.push(valid_label);
+//       }
+//       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
+//     });   
 
-    /* Duplicates in valid_labels */
-    it('should fail validation if valid_labels contains more than one of the same label', function(done) { 
-      var proj = new model( { valid_labels: [ 
-        { label: "fine", abbreviation: "fine", color: "#111111" },
-        { label: "fine", abbreviation: "ok", color: "#222222" } ] });
-      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
-    });
-    it('should fail validation if valid_labels contains more than one of the same abbreviation', function(done) { 
-      var proj = new model( { valid_labels: [ 
-        { label: "fine", abbreviation: "fine", color: "#111111" },
-        { label: "ok",   abbreviation: "fine", color: "#222222" } ] });
-      proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
-    });
-    it('should pass validation if valid_labels contains more than one of the same color', function(done) { 
-      var proj = new model( { valid_labels: [ 
-        { label: "fine1", abbreviation: "fine1", color: "#111111" },
-        { label: "fine2",   abbreviation: "fine2", color: "#111111" } ] });
+//     /* Duplicates in valid_labels */
+//     it('should fail validation if valid_labels contains more than one of the same label', function(done) { 
+//       var proj = new model( { valid_labels: [ 
+//         { label: "fine", abbreviation: "fine", color: "#111111" },
+//         { label: "fine", abbreviation: "ok", color: "#222222" } ] });
+//       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
+//     });
+//     it('should fail validation if valid_labels contains more than one of the same abbreviation', function(done) { 
+//       var proj = new model( { valid_labels: [ 
+//         { label: "fine", abbreviation: "fine", color: "#111111" },
+//         { label: "ok",   abbreviation: "fine", color: "#222222" } ] });
+//       proj.validate(function(err) { expect(err.errors.valid_labels).to.exist; done(); });
+//     });
+//     it('should pass validation if valid_labels contains more than one of the same color', function(done) { 
+//       var proj = new model( { valid_labels: [ 
+//         { label: "fine1", abbreviation: "fine1", color: "#111111" },
+//         { label: "fine2",   abbreviation: "fine2", color: "#111111" } ] });
 
-      proj.validate(function(err) { expect(err.errors.valid_labels).to.not.exist; done(); });
-    });
+//       proj.validate(function(err) { expect(err.errors.valid_labels).to.not.exist; done(); });
+//     });
 
-    /* Protected terms */
-    it('should fail validation if valid_labels contains the label or abbreviation \"O\"', function(done) { 
-      var proj1 = new model( { valid_labels: [ 
-        { label: "O", abbreviation: "fine", color: "#111111" },
-        { label: "fine", abbreviation: "ok", color: "#222222" } ] });
-      var proj2 = new model( { valid_labels: [ 
-        { label: "fine", abbreviation: "fine", color: "#111111" },
-        { label: "fine", abbreviation: "O", color: "#222222" } ] });
-      var proj3 = new model( { valid_labels: [ 
-        { label: "fine", abbreviation: "fine", color: "#111111" },
-        { label: "fine", abbreviation: "o", color: "#222222" } ] });
-      proj1.validate(function(err) { 
-        expect(err.errors.valid_labels).to.exist;
-        proj2.validate(function(err) { 
-          expect(err.errors.valid_labels).to.exist;
-          proj3.validate(function(err) { 
-            expect(err.errors.valid_labels).to.exist;
-            done();
-          });
-        });
-      });
-    });
-  });
-}
+//     /* Protected terms */
+//     it('should fail validation if valid_labels contains the label or abbreviation \"O\"', function(done) { 
+//       var proj1 = new model( { valid_labels: [ 
+//         { label: "O", abbreviation: "fine", color: "#111111" },
+//         { label: "fine", abbreviation: "ok", color: "#222222" } ] });
+//       var proj2 = new model( { valid_labels: [ 
+//         { label: "fine", abbreviation: "fine", color: "#111111" },
+//         { label: "fine", abbreviation: "O", color: "#222222" } ] });
+//       var proj3 = new model( { valid_labels: [ 
+//         { label: "fine", abbreviation: "fine", color: "#111111" },
+//         { label: "fine", abbreviation: "o", color: "#222222" } ] });
+//       proj1.validate(function(err) { 
+//         expect(err.errors.valid_labels).to.exist;
+//         proj2.validate(function(err) { 
+//           expect(err.errors.valid_labels).to.exist;
+//           proj3.validate(function(err) { 
+//             expect(err.errors.valid_labels).to.exist;
+//             done();
+//           });
+//         });
+//       });
+//     });
+//   });
+// }
 
 function runDocumentTests(model, done) {
   describe("documents", function() {
@@ -310,6 +310,6 @@ module.exports = {
   runProjectDescriptionTests: runProjectDescriptionTests,
   runProjectUserIdTests: runProjectUserIdTests,
   runProjectUserIdsTests: runProjectUserIdsTests,
-  runProjectValidLabelsTests: runProjectValidLabelsTests,
+  //runProjectValidLabelsTests: runProjectValidLabelsTests,
   runDocumentTests: runDocumentTests,
 }

@@ -9,8 +9,8 @@ var labelsValidation =
   [
     { validator: cf.validateDocumentCountMin,       msg: '{PATH}: Need at least '        + 1 + ' set of annotations in group.'},
     { validator: cf.validateDocumentCountMax,       msg: '{PATH}: exceeds the limit of ' + cf.DOCUMENT_MAXCOUNT + ' sets of annotations in group.' },
-    { validator: cf.validateLabelAbbreviationLengthMin,  msg: 'Label cannot be empty.'},
-    { validator: cf.validateLabelAbbreviationLengthMax, msg: 'All labels in document must be less than ' + cf.ABBREVIATION_MAXLENGTH + ' characters long.'},
+    //{ validator: cf.validateLabelAbbreviationLengthMin,  msg: 'Label cannot be empty.'},
+    //{ validator: cf.validateLabelAbbreviationLengthMax, msg: 'All labels in document must be less than ' + cf.ABBREVIATION_MAXLENGTH + ' characters long.'},
   ] 
 
 
@@ -65,11 +65,15 @@ DocumentGroupAnnotationSchema.methods.verifyLabelsAreValid = function(done) {
 
   // Verifies that all labels are present in the project's valid_labels.abbreviations.
   function verifyLabelsAreInProjectValidLabels(t, proj) {
-    var valid_abbreviations = new Set(proj.valid_labels.map(value => value.abbreviation));
-    valid_abbreviations.add("O"); // Add the outside category
+
+    var valid_labels = new Set(proj.category_hierarchy);
+    valid_labels.add("O");
+
+    //var valid_abbreviations = new Set(proj.valid_labels.map(value => value.abbreviation));
+    //valid_abbreviations.add("O"); // Add the outside category
     var merged_labels = Array.from(new Set([].concat.apply([], t.labels)));
     for(var i = 0; i < merged_labels.length; i++) {
-      if (!valid_abbreviations.has(merged_labels[i])) {
+      if (!valid_labels.has(merged_labels[i])) {
         return new Error("Label \"" + merged_labels[i] + "\" is not a valid label for the project." )
       }
     }

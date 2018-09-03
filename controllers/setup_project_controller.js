@@ -182,71 +182,101 @@ exports.upload_emails = function(req, res, next) {
 }
 
 
-
-
-// Upload the label categories
-exports.upload_valid_labels = function(req, res, next) {
+exports.upload_hierarchy = function(req, res, next) {
   wip_project = res.locals.wip_project;
 
-  console.log('labels', req.body.validLabelData);
+
 
   setTimeout(function() {
 
+    wip_project.category_hierarchy = req.body.data;
+    if(!req.body.data)
+      wip_project.category_hierarchy = [];
 
-
-  wip_project.valid_labels = req.body.validLabelData;
-  if(!req.body.validLabelData)
-    wip_project.valid_labels = [];
-  console.log(req.body.validLabelData)
-  wip_project.validate(function(err) {
-
-
-    var errors = null;
-
-    if(err) {
-      if(err.errors.valid_labels) {
-
-        console.log(err.errors.valid_labels)
-        //console.log("VALID LABEL ERRORS:");
-
-        //console.log(err.errors.valid_labels.message)
-
-        //var em = err.errors.valid_labels.message;
-        //var error_label = parseInt(em.slice(em.indexOf("<%") + 2, em.indexOf("%>")));
-        var errors;
-        try {
-          var field = wip_project.valid_labels;
-          var err_lines = err.errors.valid_labels.message.split("\n");
-          errors = processErrors(err_lines, field);
-        } catch(e) {
-          // Other errors, such as none or too many labels
-          errors = err.errors.valid_labels;
+    wip_project.validate(function(err) {
+      var errors = null;
+      if(err) {
+        wip_project.category_hierarchy = [];
+    
+        errors = err.errors.category_hierarchy;
+      }
+      wip_project.save(function(err) {
+        if(errors) {
+          console.log("ERRORS", errors)
+          res.send( { "success": false, "errors": errors });
+        } else {
+          console.log(wip_project.category_hierarchy)
+          res.send({ "success": true });
         }
+      });
+    });
+  }, 1000);
+}
+
+
+// // Upload the label categories
+// exports.upload_valid_labels = function(req, res, next) {
+//   wip_project = res.locals.wip_project;
+
+//   console.log('labels', req.body.validLabelData);
+
+//   setTimeout(function() {
+
+
+
+//   wip_project.valid_labels = req.body.validLabelData;
+//   if(!req.body.validLabelData)
+//     wip_project.valid_labels = [];
+//   console.log(req.body.validLabelData)
+//   wip_project.validate(function(err) {
+
+
+//     var errors = null;
+
+//     if(err) {
+//       if(err.errors.valid_labels) {
+
+//         console.log(err.errors.valid_labels)
+//         //console.log("VALID LABEL ERRORS:");
+
+//         //console.log(err.errors.valid_labels.message)
+
+//         //var em = err.errors.valid_labels.message;
+//         //var error_label = parseInt(em.slice(em.indexOf("<%") + 2, em.indexOf("%>")));
+//         var errors;
+//         try {
+//           var field = wip_project.valid_labels;
+//           var err_lines = err.errors.valid_labels.message.split("\n");
+//           errors = processErrors(err_lines, field);
+//         } catch(e) {
+//           // Other errors, such as none or too many labels
+//           errors = err.errors.valid_labels;
+//         }
  
 
-        // Reset the valid_labels if invalid to prevent weird behaviour on refresh
-        wip_project.valid_labels = [];
+//         // Reset the valid_labels if invalid to prevent weird behaviour on refresh
+//         wip_project.valid_labels = [];
       
 
-        //console.log("ERROR:", error_label);
-      }
+//         //console.log("ERROR:", error_label);
+//       }
 
-    }
+//     }
 
     
-    wip_project.save(function(err) {
-      if(errors) {
-        console.log("ERRORS", errors)
-        res.send( { "success": false, "errors": errors });
-      } else {
+//     wip_project.save(function(err) {
+//       if(errors) {
+//         console.log("ERRORS", errors)
+//         res.send( { "success": false, "errors": errors });
+//       } else {
 
-        res.send({ "success": true });
-      }
-    });
+//         res.send({ "success": true });
+//       }
+//     });
 
-  });
-  }, 10);
-}
+//   });
+//   }, 10);
+// }
 
 // Reset the WIP Project's documents and file metadata.
 // This method is necessary because without it, a user who submits an invalid file after

@@ -188,6 +188,7 @@ block content
 					option(disabled selected value="no-preset") (no preset)
 					option(value="NER") NER (4 classes)
 					option(value="FIGER") FIGER (113 classes)
+					option(value="UF") Ultra-Fine (10,331 classes)
 				form#entity-categories-text-form.special-textarea-form
 					div#entity-categories-validation.special-textarea-validation
 					div.special-textarea-container
@@ -200,7 +201,7 @@ block content
 			div.category-tree
 				h3 Category Tree
 				svg#svg-entity-categories
-			a.close <i class="fa fa-close"></i>
+			a.close <span>Save and close</span>&nbsp;<i class="fa fa-close"></i>
 
 block scripts
 
@@ -216,8 +217,32 @@ block scripts
 	script.
 
 		presets = {
-			"NER": "Person\nOrganisation\nLocation\nMisc",
-			"FIGER": "person\n actor\n architect\n artist\n athletee\n author\n coach\n director\n doctor\n engineer\n monarch\n musician\n politician\n religious_leader\n soldier\n terrorist\norganization\n airline\n company\n educational_institution\n fraternity_sorority\n sports_league\n sports_team\n terrorist_organisation\n government_agency\n government\n political_party\n eeducational_department\n military\n news_agency\nlocation\n city\n country\n county\n province\n railway\n road\n bridge\n body_of_water\n island\n mountain\n glacier\n astral_body\n cemetary\n park\nproduct\n engine\n airplane\n car\n ship\n spacecraft\n train\n camera\n mobile_phone\n computer\n software\n game\n instrument\n weapon\nart\n film\n play\n written_work\n newspaper\n music\nevent\n attack\n election\n protest\n military_conflict\n natural_disaster\n sports_event\n terrorist_attack\n building\n airport\n dam\n hospital\n hotel\n library\n power_station\n restaurant\n sports_facility\n theater\ntime\ncolor\naward\neducational_degree\ntitle\nlaw\nethnicity\nlanguage\nreligion\ngod\nchemical_thing\nbiological_thing\nmedical_treatment\ndisease\nsymptom\ndrug\nbody_part\nliving_thing\nanimal\nfood\nwebsite\nbroadcast_network\nbroadcast_program\ntv_channel\ncurrency\nstock_exchange\nalgorithm\nprogramming_language\ntransit_system\ntransit_line"
+			"NER": "person\norganisation\nlocation\nmisc",
+			"FIGER": "person\n actor\n architect\n artist\n athlete\n author\n coach\n director\n doctor\n engineer\n monarch\n musician\n politician\n religious_leader\n soldier\n terrorist\norganization\n airline\n company\n educational_institution\n fraternity_sorority\n sports_league\n sports_team\n terrorist_organisation\n government_agency\n government\n political_party\n educational_department\n military\n news_agency\nlocation\n city\n country\n county\n province\n railway\n road\n bridge\n body_of_water\n island\n mountain\n glacier\n astral_body\n cemetary\n park\nproduct\n engine\n airplane\n car\n ship\n spacecraft\n train\n camera\n mobile_phone\n computer\n software\n game\n instrument\n weapon\nart\n film\n play\n written_work\n newspaper\n music\nevent\n attack\n election\n protest\n military_conflict\n natural_disaster\n sports_event\n terrorist_attack\n building\n airport\n dam\n hospital\n hotel\n library\n power_station\n restaurant\n sports_facility\n theater\ntime\ncolor\naward\neducational_degree\ntitle\nlaw\nethnicity\nlanguage\nreligion\ngod\nchemical_thing\nbiological_thing\nmedical_treatment\ndisease\nsymptom\ndrug\nbody_part\nliving_thing\nanimal\nfood\nwebsite\nbroadcast_network\nbroadcast_program\ntv_channel\ncurrency\nstock_exchange\nalgorithm\nprogramming_language\ntransit_system\ntransit_line"
+		}
+
+		function uploadCategoryHierarchy(data) {
+			$.ajax(
+			{
+				url: 			'upload-hierarchy',
+				type:			'POST',
+				data: 			{data: data},
+				dataType: 		"json",
+				headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
+				complete: function()
+				{
+					//$form.removeClass( 'is-uploading' );
+				},
+				success: function( data )
+				{
+					console.log('yay labels!');
+				},
+				error: function()
+				{								
+					displayServerErrorBanner();
+				}
+			});		
+
 		}
 
 		function showEntityCategoriesWindow() {
@@ -229,6 +254,12 @@ block scripts
 			$("#entity-categories-window").removeClass("show");
 			$('#main > *:not(#entity-categories-window').removeClass("blur");
 			$('#navbar').removeClass("blur");
+
+
+			// Need to save the entities 
+			var entitySlashData = txt2slash($("#entity-categories-textarea").val().replace(/\t/g, " "));
+			uploadCategoryHierarchy(entitySlashData);
+			console.log(entitySlashData);
 		}
 		$("#entity-categories-window .close").click(hideEntityCategoriesWindow);
 		$("#button-create-entity-categories").click(showEntityCategoriesWindow);
@@ -248,7 +279,7 @@ block scripts
 		$("#entity-categories-preset").change(function() {
 			var val = $(this).val();
 			var preset = presets[val];
-			$("#entity-categories-textarea").val(preset);
+			$("#entity-categories-textarea").val(preset.replace(/ /g, "\t"));
 			buildTree(preset);
 		});
 
@@ -260,14 +291,14 @@ block scripts
 		var ecv = $("#entity-categories-validation");
 
 		function generateTree() {
-			buildTree(ect.val())//.replace(/\u00A0\u2022\u00A0/g, " "))
+			buildTree(ect.val().replace(/\t/g, " "))
 		}
 
 		ect.on('input', function(e) {
 
 			$("#entity-categories-preset").val("no-preset")
 
-			ect.val(ect.val())//.replace(" ", "\u00A0\u2022\u00A0"))
+			ect.val(ect.val().replace(/ /g, "\t"))
 
 			//$("#saved-notification-distribution").removeClass("show");
 			//$("#li-distribution").removeClass("completed");	
@@ -567,10 +598,6 @@ block scripts
 
 		var MAX_FILESIZE = !{max_filesize_mb} * 1024 * 1024;
 		var file_metadata = !{file_metadata};
-
-	
-
-
 
 		// Drag and drop code and css found here:
 		// https://css-tricks.com/examples/DragAndDropFileUploading/

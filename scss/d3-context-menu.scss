@@ -150,8 +150,14 @@
 	font-size: 14px;
 	font-family: "Open Sans", sans-serif;
 	padding: 4px 8px;
+	margin: 0;
+	width: auto;
 	margin-bottom: 4px;
+
 }
 .d3-context-menu form input[type="submit"] {
 	cursor: pointer;
+	&:hover {
+		border: 2px solid $primary-orange;
+	}
 }

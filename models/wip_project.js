@@ -32,7 +32,12 @@ var WipProjectSchema = new Schema({
   project_description: cf.fields.project_description,
 
   // The valid labels to use for annotation within the project.
-  valid_labels: cf.fields.valid_labels,
+  //valid_labels: cf.fields.valid_labels,
+
+  category_hierarchy: cf.fields.category_hierarchy,
+
+  // An array of all of the labels in the category hierarchy.
+  //valid_labels: cf.fields.valid_labels,
 
   // All documents in the project.
   // documents: cf.fields.all_documents,

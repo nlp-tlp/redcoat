@@ -20,15 +20,15 @@ EMAIL_MAXLENGTH    = 254;
 
 /* Validation */
 
-var validateValidLabelsHaveLabelAbbreviationAndColor = function(valid_labels) {
-  if(!valid_labels) { return true; }
-  for(var i = 0; i < valid_labels.length; i++ ) {
-    if(valid_labels[i].label == undefined || valid_labels[i].abbreviation == undefined || valid_labels[i].color == undefined ) {
-      return false;
-    }
-  }
-  return true;
-}
+// var validateValidLabelsHaveLabelAbbreviationAndColor = function(valid_labels) {
+//   if(!valid_labels) { return true; }
+//   for(var i = 0; i < valid_labels.length; i++ ) {
+//     if(valid_labels[i].label == undefined || valid_labels[i].abbreviation == undefined || valid_labels[i].color == undefined ) {
+//       return false;
+//     }
+//   }
+//   return true;
+// }
 
 // var validateValidLabelsHaveUniqueLabels = function(valid_labels) {
 //   allLabels = valid_labels.map(value => value.label);
@@ -45,16 +45,16 @@ var validateValidLabelsHaveLabelAbbreviationAndColor = function(valid_labels) {
 
 
 
-var validateValidLabelsCountMin = function(valid_labels) {
-  return valid_labels && valid_labels.length > 0;
-}
-var validateValidLabelsCountMax = function(valid_labels) {
-  return valid_labels && valid_labels.length <= VALID_LABEL_MAXCOUNT;
-}
+// var validateValidLabelsCountMin = function(valid_labels) {
+//   return valid_labels && valid_labels.length > 0;
+// }
+// var validateValidLabelsCountMax = function(valid_labels) {
+//   return valid_labels && valid_labels.length <= VALID_LABEL_MAXCOUNT;
+// }
 
-var validateValidHexColor = function(col) {
-  return /^#[0-9A-F]{6}$/i.test(col);
-};
+// var validateValidHexColor = function(col) {
+//   return /^#[0-9A-F]{6}$/i.test(col);
+// };
 
 // Returns true if a string is not blank (filled with whitespace).
 var validateNotBlank = function(str) {
@@ -133,29 +133,29 @@ var validateDocumentTokenCountMax = function(arr, done) {
 };
 
 
-// Validate that no label abbreviations in the labels are of length 0.
-var validateLabelAbbreviationLengthMin = function(arr) {
-  for(var i = 0; i < arr.length; i++) {
-  	for(var j = 0; j < arr[i].length; j++) {
-	    if(arr[i][j].length == 0) {
-	      return false;
-	    }
-	  }
-  }
-  return true;
-};
+// // Validate that no label abbreviations in the labels are of length 0.
+// var validateLabelAbbreviationLengthMin = function(arr) {
+//   for(var i = 0; i < arr.length; i++) {
+//   	for(var j = 0; j < arr[i].length; j++) {
+// 	    if(arr[i][j].length == 0) {
+// 	      return false;
+// 	    }
+// 	  }
+//   }
+//   return true;
+// };
 
-// Validate that no label abbreviations in the labels are of length greater than ABBREVIATION_MAXLENGTH;
-var validateLabelAbbreviationLengthMax = function(arr) {
-  for(var i = 0; i < arr.length; i++) {
-  	for(var j = 0; j < arr[i].length; j++) {
-	    if(arr[i][j].length > ABBREVIATION_MAXLENGTH) {
-	      return false;
-	    }
-	  }
-  }
-  return true;
-};
+// // Validate that no label abbreviations in the labels are of length greater than ABBREVIATION_MAXLENGTH;
+// var validateLabelAbbreviationLengthMax = function(arr) {
+//   for(var i = 0; i < arr.length; i++) {
+//   	for(var j = 0; j < arr[i].length; j++) {
+// 	    if(arr[i][j].length > ABBREVIATION_MAXLENGTH) {
+// 	      return false;
+// 	    }
+// 	  }
+//   }
+//   return true;
+// };
 
 // Validates that all values in an array are unique.
 var validateArrayHasUniqueValues = function(arr) {
@@ -169,103 +169,103 @@ var validateArrayHasUniqueValues = function(arr) {
 
 
 
-// A special validation function that provides useful error messages for displaying on the setup page.
-var validateValidLabels = function(arr, done) {
+// // A special validation function that provides useful error messages for displaying on the setup page.
+// var validateValidLabels = function(arr, done) {
 
-  // // Validate that no tokens in the document are of length 0.
-  // var validateNoItemsAreBlank = function(arr, item_name) {
+//   // // Validate that no tokens in the document are of length 0.
+//   // var validateNoItemsAreBlank = function(arr, item_name) {
     
-  //   var msg = [];
-  //   for(var i = 0; i < arr.length; i++) {
-  //     if(!validateNotBlank(arr[i][item_name])) {
-  //       msg.push(i + ": [" + item_name + "] Error: " + item_name + " must not be blank.");
-  //     }
-  //   }
-  //   return msg;
-  // };
+//   //   var msg = [];
+//   //   for(var i = 0; i < arr.length; i++) {
+//   //     if(!validateNotBlank(arr[i][item_name])) {
+//   //       msg.push(i + ": [" + item_name + "] Error: " + item_name + " must not be blank.");
+//   //     }
+//   //   }
+//   //   return msg;
+//   // };
 
-  // // Validate that all items are unique.
-  // var validateItemsAreUnique = function(arr, item_name) {
-  //   var msg = [];
-  //   items_seen = new Set();
-  //   for(var i = 0; i < arr.length; i++) {
-  //     if(items_seen.has(arr[i][item_name])) {
-  //       msg.push(i + ": [" + item_name + "] Error: " + item_name + " must be unique.");
-  //     } else {
-  //       items_seen.add(arr[i][item_name]);
-  //     }
-  //   }
-  //   return msg;
-  // }
+//   // // Validate that all items are unique.
+//   // var validateItemsAreUnique = function(arr, item_name) {
+//   //   var msg = [];
+//   //   items_seen = new Set();
+//   //   for(var i = 0; i < arr.length; i++) {
+//   //     if(items_seen.has(arr[i][item_name])) {
+//   //       msg.push(i + ": [" + item_name + "] Error: " + item_name + " must be unique.");
+//   //     } else {
+//   //       items_seen.add(arr[i][item_name]);
+//   //     }
+//   //   }
+//   //   return msg;
+//   // }
 
-  // // Validates that no labels or abbreviations contain the protected "O" class.
-  // var validateItemsHaveNoRestrictedTerms = function(arr, item_name) {
-  //   var msg = [];
-  //   for(var i = 0; i < arr.length; i++) {
-  //     if(arr[i][item_name].toLowerCase() == "o") {
-  //       msg.push(i + ": [" + item_name + "] Error: " + item_name + " cannot be 'o' or 'O'.");
-  //     }
-  //   }
-  //   return msg;
-  // }  
-
-
-  var msg = [];
-  var labelsSeen = new Set();
-  var abbrevsSeen = new Set();
-
-  function validate(valid_label, items_seen, item_name) {
-
-    if(!validateNotBlank(valid_label[item_name])) {
-      msg.push(i + ": [" + item_name + "] Error: " + item_name + " must not be blank.");
-    }
-    if(items_seen.has(valid_label[item_name])) {
-      msg.push(i + ": [" + item_name + "] Error: " + item_name + " must be unique.");
-    } else {
-      items_seen.add(valid_label[item_name])
-    }
-    if(valid_label[item_name].toLowerCase() == "o") {
-      msg.push(i + ": [" + item_name + "] Error: " + item_name + " cannot be 'o' or 'O'.");
-    } 
-    if(item_name == "label") {
-      if(valid_label[item_name].length > LABEL_MAXLENGTH) {
-        msg.push(i + ": [" + item_name + "] Error: " + item_name + " must be less than " + LABEL_MAXLENGTH + " characters long.");
-      }
-    }
-    if(item_name == "abbreviation") {
-      if(valid_label[item_name].length > ABBREVIATION_MAXLENGTH) {
-        msg.push(i + ": [" + item_name + "] Error: " + item_name + " must be less than " + ABBREVIATION_MAXLENGTH + " characters long.");
-      }
-    }    
-
-  }
-
-  for(var i = 0; i < arr.length; i++) {
-    // Labels
-    validate(arr[i], labelsSeen, "label");
-    validate(arr[i], abbrevsSeen, "abbreviation");
-
-  }  
+//   // // Validates that no labels or abbreviations contain the protected "O" class.
+//   // var validateItemsHaveNoRestrictedTerms = function(arr, item_name) {
+//   //   var msg = [];
+//   //   for(var i = 0; i < arr.length; i++) {
+//   //     if(arr[i][item_name].toLowerCase() == "o") {
+//   //       msg.push(i + ": [" + item_name + "] Error: " + item_name + " cannot be 'o' or 'O'.");
+//   //     }
+//   //   }
+//   //   return msg;
+//   // }  
 
 
-  // msg.push(validateNoItemsAreBlank(arr, "label"));
-  // msg.push(validateNoItemsAreBlank(arr, "abbreviation"));
-  // msg.push(validateItemsAreUnique(arr, "label"));
-  // msg.push(validateItemsAreUnique(arr, "abbreviation"));
-  // msg.push(validateItemsHaveNoRestrictedTerms(arr, "label"));
-  // msg.push(validateItemsHaveNoRestrictedTerms(arr, "abbreviation"));
+//   var msg = [];
+//   var labelsSeen = new Set();
+//   var abbrevsSeen = new Set();
+
+//   function validate(valid_label, items_seen, item_name) {
+
+//     if(!validateNotBlank(valid_label[item_name])) {
+//       msg.push(i + ": [" + item_name + "] Error: " + item_name + " must not be blank.");
+//     }
+//     if(items_seen.has(valid_label[item_name])) {
+//       msg.push(i + ": [" + item_name + "] Error: " + item_name + " must be unique.");
+//     } else {
+//       items_seen.add(valid_label[item_name])
+//     }
+//     if(valid_label[item_name].toLowerCase() == "o") {
+//       msg.push(i + ": [" + item_name + "] Error: " + item_name + " cannot be 'o' or 'O'.");
+//     } 
+//     if(item_name == "label") {
+//       if(valid_label[item_name].length > LABEL_MAXLENGTH) {
+//         msg.push(i + ": [" + item_name + "] Error: " + item_name + " must be less than " + LABEL_MAXLENGTH + " characters long.");
+//       }
+//     }
+//     if(item_name == "abbreviation") {
+//       if(valid_label[item_name].length > ABBREVIATION_MAXLENGTH) {
+//         msg.push(i + ": [" + item_name + "] Error: " + item_name + " must be less than " + ABBREVIATION_MAXLENGTH + " characters long.");
+//       }
+//     }    
+
+//   }
+
+//   for(var i = 0; i < arr.length; i++) {
+//     // Labels
+//     validate(arr[i], labelsSeen, "label");
+//     validate(arr[i], abbrevsSeen, "abbreviation");
+
+//   }  
 
 
-  // TODO: Check for restricted labels as well (O)
+//   // msg.push(validateNoItemsAreBlank(arr, "label"));
+//   // msg.push(validateNoItemsAreBlank(arr, "abbreviation"));
+//   // msg.push(validateItemsAreUnique(arr, "label"));
+//   // msg.push(validateItemsAreUnique(arr, "abbreviation"));
+//   // msg.push(validateItemsHaveNoRestrictedTerms(arr, "label"));
+//   // msg.push(validateItemsHaveNoRestrictedTerms(arr, "abbreviation"));
 
-  var msg = [].concat.apply([], msg);
 
-  if(msg.length > 0) {
-    return done(false, msg.join("\n"));
-  } else {
-    return done(true);
-  }
-}
+//   // TODO: Check for restricted labels as well (O)
+
+//   var msg = [].concat.apply([], msg);
+
+//   if(msg.length > 0) {
+//     return done(false, msg.join("\n"));
+//   } else {
+//     return done(true);
+//   }
+// }
 
 
 // A simple email validation regex.
@@ -312,28 +312,30 @@ userIdsValidation = [
   { validator: validateArrayHasUniqueValues },
 ];
 
-validLabelsValidation = [
-  { validator: validateValidLabelsCountMin, msg: "Must have one or more labels." },
-  { validator: validateValidLabelsCountMax, msg: "Must have " + VALID_LABEL_MAXCOUNT + " or fewer labels." },
-  { validator: validateValidLabelsHaveLabelAbbreviationAndColor, msg: "All labels must have a corresponding abbreviation and color."  },
+// validLabelsValidation = [
+//   { validator: validateValidLabelsCountMin, msg: "Must have one or more labels." },
+//   { validator: validateValidLabelsCountMax, msg: "Must have " + VALID_LABEL_MAXCOUNT + " or fewer labels." },
+//   { validator: validateValidLabelsHaveLabelAbbreviationAndColor, msg: "All labels must have a corresponding abbreviation and color."  },
 
 
-  // { validator: function(arr, done) { validateNoItemsAreBlank(arr, "label", function(result, msg) { done(result, msg); })}, isAsync: true },
-  // { validator: function(arr, done) { validateNoItemsAreBlank(arr, "abbreviation", function(result, msg) { done(result, msg); })}, isAsync: true },
-  // { validator: function(arr, done) { validateItemsAreUnique(arr, "label", function(result, msg) { done(result, msg); })}, isAsync: true },
-  // { validator: function(arr, done) { validateItemsAreUnique(arr, "abbreviation", function(result, msg) { done(result, msg); })}, isAsync: true },
-  { validator: function(arr, done) { validateValidLabels(arr, function(result, msg) { done(result, msg); })}, isAsync: true },
+//   // { validator: function(arr, done) { validateNoItemsAreBlank(arr, "label", function(result, msg) { done(result, msg); })}, isAsync: true },
+//   // { validator: function(arr, done) { validateNoItemsAreBlank(arr, "abbreviation", function(result, msg) { done(result, msg); })}, isAsync: true },
+//   // { validator: function(arr, done) { validateItemsAreUnique(arr, "label", function(result, msg) { done(result, msg); })}, isAsync: true },
+//   // { validator: function(arr, done) { validateItemsAreUnique(arr, "abbreviation", function(result, msg) { done(result, msg); })}, isAsync: true },
+//   { validator: function(arr, done) { validateValidLabels(arr, function(result, msg) { done(result, msg); })}, isAsync: true },
 
-  //{ validator: validateValidLabelsHaveUniqueLabels, msg: "Labels must be unique." },
-  //{ validator: validateValidLabelsHaveUniqueAbbreviations, msg: "Abbreviations must be unique." },
-//  { validator: validateValidLabelsHaveUniqueColors, msg: "Colors must be unique." },
-  //{ validator: validateValidLabelsNoRestrictedLabels, msg: "Labels and abbreviations cannot be 'O' (it is reserved for non-entities)." }
-];
+//   //{ validator: validateValidLabelsHaveUniqueLabels, msg: "Labels must be unique." },
+//   //{ validator: validateValidLabelsHaveUniqueAbbreviations, msg: "Abbreviations must be unique." },
+// //  { validator: validateValidLabelsHaveUniqueColors, msg: "Colors must be unique." },
+//   //{ validator: validateValidLabelsNoRestrictedLabels, msg: "Labels and abbreviations cannot be 'O' (it is reserved for non-entities)." }
+// ];
 
-colorValidation = [
- { validator: validateNotBlank},
- { validator: validateValidHexColor, msg: "Color must be a valid hex color." }
-];
+// colorValidation = [
+//  { validator: validateNotBlank},
+//  { validator: validateValidHexColor, msg: "Color must be a valid hex color." }
+// ];
+
+
 
 documentValidation = [
   { validator: validateDocumentCountMin,       msg: '{PATH}: Need at least 1 document in group.'},
@@ -354,6 +356,12 @@ allDocumentValidation = [
 ]; 
 
 
+categoryHierarchyValidation = [
+   
+
+]
+
+
 
 
 module.exports = {
@@ -363,7 +371,7 @@ module.exports = {
 	DOCUMENT_MAX_TOKEN_COUNT  		: DOCUMENT_MAX_TOKEN_COUNT,  // Max number of tokens in a document.
 	ABBREVIATION_MAXLENGTH    		: ABBREVIATION_MAXLENGTH,   // Max length of a label abbreviation.
 	PROJECT_NAME_MAXLENGTH    		: PROJECT_NAME_MAXLENGTH,   // Max length of project name
-	VALID_LABEL_MAXCOUNT      		: VALID_LABEL_MAXCOUNT,     // Max number of valid labels
+	//VALID_LABEL_MAXCOUNT      		: VALID_LABEL_MAXCOUNT,     // Max number of valid labels
 	LABEL_MAXLENGTH           		: LABEL_MAXLENGTH,          // Max length of one label
 	PROJECT_DESCRIPTION_MAXLENGTH : PROJECT_DESCRIPTION_MAXLENGTH, // Max length of a project description.
 	USERS_PER_PROJECT_MAXCOUNT      : USERS_PER_PROJECT_MAXCOUNT, // Max number of users per project.
@@ -372,8 +380,8 @@ module.exports = {
 	validateNotBlank : validateNotBlank,
 	validateDocumentCountMin: validateDocumentCountMin,
 	validateDocumentCountMax: validateDocumentCountMax, 
-	validateLabelAbbreviationLengthMin: validateLabelAbbreviationLengthMin,
-	validateLabelAbbreviationLengthMax: validateLabelAbbreviationLengthMax,
+	// validateLabelAbbreviationLengthMin: validateLabelAbbreviationLengthMin,
+	// validateLabelAbbreviationLengthMax: validateLabelAbbreviationLengthMax,
 	validateArrayHasUniqueValues : validateArrayHasUniqueValues,
   emailValidation: emailValidation,
 
@@ -515,16 +523,25 @@ module.exports = {
 			validate: allDocumentValidation,
 		},
 
-		valid_labels:	{
-		    type: [
-		      { 
-		        label:        { type: String },
-		        abbreviation: { type: String },
-		        color:        { type: String, validate: colorValidation } // TODO: Move this out and put it in validLabelsValidation
-		      },          
-		    ],
-		    validate: validLabelsValidation,
-	  },
+    category_hierarchy: {
+      type: [String],
+      validate: categoryHierarchyValidation
+    },
+
+    valid_labels: {
+      type: [String]
+    },
+
+		// valid_labels:	{
+		//     type: [
+		//       { 
+		//         label:        { type: String },
+		//         abbreviation: { type: String },
+		//         color:        { type: String, validate: colorValidation } // TODO: Move this out and put it in validLabelsValidation
+		//       },          
+		//     ],
+		//     validate: validLabelsValidation,
+	 //  },
 
 		user_ids: {
 	    type: [mongoose.Schema.Types.ObjectId],

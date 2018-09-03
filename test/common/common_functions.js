@@ -131,12 +131,13 @@ function registerUsers(objects, error_function, done) {
 function createValidProject(n_labels, user_id) {
   var proj = new Project( {
     user_id: user_id,
-    project_name: "New Project"
+    project_name: "New Project",
+    category_hierarchy: ["person", "organisation", "location", "misc"]
   });
-  for(var i = 0; i < n_labels; i++) {
-    var valid_label = { label: "test-" + i, abbreviation: "b-" + i, color: "#" + ("000000" + i).substr(-6, 6) }
-    proj.valid_labels.push(valid_label);
-  }      
+  // for(var i = 0; i < n_labels; i++) {
+  //   var valid_label = { label: "test-" + i, abbreviation: "b-" + i, color: "#" + ("000000" + i).substr(-6, 6) }
+  //   proj.valid_labels.push(valid_label);
+  // }      
   return proj;
 }
 
@@ -146,17 +147,18 @@ function createValidProject(n_labels, user_id) {
 function createValidProjectOrWIPP(model, n_labels, user_id) {
   var proj = new model( {
     user_id: user_id,
-    project_name: "New Project"
+    project_name: "New Project",
+    category_hierarchy: "name\norg\nloc\nmisc"
   });
 
   // if(model.collection.name == "wipprojects") {
   //   proj.documents.push(["Valid", "document"]);
   // }
 
-  for(var i = 0; i < n_labels; i++) {
-    var valid_label = { label: "test-" + i, abbreviation: "b-" + i, color: "#" + ("000000" + i).substr(-6, 6) }
-    proj.valid_labels.push(valid_label);
-  }
+  // for(var i = 0; i < n_labels; i++) {
+  //   var valid_label = { label: "test-" + i, abbreviation: "b-" + i, color: "#" + ("000000" + i).substr(-6, 6) }
+  //   proj.valid_labels.push(valid_label);
+  // }
   return proj;
 }
 
