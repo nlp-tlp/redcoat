@@ -16,6 +16,13 @@ var tree = d3.layout.tree()
 var diagonal = d3.svg.diagonal()
     .projection(function(d) { return [d.y, d.x]; });
 
+// Update the category hierarchy text field if it is present.
+// Should only be called by createNewNode, rename, delete... not when the tree is updated via the category hierarchy itself.
+function updateCategoryHierarchy(root) {
+  if($("#entity-categories-textarea")) {
+    $("#entity-categories-textarea").val(json2text(root).replace(/ /g, "\t"));
+  }
+}
 
 function buildTree(txt) {
 
@@ -143,7 +150,7 @@ function buildTree(txt) {
   root.children.forEach(assignColor);
   root.children.forEach(collapse);
   root.children.forEach(assignColorsToChildren);
-  update(root);
+  update(root, false);
 
 
   d3.select(self.frameElement).style("height", "800px");
@@ -179,7 +186,11 @@ function buildTree(txt) {
     
   }
 
-  function update(source) {
+
+
+  function update(source, generateHierarchyText=true) {
+
+
 
     // Compute the new tree layout.
     var nodes = tree.nodes(root).reverse(),
@@ -272,9 +283,17 @@ function buildTree(txt) {
 
     // Stash the old positions for transition.
     nodes.forEach(function(d) {
-      d.x0 = d.x;
-      d.y0 = d.y;
-    });
+        d.x0 = d.x;
+        d.y0 = d.y;
+      });
+
+
+    //console.log(source.length)
+    //var txt = json2text(root);
+    //if(generateHierarchyText) {
+      updateCategoryHierarchy(root);
+    //}
+
   }
 
   // Toggle children on click.
@@ -335,7 +354,6 @@ function buildTree(txt) {
       if(d == root)
         assignColor(newNode);
 
-      console.log(d);
       //Creates a Node from newNode object using d3.hierarchy(.)
      // var newNode = d3.layout.hierarchy(newNode);
 
@@ -371,6 +389,10 @@ function buildTree(txt) {
       //Update tree
       sortTree();
       update(d);
+
+
+      // If category hierarchy text exists, write the text version of the tree to it
+
   }
 
 
@@ -393,6 +415,10 @@ function buildTree(txt) {
     }
     update(d);
   }
+
+
+  // Return the text version of the tree
+
 
 }
 
@@ -669,4 +695,35 @@ function txt2slash(text) {
     slashData.push(parents.join("/") + (parents.length > 0 ? "/" : "") + cleanLine);
   }
   return slashData;
+}
+
+
+function json2slash(json) {
+
+}
+
+function json2text(root) {
+
+  var allNodes = [];
+
+  var depth = 1;
+  function addNode(d) {
+    allNodes.push((new Array(depth).join(" ")) + d.name);
+    if(d.children) {
+      depth++;
+      d.children.forEach(addNode);
+      depth--;
+    }
+    else if(d._children) {
+      depth++;
+      d._children.forEach(addNode);
+      depth--;
+    } else {
+    }
+    
+  }
+
+  root.children.forEach(addNode);
+  return allNodes.join("\n");
+
 }

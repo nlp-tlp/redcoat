@@ -113,20 +113,15 @@ block content
 
 					form#entity-categories-form
 						div.form-group
-							label(for="input-allow-new-categories") Allow users to create new categories during annotation?
+							label(for="input-allow-new-categories") To what extent should your annotators be able to modify the hierarchy?
 							select#input-allow-new-categories
-								option(value="no") No
-								option(value="yes") Yes
-							div.form-help This option is be useful if you aren't sure your category hierarchy covers every possible category in your dataset.
-						div.form-group
-							label(for="input-allow-delete-categories") Allow users to delete categories during annotation?
-							select#input-allow-delete-categories
-								option(value="no") No
-								option(value="yes") Yes
-							div.form-help This option is only recommended if you completely trust your annotators.
+								option(value="none") No modifications allowed.
+								option(value="create-new") Users can create new categories.
+								option(value="full-power") Users can create, delete, and rename categories.
+							div.form-help This option is useful if you aren't sure whether your category hierarchy covers every possible category in your dataset.
 
-				div#saved-notification-entity-categories.saved-notification
-					p <i class="fa fa-check"></i> This section has been saved.
+					div#saved-notification-entity-categories.saved-notification
+						p <i class="fa fa-check"></i> This section has been saved.
 
 			article#distribution.article-heading.not-scrolled-to
 				h1 Distribution
@@ -222,6 +217,8 @@ block scripts
 		}
 
 		function uploadCategoryHierarchy(data) {
+			$("#saved-notification-entity-categories").removeClass("show");
+			$("#li-entity-categories").removeClass("completed");
 			$.ajax(
 			{
 				url: 			'upload-hierarchy',
@@ -236,6 +233,8 @@ block scripts
 				success: function( data )
 				{
 					console.log('yay labels!');
+					$("#saved-notification-entity-categories").addClass("show");
+					$("#li-entity-categories").addClass("completed");
 				},
 				error: function()
 				{								
@@ -298,7 +297,16 @@ block scripts
 
 			$("#entity-categories-preset").val("no-preset")
 
-			ect.val(ect.val().replace(/ /g, "\t"))
+			var ss = ect[0].selectionStart;
+			var se = ect[0].selectionEnd;
+
+			ect.val(ect.val().replace(/ /g, "\t"));
+
+			ect[0].selectionStart = ss;
+			ect[0].selectionEnd = se;
+
+			// Move the cursor back to the correct position 
+
 
 			//$("#saved-notification-distribution").removeClass("show");
 			//$("#li-distribution").removeClass("completed");	
