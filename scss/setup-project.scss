@@ -848,3 +848,43 @@ button.large-button {
 	}
 
 }
+
+#entity-categories-summary {
+	width: 60%;
+	margin: 0 auto;
+	box-sizing: border-box;
+	padding: 10px 25px;
+	border: 1px solid #ddd;
+	p {
+		margin-top: 0;
+	}
+	.ec-loading {
+		display: none;
+		padding: 80px 0;
+		padding-top: 90px;
+		text-align: center;
+		color: #999;
+	}
+	display: none;
+	&.is-success {
+		display: block;
+	}
+	&:not(.is-success) {
+		table, .ec-success {
+			display: none;
+		}
+	}
+	&.uploading {
+		display: block;
+		.ec-loading {
+			display: block;
+		}
+	}
+	table {
+		width: 85%;
+		margin: 0 auto;
+		td:nth-child(2) {
+			width: 50%;
+		}
+	}
+}

@@ -75,6 +75,15 @@ block content
 					p Please determine the entity categories in your data using the form below.
 					p You may create new categories by entering them in the form below. To specify a parent category, place a space before the child category. The categories are visualised in the Category Tree, which you may also use to create your hierarchy if you prefer. You may also select from a list of presets, such as the standard 4-class Named Entity Recognition model.
 
+
+					div#entity-categories-summary
+						p.ec-success Your entity categories have been successfully uploaded.
+						p.ec-loading <i class="fa fa-cog fa-spin"></i>&nbsp;&nbsp;Uploading entity categories...
+						div.box__success_details#entity-categories-summary-box
+						
+			
+
+
 					button.large-button#button-create-entity-categories Create entity categories&nbsp;<i class="fa fa-external-link"></i>
 
 					//- div#entity-categories-file.subsection.subsection-hidden
@@ -210,6 +219,24 @@ block scripts
 		wippid = "#{wip_project_id}";
 
 	script.
+		function renderSuccessBox(metadata, form_ele, success_details_ele, sidenav_li_ele, saved_notification_ele) {
+			form_ele.addClass( 'is-success' );
+			console.log(metadata)
+			var details = "<table><tbody>";
+			for(var i = 0; i < metadata.length; i++) {
+				var k = Object.keys(metadata[i])[0];
+				var v = metadata[i][k];
+				details += "<tr><td><b>" + k + ":</b></td><td>" + v + "</td><tr/>";
+			}
+			details += "</tbody></table>"
+			success_details_ele.html(details); // remove final <br/> tag.
+			saved_notification_ele.addClass('show');
+			sidenav_li_ele.addClass('completed');
+		}
+
+
+
+	script.
 
 		presets = {
 			"NER": "person\norganisation\nlocation\nmisc",
@@ -219,6 +246,7 @@ block scripts
 		function uploadCategoryHierarchy(data) {
 			$("#saved-notification-entity-categories").removeClass("show");
 			$("#li-entity-categories").removeClass("completed");
+			$("#entity-categories-summary").addClass("uploading");
 			$.ajax(
 			{
 				url: 			'upload-hierarchy',
@@ -232,9 +260,10 @@ block scripts
 				},
 				success: function( data )
 				{
+					console.log(data.metadata);
 					console.log('yay labels!');
-					$("#saved-notification-entity-categories").addClass("show");
-					$("#li-entity-categories").addClass("completed");
+					renderSuccessBox(data.metadata, $("#entity-categories-summary"), $("#entity-categories-summary-box"), $("#li-entity-categories"), $("#saved-notification-entity-categories"));
+					$("#entity-categories-summary").removeClass("uploading");
 				},
 				error: function()
 				{								
@@ -248,6 +277,7 @@ block scripts
 			$("#entity-categories-window").addClass("show");
 			$('#main > *:not(#entity-categories-window').addClass("blur");
 			$('#navbar').addClass("blur");
+			$('#entity-categories-summary').removeClass("is-success");
 		}
 		function hideEntityCategoriesWindow() {
 			$("#entity-categories-window").removeClass("show");
@@ -613,20 +643,7 @@ block scripts
 		{
 
 
-			function renderSuccessBox(metadata, form_ele, success_details_ele, sidenav_li_ele, saved_notification_ele) {
-				form_ele.addClass( 'is-success' );
-				console.log(success_details_ele)
-				var details = "<table><tbody>";
-				for(var i = 0; i < metadata.length; i++) {
-					var k = Object.keys(metadata[i])[0];
-					var v = metadata[i][k];
-					details += "<tr><td><b>" + k + ":</b></td><td>" + v + "</td><tr/>";
-				}
-				details += "</tbody></table>"
-				success_details_ele.html(details); // remove final <br/> tag.
-				saved_notification_ele.addClass('show');
-				sidenav_li_ele.addClass('completed');
-			}
+
 
 			if(file_metadata) renderSuccessBox(file_metadata, $("#form-upload-tokenized"), $("#form-upload-tokenized").find('.box__success_details'), $("#li-upload-tokenized"), $("#saved-notification-upload-tokenized"));
 

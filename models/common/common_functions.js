@@ -16,6 +16,8 @@ LABEL_MAXLENGTH        				= 20;
 
 DOCUMENT_TOTAL_MAXCOUNT   = DOCUMENT_GROUP_TOTAL_MAXCOUNT * DOCUMENT_MAXCOUNT;
 
+CATEGORY_HIERARCHY_MAX_NAME_LENGTH = 1000; // Max length of a category label (including slashes)
+
 EMAIL_MAXLENGTH    = 254;
 
 /* Validation */
@@ -132,6 +134,23 @@ var validateDocumentTokenCountMax = function(arr, done) {
   done(true);
 };
 
+
+// Validate that no documents are of length greater than DOCUMENT_MAX_TOKEN_LENGTH.
+var validateCategoryHierarchyNames = function(arr, done) {
+  for(var i = 0; i < arr.length; i++) {
+    if(arr[i].length > CATEGORY_HIERARCHY_MAX_NAME_LENGTH) {
+      msg = "Error on line <%" + i + "%>: label must be shorter than " + CATEGORY_HIERARCHY_MAX_NAME_LENGTH + " characters.";
+      done(false, msg);
+      return;
+    }  
+    if(arr[i].length < 1) {
+      msg = "Error on line <%" + i + "%>: label must contain at least one character.";
+      done(false, msg);
+      return;
+    }        
+  }
+  done(true);
+};
 
 // // Validate that no label abbreviations in the labels are of length 0.
 // var validateLabelAbbreviationLengthMin = function(arr) {
@@ -357,8 +376,8 @@ allDocumentValidation = [
 
 
 categoryHierarchyValidation = [
-   
-
+  { validator: validateDocumentCountMin, msg: 'Your category hierarchy must have at least one category.' },
+  { validator: function(arr, done) { validateCategoryHierarchyNames(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
 ]
 
 
@@ -562,7 +581,19 @@ module.exports = {
       'Number of documents': Number,
       'Number of tokens': Number,
       'Average tokens/document': Number
-    }
+    },
+
+    category_metadata: {      
+      'Preset': {
+        type: String,
+        minlength: 0,
+        maxlength: 255,
+      },
+    
+      'Number of entity classes': Number,
+      'Maximum depth': Number,
+      'Average depth': Number
+    },
 
 	}
 }

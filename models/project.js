@@ -41,6 +41,9 @@ var ProjectSchema = new Schema({
   // Some metadata about the Project.
   file_metadata: cf.fields.file_metadata,
 
+  // Some metadata about the categories of the Project.
+  category_metadata: cf.fields.category_metadata,
+
 }, {
   timestamps: { 
     createdAt: "created_at",

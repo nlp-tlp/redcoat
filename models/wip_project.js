@@ -49,6 +49,9 @@ var WipProjectSchema = new Schema({
 
   // Some metadata about the WIP Project.
   file_metadata: cf.fields.file_metadata,
+
+  // Some metadata about the categories of the WIP Project.
+  category_metadata: cf.fields.category_metadata,
 }, {
   timestamps: { 
     createdAt: "created_at",
@@ -136,6 +139,52 @@ WipProjectSchema.methods.fileMetadataToArray = function() {
   return arr;
 }
 
+// Sets the category metadata of this wip_project based on its category hierarchy.
+WipProjectSchema.methods.updateCategoryMetadata = function() {
+  try {
+  function getMaxDepth(h) {
+    var m = 0;
+    for(var i = 0; i < h.length; i++) {
+      var c = (h[i].match(/\//g) || []).length;
+      m = c > m ? c : m;
+    }
+    return m;
+  }
+  function getAvgDepth(h) {
+    var t = 0;
+    for(var i = 0; i < h.length; i++) {
+      t += (h[i].match(/\//g) || []).length;
+    }
+    return (t/h.length).toFixed(1);
+  }
+
+  var t = this;
+  t.category_metadata = {
+    "Preset": "Test" ,
+    'Number of entity classes': t.category_hierarchy.length,
+    'Maximum depth': getMaxDepth(t.category_hierarchy || []),
+    'Average depth': getAvgDepth(t.category_hierarchy || [])
+  }
+  
+  console.log(t.category_metadata);
+  console.log('hellsllslssl')
+} catch(eee) { console.log(eee) }
+  /*this.category_metadata = {};
+  for(var k in md) {
+    var v = md[k];
+    this.category_metadata[k] = v;    
+  }*/
+}
+
+// Converts this wip_project's category metadata to an array that can be displayed on a form in order.
+WipProjectSchema.methods.categoryMetadataToArray = function() {
+  arr = [];
+  var stringy = JSON.parse(JSON.stringify(this.category_metadata));
+  for(var k in stringy) {  
+    arr.push({ [k]: stringy[k] });
+  }
+  return arr;
+}
 
 // A tiny schema used to validate an array of documents. It makes more sense than validating all the document groups after they've been created.
 var DocumentArraySchema = new Schema({
@@ -307,8 +356,10 @@ WipProjectSchema.methods.removeInvalidAndDuplicateEmails = cf.removeInvalidAndDu
 
 WipProjectSchema.pre('validate', function(next) {
   var t = this;
+  t.category_metadata = null; // Will be updated pre-save.
   next();
 });
+
 
 WipProjectSchema.pre('save', function(next) {
   var t = this;
@@ -334,20 +385,27 @@ WipProjectSchema.pre('save', function(next) {
         })
       } else {
 
-        
-
+          
+          
         
 
           // Ensure user_id hasn't been modified.
           if (t.isModified('user_id')) {
             next(new Error("user_id must remain the same as it was when the WIP Project was created."))
           } else {
-            next(err); 
+            // If there were no errors in the category hierarchy, update the category metadata.
+            if(t.errors.category_hierarchy === undefined) {
+              t.updateCategoryMetadata();
+            }
+            next(err);            
+            
           }
       }
     });
   });
 });
+
+
 
 // Cascade delete for wip_project, so all associated document_groups are deleted when a wip_project is deleted.
 WipProjectSchema.pre('remove', function(next) {

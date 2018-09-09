@@ -188,25 +188,35 @@ exports.upload_hierarchy = function(req, res, next) {
 
 
   setTimeout(function() {
-
     wip_project.category_hierarchy = req.body.data;
-    if(!req.body.data)
+    if(!req.body.data) {
       wip_project.category_hierarchy = [];
+      //wip_project.category_metadata = null;
+    }
+
+
 
     wip_project.validate(function(err) {
       var errors = null;
-      if(err) {
+      if(err.errors.category_hierarchy) {
         wip_project.category_hierarchy = [];
     
         errors = err.errors.category_hierarchy;
       }
       wip_project.save(function(err) {
         if(errors) {
+          //wip_project.category_metadata = null;
           console.log("ERRORS", errors)
           res.send( { "success": false, "errors": errors });
         } else {
+
+          
+          //
+
+
           console.log(wip_project.category_hierarchy)
-          res.send({ "success": true });
+          console.log('yay')
+          res.send({ "success": true, metadata: wip_project.categoryMetadataToArray() }); //wip_project.categoryHierarchyMetadataToArray()
         }
       });
     });
