@@ -44,6 +44,15 @@ function buildTree(txt) {
 
   var container = svg.append("g");
 
+  var slash = txt2slash(txt);
+  console.log(slash2json(slash));
+
+  // Validate the slash formatted data
+  // if(validate(slash)) {
+  //  
+  // } else {
+  // return new Error("data is invalid");
+
   var root = txt2json(txt);
 
   var currentColorIndex = 0;
@@ -336,7 +345,7 @@ function buildTree(txt) {
           return b.name.toLowerCase() < a.name.toLowerCase() ? 1 : -1;
       });
   }
-  sortTree();
+  //sortTree();
 
   // Returns a cleaned version of the name with whitespaces relaced with underscores.
   function parseName(name) {
@@ -387,7 +396,7 @@ function buildTree(txt) {
       //selected.data.children.push(newNode.data);
 
       //Update tree
-      sortTree();
+      //sortTree();
       update(d);
 
 
@@ -399,7 +408,7 @@ function buildTree(txt) {
 
   function renameNode(selected, name) {
     selected.name = parseName(name);
-    sortTree();
+    //sortTree();
     update(selected);
   }
 
@@ -604,6 +613,21 @@ vehicle
   grader
 unspecified_category`
 var txt = "example";
+
+
+// Remove empty children from the JSON data.
+function removeEmptyChildren(obj) {
+  if(obj["children"].length == 0) {
+    delete obj["children"];
+  } else {
+    for(var k in obj["children"]) {
+      removeEmptyChildren(obj["children"][k]);
+    }
+  }
+}
+
+
+
 // Converts text into JSON format for visualisation by the tree. The text may look something like:
 // category_1
 //  category_1_child_1
@@ -633,31 +657,11 @@ function txt2json(text) {
       return new Error("Unparsable tree.");
     }
     depth = newDepth;
-
-    // parentNames = [];
-    // for(var i = 0; i < parents.length; i++) {
-    //   parentNames.push(parents[i].name)
-    // }
-    // slashData.push(parentNames.join("/") + cleanLine);
-
     node = {"name": cleanLine, "children": []};
     if(parents.length > 0)
       parents[parents.length-1]["children"].push(node);
   }
-  // Remove empty children
-  function removeEmptyChildren(obj)
-  {
-    if(obj["children"].length == 0) {
-      delete obj["children"];
-    } else {
-      for(var k in obj["children"]) {
-        removeEmptyChildren(obj["children"][k]);
-      }
-    }
-  }
   removeEmptyChildren(root);
-  // console.log(slashData);
-
   return root;
 }
 
@@ -699,13 +703,13 @@ function txt2slash(text) {
 
 
 function json2slash(json) {
-
+  var txt = json2text(json);
+  var slash = txt2slash(txt);
+  return slash;
 }
 
 function json2text(root) {
-
   var allNodes = [];
-
   var depth = 1;
   function addNode(d) {
     allNodes.push((new Array(depth).join(" ")) + d.name);
@@ -718,12 +722,17 @@ function json2text(root) {
       depth++;
       d._children.forEach(addNode);
       depth--;
-    } else {
-    }
-    
+    }    
   }
-
   root.children.forEach(addNode);
   return allNodes.join("\n");
+}
 
+function slash2json(slash) {
+  var txt = [];
+  for(var i = 0; i < slash.length; i++) {
+    txt.push(slash[i].replace(/\w*\//g, " "));
+  }
+  var json = txt2json(txt.join("\n"));
+  return json;
 }

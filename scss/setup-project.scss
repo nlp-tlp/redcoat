@@ -794,6 +794,7 @@ div#setup-questions #distribute-emails-count-container, #entity-categories-count
 		}
 		.close {
 			cursor: pointer;
+			user-select: none;
 			position: absolute;
 			top: -5px;
 			right: 5px;
@@ -855,18 +856,22 @@ button.large-button {
 	box-sizing: border-box;
 	padding: 10px 25px;
 	border: 1px solid #ddd;
+	display: none;
 	p {
 		margin-top: 0;
 	}
-	.ec-loading {
+	.ec-loading, .ec-error {
 		display: none;
 		padding: 80px 0;
 		padding-top: 90px;
 		text-align: center;
 		color: #999;
 	}
-	display: none;
-	&.is-success {
+	.ec-error {
+		color: $error-red;
+	}
+	
+	&.is-success, &.is-error {
 		display: block;
 	}
 	&:not(.is-success) {
@@ -877,6 +882,11 @@ button.large-button {
 	&.uploading {
 		display: block;
 		.ec-loading {
+			display: block;
+		}
+	}
+	&.is-error {
+		.ec-error {			
 			display: block;
 		}
 	}
