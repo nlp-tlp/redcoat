@@ -68,6 +68,126 @@ describe('WIP Projects', function() {
   });
 
 
+  describe("category_hierarchy", function() {
+    afterEach(function(done) {
+      cf.dropMongooseDb(done);
+    });
+
+    var wipp;
+    var user;
+
+    // A recursive async function that ensures a set of cases all fail.
+    // cases is an array of [category_hierarchy, error_line].
+    function ensureFail(cases, done) {
+      var c = cases.pop(); 
+      var category_hierarchy = c[0];     
+      var error_line = c[1];
+      wipp.category_hierarchy = category_hierarchy;
+      var err = wipp.validate(function(err) {
+        expect(err.errors.category_hierarchy).to.exist;
+        var em = err.errors.category_hierarchy.message;
+        var eml = parseInt(em.slice(em.indexOf("<%") + 2, em.indexOf("%>"))); 
+        expect(eml).to.equal(error_line);
+        if(cases.length == 0) {
+          done();
+        } else {
+          ensureFail(cases, done);
+        }
+      });
+    }
+
+    // A recursive function that ensures a set of cases all pass.
+    // Similar to ensureFail, but there's no need for error_line.
+    function ensurePass(cases, done) {
+      var category_hierarchy = cases.pop();      
+      wipp.category_hierarchy = category_hierarchy;
+      var err = wipp.validate(function(err) {
+        if(cases.length == 0) {
+          done();
+        } else {
+          ensurePass(cases, done);
+        }
+      });
+    }
+
+
+    beforeEach(function(done) {
+      user = cf.createValidUser();
+      wipp = new WipProject();
+      wipp.user_id = user;
+      cf.registerUsers([user], function(err) { }, done);
+    })
+
+    it("should fail to validate if a category contains an empty label", function(done) {
+      ensureFail([[[""], 0]], done);
+    });
+
+    it("should fail to validate if a top-level category begins with a slash", function(done) {
+      ensureFail([[["/test"], 0]], done);
+    });
+
+    it("should fail to validate if a category ends with a slash", function(done) {
+      ensureFail([[["test/"], 0]], done);
+    });
+
+    it("should fail to validate if a category contains a blank label", function(done) {
+      ensureFail([[["t1", "t1/test", "t1/  "], 2],
+                  [["t7", "t7/test", "t7/test/       ", "t7/test/test"], 2],
+                  [["t4", "t4/test", "t4/test/test", "t4/test/ "], 3]],
+                  done);
+    });
+
+    it("should fail to validate if a category contains two slashes", function(done) {
+      ensureFail([[["t1", "t1//", "t1/test"], 1],
+                  [["//"], 0],
+                  [["t4", "t4/test", "t4/test//", "t4/test/3s"], 2]],
+                  done);    
+    });
+
+    it("should fail to validate if two top-level categories are the exact same", function(done) {
+      ensureFail([[["test", "test"], 0]], done);
+    });
+
+    it("should fail to validate if two child categories are the same", function(done) {
+      ensureFail([[["t1", "t1/test", "t1/test"], 2],
+                  [["t7", "t7/test", "t7/test/test", "t7/test/test"], 3],
+                  [["t4", "t4/test", "t4/test/3s", "t4/test/3s"], 3]],
+                  done);
+    });
+
+    it("should fail to validate if categories are declared out of order", function(done) {
+      ensureFail([[["t1", "t1/test", "t1/test/test", "t1/test/fish", "t1/test/test/fish"], 4],
+                  [["t2", "t2/test", "t2/fish", "t2/test/test"], 3]],
+                  done);
+    });
+
+    it("should fail to validate if a child's parent category wasn't previously declared", function(done) {
+      ensureFail([[["test/test"], 0],
+                  [["test", "test/test", "test/test/test/test"], 2],
+                  [["test", "test/test", "hello/test"], 2],
+                  [["test", "test/test", "hello/test/test"], 2],
+                  [["test", "test/test", "test/hello", "test/test/hello/test"], 3]],
+                  done);
+    });
+
+    // Validity tests
+    it("should pass validation if two child categories are the same but have different parents", function(done) {
+      ensurePass([["t1/test"],
+                  ["t2/test"],
+                  ["t1/test", "t2/test", "t3/test", "t1/test/test"]],
+                  done);
+    });    
+
+    it("should pass validation if the category hierarchy is OK", function(done) {
+      ensurePass([["root", "root/node_1", "root/node_1/node_1a", "root/node_2", "root/node_2/node_2a", "root/node_2/node_2a/node_2aa"]], 
+                  done);
+
+
+    });
+
+  });
+
+
   //st.runProjectValidLabelsTests(WipProject);
 
 
