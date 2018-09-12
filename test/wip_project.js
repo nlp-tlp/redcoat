@@ -118,50 +118,50 @@ describe('WIP Projects', function() {
       cf.registerUsers([user], function(err) { }, done);
     })
 
-    it("should fail to validate if a category contains an empty label", function(done) {
+    it("should fail validation if a category contains an empty label", function(done) {
       ensureFail([[[""], 0]], done);
     });
 
-    it("should fail to validate if a top-level category begins with a slash", function(done) {
+    it("should fail validation if a top-level category begins with a slash", function(done) {
       ensureFail([[["/test"], 0]], done);
     });
 
-    it("should fail to validate if a category ends with a slash", function(done) {
+    it("should fail validation if a category ends with a slash", function(done) {
       ensureFail([[["test/"], 0]], done);
     });
 
-    it("should fail to validate if a category contains a blank label", function(done) {
+    it("should fail validation if a category contains a blank label", function(done) {
       ensureFail([[["t1", "t1/test", "t1/  "], 2],
                   [["t7", "t7/test", "t7/test/       ", "t7/test/test"], 2],
                   [["t4", "t4/test", "t4/test/test", "t4/test/ "], 3]],
                   done);
     });
 
-    it("should fail to validate if a category contains two slashes", function(done) {
+    it("should fail validation if a category contains two slashes", function(done) {
       ensureFail([[["t1", "t1//", "t1/test"], 1],
                   [["//"], 0],
                   [["t4", "t4/test", "t4/test//", "t4/test/3s"], 2]],
                   done);    
     });
 
-    it("should fail to validate if two top-level categories are the exact same", function(done) {
+    it("should fail validation if two top-level categories are the exact same", function(done) {
       ensureFail([[["test", "test"], 0]], done);
     });
 
-    it("should fail to validate if two child categories are the same", function(done) {
+    it("should fail validation if two child categories are the same", function(done) {
       ensureFail([[["t1", "t1/test", "t1/test"], 2],
                   [["t7", "t7/test", "t7/test/test", "t7/test/test"], 3],
                   [["t4", "t4/test", "t4/test/3s", "t4/test/3s"], 3]],
                   done);
     });
 
-    it("should fail to validate if categories are declared out of order", function(done) {
+    it("should fail validation if categories are declared out of order", function(done) {
       ensureFail([[["t1", "t1/test", "t1/test/test", "t1/test/fish", "t1/test/test/fish"], 4],
                   [["t2", "t2/test", "t2/fish", "t2/test/test"], 3]],
                   done);
     });
 
-    it("should fail to validate if a child's parent category wasn't previously declared", function(done) {
+    it("should fail validation if a child's parent category wasn't previously declared", function(done) {
       ensureFail([[["test/test"], 0],
                   [["test", "test/test", "test/test/test/test"], 2],
                   [["test", "test/test", "hello/test"], 2],
@@ -170,11 +170,16 @@ describe('WIP Projects', function() {
                   done);
     });
 
+    it("should fail validation if the hierarchy contains a category that is too long", function(done) {
+      ensureFail([[["t1", "t1/t\\/est", "t1/t\\/est/test", "t1/t\\/est/test/" + cf.createStringOfLength(500)], 3],
+                  [[cf.createStringOfLength(500)], 0]],
+                  done);
+    });
+
     // Validity tests
     it("should pass validation if two child categories are the same but have different parents", function(done) {
-      ensurePass([["t1/test"],
-                  ["t2/test"],
-                  ["t1/test", "t2/test", "t3/test", "t1/test/test"]],
+      ensurePass([["t1", "t1/test", "t2", "t2/test"],
+                  ["t1", "t1/test", "t2", "t2/test", "t3", "t3/test"]],
                   done);
     });    
 
@@ -184,6 +189,12 @@ describe('WIP Projects', function() {
 
 
     });
+
+    it("should pass validation if a category contains a backslash followed by a forward slash", function(done) {
+      ensurePass([["t1\\/test"],
+                  ["t1", "t1/test\\/test"]],
+                  done);
+    });    
 
   });
 
