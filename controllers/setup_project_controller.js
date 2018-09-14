@@ -448,15 +448,17 @@ exports.submit_new_project_form = function(req, res, next) {
       return;
     } else {
       project.getDocumentGroups(function(err2, document_groups) {
-        if(err) {
-          console.log(err);
-          res.render("temp-render-form", {err: err });
-        } else {
-          res.render("temp-render-form", {project: JSON.stringify(project, null, 4), wip_project: JSON.stringify(wip_project, null, 4), n_document_groups: document_groups.length, document_groups: JSON.stringify(document_groups.splice(0, 1), null, 4), path: req.path});
-        }
+        project.getFrequentTokens(function(err3, frequent_tokens) {
+          if(err) {
+            console.log(err);
+            res.render("temp-render-form", {err: err });
+          } else {
+            res.render("temp-render-form", {project: JSON.stringify(project, null, 4), frequent_tokens: JSON.stringify(frequent_tokens, null, 4), wip_project: JSON.stringify(wip_project, null, 4), n_document_groups: document_groups.length, document_groups: JSON.stringify(document_groups.splice(0, 1), null, 4), path: req.path});
+          }
 
 
-      })
+        });
+      });
 
     }
 

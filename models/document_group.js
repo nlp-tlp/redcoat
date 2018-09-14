@@ -1,6 +1,7 @@
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
-var sw = require('stopword')
+var sw = require('stopword');
+
 
 var cf = require("./common/common_functions.js")
 

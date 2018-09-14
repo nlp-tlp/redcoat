@@ -198,4 +198,8 @@ nav#sidenav {
 	}
 	//border-right: 12px double $primary-gold;
 	//max-width: 350px;
+	&.white {
+		background: $sidenav-white-color;
+		border-right: 1px solid darken($sidenav-white-color, 5);
+	}
 }

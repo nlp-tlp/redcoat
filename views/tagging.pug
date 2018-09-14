@@ -5,28 +5,29 @@ block head
 
 
 block content
-	nav#legend
-		h3 Legend
-		ul#legend-list
-			//
-				<li><b>1. </b>Person</li>
-				<li><b>2. </b>Injury</li>
-				<li><b>3. </b>Body part</li>
-				<li><b>4. </b>Vehicle</li>
-				<li><b>5. </b>Activity</li>
-				<li><b>6. </b>Location</li>
-				<li><b>7. </b>Date/time</li>
-				<li><b>8. </b>Accident cause</li>
-				<li><b>9. </b>Condition</li>
-	//
-		<nav id="hotkeys">
-		<h3>Hotkeys</h3>
-		<ul>
-		<li><b>j</b>: jump to group</li>
-		<li><b>l</b>: show/hide legend</li>
-		<li><b>1-9</b>: tag entity</li>
-		</ul>
-		</nav>
+	nav#sidenav.white
+		nav#legend
+			h3 Legend
+			ul#legend-list
+				//
+					<li><b>1. </b>Person</li>
+					<li><b>2. </b>Injury</li>
+					<li><b>3. </b>Body part</li>
+					<li><b>4. </b>Vehicle</li>
+					<li><b>5. </b>Activity</li>
+					<li><b>6. </b>Location</li>
+					<li><b>7. </b>Date/time</li>
+					<li><b>8. </b>Accident cause</li>
+					<li><b>9. </b>Condition</li>
+		//
+			<nav id="hotkeys">
+			<h3>Hotkeys</h3>
+			<ul>
+			<li><b>j</b>: jump to group</li>
+			<li><b>l</b>: show/hide legend</li>
+			<li><b>1-9</b>: tag entity</li>
+			</ul>
+			</nav>
 	div#tagging-container
 		#sentence-tagging
 

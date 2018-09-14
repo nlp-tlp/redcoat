@@ -18,7 +18,22 @@ main {
 	margin-top: 0;
 	opacity: 0.6;
 	transition: opacity 0.5s ease;
+	position: relative;
 
+	// &:before {
+	// 	position: absolute;
+	// 	left: -120px;
+	// 	top: 0;
+	// 	vertical-align: middle;
+	// 	content: "1";
+	// 	color: #bbb;
+	// 	pointer-events: none;
+	// 	font-size: 22px;
+	// 	display: table-cell;
+	// 	height: 100%;
+	// 	padding: 0 20px;
+	// 	border-right: 1px dotted #ddd;
+	// }
 }
 #sentence-tagging .sentence .word, #sentence-tagging .sentence .punctuation {
 	background: none;
@@ -168,13 +183,12 @@ button#jump-to-batch-go {
 }
 
 nav#legend {
-	position: fixed;
-	top: 100px;
-	left: 0;
-	width: 300px;
-	padding: 0 80px;
+	box-sizing: border-box;
+	width: 100%;
+	padding: 0 40px;
 	font-size: 24px;
 	color: #222;
+	margin-top: 50px;
 
 
 }

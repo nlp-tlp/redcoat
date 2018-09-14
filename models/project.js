@@ -4,7 +4,7 @@ var DocumentGroup = require('./document_group')
 var cf = require("./common/common_functions")
 var User = require("./user")
 var nanoid = require('nanoid')
-
+var FrequentTokens = require('./frequent_tokens')
 //USERS_PER_PROJECT_MAXCOUNT = cf.USERS_PER_PROJECT_MAXCOUNT;
 
 
@@ -49,6 +49,11 @@ var ProjectSchema = new Schema({
 
   // How many times each document should be annotated.
   overlap: cf.fields.overlap,
+
+  frequent_tokens: {
+    type: Schema.Types.ObjectId,
+    ref: 'FrequentTokens',
+  }
 
 }, {
   timestamps: { 
@@ -98,6 +103,10 @@ ProjectSchema.methods.verifyAssociatedObjectsExist = cf.verifyAssociatedObjectsE
 
 ProjectSchema.methods.getCategoryHierarchy = function() {
   return this.category_hierarchy;
+}
+
+ProjectSchema.methods.getFrequentTokens = function(next) {
+  return FrequentTokens.findOne({ _id: this.frequent_tokens }).exec(next);  
 }
 
 ProjectSchema.methods.getDocumentGroups = function(next) {

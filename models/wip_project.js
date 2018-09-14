@@ -4,6 +4,7 @@ var cf = require("./common/common_functions")
 //var WipDocumentGroup = require('./wip_document_group')
 var Project = require("./project")
 var DocumentGroup = require("./document_group")
+var FrequentTokens = require("./frequent_tokens")
 var natural = require('natural');
 var tokenizer = new natural.TreebankWordTokenizer();
 var clone = require('clone');
@@ -317,8 +318,6 @@ WipProjectSchema.methods.convertToProject = function(done) {
        Email an invitation out to each user (a 'please register' for the non-registered users).
 
     */
-
-
     
     t.getDocumentGroups(function(err, document_groups) {
 
@@ -340,17 +339,59 @@ WipProjectSchema.methods.convertToProject = function(done) {
         return done(new Error("A project may only have up to " + cf.DOCUMENT_GROUP_TOTAL_MAXCOUNT + " document groups."));
       }
 
+      var f = new FrequentTokens();
 
-      // Save the project
-      p.save(function(err, project) {
-        if(err) { return done(err) }
-        try {
-        // Remove this WIP Project after completion. (also removes all associated wip document groups via cascade)
-        t.remove(function(err) {
-          if(err) { done(err); return; }
-          done(null, project);
-        });  
-        } catch(e) { console.log(e) }         
+      //var tokens = document_groups[0].documents[0];
+
+      // for(var i = 0; i < document_groups.length; i++) {
+      //   for(var j = 0; j < document_groups[i].documents.length; j++) {
+      //     for(var k = 0; k < document_groups[i].documents[j].length; k++) {
+      //       f.addToken(document_groups[i].documents[j][k].toLowerCase(), ["person", "org", "loc", "misc", null][Math.floor(Math.random() * 5)])
+      //     }
+      //   }
+      // }
+
+
+
+      // var tokens = [];
+      // for(var i = 0; i < (document_groups.length > 5 ? 5 : document_groups.length); i++) {
+      //   var nd = document_groups[i].documents[0].length;
+      //   for(var j = 0; j < nd; j++) {
+      //     if(document_groups[i].documents[0][j] == "Tibet") {
+      //       console.log("TIBET")
+      //     }
+
+      //     f.tokens[document_groups[i].documents[0][j]] = {category: null, frequency: 0, total: 0}
+   
+      //   }
+      // }
+
+      // DocumentGroup.collection.insert(docgroupsToCreate, function(err, docgroups) {
+      f.save(function(err, ft) {
+
+        //console.log(Object.keys(f.tokens).length, "tokens total.")
+
+        // var ff = FrequentTokens.aggregate( [{
+        //   $match: {
+        //    token: "Tibet",
+        //    category: true,
+        //   }
+        // }], function(ee, eee) {
+        //   console.log(">>>", ee, eee);
+        // })
+
+        p.frequent_tokens = ft._id;
+        // Save the project
+        p.save(function(err, project) {
+          if(err) { return done(err) }
+          try {
+          // Remove this WIP Project after completion. (also removes all associated wip document groups via cascade)
+          t.remove(function(err) {
+            if(err) { done(err); return; }
+            done(null, project);
+          });  
+          } catch(e) { console.log(e) }         
+        });
       });
     });
   });
