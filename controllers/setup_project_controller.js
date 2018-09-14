@@ -109,7 +109,6 @@ exports.index = function(req, res, next) {
 // Upload the name and description of the project.
 exports.upload_name_desc = function(req, res, next) {
 
-
   wip_project = res.locals.wip_project;
 
   console.log(req.body.name)
@@ -118,7 +117,7 @@ exports.upload_name_desc = function(req, res, next) {
   wip_project.project_description = req.body.desc.length > 0 ? req.body.desc : null;
 
   wip_project.validate(function(err) {
-    if(err) {
+    if(err && err.errors) {
       // If the user enters an invalid project name or description, reset it before saving.
       if(err.errors.project_name) {
         wip_project.project_name = null;
@@ -126,7 +125,7 @@ exports.upload_name_desc = function(req, res, next) {
       if(err.errors.project_description) {
          wip_project.project_description = null;
       }
-    }
+    }    
 
     wip_project.save(function(err) {
       if(err) { console.log(err); res.send( { "success": false} ); }
@@ -198,7 +197,7 @@ exports.upload_hierarchy = function(req, res, next) {
 
     wip_project.validate(function(err) {
       var errors = null;
-      if(err.errors.category_hierarchy) {
+      if(err && err.errors && err.errors.category_hierarchy) {
         wip_project.category_hierarchy = [];
     
         errors = err.errors.category_hierarchy;
@@ -303,15 +302,19 @@ exports.upload_tokenized_reset = function(req, res, next) {
 
 // Upload a dataset.
 exports.upload_tokenized = function(req, res, next) {
-    wip_project = res.locals.wip_project;
+
+  wip_project = res.locals.wip_project;
   // Ensure user does not already have a WipProject.
 
   // if (user has documents saved in wip project already)
   //res.send({"success": false, "error": "You cannot upload a new dataset as you have already uploaded one."})
   //return;
-
+  console.log(req.user._id);
   wip_project.deleteDocumentsAndMetadataAndSave(function(err, wip_project) {
+
+    if(err) console.log(err);
     if (err) throw err;
+
 
     var responded = false;
     var numberOfLines = 0;

@@ -22,6 +22,9 @@ ObjectId = require('mongodb').ObjectID;
 
 
 var WipProjectSchema = new Schema({
+
+  _id: cf.fields.short_id,
+
   // The user who created the project.
   user_id: cf.fields.user_id_unique,
 
@@ -52,6 +55,9 @@ var WipProjectSchema = new Schema({
 
   // Some metadata about the categories of the WIP Project.
   category_metadata: cf.fields.category_metadata,
+
+  // How many times each document should be annotated.
+  overlap: cf.fields.overlap,
 }, {
   timestamps: { 
     createdAt: "created_at",
@@ -73,16 +79,16 @@ WipProjectSchema.statics.findWipByUserId = function(uid, done) {
 // Verifies a 'wippid' (WIP id). The WIP id will be placed in a header, and this function verifies that the person who created
 // this WIP is the user with id user_id. (it should be called with the value of req.headers.wippid and logged_in_user._id).
 WipProjectSchema.statics.verifyWippid = function(user_id, wippid, done) {
-  try {
-  var wippid = ObjectId(wippid);
-  } catch(err) { 
-    done(err); return;
-  } 
-
+  // try {
+  // var wippid = ObjectId(wippid);
+  // } catch(err) { 
+  //   done(err); return;
+  // } 
   WipProject.findWipByUserId(user_id, function(err, wip_project) {
     if(!wip_project) { return done(err, null)}
-    if(!wip_project._id.equals(wippid))
+    if(!wip_project._id == wippid) {
       done(err, null);
+    }
     else 
       done(err, wip_project);
   });
@@ -101,6 +107,7 @@ WipProjectSchema.methods.deleteDocumentsAndMetadataAndSave = function(next) {
   t.file_metadata = {};
 
   DocumentGroup.remove({ project_id: t._id }, function(err) { // No associated objects so it's OK to use remove this way (no pre-remove hooks)
+
     if(err) { return next(err); }
     t.save(function(err, wipp) {
       next(err, wipp);
@@ -167,7 +174,6 @@ WipProjectSchema.methods.updateCategoryMetadata = function() {
   }
   
   console.log(t.category_metadata);
-  console.log('hellsllslssl')
 } catch(eee) { console.log(eee) }
   /*this.category_metadata = {};
   for(var k in md) {
@@ -195,6 +201,7 @@ var DocumentArray = mongoose.model('DocumentArray', DocumentArraySchema);
 
 // Creates an array of documents from a given string, assigns them to this wip_project's documents array, and validates the documents field.
 WipProjectSchema.methods.createDocumentGroupsFromString = function(str, done) {
+
   var t = this;
   t.tokenizeString(str, function(err, tokenized_sentences, number_of_tokens, line_indexes) {
     if(err) { done(err); return; }
@@ -219,11 +226,15 @@ WipProjectSchema.methods.createDocumentGroupsFromString = function(str, done) {
 
       docgroupsToCreate = [];
       for (i in docgroups) {
-        docgroupsToCreate.push(new DocumentGroup( { project_id : t._id, documents: docgroups[i] } ));
+        var d = new DocumentGroup( { project_id : t._id, documents: docgroups[i] } )
+        d.generateDisplayName();
+        docgroupsToCreate.push(d);       
       }
 
-      // Bypassses validation as it was already done before.         
+
+      // Bypassses validation as it was already done before.
       DocumentGroup.collection.insert(docgroupsToCreate, function(err, docgroups) {
+
         if(err) { done(err); return; }
         done(null, number_of_lines, number_of_tokens);
       });
@@ -289,7 +300,6 @@ WipProjectSchema.methods.convertToProject = function(done) {
     for(var k in Project.schema.paths) {
       ProjectSchemaPaths.add(k.split(".")[0]);
     }
-
     var sharedFields = [... WipProjectSchemaPaths].filter(x => ProjectSchemaPaths.has(x)); // The set intersection.
 
     p.user_id = t.user_id;
@@ -385,16 +395,12 @@ WipProjectSchema.pre('save', function(next) {
         })
       } else {
 
-          
-          
-        
-
           // Ensure user_id hasn't been modified.
           if (t.isModified('user_id')) {
             next(new Error("user_id must remain the same as it was when the WIP Project was created."))
           } else {
             // If there were no errors in the category hierarchy, update the category metadata.
-            if(t.errors.category_hierarchy === undefined) {
+            if(t.errors && t.errors.category_hierarchy === undefined) {
               t.updateCategoryMetadata();
             }
             next(err);            

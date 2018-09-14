@@ -1,4 +1,5 @@
 var mongoose = require('mongoose');
+var nanoid = require('nanoid')
 
 DOCUMENT_GROUP_TOTAL_MAXCOUNT = 11000; // Number of groups that can be in a project.
 
@@ -19,6 +20,8 @@ DOCUMENT_TOTAL_MAXCOUNT   = DOCUMENT_GROUP_TOTAL_MAXCOUNT * DOCUMENT_MAXCOUNT;
 CATEGORY_HIERARCHY_MAX_NAME_LENGTH = 1000; // Max length of a category label (including slashes)
 
 EMAIL_MAXLENGTH    = 254;
+
+DOCUMENT_GROUP_DISPLAY_NAME_WORDCOUNT = 3;
 
 /* Validation */
 
@@ -396,6 +399,8 @@ module.exports = {
 	USERS_PER_PROJECT_MAXCOUNT      : USERS_PER_PROJECT_MAXCOUNT, // Max number of users per project.
 	PROJECTS_PER_USER_MAXCOUNT      : PROJECTS_PER_USER_MAXCOUNT, // Max number of projects per user.
 
+  DOCUMENT_GROUP_DISPLAY_NAME_WORDCOUNT: DOCUMENT_GROUP_DISPLAY_NAME_WORDCOUNT, // Number of words in a document group display name.
+
 	validateNotBlank : validateNotBlank,
 	validateDocumentCountMin: validateDocumentCountMin,
 	validateDocumentCountMax: validateDocumentCountMax, 
@@ -413,9 +418,11 @@ module.exports = {
 	},
 	// Verify an associated record exists in the database.
 	verifyAssociatedExists: function(model, asso_id, next) {	
+    console.log("STARTING");
 	  model.findOne({_id: asso_id}, function(err, obj) {
-	    if(err || obj == null) { next( { "association": new Error("Associated " + model.collection.collectionName + " record must exist in database.") } )  }
-	    else { next() }
+      console.log("OBJjjj:", obj)
+	    if(obj == null) { next( { "association": new Error("Associated " + model.collection.collectionName + " record must exist in database.") } )  }
+	    else { console.log("DONE"); console.log("bip"); next() }
 	  });
 	},
 	// Verify that all records in an associated array exist in the database.
@@ -549,6 +556,17 @@ module.exports = {
 
     valid_labels: {
       type: [String]
+    },
+
+    short_id: {
+      type: String,
+      default: nanoid(7),
+    },
+
+    overlap: {
+      type: Number,
+      default: 1,
+      // Need to validate based on users (shouldn't exceed user count)
     },
 
 		// valid_labels:	{

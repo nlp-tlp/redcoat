@@ -3,6 +3,7 @@ var Schema = mongoose.Schema;
 var DocumentGroup = require('./document_group')
 var cf = require("./common/common_functions")
 var User = require("./user")
+var nanoid = require('nanoid')
 
 //USERS_PER_PROJECT_MAXCOUNT = cf.USERS_PER_PROJECT_MAXCOUNT;
 
@@ -17,6 +18,8 @@ var User = require("./user")
 /* Schema */
 
 var ProjectSchema = new Schema({
+  _id: cf.fields.short_id,
+
   // The user who created the project.
   user_id: cf.fields.user_id,
 
@@ -43,6 +46,9 @@ var ProjectSchema = new Schema({
 
   // Some metadata about the categories of the Project.
   category_metadata: cf.fields.category_metadata,
+
+  // How many times each document should be annotated.
+  overlap: cf.fields.overlap,
 
 }, {
   timestamps: { 
@@ -114,6 +120,22 @@ ProjectSchema.methods.getUsers = function(next) {
     if(err) { next(new Error("There was an error attempting to run the find users query.")); return; }
     else { next(null, users); return; }
   });
+}
+
+
+// Recommend a document group to a user. This is based on the document groups that the user is yet to annotate.
+// Only document groups that have been annotated less than N times will be recommended, where N = a field that is yet to be implemented.
+ProjectSchema.methods.recommendDocgroupToUser = function(user, next) {
+
+  var t = this;
+  // Note times annotated is hard coded to 3 for now
+  DocumentGroup.find({ $and: [{ project_id: t._id}, { times_annotated: { $lt: t.overlap } } ] }, function(err, docgroups) {
+    if(err) return next(err);
+    console.log(docgroups.length)
+    return next(null, docgroups[Math.floor(Math.random() * docgroups.length)]);
+
+  });
+
 }
 
 // Adds the creator of the project to its user_ids (as the creator should always be able to annotate the project).

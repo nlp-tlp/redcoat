@@ -34,36 +34,59 @@ router.get('/', isLoggedIn, function(req, res) {
 router.get('/:id/tagging', isLoggedIn, function(req, res) {
   var id = req.params.id;
 
-  // TODO: Ensure user can only access their own projects
-  Project.findOne({ _id: id }, function(err, proj) {
-    if(!proj) {
-      res.status(404);
-      res.render('error', {
-        message: "The requested project does not exist.",
-        error: {}
-      });
-    }
 
-    proj.getDocumentGroups(function(err, docgroups) {
-      console.log(err, docgroups.length);
-      if(err)
-        res.send(err);
-      else {
-        try {
+  //
+
+  Project.findOne({ _id: id }, function(err, proj) {
+    if(err) {
+      res.send("nope");
+    }
+    proj.recommendDocgroupToUser(req.user, function(err, docgroup) {
+      if(err) {
+        res.send("nope");
+      } else {
         res.render('tagging', { 
-          data: JSON.stringify(docgroups[0].documents),
+          data: JSON.stringify(docgroup.documents),
           entity_classes: JSON.stringify(proj.category_hierarchy),
           entity_classes_abbr: JSON.stringify(proj.category_hierarchy),
           //colors: JSON.stringify(proj.getValidLabelColors()),
-          title: "Dashboard" })
-      } catch(e) {
-        console.log(e)
-      }
+          title: "Tagging group: \"" + (docgroup.display_name || "UnnamedGroup") + "\"" })      
       }
     });
+
+  });
+
+
+  // // TODO: Ensure user can only access their own projects
+  // Project.findOne({ _id: id }, function(err, proj) {
+  //   if(!proj) {
+  //     res.status(404);
+  //     res.render('error', {
+  //       message: "The requested project does not exist.",
+  //       error: {}
+  //     });
+  //   }
+
+  //   proj.getDocumentGroups(function(err, docgroups) {
+  //     console.log(err, docgroups.length);
+  //     if(err)
+  //       res.send(err);
+  //     else {
+  //       try {
+  //       res.render('tagging', { 
+  //         data: JSON.stringify(docgroups[0].documents),
+  //         entity_classes: JSON.stringify(proj.category_hierarchy),
+  //         entity_classes_abbr: JSON.stringify(proj.category_hierarchy),
+  //         //colors: JSON.stringify(proj.getValidLabelColors()),
+  //         title: "Tagging group: \"" + (docgroups[0].display_name || "UnnamedGroup") + "\"" })
+  //     } catch(e) {
+  //       console.log(e)
+  //     }
+  //     }
+  //   });
     
 
-  });  
+  // });  
 });
 
 module.exports = router;

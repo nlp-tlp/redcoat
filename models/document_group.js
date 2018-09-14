@@ -1,5 +1,6 @@
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
+var sw = require('stopword')
 
 var cf = require("./common/common_functions.js")
 
@@ -8,7 +9,7 @@ var cf = require("./common/common_functions.js")
 
 var DocumentGroupSchema = new Schema({
   project_id: {
-    type: Schema.Types.ObjectId,
+    type: String,
     ref: 'Project',
     required: true
   },
@@ -17,6 +18,10 @@ var DocumentGroupSchema = new Schema({
     type: Number,
     default: 0,
   },
+  display_name: {
+    type: String,
+    default: "UnnamedGroup"
+  }
 }, {
   timestamps: { 
     createdAt: "created_at",
@@ -40,6 +45,31 @@ DocumentGroupSchema.methods.getAnnotations = function(done) {
   })
 }
 
+// Generate a display name for this doc group based on random words in its documents.
+DocumentGroupSchema.methods.generateDisplayName = function() {
+  try {
+    var t = this;
+    var allDocs = [].concat.apply([], t.documents);
+    var cleanedDocs = [];
+    for(var i = 0; i < allDocs.length; i++) {
+      if(/^[a-zA-Z]{3,}$/.test(allDocs[i])) {
+        cleanedDocs.push(allDocs[i]);
+      }
+    }
+    words = sw.removeStopwords(cleanedDocs);
+    var wl = words.length;
+    var dn = "";
+    for(var i = 0; i < cf.DOCUMENT_GROUP_DISPLAY_NAME_WORDCOUNT; i++) {
+      var wi = Math.floor(Math.random() * wl)
+      dn += words[wi].charAt(0).toUpperCase() + words[wi].slice(1);
+    }
+    t.display_name = dn;
+    console.log("Display name:", dn);
+  } catch(eee) {
+    console.log(eee);
+  }
+
+}
 
 
 /* Middleware */
@@ -49,7 +79,10 @@ DocumentGroupSchema.pre('save', function(next) {
   // 1. Verify associated exists
   var Project = require('./project')
   this.verifyAssociatedExists(Project, this.project_id, function(err) {
-    next(err);
+    if(err) { next(err); return; }
+    this.generateDisplayName(function(err) {
+      next(err);
+    });
   })
 });
 
