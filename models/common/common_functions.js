@@ -1,5 +1,5 @@
 var mongoose = require('mongoose');
-var nanoid = require('nanoid')
+var shortid = require('shortid')
 
 DOCUMENT_GROUP_TOTAL_MAXCOUNT = 11000; // Number of groups that can be in a project.
 
@@ -560,7 +560,7 @@ module.exports = {
 
     short_id: {
       type: String,
-      default: nanoid(7),
+      default: shortid.generate,
     },
 
     overlap: {

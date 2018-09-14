@@ -59,7 +59,8 @@ var UserSchema = new Schema({
 
   // A list of all document groups the user has annotated.
   docgroups_annotated: {
-    type: [mongoose.Schema.Types.ObjectId]
+    type: [mongoose.Schema.Types.ObjectId],
+    index: true
   }
 }, {
   timestamps: { 

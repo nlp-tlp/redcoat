@@ -31,6 +31,7 @@ var DocumentGroupAnnotationSchema = new Schema({
     type: [[String]],
     validate: labelsValidation
   },
+
 }, {
   timestamps: { 
     createdAt: "created_at",

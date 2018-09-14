@@ -22,7 +22,6 @@ function isLoggedIn(req, res, next) {
 
 router.get('/', isLoggedIn, function(req, res) {
   req.user.getProjects(function(err, projects) {
-    console.log(err, projects);
     if(err)
       res.send(err);
     else {
@@ -42,6 +41,10 @@ router.get('/:id/tagging', isLoggedIn, function(req, res) {
       res.send("nope");
     }
     proj.recommendDocgroupToUser(req.user, function(err, docgroup) {
+      if(err == null && docgroup == null) {
+        res.render("tagging-complete"); // User has annotated every docgroup they need to.
+        return;
+      }
       if(err) {
         res.send("nope");
       } else {

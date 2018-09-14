@@ -126,16 +126,24 @@ ProjectSchema.methods.getUsers = function(next) {
 // Recommend a document group to a user. This is based on the document groups that the user is yet to annotate.
 // Only document groups that have been annotated less than N times will be recommended, where N = a field that is yet to be implemented.
 ProjectSchema.methods.recommendDocgroupToUser = function(user, next) {
-
   var t = this;
-  // Note times annotated is hard coded to 3 for now
-  DocumentGroup.find({ $and: [{ project_id: t._id}, { times_annotated: { $lt: t.overlap } } ] }, function(err, docgroups) {
-    if(err) return next(err);
-    console.log(docgroups.length)
-    return next(null, docgroups[Math.floor(Math.random() * docgroups.length)]);
+  // All doc groups with this project id, where the times annotated is less than overlap, that the user hasn't already annotated
+  var q = { $and: [{ project_id: t._id}, { times_annotated: { $lt: t.overlap } }, { _id: { $nin: user.docgroups_annotated }} ] };
 
+  DocumentGroup.count(q, function(err, count) {
+    console.log(count)
+    var random = Math.random() * count; // skip over a random number of records. Much faster than using find() and then picking a random one.
+    DocumentGroup.findOne(q).lean().skip(random).exec(function(err, docgroup) {
+      if(err) return next(err);
+      //if(docgroups.length == 0) {
+      //  return next(null, null);
+      //}
+      if(docgroup == null) {
+        return next(null, null);
+      }
+      return next(null, docgroup);
+    });
   });
-
 }
 
 // Adds the creator of the project to its user_ids (as the creator should always be able to annotate the project).

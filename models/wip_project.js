@@ -400,7 +400,7 @@ WipProjectSchema.pre('save', function(next) {
             next(new Error("user_id must remain the same as it was when the WIP Project was created."))
           } else {
             // If there were no errors in the category hierarchy, update the category metadata.
-            if(t.errors && t.errors.category_hierarchy === undefined) {
+            if((t.errors && t.errors.category_hierarchy === undefined) || !t.errors) {
               t.updateCategoryMetadata();
             }
             next(err);            

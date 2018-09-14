@@ -11,12 +11,14 @@ var DocumentGroupSchema = new Schema({
   project_id: {
     type: String,
     ref: 'Project',
-    required: true
+    required: true,
+    index: true
   },
   documents: cf.fields.documents,
   times_annotated: {
     type: Number,
     default: 0,
+    index: true
   },
   display_name: {
     type: String,
@@ -28,6 +30,7 @@ var DocumentGroupSchema = new Schema({
     updatedAt: "updated_at"
   }
 });
+
 
 /* Common methods */
 
@@ -64,7 +67,6 @@ DocumentGroupSchema.methods.generateDisplayName = function() {
       dn += words[wi].charAt(0).toUpperCase() + words[wi].slice(1);
     }
     t.display_name = dn;
-    console.log("Display name:", dn);
   } catch(eee) {
     console.log(eee);
   }
