@@ -122,6 +122,12 @@ describe('WIP Projects', function() {
       ensureFail([[[""], 0]], done);
     });
 
+    it("should fail validation if a category is O", function(done) {
+      ensureFail([[["O"], 0],
+                  [["test", "test/O"], 1]],
+                  done);
+    });
+
     it("should fail validation if a top-level category begins with a slash", function(done) {
       ensureFail([[["/test"], 0]], done);
     });
@@ -133,7 +139,7 @@ describe('WIP Projects', function() {
     it("should fail validation if a category contains a blank label", function(done) {
       ensureFail([[["t1", "t1/test", "t1/  "], 2],
                   [["t7", "t7/test", "t7/test/       ", "t7/test/test"], 2],
-                  [["t4", "t4/test", "t4/test/test", "t4/test/ "], 3]],
+                  [["t4a", "t4a/test", "t4a/test/test", "t4a/test/ "], 3]],
                   done);
     });
 
@@ -145,7 +151,7 @@ describe('WIP Projects', function() {
     });
 
     it("should fail validation if two top-level categories are the exact same", function(done) {
-      ensureFail([[["test", "test"], 0]], done);
+      ensureFail([[["test", "test"], 1]], done);
     });
 
     it("should fail validation if two child categories are the same", function(done) {
@@ -166,6 +172,7 @@ describe('WIP Projects', function() {
                   [["test", "test/test", "test/test/test/test"], 2],
                   [["test", "test/test", "hello/test"], 2],
                   [["test", "test/test", "hello/test/test"], 2],
+                  [["test", "test/test", "test/test/test", "test/test/test/test", "test/hello", "test/heloooo/hi"], 5],
                   [["test", "test/test", "test/hello", "test/test/hello/test"], 3]],
                   done);
     });
@@ -184,7 +191,8 @@ describe('WIP Projects', function() {
     });    
 
     it("should pass validation if the category hierarchy is OK", function(done) {
-      ensurePass([["root", "root/node_1", "root/node_1/node_1a", "root/node_2", "root/node_2/node_2a", "root/node_2/node_2a/node_2aa"]], 
+      ensurePass([["root", "root/node_1", "root/node_1/node_1a", "root/node_2", "root/node_2/node_2a", "root/node_2/node_2a/node_2aa"], 
+                  ["root", "root/node_1", "root/node_1/node_1a", "root/node_1/node_1a/node3a", "root/node_2", "root/node_2/node_2a"]], 
                   done);
 
 

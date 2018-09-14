@@ -303,6 +303,8 @@ WipProjectSchema.methods.convertToProject = function(done) {
     }
     var sharedFields = [... WipProjectSchemaPaths].filter(x => ProjectSchemaPaths.has(x)); // The set intersection.
 
+    console.log(">>>", sharedFields);
+
     p.user_id = t.user_id;
     p.project_name = t.project_name;
 
@@ -341,15 +343,15 @@ WipProjectSchema.methods.convertToProject = function(done) {
 
       var f = new FrequentTokens();
 
-      //var tokens = document_groups[0].documents[0];
+      var tokens = document_groups[0].documents[0];
 
-      // for(var i = 0; i < document_groups.length; i++) {
-      //   for(var j = 0; j < document_groups[i].documents.length; j++) {
-      //     for(var k = 0; k < document_groups[i].documents[j].length; k++) {
-      //       f.addToken(document_groups[i].documents[j][k].toLowerCase(), ["person", "org", "loc", "misc", null][Math.floor(Math.random() * 5)])
-      //     }
-      //   }
-      // }
+      for(var i = 0; i < document_groups.length; i++) {
+        for(var j = 0; j < document_groups[i].documents.length; j++) {
+          for(var k = 0; k < document_groups[i].documents[j].length; k++) {
+            f.addToken(document_groups[i].documents[j][k].toLowerCase(), ["person", "org", "loc", "misc", null][Math.floor(Math.random() * 5)])
+          }
+        }
+      }
 
 
 
@@ -369,7 +371,7 @@ WipProjectSchema.methods.convertToProject = function(done) {
       // DocumentGroup.collection.insert(docgroupsToCreate, function(err, docgroups) {
       f.save(function(err, ft) {
 
-        //console.log(Object.keys(f.tokens).length, "tokens total.")
+        console.log(Object.keys(f.tokens).length, "tokens total.")
 
         // var ff = FrequentTokens.aggregate( [{
         //   $match: {
@@ -407,7 +409,7 @@ WipProjectSchema.methods.removeInvalidAndDuplicateEmails = cf.removeInvalidAndDu
 
 WipProjectSchema.pre('validate', function(next) {
   var t = this;
-  t.category_metadata = null; // Will be updated pre-save.
+  //t.category_metadata = undefined; // Will be updated pre-save.
   next();
 });
 

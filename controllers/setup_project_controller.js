@@ -20,7 +20,6 @@ exports.verifyWippid = function(req, res, next) {
 
   //console.log(req.body["_wippid"], res.locals.user, "BODY")
   var wippid = req.headers.wippid || req.body["_wippid"];
-
   WipProject.verifyWippid(testuser._id, wippid, function(err, wip_project) {
     if(!wip_project) { console.log("incorrect user"); res.send({ "success": false }); }
     else {
@@ -66,6 +65,7 @@ exports.index = function(req, res, next) {
       if(err) { console.log("E", err); next(err); return; }
       if(wip_project) {
         console.log("Existing WIP Project found.");
+        console.log(wip_project)
 
         var valid_labels = [];
         if(wip_project.valid_labels) {

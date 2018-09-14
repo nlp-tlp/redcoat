@@ -48,7 +48,7 @@ block scripts
 	script.
 		$(document).ready(function() {
 			$(".progress-bar .inner").each(function() {
-				var total = parseInt($(this).closest("tbody").find(".num-docs").html());
+				var total = parseInt($(this).closest("tbody").find(".num-docs").html()) * 3;
 				var done = Math.floor(Math.random() * total);
 				
 				console.log(total);
@@ -58,6 +58,4 @@ block scripts
 				$(this).find(".total").html(total);
 				$(this).css("width", (done/total*100) + "%");
 			});
-
-
 		});
