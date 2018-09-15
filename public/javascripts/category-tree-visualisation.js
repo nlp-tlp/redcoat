@@ -33,9 +33,9 @@ class CategoryHierarchy {
 
 
 
-    // Returns a cleaned version of the name with whitespaces relaced with underscores.
+    // Returns a cleaned version of the name with whitespaces relaced with underscores. Replaces forward slashes with \/
     function parseName(name) {
-      return name.replace(/[^\S\n]/g, "_");
+      return name.replace(/[^\S\n]/g, "_").replace(/\//g, "\\");
     }
 
     // Creates a new node and updates the tree.
@@ -133,7 +133,7 @@ class CategoryHierarchy {
     // https://github.com/patorjk/d3-context-menu
     this.menu = function(d) {
       var title = {
-          title: function(d) { return d.name.replace(/\\\//g, '/'); }
+          title: function(d) { return d.name; }//.replace(/\\\//g, '/'); }
       }
       var newChildCategory = {
         title: '<i class="fa fa-plus"></i>&nbsp;&nbsp;New child category',
@@ -310,7 +310,7 @@ class CategoryHierarchy {
 
     nodeUpdate.select("text")
         .style("fill-opacity", 1)
-        .text(function(d) { return d.name.replace(/\\\//g, '/') })
+        .text(function(d) { return d.name; }); //.replace(/\\\//g, '/') })
 
 
     // Transition exiting nodes to the parent's new position.
@@ -578,17 +578,24 @@ function json2text(root) {
 }
 
 function slash2json(slash) {
-  var txt = [];
-  for(var i = 0; i < slash.length; i++) {
-    txt.push(slash[i].replace(/[^\/]*\//g, ' '));
-  }
-  var json = txt2json(txt.join("\n"));
-  return json;
+  // var txt = [];
+  // for(var i = 0; i < slash.length; i++) {
+  //   txt.push(slash[i].replace(/[^\/]*\//g, ' '));
+  // }
+  // var json = txt2json(txt.join("\n"));
+  return txt2json(slash2txt(slash));
 }
 
 function slash2txt(slash) {
+  console.log(slash);
   var txt = [];
   for(var i = 0; i < slash.length; i++) {
+    //var s = slash[i].replace(/\\\//g, '<::slash::>')
+    //console.log(s)
+    //s = s.replace(/[^\/]*\//g, ' ')
+    //console.log(s)
+    //s = s.replace(/<::slash::>/g, '\\/')
+    //console.log(s)
     txt.push(slash[i].replace(/[^\/]*\//g, ' '));
   }
   return txt.join("\n");

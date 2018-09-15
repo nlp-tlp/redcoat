@@ -179,7 +179,7 @@ describe('WIP Projects', function() {
     });
 
     it("should fail validation if the hierarchy contains a category that is too long", function(done) {
-      ensureFail([[["t1", "t1/t\\/est", "t1/t\\/est/test", "t1/t\\/est/test/" + cf.createStringOfLength(500)], 3],
+      ensureFail([[["t1", "t1/test", "t1/test/test", "t1/test/test/" + cf.createStringOfLength(500)], 3],
                   [[cf.createStringOfLength(500)], 0]],
                   done);
     });
@@ -202,9 +202,9 @@ describe('WIP Projects', function() {
 
     });
 
-    it("should pass validation if a category contains a backslash followed by a forward slash", function(done) {
-      ensurePass([["t1\\/test"],
-                  ["t1", "t1/test\\/test"]],
+    it("should pass validation if a category contains a backslash", function(done) {
+      ensurePass([["t1\\", "t1\\/test"],
+                  ["t1", "t1/test\\", "t1/test\\/test"]],
                   done);
     });    
 

@@ -33,7 +33,7 @@ var CATEGORY_HIERARCHY_MAX_NAME_LENGTH = 200;
       if(line.match(/\/\//g))
         return done(false, generateMessage(i, "must not be empty."));
 
-      line = line.replace("\\/", ""); // Ignore backslashed-forwardslashes
+      //line = line.replace("\\/", ""); // Ignore backslashed-forwardslashes
       var cats = line.match(/[^\/]+/g);
 
       if(cats == null)
