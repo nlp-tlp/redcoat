@@ -214,6 +214,7 @@ exports.upload_hierarchy = function(req, res, next) {
 
 
           console.log(wip_project.category_hierarchy)
+          console.log(wip_project.category_metadata)
           console.log('yay')
 
           res.send({ "success": true, metadata: wip_project.categoryMetadataToArray() }); //wip_project.categoryHierarchyMetadataToArray()

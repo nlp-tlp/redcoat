@@ -7,7 +7,14 @@ var DocumentGroup = require("./document_group")
 var FrequentTokens = require("./frequent_tokens")
 var natural = require('natural');
 var tokenizer = new natural.TreebankWordTokenizer();
-var clone = require('clone');
+var hp = require('../public/javascripts/shared/hierarchy_presets');
+
+// Get the base64 encoded versions of each of the presets
+var presets_enc = {}
+Object.keys(hp.presets).forEach(function(k) {
+    presets_enc[Buffer.from(JSON.stringify(hp.presets[k])).toString('base64')] = k;
+});
+
 ObjectId = require('mongodb').ObjectID;
 
 // A model for storing projects that are "work in progress" (WIP). 
@@ -147,36 +154,48 @@ WipProjectSchema.methods.fileMetadataToArray = function() {
   return arr;
 }
 
+
+
+
+
 // Sets the category metadata of this wip_project based on its category hierarchy.
 WipProjectSchema.methods.updateCategoryMetadata = function() {
   try {
-  function getMaxDepth(h) {
 
-    var m = 0;
-    for(var i = 0; i < h.length; i++) {
-      var c = (h[i].match(/\//g) || []).length;
-      m = c > m ? c : m;
-    }
-    console.log(m, h, '...');
-    return m;
-  }
-  function getAvgDepth(h) {
-    var t = 0;
-    for(var i = 0; i < h.length; i++) {
-      t += (h[i].match(/\//g) || []).length;
-    }
-    return (t/h.length).toFixed(1);
-  }
 
-  var t = this;
-  t.category_metadata = {
-    "Preset": "Test" ,
-    'Number of entity classes': t.category_hierarchy.length,
-    'Maximum depth': getMaxDepth(t.category_hierarchy || []),
-    'Average depth': getAvgDepth(t.category_hierarchy || [])
-  }
+
+    function getMaxDepth(h) {
+
+      var m = 0;
+      for(var i = 0; i < h.length; i++) {
+        var c = (h[i].match(/\//g) || []).length;
+        m = c > m ? c : m;
+      }
+      console.log(m, h, '...');
+      return m;
+    }
+    function getAvgDepth(h) {
+      var t = 0;
+      for(var i = 0; i < h.length; i++) {
+        t += (h[i].match(/\//g) || []).length;
+      }
+      return (t/h.length).toFixed(1);
+    }
+
+    function checkPreset(h) {
+      var k = presets_enc[Buffer.from(JSON.stringify(h)).toString('base64')]
+      return k ? k : "(Custom)";
+    }
+
+    var t = this;
+    t.category_metadata = {
+      "Preset": checkPreset(t.category_hierarchy) ,
+      'Number of entity classes': t.category_hierarchy.length,
+      'Maximum depth': getMaxDepth(t.category_hierarchy || []),
+      'Average depth': getAvgDepth(t.category_hierarchy || [])
+    }
   
-} catch(eee) { console.log(eee) }
+  } catch(eee) { console.log(eee) }
   /*this.category_metadata = {};
   for(var k in md) {
     var v = md[k];

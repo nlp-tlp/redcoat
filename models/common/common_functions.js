@@ -3,6 +3,7 @@ var shortid = require('shortid')
 
 var hv = require('../../public/javascripts/shared/hierarchy_validator');
 
+
 DOCUMENT_GROUP_TOTAL_MAXCOUNT = 11000; // Number of groups that can be in a project.
 
 USERS_PER_PROJECT_MAXCOUNT = 100;

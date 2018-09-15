@@ -123,7 +123,7 @@
       "transit_system",
       "transit_line"
     ],
-    "DMP": [
+    "Mining": [
       "accident_cause",
       "accident_cause/bodily_contact",
       "accident_cause/caught_between",
@@ -303,4 +303,5 @@
       "unspecified_category"
     ],
   }
+
 })(typeof exports === 'undefined' ? this['hierarchyPresets'] = {} : exports);
