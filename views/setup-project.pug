@@ -117,19 +117,17 @@ block content
 				div.form-section
 					form#other-options-form
 						div.form-group
-							br
-							label(for="input-allow-new-categories") To what extent should your annotators be able to modify the hierarchy?
+							label(for="input-allow-new-categories") To what extent should annotators be able to modify the category hierarchy?
 							select#input-hierarchy-permissions
 								option(disabled selected value="not-selected") (click to select)
 								option(value="no_modification") No modifications allowed.
 								option(value="create_edit_only") Users can create new categories.
 								option(value="full_permission") Users can create, delete, and rename categories.
-							div.form-help This option is useful if you aren't sure whether your category hierarchy covers every possible category in your dataset.
-							br
-							br
+							div.form-help If allowed, users will be able to add categories as they appear, or delete ones that aren't relevant. This option is useful if you aren't sure whether your category hierarchy covers every possible category in your dataset. 
+						div.form-group
 							label(for="input-overlap") How many times should a document be annotated before annotation is considered complete?
 							input(type="range" min="1" max="10" value="1")
-							div.form-help More overlap can result in better results, but longer annotation time.
+							div.form-help More overlap can result in a more robust set of results, but requires longer annotation time. 
 							br
 				div#saved-notification-project-options.saved-notification
 					p <i class="fa fa-check"></i> This section has been saved.
@@ -405,6 +403,7 @@ block scripts
 		var p = "!{category_hierarchy_permissions}";
 		var o = $("#input-hierarchy-permissions option[value=\"" + p + "\"]");
 		if(o) {
+			// TODO: check the overlap slider before marking complete
 			$("#saved-notification-project-options").addClass('show');
 			$("#li-project-options").addClass('completed');			
 			o.attr("selected", "selected")
