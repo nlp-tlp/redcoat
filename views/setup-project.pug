@@ -230,7 +230,6 @@ block scripts
 		function renderSuccessBox(metadata, form_ele, success_details_ele, sidenav_li_ele, saved_notification_ele) {
 			form_ele.addClass( 'is-success' );
 			form_ele.removeClass( 'is-error' );
-			console.log(metadata)
 			var details = "<table><tbody>";
 			for(var i = 0; i < metadata.length; i++) {
 				var k = Object.keys(metadata[i])[0];
@@ -303,7 +302,8 @@ block scripts
 			$('#navbar').removeClass("blur");
 
 			// Need to save the entities 
-			var entitySlashData = txt2slash($("#entity-categories-textarea").val().replace(/\t/g, " "));
+			//var entitySlashData = txt2slash($("#entity-categories-textarea").val().replace(/\t/g, " "));
+			var entitySlashData = $("#entity-categories-textarea").val().split('\n');
 			uploadCategoryHierarchy(entitySlashData);
 			//console.log(entitySlashData);
 		}
@@ -366,7 +366,7 @@ block scripts
 		ect.linedtextarea();
 
 		function generateTree() {
-			validateHierarchyInput(ect.val().replace(/\t/g, " ").split('\n'), function(valid, slashData, errmsg) {
+			validateHierarchyInput(ect.val().split('\n'), function(valid, slashData, errmsg) {
 				if(valid) categoryHierarchy.buildTree(slashData)
 				else categoryHierarchy.clearTree(errmsg);
 			});		
@@ -383,7 +383,7 @@ block scripts
 			var ss = ect[0].selectionStart;
 			var se = ect[0].selectionEnd;
 
-			//ect.val(ect.val().replace(/ /g, "\t"));
+			ect.val(ect.val().replace(/[^\S\n]/g, "_"));
 
 			ect[0].selectionStart = ss;
 			ect[0].selectionEnd = se;

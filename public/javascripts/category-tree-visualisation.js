@@ -35,7 +35,7 @@ class CategoryHierarchy {
 
     // Returns a cleaned version of the name with whitespaces relaced with underscores.
     function parseName(name) {
-      return name.trim().replace(/\s+/g, "_");
+      return name.replace(/[^\S\n]/g, "_");
     }
 
     // Creates a new node and updates the tree.
@@ -120,6 +120,7 @@ class CategoryHierarchy {
 
     function showError(err, next) {
       document.getElementsByClassName("d3-context-menu")[0].innerHTML = "<form id=\"new-node-form\"><label class=\"new-node-form-error\">" + err + "</label><input class=\"submit-fail\" type=\"submit\" value=\"OK\"/></form>";
+      $("#new-node-form input").focus();
       $("#new-node-form").on('submit', function(e) {
         e.preventDefault();
         return next();
@@ -130,11 +131,11 @@ class CategoryHierarchy {
 
     // A context menu for the tree that calls the functions above.
     // https://github.com/patorjk/d3-context-menu
-    this.menu = [
-      {
-        title: function(d) { return d.name.replace(/\\\//g, '/'); }
-      },
-      {
+    this.menu = function(d) {
+      var title = {
+          title: function(d) { return d.name.replace(/\\\//g, '/'); }
+      }
+      var newChildCategory = {
         title: '<i class="fa fa-plus"></i>&nbsp;&nbsp;New child category',
         action: function(d, i, next) {
           var name = showInput(function(name) {
@@ -144,13 +145,11 @@ class CategoryHierarchy {
                 updateCategoryHierarchy(t.root);
                 next();
               }
-            });
-            
+            });            
           });
-          //elm.closeMenu();
         }
-      },
-      {
+      }
+      var renameCategory = {
         title: '<i class="fa fa-edit"></i>&nbsp;&nbsp;Rename category',
         action: function(d, i, next) {
           var name = showInput(function(name) {
@@ -162,10 +161,9 @@ class CategoryHierarchy {
               }
             });            
           });
-          //elm.closeMenu();
         }
-      },
-      {
+      }
+      var deleteCategory = {
         title: '<i class="fa fa-trash"></i>&nbsp;&nbsp;Delete category',
         action: function(d, i, next) {
           deleteNode(d);
@@ -173,7 +171,19 @@ class CategoryHierarchy {
           next();
         }
       }
-    ]
+      if(d == t.root) {
+        return [
+          title,
+          newChildCategory
+        ]
+      }
+      return [
+        title,
+        newChildCategory,
+        renameCategory,
+        deleteCategory
+      ]
+    }
   }
 
 
@@ -442,6 +452,7 @@ class CategoryHierarchy {
 // Should only be called by createNewNode, rename, delete... not when the tree is updated via the category hierarchy itself.
 function updateCategoryHierarchy(root) {
   if($("#entity-categories-textarea")) {
+    $("#entity-categories-preset").val("no-preset")
     //$("#entity-categories-textarea").val(json2text(root).replace(/ /g, "\t"));
     $("#entity-categories-textarea").val(json2slash(root).join("\n"));
   }
@@ -484,7 +495,7 @@ function txt2json(text) {
   var parents = [];
   var node = root;
   for(var i = 0; i < lines.length; i++) {
-    var cleanLine = lines[i].replace(/\s/g, "");
+    var cleanLine = lines[i].trim()//replace(/\s/g, "");
     var newDepth  = lines[i].search(/\S/) + 1;
     if(newDepth < depth) {
       parents = parents.slice(0, newDepth);
