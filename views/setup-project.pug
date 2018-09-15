@@ -303,7 +303,7 @@ block scripts
 
 			// Need to save the entities 
 			//var entitySlashData = txt2slash($("#entity-categories-textarea").val().replace(/\t/g, " "));
-			var entitySlashData = $("#entity-categories-textarea").val().split('\n');
+			var entitySlashData = txt2slash($("#entity-categories-textarea").val());
 			uploadCategoryHierarchy(entitySlashData);
 			//console.log(entitySlashData);
 		}
@@ -404,6 +404,24 @@ block scripts
 			treeGeneratingTimeout = window.setTimeout(generateTree, 1000);
 			generatingTree = true;
 		})
+
+
+
+		// If category hierarchy or metadata exist...
+
+		var category_hierarchy = !{category_hierarchy};
+		var category_metadata = !{category_metadata};
+
+		if(category_hierarchy && category_hierarchy.length > 0) {
+			ect.val(slash2txt(category_hierarchy));
+			generateTree();
+		}
+		if(category_metadata && category_metadata.length > 0) {
+			var p = category_metadata[0].Preset;
+			var o = $("#entity-categories-preset option[value=\"" + p + "\"]");
+			if(o) o.attr("selected", "selected"); // Select the corresponding option in the presets dropdown
+			renderSuccessBox(category_metadata, $("#entity-categories-summary"), $("#entity-categories-summary-box"), $("#li-entity-categories"), $("#saved-notification-entity-categories"));
+		}
 
 
 

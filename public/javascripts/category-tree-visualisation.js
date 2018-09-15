@@ -487,7 +487,6 @@ function removeEmptyChildren(obj) {
 function txt2json(text) {
   var lines = text.split('\n');  
   var depth = 0; // Current indentation
-  // var slashData = [];
   var root = {
     "name": "entity",
     "children": []
@@ -578,25 +577,13 @@ function json2text(root) {
 }
 
 function slash2json(slash) {
-  // var txt = [];
-  // for(var i = 0; i < slash.length; i++) {
-  //   txt.push(slash[i].replace(/[^\/]*\//g, ' '));
-  // }
-  // var json = txt2json(txt.join("\n"));
   return txt2json(slash2txt(slash));
 }
 
 function slash2txt(slash) {
-  console.log(slash);
   var txt = [];
   for(var i = 0; i < slash.length; i++) {
-    //var s = slash[i].replace(/\\\//g, '<::slash::>')
-    //console.log(s)
-    //s = s.replace(/[^\/]*\//g, ' ')
-    //console.log(s)
-    //s = s.replace(/<::slash::>/g, '\\/')
-    //console.log(s)
-    txt.push(slash[i].replace(/[^\/]*\//g, ' '));
+    txt.push(slash[i].replace(/[^\/]*\//g, ' ')); // Replace any forwardslashes+text with a space.
   }
   return txt.join("\n");
 }

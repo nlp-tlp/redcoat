@@ -57,8 +57,8 @@ exports.index = function(req, res, next) {
 
     // If they don't, create a new one
 
-    function renderPage(wip_project, project_name, project_desc, file_metadata, valid_labels, user_emails) {
-       res.render('setup-project', { wip_project_id: wip_project._id, project_name: project_name, project_desc: project_desc, file_metadata: file_metadata, valid_labels: valid_labels, user_emails: user_emails, csrfToken: req.csrfToken(), path: req.path, title: "Setup project", max_filesize_mb: MAX_FILESIZE_MB, max_emails: USERS_PER_PROJECT_MAXCOUNT });
+    function renderPage(wip_project, project_name, project_desc, file_metadata, category_hierarchy, category_metadata, user_emails) {
+       res.render('setup-project', { wip_project_id: wip_project._id, project_name: project_name, project_desc: project_desc, file_metadata: file_metadata, category_hierarchy: category_hierarchy, category_metadata: category_metadata, user_emails: user_emails, csrfToken: req.csrfToken(), path: req.path, title: "Setup project", max_filesize_mb: MAX_FILESIZE_MB, max_emails: USERS_PER_PROJECT_MAXCOUNT });
     }
 
     WipProject.findWipByUserId(testuser._id, function(err, wip_project) {
@@ -66,21 +66,24 @@ exports.index = function(req, res, next) {
       if(wip_project) {
         console.log("Existing WIP Project found.");
         console.log(wip_project)
+        console.log(wip_project.category_metadata)
 
-        var valid_labels = [];
-        if(wip_project.valid_labels) {
-          for(var i = 0; i < wip_project.valid_labels.length; i++) {
-            valid_labels.push({ label: wip_project.valid_labels[i].label, abbreviation: wip_project.valid_labels[i].abbreviation, color: wip_project.valid_labels[i].color });
-          }
-        } else {
-          valid_labels = null;
-        }
+        // var valid_labels = [];
+        // if(wip_project.valid_labels) {
+        //   for(var i = 0; i < wip_project.valid_labels.length; i++) {
+        //     valid_labels.push({ label: wip_project.valid_labels[i].label, abbreviation: wip_project.valid_labels[i].abbreviation, color: wip_project.valid_labels[i].color });
+        //   }
+        // } else {
+        //   valid_labels = null;
+        // }
 
         renderPage(wip_project,
                    wip_project.project_name,
                    wip_project.project_description,
                    wip_project.file_metadata["Filename"] != undefined ? JSON.stringify(wip_project.fileMetadataToArray()) : "null",
-                   valid_labels ? JSON.stringify(valid_labels) : "null",
+                   JSON.stringify(wip_project.category_hierarchy),
+                   wip_project.category_metadata ? JSON.stringify(wip_project.categoryMetadataToArray()) : "null",
+                   //valid_labels ? JSON.stringify(valid_labels) : "null",
                    wip_project.user_emails ? JSON.stringify(wip_project.user_emails) : "null");
 
 

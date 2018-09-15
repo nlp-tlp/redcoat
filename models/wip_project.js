@@ -179,20 +179,26 @@ WipProjectSchema.methods.updateCategoryMetadata = function() {
       for(var i = 0; i < h.length; i++) {
         t += (h[i].match(/\//g) || []).length;
       }
-      return (t/h.length).toFixed(1);
+      return (t/h.length).toFixed(1) || 0;
     }
 
     function checkPreset(h) {
       var k = presets_enc[Buffer.from(JSON.stringify(h)).toString('base64')]
-      return k ? k : "(Custom)";
+      return k ? k : "(No preset)";
     }
 
     var t = this;
-    t.category_metadata = {
-      "Preset": checkPreset(t.category_hierarchy) ,
-      'Number of entity classes': t.category_hierarchy.length,
-      'Maximum depth': getMaxDepth(t.category_hierarchy || []),
-      'Average depth': getAvgDepth(t.category_hierarchy || [])
+
+    if(!t.category_hierarchy || t.category_hierarchy.length == 0){
+      t.category_metadata = {};
+    }
+    else {
+      t.category_metadata = {
+        "Preset": checkPreset(t.category_hierarchy) ,
+        'Number of entity classes': t.category_hierarchy.length,
+        'Maximum depth': getMaxDepth(t.category_hierarchy || []),
+        'Average depth': getAvgDepth(t.category_hierarchy || [])
+      }
     }
   
   } catch(eee) { console.log(eee) }
@@ -461,9 +467,9 @@ WipProjectSchema.pre('save', function(next) {
             next(new Error("user_id must remain the same as it was when the WIP Project was created."))
           } else {
             // If there were no errors in the category hierarchy, update the category metadata.
-            if((t.errors && t.errors.category_hierarchy === undefined) || !t.errors) {
-              t.updateCategoryMetadata();
-            }
+            //if((t.errors && t.errors.category_hierarchy === undefined) || !t.errors) {
+            t.updateCategoryMetadata();
+            //}
             next(err);            
             
           }
