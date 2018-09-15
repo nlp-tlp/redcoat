@@ -40,3 +40,12 @@
   color: #888;
   text-align: center;
 }
+
+.new-node-form-error {
+  color: $primary-red;
+}
+
+.d3-context-menu form input.submit-fail {
+  margin-left: 60%;
+  width: 40%;
+}

@@ -1,3 +1,11 @@
+var colors = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff"];
+var currentColorIndex = 0;
+
+function assignColor(d) {
+  d._color = colors.length > 0 ? colors[currentColorIndex % colors.length] : "steelblue";
+  currentColorIndex++;
+}
+
 // The category hierarchy.
 class CategoryHierarchy {
 
@@ -23,36 +31,69 @@ class CategoryHierarchy {
     this.error_message = $("#category-hierarchy-error");
     this.error_message_inner = $("#category-hierarchy-error .message");
 
+
+
     // Returns a cleaned version of the name with whitespaces relaced with underscores.
     function parseName(name) {
-      return name.trim().replace(/\s+/g, "_").replace(/\\\//g, "/");;
+      return name.trim().replace(/\s+/g, "_");
     }
 
     // Creates a new node and updates the tree.
-    function createNewNode(d, name) {
-        var newNode = {
-            name: parseName(name) || "<New category>"
-          };
-        newNode._color = d._color;
-        if(d == t.root)
-          assignColor(newNode);
-        if(!d._children && !d.children) {
-          d.children = [];
+    function createNewNode(t, d, name, done) {
+
+        validateName(d, parseName(name), function(err) {
+          if(!err) {
+         
+            var newNode = {
+                name: parseName(name) || "<New category>"
+              };
+            newNode._color = d._color;
+            if(d == t.root)
+              assignColor(newNode);
+            if(!d._children && !d.children) {
+              d.children = [];
+            }
+            if(!d._children){
+              d.children.push(newNode);
+            } else {
+              d._children.push(newNode);
+              t.click(d, t);
+            }
+            t.update(d);
+          }
+          done(err);
+        });
+    }
+
+    function validateName(p, name, done) {
+      if(name.trim().length == 0)
+        return done("Error: name cannot be blank.");
+      if(name.length > 100)
+        return done("Error: name exceeds max length of 100 characters.");
+      if(p.children) {
+        for(var c of p.children) {
+          if(c.name == name) return done("Error: name must be unique<br/>within this level of the hierarchy.")
         }
-        if(!d._children){
-          d.children.push(newNode);
-        } else {
-          d._children.push(newNode);
-          t.click(d, t);
+      } else if(p._children) {
+        for(var c of p._children) {
+          if(c.name == name) return done("Error: name must be unique<br/>within this level of the hierarchy.")
         }
-        t.update(d);
+      }
+      return done(null);
     }
 
     // Renames the selected node to the name provided.
-    function renameNode(selected, name) {
-      selected.name = parseName(name);
+    function renameNode(d, name, done) {
+     
+
+      validateName(d.parent, parseName(name), function(err) {
+        if(!err) {
+          d.name = parseName(name);
+          t.update(d);          
+        }
+        done(err);
+      });
       //sortTree();
-      t.update(selected);
     }
 
     // Deletes a node.
@@ -77,6 +118,16 @@ class CategoryHierarchy {
       });      
     }
 
+    function showError(err, next) {
+      document.getElementsByClassName("d3-context-menu")[0].innerHTML = "<form id=\"new-node-form\"><label class=\"new-node-form-error\">" + err + "</label><input class=\"submit-fail\" type=\"submit\" value=\"OK\"/></form>";
+      $("#new-node-form").on('submit', function(e) {
+        e.preventDefault();
+        return next();
+      }); 
+
+
+    }
+
     // A context menu for the tree that calls the functions above.
     // https://github.com/patorjk/d3-context-menu
     this.menu = [
@@ -87,8 +138,14 @@ class CategoryHierarchy {
         title: '<i class="fa fa-plus"></i>&nbsp;&nbsp;New child category',
         action: function(d, i, next) {
           var name = showInput(function(name) {
-            createNewNode(d, name);
-            next();
+            createNewNode(t, d, name, function(err) {
+              if(err) { showError(err, next) }
+              else {
+                updateCategoryHierarchy(t.root);
+                next();
+              }
+            });
+            
           });
           //elm.closeMenu();
         }
@@ -97,8 +154,13 @@ class CategoryHierarchy {
         title: '<i class="fa fa-edit"></i>&nbsp;&nbsp;Rename category',
         action: function(d, i, next) {
           var name = showInput(function(name) {
-            renameNode(d, name);
-            next();
+            renameNode(d, name, function(err) {
+              if(err) { showError(err, next) }
+              else {
+                updateCategoryHierarchy(t.root);
+                next();
+              }
+            });            
           });
           //elm.closeMenu();
         }
@@ -107,11 +169,13 @@ class CategoryHierarchy {
         title: '<i class="fa fa-trash"></i>&nbsp;&nbsp;Delete category',
         action: function(d, i, next) {
           deleteNode(d);
+          updateCategoryHierarchy(t.root);
           next();
         }
       }
     ]
   }
+
 
 
   // Lighten or darken a colour.
@@ -287,7 +351,7 @@ class CategoryHierarchy {
     //console.log(source.length)
     //var txt = json2text(root);
     //if(generateHierarchyText) {
-    updateCategoryHierarchy(this.root);
+    
     //}
 
   }
@@ -299,12 +363,10 @@ class CategoryHierarchy {
     this.error_message.show();
     this.error_message_inner.html(errmsg);
 
-
-
-
   }
 
   buildTree(slash) {
+    currentColorIndex = 0;
 
     this.error_message.hide();
 
@@ -334,29 +396,11 @@ class CategoryHierarchy {
 
     this.container = svg.append("g");
 
-   
-    //console.log(slash2json(slash));
-
-    // Validate the slash formatted data
-    // if(validate(slash)) {
-    //  
-    // } else {
-  // return new Error("data is invalid");
-
     var root = slash2json(slash);
-
-    var currentColorIndex = 0;
-    var colors = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff"];
+    
     //var colors = ["#688024", "#9a35c9", "#5be34b", "#c75ff1", "#95d73f", "#5759e4", "#cbd429", "#8050c7", "#4db22c", "#d92eb3", "#6be279", "#e362db", "#b9d447", "#4957bc", "#eeca19", "#8878e8", "#99ad24", "#be79e4", "#3ab862", "#d84dac", "#3e8d29", "#a13ea2", "#84ba55", "#e64690", "#5ce0b2", "#e12e27", "#51d7df", "#e95314", "#5882e7", "#dac03e", "#80509f", "#e4a130", "#5e93df", "#e57e20", "#68cef1", "#ea5d3f", "#41b07e", "#e7386a", "#48b3a6", "#c62b3b", "#4aa1bc", "#ae4419", "#64a9de", "#a47e1c", "#ee83dd", "#35773e", "#ab367d", "#bacd6e", "#c66db8", "#aaa037", "#a089d5", "#e1be6a", "#4e61a1", "#e17e4a", "#3e8581", "#e55d62", "#6ba363", "#b83864", "#a1d393", "#e598e0", "#5a5d23", "#cc99d9", "#905d1c", "#babaee", "#d2944f", "#7a8bb8", "#9d4d2e", "#9cd5cd", "#a63c49", "#85ba96", "#de72a2", "#3b7a5e", "#d46c80", "#677e4f", "#955282", "#bcb472", "#725e7f", "#ecc38e", "#50748f", "#e38472", "#3d6362", "#e998b9", "#887e3e", "#e3b7e3", "#a27144", "#aac6de", "#8c4b59", "#c4c4a8", "#aa748b", "#7ca9a9", "#a5655b", "#d5c1d0", "#786353", "#e7baba", "#828c7b", "#d49299", "#a29a72", "#a591af", "#daa485", "#ac8b81"]
     root.x0 = height / 2;
     root.y0 = 0;
-
-
-
-    function assignColor(d) {
-      d._color = colors.length > 0 ? colors[currentColorIndex % colors.length] : "steelblue";
-      currentColorIndex++;
-    }
 
     function assignColorsToChildren(d, i) {     
       if (d._children) {
@@ -374,7 +418,9 @@ class CategoryHierarchy {
         d.children = null;
       }
     }
-    root._color = "#eee";         
+    root._color = "#eee";   
+
+
 
     root.children.forEach(assignColor);
     root.children.forEach(collapse);
@@ -390,24 +436,6 @@ class CategoryHierarchy {
   
 
 }
-
-
-// function showInput(next) {
-//   document.getElementsByClassName("d3-context-menu")[0].innerHTML = "<form id=\"new-node-form\"><label>Category name</label><input id='new-node-form-input' name='test'/><input type=\"submit\"/></form>";
-//   $("#new-node-form-input").focus();
-//   $("#new-node-form").on('submit', function(e) {
-//     var name = $("#new-node-form-input").val();
-//     e.preventDefault();
-//     return next(name);
-//   });      
-// }
-
-
-
-
-
-
-
 
 
 // Update the category hierarchy text field if it is present.
@@ -473,9 +501,6 @@ function txt2json(text) {
   removeEmptyChildren(root);
   return root;
 }
-
-
-
 
 // Converts 'space' notation to 'slash' notation, e.g.
 // person
@@ -544,9 +569,8 @@ function json2text(root) {
 function slash2json(slash) {
   var txt = [];
   for(var i = 0; i < slash.length; i++) {
-    txt.push(slash[i]);
+    txt.push(slash[i].replace(/[^\/]*\//g, ' '));
   }
-  console.log(txt)
   var json = txt2json(txt.join("\n"));
   return json;
 }
