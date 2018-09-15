@@ -30,6 +30,10 @@ block content
 					span 
 						i.fa.fa-check
 						| Distribution
+				li#li-project-options.not-yet-started
+					span 
+						i.fa.fa-check
+						| Project Options
 				li#li-submission.not-yet-started
 					span 
 						i.fa.fa-check
@@ -74,62 +78,12 @@ block content
 				div.form-section
 					p Please determine the entity categories in your data using the form below.
 					p You may create new categories by entering them in the form below. To specify a parent category, place a space before the child category. The categories are visualised in the Category Tree, which you may also use to create your hierarchy if you prefer. You may also select from a list of presets, such as the standard 4-class Named Entity Recognition model.
-
-
 					div#entity-categories-summary
 						p.ec-success Your entity categories have been successfully uploaded.
 						p.ec-loading <i class="fa fa-cog fa-spin"></i>&nbsp;&nbsp;Uploading entity categories...
 						p.ec-error Your category hierarchy contained an error and has not been saved.
 						div.box__success_details#entity-categories-summary-box
-						
-			
-
-
 					button.large-button#button-create-entity-categories Create entity categories&nbsp;<i class="fa fa-external-link"></i>
-
-					//- div#entity-categories-file.subsection.subsection-hidden
-					//- 	h3 Entity categories from file
-					//- 	div.pad
-					//- 		p Please upload your entity categories using the form below.
-					//- 		p The list of entity categories must be saved as a <code>.txt</code> file. Each line in the file must contain an entity category, followed by a tab character, followed by an abbreviated form of that entity (such as <code>PER</code> for "Person").
-					//- 		p You may optionally add a tag colour by adding an additional tab character and a 6-digit hexadecimal colour code to the end of the line. This will determine the colour of the respective entity's label during annotation.
-					//- 		p <a href="/files/example_categories.txt" download>Click here</a> to download a small example file.
-							
-					//- 		- var action = 'upload-categories'
-					//- 		include partials/upload_widget
-						
-
-					//- div#entity-categories-list.subsection
-					//- 	h3 List entity classes
-					//- 	div.pad
-					//- 		p Please enter your entity classes into the form below.
-					//- 		p The "Abbreviation" will determine what is written in the output file after annotation, while the "Colour" will determine the colour of the tag during annotation.
-					//- 		p Note: you can press Tab to jump to the next item in the form.
-
-					//- 		br
-
-
-
-							//- p If you do not have a unique category hierarchy, please select one of the presets below:
-							//- ul
-							//- 	li <a href="#">Named Entity Recognition</a>: 4 classes (Person, Location, Organisation, Misc).
-							//- 	li <a href="#">Fine-grained Entity Recognition</a>: 113 classes encompassing a wide range of entity types.
-						
-
-					//- blockquote
-					//- 	a(id="entity-categories-list-button" class="subsection-open-button") I have a list of the entity classes present in my data.
-					//- blockquote
-					//- 	a(id="entity-categories-ner-button" class="subsection-open-button") I'm using the standard 4 class model for Named Entity Recognition.
-
-					form#entity-categories-form
-						div.form-group
-							label(for="input-allow-new-categories") To what extent should your annotators be able to modify the hierarchy?
-							select#input-allow-new-categories
-								option(value="none") No modifications allowed.
-								option(value="create-new") Users can create new categories.
-								option(value="full-power") Users can create, delete, and rename categories.
-							div.form-help This option is useful if you aren't sure whether your category hierarchy covers every possible category in your dataset.
-
 					div#saved-notification-entity-categories.saved-notification
 						p <i class="fa fa-check"></i> This section has been saved.
 
@@ -158,6 +112,28 @@ block content
 				div#saved-notification-distribution.saved-notification
 					p <i class="fa fa-check"></i> This section has been saved.
 
+			article#project-options.article-heading.not-scrolled-to
+				h1 Project options
+				div.form-section
+					form#other-options-form
+						div.form-group
+							br
+							label(for="input-allow-new-categories") To what extent should your annotators be able to modify the hierarchy?
+							select#input-hierarchy-permissions
+								option(disabled selected value="not-selected") (click to select)
+								option(value="no_modification") No modifications allowed.
+								option(value="create_edit_only") Users can create new categories.
+								option(value="full_permission") Users can create, delete, and rename categories.
+							div.form-help This option is useful if you aren't sure whether your category hierarchy covers every possible category in your dataset.
+							br
+							br
+							label(for="input-overlap") How many times should a document be annotated before annotation is considered complete?
+							input(type="range" min="1" max="10" value="1")
+							div.form-help More overlap can result in better results, but longer annotation time.
+							br
+				div#saved-notification-project-options.saved-notification
+					p <i class="fa fa-check"></i> This section has been saved.
+
 			//- article#dataset.article-heading.not-scrolled-to
 			//- 	h1 Administrator Account
 			//- 	div.form-section
@@ -183,8 +159,9 @@ block content
 
 			div(style="height: 600px")
 
-	div#entity-categories-window
 
+
+	div#entity-categories-window
 		div.inner
 			div.category-hierarchy
 				h3 Category Hierarchy
@@ -423,6 +400,36 @@ block scripts
 			renderSuccessBox(category_metadata, $("#entity-categories-summary"), $("#entity-categories-summary-box"), $("#li-entity-categories"), $("#saved-notification-entity-categories"));
 		}
 
+
+	script.
+		var p = "!{category_hierarchy_permissions}";
+		var o = $("#input-hierarchy-permissions option[value=\"" + p + "\"]");
+		if(o) {
+			$("#saved-notification-project-options").addClass('show');
+			$("#li-project-options").addClass('completed');			
+			o.attr("selected", "selected")
+		}
+
+		$("#input-hierarchy-permissions").on('change', function(e) {
+			$("#saved-notification-project-options").removeClass('show');
+			$("#li-project-options").removeClass('completed');
+			console.log(this.value);
+			$.ajax(
+			{
+				url: 			'upload-hierarchy-permissions',
+				type:			'POST',
+				data: 			{ val: this.value },
+				dataType: 		"json",
+				headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
+				success: function( data )
+				{
+					$("#saved-notification-project-options").addClass('show');
+					$("#li-project-options").addClass('completed');
+					$("#error-banner").removeClass("show");					
+				},
+				error: displayServerErrorBanner
+			});						
+		});
 
 
 	script.

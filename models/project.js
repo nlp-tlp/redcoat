@@ -35,6 +35,9 @@ var ProjectSchema = new Schema({
   // The category hierarchy of the project, stored as a string. "name\nperson\norganisation\n business" etc
   category_hierarchy: cf.fields.category_hierarchy,
 
+  // Determines the extent to which users may modify the hierarchy
+  category_hierarchy_permissions: cf.fields.category_hierarchy_permissions,
+
   // An array of all of the labels in the category hierarchy.
   //valid_labels: cf.fields.valid_labels,
 

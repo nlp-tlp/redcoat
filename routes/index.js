@@ -102,6 +102,7 @@ router.get('/setup-project',           isLoggedIn, setupProjectController.index)
 router.post('/upload-namedesc',        parseForm, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_name_desc);
 //router.post('/upload-validlabels',     parseForm, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_valid_labels);
 router.post('/upload-hierarchy',       parseForm, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_hierarchy);
+router.post('/upload-hierarchy-permissions', parseForm, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_hierarchy_permissions);
 router.post('/upload-emails',          parseForm, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_emails);
 router.post('/upload-tokenized-reset', parseForm, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_tokenized_reset);
 router.post('/upload-tokenized',       parseForm, isLoggedIn, setupProjectController.verifyWippid, setupProjectController.upload_tokenized);

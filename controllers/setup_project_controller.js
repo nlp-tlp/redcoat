@@ -57,8 +57,8 @@ exports.index = function(req, res, next) {
 
     // If they don't, create a new one
 
-    function renderPage(wip_project, project_name, project_desc, file_metadata, category_hierarchy, category_metadata, user_emails) {
-       res.render('setup-project', { wip_project_id: wip_project._id, project_name: project_name, project_desc: project_desc, file_metadata: file_metadata, category_hierarchy: category_hierarchy, category_metadata: category_metadata, user_emails: user_emails, csrfToken: req.csrfToken(), path: req.path, title: "Setup project", max_filesize_mb: MAX_FILESIZE_MB, max_emails: USERS_PER_PROJECT_MAXCOUNT });
+    function renderPage(wip_project, project_name, project_desc, file_metadata, category_hierarchy, category_metadata, user_emails, category_hierarchy_permissions) {
+       res.render('setup-project', { wip_project_id: wip_project._id, project_name: project_name, project_desc: project_desc, file_metadata: file_metadata, category_hierarchy: category_hierarchy, category_metadata: category_metadata, user_emails: user_emails, csrfToken: req.csrfToken(), path: req.path, title: "Setup project", max_filesize_mb: MAX_FILESIZE_MB, max_emails: USERS_PER_PROJECT_MAXCOUNT, category_hierarchy_permissions: category_hierarchy_permissions });
     }
 
     WipProject.findWipByUserId(testuser._id, function(err, wip_project) {
@@ -84,7 +84,8 @@ exports.index = function(req, res, next) {
                    JSON.stringify(wip_project.category_hierarchy),
                    wip_project.category_metadata ? JSON.stringify(wip_project.categoryMetadataToArray()) : "null",
                    //valid_labels ? JSON.stringify(valid_labels) : "null",
-                   wip_project.user_emails ? JSON.stringify(wip_project.user_emails) : "null");
+                   wip_project.user_emails ? JSON.stringify(wip_project.user_emails) : "null",
+                   wip_project.category_hierarchy_permissions ? wip_project.category_hierarchy_permissions : "null")
 
 
         // if(wip_project.file_metadata["Filename"] != undefined) {
@@ -96,7 +97,7 @@ exports.index = function(req, res, next) {
         console.log("No existing WIP Project found - creating a new one.")
         wip_project = new WipProject({ user_id: testuser._id });
         wip_project.save(function(err, wip_project) {
-          renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", "null", "null"); 
+          renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", "null", "null", "null", "null"); 
         });   
       }
    
@@ -227,6 +228,18 @@ exports.upload_hierarchy = function(req, res, next) {
   }, 1000);
 }
 
+exports.upload_hierarchy_permissions = function(req, res, next) {
+  wip_project = res.locals.wip_project;
+  var d = req.body.val;
+  console.log(d)
+  wip_project.category_hierarchy_permissions = d;
+  wip_project.save(function(err) {
+    if(err) res.send( {"success": false, err: err});
+    res.send({ "success": true })
+
+  });
+  
+}
 
 // // Upload the label categories
 // exports.upload_valid_labels = function(req, res, next) {

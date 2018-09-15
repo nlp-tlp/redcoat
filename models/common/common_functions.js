@@ -566,6 +566,11 @@ module.exports = {
 		//     validate: validLabelsValidation,
 	 //  },
 
+    category_hierarchy_permissions: {
+      type: String,
+      enum: ["full_permission", "create_edit_only", "no_modification"],
+    },
+
 		user_ids: {
 	    type: [mongoose.Schema.Types.ObjectId],
 	    ref: 'User',

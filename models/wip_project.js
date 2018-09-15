@@ -64,6 +64,9 @@ var WipProjectSchema = new Schema({
   // Some metadata about the categories of the WIP Project.
   category_metadata: cf.fields.category_metadata,
 
+  // Determines the extent to which users may modify the hierarchy
+  category_hierarchy_permissions: cf.fields.category_hierarchy_permissions,
+
   // How many times each document should be annotated.
   overlap: cf.fields.overlap,
 }, {
