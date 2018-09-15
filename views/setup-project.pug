@@ -349,7 +349,7 @@ block scripts
 			var preset = hierarchyPresets.presets[val]; 
 			//var preset = slash2txt(hierarchyPresets.presets[val]); // the presets are stored in slash format, so we need to convert to txt first.
 			//console.log(hierarchyPresets.presets[val], preset);
-			$("#entity-categories-textarea").val(preset.join('\n'))
+			$("#entity-categories-textarea").val(slash2txt(preset))
 			//$("#entity-categories-textarea").val(preset.replace(/ /g, "\t"));
 			validateHierarchyInput(preset, function(valid, slashData, errmsg) {
 				if(valid) categoryHierarchy.buildTree(slashData);
@@ -366,7 +366,7 @@ block scripts
 		ect.linedtextarea();
 
 		function generateTree() {
-			validateHierarchyInput(ect.val().split('\n'), function(valid, slashData, errmsg) {
+			validateHierarchyInput(txt2slash(ect.val()), function(valid, slashData, errmsg) {
 				if(valid) categoryHierarchy.buildTree(slashData)
 				else categoryHierarchy.clearTree(errmsg);
 			});		
@@ -383,7 +383,7 @@ block scripts
 			var ss = ect[0].selectionStart;
 			var se = ect[0].selectionEnd;
 
-			ect.val(ect.val().replace(/[^\S\n]/g, "_"));
+			ect.val(ect.val().replace(/\b[^\S\n]/g, "_"));
 
 			ect[0].selectionStart = ss;
 			ect[0].selectionEnd = se;

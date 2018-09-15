@@ -33,9 +33,9 @@ class CategoryHierarchy {
 
 
 
-    // Returns a cleaned version of the name with whitespaces relaced with underscores. Replaces forward slashes with \/
+    // Returns a cleaned version of the name with whitespaces relaced with underscores. Replaces forward slashes with |
     function parseName(name) {
-      return name.replace(/[^\S\n]/g, "_").replace(/\//g, "\\");
+      return name.replace(/[^\S\n]/g, "_").replace(/\//g, "|");
     }
 
     // Creates a new node and updates the tree.
@@ -133,7 +133,7 @@ class CategoryHierarchy {
     // https://github.com/patorjk/d3-context-menu
     this.menu = function(d) {
       var title = {
-          title: function(d) { return d.name; }//.replace(/\\\//g, '/'); }
+          title: function(d) { return d.name.replace(/\|/g, "/"); }//.replace(/\\\//g, '/'); }
       }
       var newChildCategory = {
         title: '<i class="fa fa-plus"></i>&nbsp;&nbsp;New child category',
@@ -310,7 +310,7 @@ class CategoryHierarchy {
 
     nodeUpdate.select("text")
         .style("fill-opacity", 1)
-        .text(function(d) { return d.name; }); //.replace(/\\\//g, '/') })
+        .text(function(d) { return d.name.replace(/\|/g, "/"); }); //.replace(/\\\//g, '/') })
 
 
     // Transition exiting nodes to the parent's new position.
@@ -454,7 +454,7 @@ function updateCategoryHierarchy(root) {
   if($("#entity-categories-textarea")) {
     $("#entity-categories-preset").val("no-preset")
     //$("#entity-categories-textarea").val(json2text(root).replace(/ /g, "\t"));
-    $("#entity-categories-textarea").val(json2slash(root).join("\n"));
+    $("#entity-categories-textarea").val(json2text(root));
   }
 }
 
@@ -530,7 +530,7 @@ function txt2slash(text) {
   var parents = [];
   var prev = "";
   for(var i = 0; i < lines.length; i++) {
-    var cleanLine = lines[i].replace(/\s/g, "");
+    var cleanLine = lines[i].replace(/\s/g, "").replace(/\//g, '|');
     var newDepth  = lines[i].search(/\S/) + 1;
     if(newDepth < depth){
       parents = parents.slice(0, newDepth-1);
@@ -557,7 +557,7 @@ function json2text(root) {
   var allNodes = [];
   var depth = 1;
   function addNode(d) {
-    allNodes.push((new Array(depth).join(" ")) + d.name);
+    allNodes.push((new Array(depth).join(" ")) + d.name.replace(/\|/, '/'));
     if(d.children) {
       depth++;
       d.children.forEach(addNode);
