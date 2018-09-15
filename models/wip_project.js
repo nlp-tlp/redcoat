@@ -151,11 +151,13 @@ WipProjectSchema.methods.fileMetadataToArray = function() {
 WipProjectSchema.methods.updateCategoryMetadata = function() {
   try {
   function getMaxDepth(h) {
+
     var m = 0;
     for(var i = 0; i < h.length; i++) {
       var c = (h[i].match(/\//g) || []).length;
       m = c > m ? c : m;
     }
+    console.log(m, h, '...');
     return m;
   }
   function getAvgDepth(h) {
@@ -174,7 +176,6 @@ WipProjectSchema.methods.updateCategoryMetadata = function() {
     'Average depth': getAvgDepth(t.category_hierarchy || [])
   }
   
-  console.log(t.category_metadata);
 } catch(eee) { console.log(eee) }
   /*this.category_metadata = {};
   for(var k in md) {
@@ -302,8 +303,6 @@ WipProjectSchema.methods.convertToProject = function(done) {
       ProjectSchemaPaths.add(k.split(".")[0]);
     }
     var sharedFields = [... WipProjectSchemaPaths].filter(x => ProjectSchemaPaths.has(x)); // The set intersection.
-
-    console.log(">>>", sharedFields);
 
     p.user_id = t.user_id;
     p.project_name = t.project_name;

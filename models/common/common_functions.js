@@ -1,6 +1,8 @@
 var mongoose = require('mongoose');
 var shortid = require('shortid')
 
+var hv = require('../../public/javascripts/shared/hierarchy_validator');
+
 DOCUMENT_GROUP_TOTAL_MAXCOUNT = 11000; // Number of groups that can be in a project.
 
 USERS_PER_PROJECT_MAXCOUNT = 100;
@@ -138,83 +140,7 @@ var validateDocumentTokenCountMax = function(arr, done) {
 };
 
 
-// Validate that no documents are of length greater than DOCUMENT_MAX_TOKEN_LENGTH.
-var validateCategoryHierarchyNames = function(arr, done) {
 
-  // A lot of this code is summarised here: https://i.redd.it/hk54ti5n6tk11.png
-
-  function generateMessage(lineno, msg) {
-    return "Error on line <%" + lineno + "%>: category " + msg;
-  }
-
-  var depth = 0;
-  var prevParents = [];
-  var parents = [];
-  var newDepth = 0;
-
-  var seenSet = new Set();
-
-  for(var i = 0; i < arr.length; i++) {
-    line = arr[i];
-
-    if(seenSet.has(line)) {
-      return done(false, generateMessage(i, "already appears elsewhere in the hierarchy."));
-    }
-    seenSet.add(line);
-
-    if(line.length > 0 && line[0] == "/")
-      return done(false, generateMessage(i, "must not begin with a forward slash."));
-    if(line[line.length-1] == "/")
-      return done(false, generateMessage(i, "must not end with a forward slash."));
-
-
-    if(line.match(/\/\//g))
-      return done(false, generateMessage(i, "must not be empty."));
-
-    line = line.replace("\\/", ""); // Ignore backslashed-forwardslashes
-    var cats = line.match(/[^\/]+/g);
-
-    if(cats == null)
-      return done(false, generateMessage(i, "must not be empty."));
-
-    var newDepth = cats.length;
-    var parents = cats.slice(0, -1);
-    var cat = cats[cats.length - 1];
-    
-
-    if(newDepth == depth){
-      prevParents.pop();
-    } else if(newDepth > depth + 1) {
-      return done(false, generateMessage(i, "appears to be skipping a level in the hierarchy."));
-    }
-
-    // Ensure parents match
-    for(var j = 0; j < parents.length; j++) {
-      if(parents[j] != prevParents[j]) {
-        //console.log(cat, parents, prevParents, "<BROKEN")
-        return done(false, generateMessage(i, "does not have the correct parent for its position in the hierarchy."));
-      }
-    }
-
-    if(cat.trim().length == 0)
-      return done(false, generateMessage(i, "must not be empty."));
-    if(cat.length > CATEGORY_HIERARCHY_MAX_NAME_LENGTH)
-      return done(false, generateMessage(i, "must be shorter than " + CATEGORY_HIERARCHY_MAX_NAME_LENGTH + " characters."));
-    if(cat.length < 1)
-      return done(false, generateMessage(i, "must contain at least one character."));
-    if(cat == "O") {
-      return done(false, generateMessage(i, "cannot be \"O\" as it is used to denote non-entities."));
-    }
-
-    if(newDepth == depth+1) {
-      parents.push(cat);
-    }
-    depth = newDepth;    
-    prevParents = parents;
-  }
-
-  done(true);
-};
 
 // // Validate that no label abbreviations in the labels are of length 0.
 // var validateLabelAbbreviationLengthMin = function(arr) {
@@ -441,7 +367,7 @@ allDocumentValidation = [
 
 categoryHierarchyValidation = [
   { validator: validateDocumentCountMin, msg: 'Your category hierarchy must have at least one category.' },
-  { validator: function(arr, done) { validateCategoryHierarchyNames(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+  { validator: function(arr, done) { hv.validateCategoryHierarchy(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
 ]
 
 

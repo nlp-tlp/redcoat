@@ -1,218 +1,205 @@
-  // Code for tree found here:
-  // https://bl.ocks.org/mbostock/4339083
-var margin = {top: 20, right: 120, bottom: 20, left: 120},
-    width = 1520 - margin.right - margin.left,
-    height = 800 - margin.top - margin.bottom;
+// The category hierarchy.
+class CategoryHierarchy {
 
-var i = 0,
-    duration = 750,
-    root;
+  constructor() {
 
-var circleRadius = 16;
+    var t = this;
+    // Code for tree found here:  
+    // https://bl.ocks.org/mbostock/4339083
+    this.margin = {top: 20, right: 120, bottom: 20, left: 120};
+    this.width = 1520 - this.margin.right - this.margin.left;
+    this.height = 800 - this.margin.top - this.margin.bottom;
+    this.i = 0;
+    this.duration = 750;
+    this.root;
+    this.container;
+    this.circleRadius = 16;
+    this.tree = d3.layout.tree()
+        .size([this.height, this.width]);
 
-var tree = d3.layout.tree()
-    .size([height, width]);
+    this.diagonal = d3.svg.diagonal()
+        .projection(function(d) { return [d.y, d.x]; });
 
-var diagonal = d3.svg.diagonal()
-    .projection(function(d) { return [d.y, d.x]; });
+    this.error_message = $("#category-hierarchy-error");
+    this.error_message_inner = $("#category-hierarchy-error .message");
 
-// Update the category hierarchy text field if it is present.
-// Should only be called by createNewNode, rename, delete... not when the tree is updated via the category hierarchy itself.
-function updateCategoryHierarchy(root) {
-  if($("#entity-categories-textarea")) {
-    $("#entity-categories-textarea").val(json2text(root).replace(/ /g, "\t"));
-  }
-}
+    // Returns a cleaned version of the name with whitespaces relaced with underscores.
+    function parseName(name) {
+      return name.trim().replace(/\s+/g, "_").replace(/\\\//g, "/");;
+    }
 
-function buildTree(txt) {
+    // Creates a new node and updates the tree.
+    function createNewNode(d, name) {
+        var newNode = {
+            name: parseName(name) || "<New category>"
+          };
+        newNode._color = d._color;
+        if(d == t.root)
+          assignColor(newNode);
+        if(!d._children && !d.children) {
+          d.children = [];
+        }
+        if(!d._children){
+          d.children.push(newNode);
+        } else {
+          d._children.push(newNode);
+          t.click(d, t);
+        }
+        t.update(d);
+    }
 
-  function zoomed() {
-      container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-  }
+    // Renames the selected node to the name provided.
+    function renameNode(selected, name) {
+      selected.name = parseName(name);
+      //sortTree();
+      t.update(selected);
+    }
 
-  var zoom = d3.behavior.zoom()
-    .scaleExtent([0.25, 4])
-    .on("zoom", zoomed);
+    // Deletes a node.
+    function deleteNode(d) {
+      for (var ii = 0; ii < d.parent.children.length; ii++) {
+        if (d.parent.children[ii].name === d.name) {
+          d.parent.children.splice(ii, 1);
+          break;
+        }          
+      }
+      t.update(d);
+    }
 
-  d3.select("#svg-entity-categories").html('');
-  var svg = d3.select("#svg-entity-categories")
-      .attr("width", "100%")
-      .attr("height", "100%")
-      .call(zoom)
-    .append("g")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+    // Displays an input box for the user.
+    function showInput(next) {
+      document.getElementsByClassName("d3-context-menu")[0].innerHTML = "<form id=\"new-node-form\"><label>Category name</label><input id='new-node-form-input' name='test'/><input type=\"submit\"/></form>";
+      $("#new-node-form-input").focus();
+      $("#new-node-form").on('submit', function(e) {
+        var name = $("#new-node-form-input").val();
+        e.preventDefault();
+        return next(name);
+      });      
+    }
 
-  var container = svg.append("g");
-
-  var slash = txt2slash(txt);
-  console.log(slash2json(slash));
-
-  // Validate the slash formatted data
-  // if(validate(slash)) {
-  //  
-  // } else {
-  // return new Error("data is invalid");
-
-  var root = txt2json(txt);
-
-  var currentColorIndex = 0;
-
-  var colors = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff"];
-
-
-  //var colors = ["#688024", "#9a35c9", "#5be34b", "#c75ff1", "#95d73f", "#5759e4", "#cbd429", "#8050c7", "#4db22c", "#d92eb3", "#6be279", "#e362db", "#b9d447", "#4957bc", "#eeca19", "#8878e8", "#99ad24", "#be79e4", "#3ab862", "#d84dac", "#3e8d29", "#a13ea2", "#84ba55", "#e64690", "#5ce0b2", "#e12e27", "#51d7df", "#e95314", "#5882e7", "#dac03e", "#80509f", "#e4a130", "#5e93df", "#e57e20", "#68cef1", "#ea5d3f", "#41b07e", "#e7386a", "#48b3a6", "#c62b3b", "#4aa1bc", "#ae4419", "#64a9de", "#a47e1c", "#ee83dd", "#35773e", "#ab367d", "#bacd6e", "#c66db8", "#aaa037", "#a089d5", "#e1be6a", "#4e61a1", "#e17e4a", "#3e8581", "#e55d62", "#6ba363", "#b83864", "#a1d393", "#e598e0", "#5a5d23", "#cc99d9", "#905d1c", "#babaee", "#d2944f", "#7a8bb8", "#9d4d2e", "#9cd5cd", "#a63c49", "#85ba96", "#de72a2", "#3b7a5e", "#d46c80", "#677e4f", "#955282", "#bcb472", "#725e7f", "#ecc38e", "#50748f", "#e38472", "#3d6362", "#e998b9", "#887e3e", "#e3b7e3", "#a27144", "#aac6de", "#8c4b59", "#c4c4a8", "#aa748b", "#7ca9a9", "#a5655b", "#d5c1d0", "#786353", "#e7baba", "#828c7b", "#d49299", "#a29a72", "#a591af", "#daa485", "#ac8b81"]
-
-  root.x0 = height / 2;
-  root.y0 = 0;
-
-
-
-  function showInput(next) {
-    document.getElementsByClassName("d3-context-menu")[0].innerHTML = "<form id=\"new-node-form\"><label>Category name</label><input id='new-node-form-input' name='test'/><input type=\"submit\"/></form>";
-    $("#new-node-form-input").focus();
-    $("#new-node-form").on('submit', function(e) {
-      var name = $("#new-node-form-input").val();
-      e.preventDefault();
-      return next(name);
-    });
-    /*
-    window.setTimeout(function() {
-      var name = "test";
-      next(name);
-    }, 3000)*/
-    
-  }
-
-  // function removeChildren(d) {
-  //   if(d.children) {
-  //     d.children.forEach(removeChildren)
-  //   }
-  //   if(d._children) {
-  //     d._children.forEach(removeChildren)
-  //   }
-  //   d.children = null;
-  //   d._children = null;
-  
-  // }
-
-  // https://github.com/patorjk/d3-context-menu
-  var menu = [
-    {
-      title: function(d) { return d.name }
-    },
-    {
-      title: '<i class="fa fa-plus"></i>&nbsp;&nbsp;New child category',
-      action: function(d, i, next) {
-        var name = showInput(function(name) {
-          createNewNode(d, name);
+    // A context menu for the tree that calls the functions above.
+    // https://github.com/patorjk/d3-context-menu
+    this.menu = [
+      {
+        title: function(d) { return d.name.replace(/\\\//g, '/'); }
+      },
+      {
+        title: '<i class="fa fa-plus"></i>&nbsp;&nbsp;New child category',
+        action: function(d, i, next) {
+          var name = showInput(function(name) {
+            createNewNode(d, name);
+            next();
+          });
+          //elm.closeMenu();
+        }
+      },
+      {
+        title: '<i class="fa fa-edit"></i>&nbsp;&nbsp;Rename category',
+        action: function(d, i, next) {
+          var name = showInput(function(name) {
+            renameNode(d, name);
+            next();
+          });
+          //elm.closeMenu();
+        }
+      },
+      {
+        title: '<i class="fa fa-trash"></i>&nbsp;&nbsp;Delete category',
+        action: function(d, i, next) {
+          deleteNode(d);
           next();
-        });
-        //elm.closeMenu();
+        }
       }
-    },
-    {
-      title: '<i class="fa fa-edit"></i>&nbsp;&nbsp;Rename category',
-      action: function(d, i, next) {
-        var name = showInput(function(name) {
-          renameNode(d, name);
-          next();
-        });
-        //elm.closeMenu();
-      }
-    },
-    {
-      title: '<i class="fa fa-trash"></i>&nbsp;&nbsp;Delete category',
-      action: function(d, i, next) {
-        console.log(i, d.parent);
-        //removeChildren(d);
-        // Remove this element from parent
-        deleteNode(d);
-        next();
-      }
-    }
-  ]
-
-
-  function assignColor(d) {
-    d._color = colors.length > 0 ? colors[currentColorIndex % colors.length] : "steelblue";
-    currentColorIndex++;
+    ]
   }
 
-  function assignColorsToChildren(d, i) {
-    if (d._children) {
-      for(var i = 0; i < d._children.length; i++) {
-        d._children[i]._color = d._color;
-      }
-      d._children.forEach(assignColorsToChildren)
-    }
-  }
 
-  function collapse(d) {
-    if (d.children) {
-      d._children = d.children;
-      d._children.forEach(collapse);
-      d.children = null;
-    }
-  }
-  root._color = "#eee";
-
-  root.children.forEach(assignColor);
-  root.children.forEach(collapse);
-  root.children.forEach(assignColorsToChildren);
-  update(root, false);
-
-
-  d3.select(self.frameElement).style("height", "800px");
-
+  // Lighten or darken a colour.
   // https://css-tricks.com/snippets/javascript/lighten-darken-color/
-  function LightenDarkenColor(col, amt) {
-    
-      var usePound = false;
-    
+  LightenDarkenColor(col, amt) {  
+      var usePound = false;  
       if (col[0] == "#") {
           col = col.slice(1);
           usePound = true;
-      }
-   
-      var num = parseInt(col,16);
-   
-      var r = (num >> 16) + amt;
-   
+      } 
+      var num = parseInt(col,16); 
+      var r = (num >> 16) + amt; 
       if (r > 255) r = 255;
-      else if  (r < 0) r = 0;
-   
-      var b = ((num >> 8) & 0x00FF) + amt;
-   
+      else if  (r < 0) r = 0; 
+      var b = ((num >> 8) & 0x00FF) + amt; 
       if (b > 255) b = 255;
-      else if  (b < 0) b = 0;
-   
-      var g = (num & 0x0000FF) + amt;
-   
+      else if  (b < 0) b = 0; 
+      var g = (num & 0x0000FF) + amt; 
       if (g > 255) g = 255;
-      else if (g < 0) g = 0;
-   
+      else if (g < 0) g = 0; 
       return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16);
-    
   }
 
+  // Toggle children on click.
+  click(d, t) {
+    if (d.children) {
+      d._children = d.children;
+      d.children = null;
+    } else {
+      d.children = d._children;
+      d._children = null;
+    }
+    t.update(d);
+  }
 
+  // expand(d){   
+  //     var children = (d.children)?d.children:d._children;
+  //     if (d._children) {        
+  //         d.children = d._children;
+  //         d._children = null;       
+  //     }
+  //     if(children)
+  //       children.forEach(expand);
+  // }
 
-  function update(source, generateHierarchyText=true) {
+  // expandAll(){
+  //     this.expand(this.root); 
+  //     this.update(this.root);
+  // }
 
+  // collapseAll(){
+  //     this.root.children.forEach(collapse);
+  //     this.collapse(this.root);
+  //     this.update(this.root);
+  //     this.click(this.root);
+  // }
 
+  // sortTree() {
+  //     this.tree.sort(function(a, b) {
+  //         return b.name.toLowerCase() < a.name.toLowerCase() ? 1 : -1;
+  //     });
+  // }
+  //sortTree();
+
+  update(source) {
+
+    var margin       = this.margin,
+        width        = this.width,
+        height       = this.height,
+        circleRadius = this.circleRadius,
+        duration     = this.duration,
+        tree         = this.tree,
+        diagonal     = this.diagonal,
+        t            = this;
 
     // Compute the new tree layout.
-    var nodes = tree.nodes(root).reverse(),
-        links = tree.links(nodes);
+    var nodes = tree.nodes(this.root).reverse(),
+        links = tree.links(nodes);     
 
-    
+
+
 
     // Normalize for fixed-depth.
     nodes.forEach(function(d) { d.y = d.depth * 180; });
 
     // Update the nodes…
-    var node = container.selectAll("g.node")
-        .data(nodes, function(d) { return d.id || (d.id = ++i); });
+    var node = this.container.selectAll("g.node")
+        .data(nodes, function(d) { return d.id || (d.id = ++t.i); });
 
     // Enter any new nodes at the parent's previous position.
     var nodeEnter = node.enter().append("g")
@@ -224,9 +211,9 @@ function buildTree(txt) {
         .attr("r", 1e-6 )
         .style("fill", function(d) { return d._children ? d._color : "#fff"; })
         .style("stroke", function(d) { return d._color; })
-        .on("click", click)
-        .on('contextmenu', d3.contextMenu(menu, function(d) {
-          $(".d3-context-menu li.is-header").css("border-color", LightenDarkenColor(d._color, -20) || "#eee");
+        .on("click", function(d) { t.click(d, t) })
+        .on('contextmenu', d3.contextMenu(this.menu, function(d) {
+          $(".d3-context-menu li.is-header").css("border-color", t.LightenDarkenColor(d._color, -20) || "#eee");
           $(".d3-context-menu li.is-header").css("background", d._color || "#eee");
         }));
 
@@ -234,7 +221,7 @@ function buildTree(txt) {
         .attr("x", function(d) { return d.children || d._children ? -circleRadius*1.5 : circleRadius*1.5; })
         .attr("dy", ".35em")
         .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
-        .text(function(d) { return d.name; })
+        .text(function(d) { return d.name })
         .style("fill-opacity", 1e-6);
 
     // Transition nodes to their new position.
@@ -249,7 +236,7 @@ function buildTree(txt) {
 
     nodeUpdate.select("text")
         .style("fill-opacity", 1)
-        .text(function(d) { return d.name; })
+        .text(function(d) { return d.name.replace(/\\\//g, '/') })
 
 
     // Transition exiting nodes to the parent's new position.
@@ -265,7 +252,7 @@ function buildTree(txt) {
         .style("fill-opacity", 1e-6);
 
     // Update the links…
-    var link = container.selectAll("path.link")
+    var link = this.container.selectAll("path.link")
         .data(links, function(d) { return d.target.id; });
 
     // Enter any new links at the parent's previous position.
@@ -273,20 +260,20 @@ function buildTree(txt) {
         .attr("class", "link")
         .attr("d", function(d) {
           var o = {x: source.x0, y: source.y0};
-          return diagonal({source: o, target: o});
+          return t.diagonal({source: o, target: o});
         });
 
     // Transition links to their new position.
     link.transition()
         .duration(duration)
-        .attr("d", diagonal);
+        .attr("d", t.diagonal);
 
     // Transition exiting nodes to the parent's new position.
     link.exit().transition()
         .duration(duration)
         .attr("d", function(d) {
           var o = {x: source.x, y: source.y};
-          return diagonal({source: o, target: o});
+          return t.diagonal({source: o, target: o});
         })
         .remove();
 
@@ -300,319 +287,140 @@ function buildTree(txt) {
     //console.log(source.length)
     //var txt = json2text(root);
     //if(generateHierarchyText) {
-      updateCategoryHierarchy(root);
+    updateCategoryHierarchy(this.root);
     //}
 
   }
 
-  // Toggle children on click.
-  function click(d) {
-    if (d.children) {
-      d._children = d.children;
-      d.children = null;
-    } else {
-      d.children = d._children;
-      d._children = null;
+  // Clears the tree and prints an error message if provided.
+  clearTree(errmsg) {
+    d3.select("#svg-entity-categories").html('');
+
+    this.error_message.show();
+    this.error_message_inner.html(errmsg);
+
+
+
+
+  }
+
+  buildTree(slash) {
+
+    this.error_message.hide();
+
+    var margin    = this.margin,
+        width     = this.width,
+        height    = this.height,
+        tree      = this.tree,
+        t         = this;
+
+
+
+    function zoomed() {
+        t.container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
     }
-    update(d);
-  }
 
-  function expand(d){   
-      var children = (d.children)?d.children:d._children;
-      if (d._children) {        
-          d.children = d._children;
-          d._children = null;       
-      }
-      if(children)
-        children.forEach(expand);
-  }
+    var zoom = d3.behavior.zoom()
+      .scaleExtent([0.25, 4])
+      .on("zoom", zoomed);
 
-  function expandAll(){
-      expand(root); 
-      update(root);
-  }
+    d3.select("#svg-entity-categories").html('');
+    var svg = d3.select("#svg-entity-categories")
+        .attr("width", "100%")
+        .attr("height", "100%")
+        .call(zoom)
+      .append("g")
+        .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
 
-  function collapseAll(){
-      root.children.forEach(collapse);
-      collapse(root);
-      update(root);
-      click(root);
+    this.container = svg.append("g");
 
-  }
+   
+    //console.log(slash2json(slash));
 
-  function sortTree() {
-      tree.sort(function(a, b) {
-          return b.name.toLowerCase() < a.name.toLowerCase() ? 1 : -1;
-      });
-  }
-  //sortTree();
+    // Validate the slash formatted data
+    // if(validate(slash)) {
+    //  
+    // } else {
+  // return new Error("data is invalid");
 
-  // Returns a cleaned version of the name with whitespaces relaced with underscores.
-  function parseName(name) {
-    return name.trim().replace(/\s+/g, "_");
+    var root = slash2json(slash);
 
-  }
-
-
-  function createNewNode(d, name) {
-      //Adding a new node (as a child) to selected Node (code snippet)
-      var newNode = {
-          name: parseName(name) || "<New category>"
-        };
-      newNode._color = d._color;
-      if(d == root)
-        assignColor(newNode);
-
-      //Creates a Node from newNode object using d3.hierarchy(.)
-     // var newNode = d3.layout.hierarchy(newNode);
-
-      //later added some properties to Node like child,parent,depth
-      //newNode.parent = selected; 
-
-      //Selected is a node, to which we are adding the new node as a child
-      //If no child array, create an empty array
-
-      if(!d._children && !d.children) {
-        d.children = [];
-      }
-
-
-      if(!d._children){
-        d.children.push(newNode);
-
-        //selected._children = [];
-        //selected.data._children = [];
-      } else {
-        d._children.push(newNode);
-        click(d);
-      }
+    var currentColorIndex = 0;
+    var colors = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff"];
+    //var colors = ["#688024", "#9a35c9", "#5be34b", "#c75ff1", "#95d73f", "#5759e4", "#cbd429", "#8050c7", "#4db22c", "#d92eb3", "#6be279", "#e362db", "#b9d447", "#4957bc", "#eeca19", "#8878e8", "#99ad24", "#be79e4", "#3ab862", "#d84dac", "#3e8d29", "#a13ea2", "#84ba55", "#e64690", "#5ce0b2", "#e12e27", "#51d7df", "#e95314", "#5882e7", "#dac03e", "#80509f", "#e4a130", "#5e93df", "#e57e20", "#68cef1", "#ea5d3f", "#41b07e", "#e7386a", "#48b3a6", "#c62b3b", "#4aa1bc", "#ae4419", "#64a9de", "#a47e1c", "#ee83dd", "#35773e", "#ab367d", "#bacd6e", "#c66db8", "#aaa037", "#a089d5", "#e1be6a", "#4e61a1", "#e17e4a", "#3e8581", "#e55d62", "#6ba363", "#b83864", "#a1d393", "#e598e0", "#5a5d23", "#cc99d9", "#905d1c", "#babaee", "#d2944f", "#7a8bb8", "#9d4d2e", "#9cd5cd", "#a63c49", "#85ba96", "#de72a2", "#3b7a5e", "#d46c80", "#677e4f", "#955282", "#bcb472", "#725e7f", "#ecc38e", "#50748f", "#e38472", "#3d6362", "#e998b9", "#887e3e", "#e3b7e3", "#a27144", "#aac6de", "#8c4b59", "#c4c4a8", "#aa748b", "#7ca9a9", "#a5655b", "#d5c1d0", "#786353", "#e7baba", "#828c7b", "#d49299", "#a29a72", "#a591af", "#daa485", "#ac8b81"]
+    root.x0 = height / 2;
+    root.y0 = 0;
 
 
 
-      //Push it to parent.children array  
-      //selected._children.push(newNode);
-
-     // console.log("Children:", selected._children.length);
-      //selected.data.children.push(newNode.data);
-
-      //Update tree
-      //sortTree();
-      update(d);
-
-
-      // If category hierarchy text exists, write the text version of the tree to it
-
-  }
-
-
-
-  function renameNode(selected, name) {
-    selected.name = parseName(name);
-    //sortTree();
-    update(selected);
-  }
-
-  function deleteNode(d) {
-    // if(d.parent == root) {
-    //   colors.push(d._color);
-    // }
-    for (var ii = 0; ii < d.parent.children.length; ii++) {
-      if (d.parent.children[ii].name === d.name) {
-        d.parent.children.splice(ii, 1);
-        break;
-      }          
+    function assignColor(d) {
+      d._color = colors.length > 0 ? colors[currentColorIndex % colors.length] : "steelblue";
+      currentColorIndex++;
     }
-    update(d);
-  }
+
+    function assignColorsToChildren(d, i) {     
+      if (d._children) {
+        for(var i = 0; i < d._children.length; i++) {              
+          d._children[i]._color = d._color;
+        }
+        d._children.forEach(assignColorsToChildren)
+      }
+    }
+
+    function collapse(d) {
+      if (d.children) {
+        d._children = d.children;
+        d._children.forEach(collapse);
+        d.children = null;
+      }
+    }
+    root._color = "#eee";         
+
+    root.children.forEach(assignColor);
+    root.children.forEach(collapse);
+    root.children.forEach(assignColorsToChildren);
+    root.children.forEach(assignColorsToChildren);
+
+    t.root = root;
 
 
-  // Return the text version of the tree
-
+    t.update(root, false);
+    d3.select(self.frameElement).style("height", "800px");
+    }
+  
 
 }
 
 
+// function showInput(next) {
+//   document.getElementsByClassName("d3-context-menu")[0].innerHTML = "<form id=\"new-node-form\"><label>Category name</label><input id='new-node-form-input' name='test'/><input type=\"submit\"/></form>";
+//   $("#new-node-form-input").focus();
+//   $("#new-node-form").on('submit', function(e) {
+//     var name = $("#new-node-form-input").val();
+//     e.preventDefault();
+//     return next(name);
+//   });      
+// }
 
 
-var txt = 
-`accident_cause
- bodily_contact
- caught_between
- fall
-  fall_from_heights
-  fall_from_vehicle
- over_exertion
- recurrence
- stepping
- struck_by_object
- trip_and_fall
- vehicle_related
-activity
- driving
- running
- walking
-age_group
- age_15_24
- age_25_34
- age_35_44
- age_45_54
- age_55_64
- age_65_100
-body_part
- arm
-  elbow
-   left_elbow
-   right_elbow
-  hand
-   fingers
-   left_hand
-   right_hand
-   thumb
-    left_thumb
-    right_thumb
-  left_arm
-  right_arm
-  shoulder
-   left_shoulder
-   right_shoulder
-  wrist
-   left_wrist
-   right_wrist
- back
-  lower_back
-  upper_back
- body
-  chest
-  stomach
-  torso
- groin
- head
-  ear
-   left_ear
-   right_ear
-  eye
-   left_eye
-   right_eye
-  mouth
-  nose
- leg
-  ankle
-   left_ankle
-   right_ankle
-  calf
-   left_calf
-   right_calf
-  foot
-   left_foot
-   right_foot
-   toes
-  knee
-   left_knee
-   right_knee
-  left_leg
-  right_leg
-  thigh
-   left_thigh
-   right_thigh
- neck
-equipment
- bund_wall
- cage
- cables
- catenery_cable
- chock
- chute
- filter
- headframe
- jumbo
- mechanical_equipment
-  auger
-  cavity_monitoring_system
-  conveyor
-  crusher
-  pump
-   sump_pump
-  skip
- personal_protective_equipment 
- pipe 
-gender
- female
- male
-injury
- amputation
- bite
- bruises
-  contusion
- burn
-  electric_burn
-  thermal_burn
- chemical_effect
- crush_injury
- dislocation
-  displacement
- fracture
-  break
- laceration
- loss_of_conciousness
- multiple_injuries
- muscle
-  sprain
-  strain
- puncture
- splinter
- unspecified_injuries
-location
- camp_medical_centre
- kitchen
- office
-person
- blast_guard
- blaster
- boilermaker
- chef
- contractor
- driller
- driver
- electrical_worker
- employee
- fitter
- individual
- injured_person
- maintainer
- offsider
- operator
- personnel
- process_worker
- service_crew
- spotter
- supervisor
- telehandler
- underground_operator
- worker
-severity
- minor
- serious
- fatal
- ndi
-vehicle
- light_vehicle
-  car
-  forklift
-  man_car
-  mine_car
-  ute
-  golf_buggy
- heavy_vehicle
-  bogger
-  continuous_miner
-  dozer
-  dump_truck
-  excavator
-  haul_truck
-  scraper
-  grader
-unspecified_category`
-var txt = "example";
+
+
+
+
+
+
+
+// Update the category hierarchy text field if it is present.
+// Should only be called by createNewNode, rename, delete... not when the tree is updated via the category hierarchy itself.
+function updateCategoryHierarchy(root) {
+  if($("#entity-categories-textarea")) {
+    //$("#entity-categories-textarea").val(json2text(root).replace(/ /g, "\t"));
+    $("#entity-categories-textarea").val(json2slash(root).join("\n"));
+  }
+}
+
+
+
 
 
 // Remove empty children from the JSON data.
@@ -626,6 +434,7 @@ function removeEmptyChildren(obj) {
   }
 }
 
+/* Conversion functions */
 
 
 // Converts text into JSON format for visualisation by the tree. The text may look something like:
@@ -665,7 +474,7 @@ function txt2json(text) {
   return root;
 }
 
-buildTree(txt);
+
 
 
 // Converts 'space' notation to 'slash' notation, e.g.
@@ -688,11 +497,11 @@ function txt2slash(text) {
     var cleanLine = lines[i].replace(/\s/g, "");
     var newDepth  = lines[i].search(/\S/) + 1;
     if(newDepth < depth){
-      parents = parents.slice(newDepth, parents.length);
+      parents = parents.slice(0, newDepth-1);
     } else if (newDepth == depth + 1) {
       parents.push(prev);
     } else if(newDepth > depth + 1) {
-      return new Error("Unparsable tree.");
+      //return new Error("Unparsable tree.");
     }
     depth = newDepth;
     prev = cleanLine;
@@ -724,15 +533,28 @@ function json2text(root) {
       depth--;
     }    
   }
-  root.children.forEach(addNode);
+  if(root.children)
+    root.children.forEach(addNode);
+  else if(root._children) 
+    root._children.forEach(addNode);
+
   return allNodes.join("\n");
 }
 
 function slash2json(slash) {
   var txt = [];
   for(var i = 0; i < slash.length; i++) {
-    txt.push(slash[i].replace(/\w*\//g, " "));
+    txt.push(slash[i]);
   }
+  console.log(txt)
   var json = txt2json(txt.join("\n"));
   return json;
+}
+
+function slash2txt(slash) {
+  var txt = [];
+  for(var i = 0; i < slash.length; i++) {
+    txt.push(slash[i].replace(/[^\/]*\//g, ' '));
+  }
+  return txt.join("\n");
 }

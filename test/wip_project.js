@@ -105,6 +105,7 @@ describe('WIP Projects', function() {
         if(cases.length == 0) {
           done();
         } else {
+          expect(err.errors.category_hierarchy).to.not.exist;
           ensurePass(cases, done);
         }
       });
@@ -192,7 +193,10 @@ describe('WIP Projects', function() {
 
     it("should pass validation if the category hierarchy is OK", function(done) {
       ensurePass([["root", "root/node_1", "root/node_1/node_1a", "root/node_2", "root/node_2/node_2a", "root/node_2/node_2a/node_2aa"], 
-                  ["root", "root/node_1", "root/node_1/node_1a", "root/node_1/node_1a/node3a", "root/node_2", "root/node_2/node_2a"]], 
+                  ["root", "root/node_1", "root/node_1/node_1a", "root/node_1/node_1a/node3a", "root/node_2", "root/node_2/node_2a"], 
+                  ["a", "a/b", "a/b/c", "a/b/c/d", "a/b/c/d/e", "a/b/c/d/e/f", "a/c", "a/c/d", "a/c/d/e", "a/c/d/e/f", "a/d", "a/d/e"],
+                  ["Person", "Organisation", "Organisation/test", "Location", "Miscellaneous"],
+                  ["Person", "Organisation", "Organisation/test", "Organisation/test/test", "Location", "Miscellaneous"]],
                   done);
 
 

@@ -193,27 +193,34 @@ block content
 					option(disabled selected value="no-preset") (no preset)
 					option(value="NER") NER (4 classes)
 					option(value="FIGER") FIGER (113 classes)
+					option(value="DMP") Mining accidents (177 classes)
 					option(value="UF") Ultra-Fine (10,331 classes)
 				form#entity-categories-text-form.special-textarea-form
-					div#entity-categories-validation.special-textarea-validation
-					div.special-textarea-container
+					//div#entity-categories-validation.special-textarea-validation
+					//div.special-textarea-container
 						
-						textarea.special-textarea#entity-categories-textarea(rows="12", wrap="off"  cols="254" placeholder="example_class_1\nexample_class_2\n   example_child_1\n   example_child_2\nexample_class_3")
-						div#entity-categories-count-container
+					textarea#entity-categories-textarea(rows="12", wrap="off"  cols="254" placeholder="example_class_1\nexample_class_2\n   example_child_1\n   example_child_2\nexample_class_3")
+					div#entity-categories-count-container
 
 
 
 			div.category-tree
 				h3 Category Tree
 				svg#svg-entity-categories
+				div#category-hierarchy-error
+					div.message Generate a category hierarchy using the menu on the left.
 			a.close <span>Save and close</span>&nbsp;<i class="fa fa-close"></i>
 
 block scripts
 
 	script(src="/javascripts/d3/d3.min.js")
 	script(src="/javascripts/d3/d3-context-menu.js")
+	script(src="/javascripts/shared/hierarchy_validator.js")
 	script(src="/javascripts/category-tree-visualisation.js")
 	script(src="/javascripts/setup_project/jquery.autosize.js")
+	script(src="/javascripts/setup_project/jquery-linedtextarea.js")
+	script(src="/javascripts/shared/hierarchy_presets.js")
+
 	
 	script.
 		csrfToken = "#{csrfToken}";
@@ -240,10 +247,12 @@ block scripts
 
 	script.
 
-		presets = {
-			"NER": "person\norganisation\nlocation\nmisc",
-			"FIGER": "person\n actor\n architect\n artist\n athlete\n author\n coach\n director\n doctor\n engineer\n monarch\n musician\n politician\n religious_leader\n soldier\n terrorist\norganization\n airline\n company\n educational_institution\n fraternity_sorority\n sports_league\n sports_team\n terrorist_organisation\n government_agency\n government\n political_party\n educational_department\n military\n news_agency\nlocation\n city\n country\n county\n province\n railway\n road\n bridge\n body_of_water\n island\n mountain\n glacier\n astral_body\n cemetary\n park\nproduct\n engine\n airplane\n car\n ship\n spacecraft\n train\n camera\n mobile_phone\n computer\n software\n game\n instrument\n weapon\nart\n film\n play\n written_work\n newspaper\n music\nevent\n attack\n election\n protest\n military_conflict\n natural_disaster\n sports_event\n terrorist_attack\n building\n airport\n dam\n hospital\n hotel\n library\n power_station\n restaurant\n sports_facility\n theater\ntime\ncolor\naward\neducational_degree\ntitle\nlaw\nethnicity\nlanguage\nreligion\ngod\nchemical_thing\nbiological_thing\nmedical_treatment\ndisease\nsymptom\ndrug\nbody_part\nliving_thing\nanimal\nfood\nwebsite\nbroadcast_network\nbroadcast_program\ntv_channel\ncurrency\nstock_exchange\nalgorithm\nprogramming_language\ntransit_system\ntransit_line"
-		}
+		//- presets = {
+		//- 	"NER": "person\norganisation\nlocation\nmisc",
+		//- 	"FIGER": "person\n actor\n architect\n artist\n athlete\n author\n coach\n director\n doctor\n engineer\n monarch\n musician\n politician\n religious_leader\n soldier\n terrorist\norganization\n airline\n company\n educational_institution\n fraternity_sorority\n sports_league\n sports_team\n terrorist_organisation\n government_agency\n government\n political_party\n educational_department\n military\n news_agency\nlocation\n city\n country\n county\n province\n railway\n road\n bridge\n body_of_water\n island\n mountain\n glacier\n astral_body\n cemetary\n park\nproduct\n engine\n airplane\n car\n ship\n spacecraft\n train\n camera\n mobile_phone\n computer\n software\n game\n instrument\n weapon\nart\n film\n play\n written_work\n newspaper\n music\nevent\n attack\n election\n protest\n military_conflict\n natural_disaster\n sports_event\n terrorist_attack\n building\n airport\n dam\n hospital\n hotel\n library\n power_station\n restaurant\n sports_facility\n theater\ntime\ncolor\naward\neducational_degree\ntitle\nlaw\nethnicity\nlanguage\nreligion\ngod\nchemical_thing\nbiological_thing\nmedical_treatment\ndisease\nsymptom\ndrug\nbody_part\nliving_thing\nanimal\nfood\nwebsite\nbroadcast_network\nbroadcast_program\ntv_channel\ncurrency\nstock_exchange\nalgorithm\nprogramming_language\ntransit_system\ntransit_line"
+		//- }
+
+		var categoryHierarchy = new CategoryHierarchy();
 
 		function uploadCategoryHierarchy(data) {
 			$("#saved-notification-entity-categories").removeClass("show");
@@ -293,11 +302,10 @@ block scripts
 			$('#main > *:not(#entity-categories-window').removeClass("blur");
 			$('#navbar').removeClass("blur");
 
-
 			// Need to save the entities 
 			var entitySlashData = txt2slash($("#entity-categories-textarea").val().replace(/\t/g, " "));
 			uploadCategoryHierarchy(entitySlashData);
-			console.log(entitySlashData);
+			//console.log(entitySlashData);
 		}
 		$("#entity-categories-window .close").click(hideEntityCategoriesWindow);
 		$("#button-create-entity-categories").click(showEntityCategoriesWindow);
@@ -314,13 +322,40 @@ block scripts
 			$("#er-body > *:nth-child(" + (i + 1) + ")").show();
 		});
 
-		$("#entity-categories-preset").change(function() {
-			var val = $(this).val();
-			var preset = presets[val];
-			$("#entity-categories-textarea").val(preset.replace(/ /g, "\t"));
-			buildTree(preset);
-		});
+		function validateHierarchyInput(slash, done) {
 
+			//var slash = txt2slash(txt);
+			var ecv = $("#entity-categories-validation");
+
+		    hierarchyValidator.validateCategoryHierarchy(slash, function(valid, em) {
+				var eml = -1;
+				if(!valid) {
+					console.log("invalid tree");
+					console.log(em);					
+					eml = parseInt(em.slice(em.indexOf("<%") + 2, em.indexOf("%>")));    
+				}
+				if(em)
+					em = em.replace(/<%\d+%>/g, (eml+1));
+
+				$($("#entity-categories-text-form .lineno")[eml]).addClass("lineselect");
+				done(valid, slash, em);
+			});
+
+		}
+
+		$("#entity-categories-preset").change(function() {
+			$("#entity-categories-text-form .lineno").removeClass("lineselect");
+			var val = $(this).val();
+			var preset = hierarchyPresets.presets[val]; 
+			//var preset = slash2txt(hierarchyPresets.presets[val]); // the presets are stored in slash format, so we need to convert to txt first.
+			//console.log(hierarchyPresets.presets[val], preset);
+			$("#entity-categories-textarea").val(preset.join('\n'))
+			//$("#entity-categories-textarea").val(preset.replace(/ /g, "\t"));
+			validateHierarchyInput(preset, function(valid, slashData, errmsg) {
+				if(valid) categoryHierarchy.buildTree(slashData);
+				else categoryHierarchy.clearTree(errmsg);
+			});			
+		});
 
 		var generatingTree = false;
 		var treeGeneratingTimeout;
@@ -328,18 +363,27 @@ block scripts
 		var ect = $("#entity-categories-textarea");
 		var ecv = $("#entity-categories-validation");
 
+		ect.linedtextarea();
+
 		function generateTree() {
-			buildTree(ect.val().replace(/\t/g, " "))
+			validateHierarchyInput(ect.val().replace(/\t/g, " ").split('\n'), function(valid, slashData, errmsg) {
+				if(valid) categoryHierarchy.buildTree(slashData)
+				else categoryHierarchy.clearTree(errmsg);
+			});		
+			
 		}
 
 		ect.on('input', function(e) {
+
+			$("#entity-categories-text-form .lineno").removeClass("lineselect");
+
 
 			$("#entity-categories-preset").val("no-preset")
 
 			var ss = ect[0].selectionStart;
 			var se = ect[0].selectionEnd;
 
-			ect.val(ect.val().replace(/ /g, "\t"));
+			//ect.val(ect.val().replace(/ /g, "\t"));
 
 			ect[0].selectionStart = ss;
 			ect[0].selectionEnd = se;
