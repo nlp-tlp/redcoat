@@ -15,6 +15,17 @@
 $navbar-height: 50px;
 
 #welcome {
+	.title-container {
+		display: flex;
+		justify-items: center;
+		img {
+			margin-left: 30px;
+		}
+		.title-words {
+			width: 70%;
+			margin-left: -70px;
+		}
+	}
 	h1, h2#h2-byline  {
 		text-align: center;
 		//text-transform: uppercase;
@@ -24,6 +35,7 @@ $navbar-height: 50px;
 		color: white;
 		letter-spacing: 2px;
 		margin-top: 60px;
+
 		&:before {
 			content: attr(data-content);
 			top: 2px;
