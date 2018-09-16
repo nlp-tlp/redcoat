@@ -5,7 +5,7 @@ var CATEGORY_HIERARCHY_MAX_NAME_LENGTH = 200;
   // ["test", "test/test", "test/test/test", "test/test2", "test/test2/test3" ... ]
   exports.validateCategoryHierarchy = function(arr, done) {
     // A lot of this code is summarised here: https://i.redd.it/hk54ti5n6tk11.png
-    function generateMessage(lineno, msg) {
+    function generateMessage(lineno, msg) {      
       return "Error on line <%" + lineno + "%>: category " + msg;
     }
 
@@ -25,10 +25,9 @@ var CATEGORY_HIERARCHY_MAX_NAME_LENGTH = 200;
       seenSet.add(line);
 
       if(line.length > 0 && line[0] == "/")
-        return done(false, generateMessage(i, "must not begin with a forward slash."));
+         return done(false, generateMessage(i, "must not begin with a forward slash."));
       if(line[line.length-1] == "/")
-        return done(false, generateMessage(i, "must not end with a forward slash."));
-
+         return done(false, generateMessage(i, "must not end with a forward slash."));
 
       if(line.match(/\/\//g))
         return done(false, generateMessage(i, "must not be empty."));
@@ -39,9 +38,13 @@ var CATEGORY_HIERARCHY_MAX_NAME_LENGTH = 200;
       if(cats == null)
         return done(false, generateMessage(i, "must not be empty."));
 
+      
+
       var newDepth = cats.length;
       var parents = cats.slice(0, -1); // The parents of this category
       var cat = cats[cats.length - 1]; // The category itself
+
+
 
       if(newDepth < depth){
         prevParents = prevParents.slice(0, newDepth -1);

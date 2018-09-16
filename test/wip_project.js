@@ -147,6 +147,7 @@ describe('WIP Projects', function() {
     it("should fail validation if a category contains two slashes", function(done) {
       ensureFail([[["t1", "t1//", "t1/test"], 1],
                   [["//"], 0],
+                  [["t1", "t1//test"], 1],
                   [["t4", "t4/test", "t4/test//", "t4/test/3s"], 2]],
                   done);    
     });

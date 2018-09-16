@@ -126,9 +126,25 @@ block content
 							div.form-help If allowed, users will be able to add categories as they appear, or delete ones that aren't relevant. This option is useful if you aren't sure whether your category hierarchy covers every possible category in your dataset. 
 						div.form-group
 							label(for="input-overlap") How many times should a document be annotated before annotation is considered complete?
-							input(type="range" min="1" max="10" value="1")
-							div.form-help More overlap can result in a more robust set of results, but requires longer annotation time. 
-							br
+							div.input-range-group.disabled#input-range-group
+								div.disabled-message <span class="inapplicable">This option is inapplicable because you are the only annotator.</span><span class="havent-started">Please complete the Distribution section to enable this option.</span>
+								div.inner
+									div.input-range-summary#input-overlap-summary
+										p <span class="num">1</span> annotation<span class="plural"></span>/document<br>
+										p.small Each annotator labels approximately <span class="avg">100</span>% of the corpus
+									div.input-range-container
+										div.left 1
+										input(id="input-overlap" name="input-overlap" type="range" min="1" max="10" value="1")
+										div.right 10
+									div.form-help More overlap can result in a more robust set of results, but requires longer annotation time. 
+						div.form-group
+							label(for="input-automatically-tag") Should commonly-tagged words be automatically tagged?
+							select#input-hierarchy-permissions
+								option(disabled selected value="not-selected") (click to select)
+								option(value="yes") Yes.
+								option(value="no") No.
+							div.form-help Redcoat can automatically tag words that have been seen more than 20 times by the annotators of your project. Only words that have been labelled more than 90% of the time as a particular class will be automatically tagged. Annotators may modify or delete these automatic annotations before they are saved.
+
 				div#saved-notification-project-options.saved-notification
 					p <i class="fa fa-check"></i> This section has been saved.
 
@@ -431,6 +447,26 @@ block scripts
 		});
 
 
+		var ion = $("#input-overlap-summary .num");
+		var ioa = $("#input-overlap-summary .avg");
+		var iop = $("#input-overlap-summary .plural");		
+		var iov = $("#input-overlap");		
+
+		function updateOverlapSummary() {
+			var numAnnotators = parseInt($("#input-range-group .right").html());
+			var v = iov.val();
+			ion.html(v);
+			ioa.html((1 / numAnnotators * v * 100).toFixed(2));
+			if(v > 1) iop.html("s");
+			else iop.html("");
+		}
+
+		iov.on('input', function() {
+			updateOverlapSummary();
+		});
+		updateOverlapSummary();
+
+
 	script.
 		var errorBannerTimeout;
 		function displayServerErrorBanner() {
@@ -514,14 +550,28 @@ block scripts
 				},
 				success: function( data )
 				{					
+					$("#input-range-group havent-started").hide();
 					$("#error-banner").removeClass("show");
 					console.log("done")
 					// Only display the 'saved' notification if there is at least one valid email.
 
-					if((dev).find("i.fa-check").length > 0) {
+					var nvalid = (dev).find("i.fa-check").length
+
+					if( nvalid > 0) {
 						$("#saved-notification-distribution").addClass("show");
 						$("#li-distribution").addClass("completed");
+
+						$("#input-range-group").removeClass("disabled");
+						// Modify the slider
+						$("#input-overlap").attr("max", nvalid + 1);	
+						$("#input-range-group .right").html(nvalid + 1);	
+
+						
+					} else {
+						$("#input-range-group").addClass("disabled");
+						$("#input-range-group inapplicable").show();
 					}
+					updateOverlapSummary();
 
 
 
@@ -575,6 +625,10 @@ block scripts
 	 
 
 		det.on('input', function(e) {
+		
+			$("#input-range-group").addClass("disabled");
+			$("#input-range-group inapplicable").show();
+
 
 			$("#saved-notification-distribution").removeClass("show");
 			$("#li-distribution").removeClass("completed");	
@@ -607,6 +661,12 @@ block scripts
 			}
 			$("#distribute-emails-count").html(existingEmails.length);
 			dev.html(devHtml)
+
+			$("#input-range-group").removeClass("disabled");
+			$("#input-range-group havent-started").hide();
+			$("#input-overlap").attr("max", existingEmails.length + 1);	
+			$("#input-range-group .right").html(existingEmails.length + 1);	
+			updateOverlapSummary();
 
 		}
 
