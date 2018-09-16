@@ -25,9 +25,10 @@ nav#navbar
 			//- 		li: a(href="/setup-project") <i class="fa fa-plus"></i>New project
 
 			div(class="dropdown-menu")
-				span <i class="fa fa-user"></i>&nbsp;&nbsp;Logged in as #{user.username} 
-					span(class="caret") &#9660;	
+				span Logged in as #{user.username}&nbsp;&nbsp;(#{user_stars}&nbsp;<i class="fa fa-star award-stars"></i>)
+					//span(class="caret") &#9660;	
 				ul(class="dropdown-menu-items")
-					li: a(href="/projects") Dashboard
+					li: a(href="/projects") Projects
 					li: a(href="/setup-project") Setup project
+					li: a(href="/profile") Profile
 					li: a(href="/logout") Logout

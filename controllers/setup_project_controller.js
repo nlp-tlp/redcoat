@@ -77,6 +77,8 @@ exports.index = function(req, res, next) {
         //   valid_labels = null;
         // }
 
+
+
         renderPage(wip_project,
                    wip_project.project_name,
                    wip_project.project_description,
@@ -89,7 +91,7 @@ exports.index = function(req, res, next) {
                    testuser.email,
                    wip_project.automatic_tagging,
                    wip_project.overlap,
-                   wip_project.distribute_self ? wip_project.distribute_self : false)
+                   wip_project.distribute_self)
 
 
         // if(wip_project.file_metadata["Filename"] != undefined) {
@@ -101,7 +103,7 @@ exports.index = function(req, res, next) {
         console.log("No existing WIP Project found - creating a new one.")
         wip_project = new WipProject({ user_id: testuser._id });
         wip_project.save(function(err, wip_project) {
-          renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", "null", "null", "null", "null", testuser.email, "", "1", "false"); 
+          renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", "null", "null", "null", "null", testuser.email, "", "1", "undecided"); 
         });   
       }
    

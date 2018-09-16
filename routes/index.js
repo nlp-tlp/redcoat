@@ -25,11 +25,11 @@ michael.save(function(err) {
   console.log('User saved successfully!');
 });*/
 
-// TODO: Remove this and replace it with a proper user authentication function.
-var testuser;
-User.findOne({ username: "Pingu99" }, function(err, user) {
-  testuser = user;
-});
+// // TODO: Remove this and replace it with a proper user authentication function.
+// var testuser;
+// User.findOne({ username: "Pingu99" }, function(err, user) {
+//   testuser = user;
+// });
 
 
 
@@ -41,10 +41,13 @@ var parseForm = bodyParser.urlencoded({ extended: false })
 function isLoggedIn(req, res, next) {
 
     // if user is authenticated in the session, carry on 
-    if (req.isAuthenticated())
+    if (req.isAuthenticated()) {
+        console.log(">>> ", req.user.docgroups_annotated)
+        req.user_stars = req.user.docgroups_annotated.length;
     //res.locals.user = testuser;
         return next();
     //next();
+    }
 
     //if they aren't redirect them to the home page
     res.redirect('/login');

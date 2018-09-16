@@ -10,10 +10,13 @@ var Project = require('../models/project')
 function isLoggedIn(req, res, next) {
 
     // if user is authenticated in the session, carry on 
-    if (req.isAuthenticated())
+    if (req.isAuthenticated()) {
+        console.log(">>> ", req.user.docgroups_annotated)
+        res.locals.user_stars = req.user.docgroups_annotated.length;
     //res.locals.user = testuser;
         return next();
     //next();
+    }
 
     //if they aren't redirect them to the home page
     res.redirect('/login');
@@ -25,6 +28,7 @@ router.get('/', isLoggedIn, function(req, res) {
     if(err)
       res.send(err);
     else {
+      console.log(res.locals.user_stars, "<<")
       res.render('dashboard', { projects: projects, title: "Dashboard" })
     }
   });  
