@@ -42,7 +42,6 @@ function isLoggedIn(req, res, next) {
 
     // if user is authenticated in the session, carry on 
     if (req.isAuthenticated()) {
-        console.log(">>> ", req.user.docgroups_annotated)
         res.locals.user_stars = req.user.docgroups_annotated.length;
     //res.locals.user = testuser;
         return next();

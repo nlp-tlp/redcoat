@@ -11,7 +11,6 @@ function isLoggedIn(req, res, next) {
 
     // if user is authenticated in the session, carry on 
     if (req.isAuthenticated()) {
-        console.log(">>> ", req.user.docgroups_annotated)
         res.locals.user_stars = req.user.docgroups_annotated.length;
     //res.locals.user = testuser;
         return next();
@@ -53,6 +52,7 @@ router.get('/:id/tagging', isLoggedIn, function(req, res) {
         res.send("nope");
       } else {
         res.render('tagging', { 
+          tagging: true,
           data: JSON.stringify(docgroup.documents),
           entity_classes: JSON.stringify(proj.category_hierarchy),
           entity_classes_abbr: JSON.stringify(proj.category_hierarchy),

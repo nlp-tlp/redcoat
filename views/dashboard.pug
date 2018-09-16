@@ -2,7 +2,21 @@ extends layout
 
 block content
 
-	nav#sidenav
+	nav#sidenav.white
+		h3.page-title Projects
+		ul.page-list
+			li#li-your-projects.current
+				span
+					i.fa.fa-folder
+					| Your projects
+			li#li-joined-projects
+				span 
+					i.fa.fa-group
+					| Joined projects
+			li#li-global-projects
+				span 
+					i.fa.fa-globe
+					| Global projects
 
 	div#dashboard
 

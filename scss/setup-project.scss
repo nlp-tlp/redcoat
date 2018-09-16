@@ -50,7 +50,7 @@ nav#sidenav {
 	}
 	&:after {
 		position: absolute;
-		left: 10px;
+		left: 12px;
 		top: 0;
 		height: 100%;
 		//border-left: 4px solid darken($primary-red, 25);
@@ -62,7 +62,69 @@ nav#sidenav {
 		
 		opacity: 0.05;
 	}	
-	ul.setup-stages {
+	h3.page-title {
+		padding: 10px 0;
+		margin: 0;
+		text-align: center;
+		color: #444;
+		margin-top: 25px;
+	}
+	&.white ul {
+		color: #444;
+		li {
+			transition: border 0.3s ease;
+			color: rgba(0, 0, 0, 0.7);
+			&:hover {
+				background: darken($primary-red, 27);
+				span {
+					color: white;
+				}
+
+			}
+			span {
+				padding-left: 25px;
+			}
+			a {
+				color: #444;
+			}
+			
+			&.current {
+				background: darken($primary-red, 21);
+				color: white;
+				font-weight: bold;
+				border-left: 10px solid $primary-gold;
+			}
+			i {
+				opacity: 1;
+				margin-top: 2px;
+				float: none;
+			}
+
+			&.current:before, &:hover:before {
+				//border-radius: 20%;
+				width: 10px;
+				height: 10px;
+				position: absolute;
+				right: -20px;
+				left: auto;
+				top: 0px;
+				content: " ";
+				//border: 4px solid rgb(250, 139, 91);
+				//background: rgb(250, 139, 91);
+				z-index: 100;
+
+				width: 0;
+				height: 0;
+				border-style: solid;
+				border-width: 34px 0 34px 20px;
+				border-color: transparent transparent transparent darken($primary-red, 21);
+			}	
+			&:not(.current):hover:before {
+				border-color: transparent transparent transparent darken($primary-red, 27);
+			}		
+		}
+	}
+	ul {
 		list-style: none;
 		color: #eee;
 		padding: 0;
@@ -92,12 +154,32 @@ nav#sidenav {
 			}
 
 			span {
+				&:after {
+					position: absolute;
+					top: 0;
+					left: 12px;
+					content: " ";
+					height: 100%;
+					width: 12px;
+					background: $primary-red;
+					display: none;
+					opacity: 0.6;
+				}
 				padding: 20px 25px;
 				display: block;
 				padding-left: 55px;
 				i {
 					margin-right: 10px;
 				}
+			}
+		}
+		&.setup-stages li {
+			&:not(.not-yet-started):not(.scrolled-past) span:after {
+				height: 26px;
+				display: block;
+			}
+			&:not(.not-yet-started).scrolled-past span:after {
+				display: block;
 			}
 			i {
 				opacity: 0;
@@ -118,7 +200,7 @@ nav#sidenav {
 				top: 0;
 				content: " ";
 				height: 100%;
-				width: 25px;
+				width: 28px;
 				z-index: 100;
 
 			}
@@ -140,7 +222,7 @@ nav#sidenav {
 				width: 10px;
 				height: 10px;
 				position: absolute;
-				left: 25px;
+				left: 28px;
 				top: 26px;
 				content: " ";
 				//border: 4px solid rgb(250, 139, 91);
@@ -153,8 +235,6 @@ nav#sidenav {
 				border-width: 8px 0 8px 16px;
 				border-color: transparent transparent transparent $sidenav-arrow-color;
 			}
-			
-
 		}
 	}
 }

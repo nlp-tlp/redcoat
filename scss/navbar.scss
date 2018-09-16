@@ -35,13 +35,12 @@ nav#navbar .navbar-left {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: #444;
 		padding: 0 15px;
 		padding-left: 10px;
 		border-radius: 5px;
 		overflow: hidden;
-		background: url('/images/triangles3.png');
-		background-size: cover;		
+		//background: url('/images/triangles3.png');
+		background-size: cover;	
 	}
 
 	span.img {
@@ -76,13 +75,85 @@ nav .navbar-centre {
 	text-align: center;
 	padding: 12px 0;
 	font-weight: bold;
-	width: 70%;
+	width: 65%;
 }
 
 
 nav#navbar .navbar-right {
-	width: 12.5%;
+	width: 17.5%;
 	/*width: 190px;	*/	
+
+	.profile-circle-container {
+		
+		position: absolute;
+		top: 0;
+		right: 0;
+	}
+	#profile-circle {
+		position: absolute;
+		top: 38px;
+		right: 2px;
+		width: 60px;
+		height: 60px;
+		//border-radius: 50%;
+		//border: 2px solid $primary-gold;
+		//background: #222;
+		z-index: 12;
+		background-size: cover;
+		background-position: center;
+		background-repeat: no-repeat;
+	}
+	#profile-banner {
+		background: darken($primary-red, 21);
+		border-bottom: 2px solid darken($primary-red, 30);
+		transform: translate(0, $navbar-height);
+		color: white;
+		padding: 5px 35px;
+		padding-right: 75px;
+		font-size: 17px;
+		margin-right: 0;
+		z-index: 10;
+		.sneaky-border {
+			border-bottom: 2px solid darken($primary-red, 30);
+			position: absolute;
+			left: -15px;
+			bottom: -2px;
+			width: 15px;
+			&:after {
+				content: " ";
+				border-style: solid;
+				border-width: 0 17px 19px 0;
+				border-color: transparent darken($primary-red, 30) transparent transparent;
+				width: 0;			
+				height: 0;
+				position: absolute;
+				left: -2px;
+				top: -33px;
+			}
+		}
+		&:after {
+			content: " ";
+			border-style: solid;
+			border-width: 0 15px 16px 0;
+			border-color: transparent darken($primary-red, 21) transparent transparent;
+			width: 0;			
+			height: 0;
+			position: absolute;
+			left: -15px;
+			top: 0;
+		}
+		&:before {
+			content: " ";
+			border-style: solid;
+			border-width: 0 0 16px 15px;
+			border-color: transparent transparent darken($primary-red, 21) transparent;
+			width: 0;			
+			height: 0;
+			position: absolute;
+			left: -15px;
+			bottom: 0
+		}
+	}
 }
 
 
@@ -90,6 +161,8 @@ nav#navbar .navbar-right input, nav#navbar .navbar-right button {
 	height: 36px;
 }
 nav .dropdown-menu {
+
+	z-index: 1000;
 	width: 100%;
 	font-size: 14px;
 	display: inline-block;
@@ -101,7 +174,7 @@ nav .dropdown-menu {
 		text-align: center;
 		display: block;
 	}
-	margin-right: -6px;
+	margin-right: 80px;
 	margin-top: 0px;
 	border-left: 1px solid rgba(0, 0, 0, 0);
 	border-right: 1px solid rgba(0, 0, 0, 0);
