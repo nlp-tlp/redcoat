@@ -35,14 +35,8 @@ $(document).on('scroll', function() {
 	    	$($("#nav-setup-stages").children()[$(this).index()]).removeClass("not-yet-started")
 	       
 	    }
-
-
 	})
-
-
 });
-
-
 
 
 $("#already-tokenized-data-button").on("click", function() {

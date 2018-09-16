@@ -13,24 +13,35 @@ nav#navbar {
 	box-sizing: border-box;
 	//box-shadow: 1px 1px 5px -2px darken($primary-color, 40);
 	color: white;
+	display: flex;
 }
 
 nav#navbar .navbar-left {
-	position: absolute;
-	right: 0;
-	left: 0;	
 	width: 17.5%;			
-	display: table;
 	height: 100%;
 }
 #logo {
 	font-weight: bold;
 	vertical-align: middle;
-	display: table-cell;
 	width: 100%;
+	border-left: 1px solid rgba(0, 0, 0, 0);
+	border-right: 1px solid rgba(0, 0, 0, 0);
+	box-sizing: border-box;
+	span.img {
+		width: 40px;
+		height: 40px;
+		margin-right: 10px;
+	}
+	img {
+		width: 100%;
+		height: 100%;
+	}
 	a {
-		padding: 12px 0;
-		display: block;
+
+		padding: 5px 0;
+		display: flex;
+		justify-content: center;
+		align-items: center;
 		text-align: center;
 		text-decoration: none;
 		color: #eee;
@@ -40,21 +51,31 @@ nav#navbar .navbar-left {
 	}
 }
 
+nav .navbar-centre {
+	text-align: center;
+	padding: 12px 0;
+	font-weight: bold;
+	width: 70%;
+}
+
+
 nav#navbar .navbar-right {
-	position: absolute;
-	right: 0;
-	top: 0;	
+	width: 12.5%;
 	/*width: 190px;	*/	
 }
+
+
 nav#navbar .navbar-right input, nav#navbar .navbar-right button {
 	height: 36px;
 }
 nav .dropdown-menu {
+	width: 100%;
 	font-size: 14px;
 	display: inline-block;
-	padding: 16px 25px;
+	padding: 16px 0;
 	min-width: 140px;
 	position: relative;
+	text-align: center;
 	> span {
 		text-align: center;
 		display: block;
@@ -64,7 +85,7 @@ nav .dropdown-menu {
 	border-left: 1px solid rgba(0, 0, 0, 0);
 	border-right: 1px solid rgba(0, 0, 0, 0);
 }
-nav .dropdown-menu:hover, nav #logo-link:hover #logo {
+nav .dropdown-menu:hover, nav #logo:hover {
 	background: #333;
 	cursor: pointer;
 	border-left: 1px solid #444;
@@ -112,15 +133,6 @@ nav .dropdown-menu:hover .dropdown-menu-items {
 
 }
 
-nav .navbar-centre {
-	position: absolute;
-	top: 0;
-	left: 0;
-	left: 40%;
-	text-align: center;
-	padding: 12px 0;
-	font-weight: bold;
-}
 
 button#save-to-file {
 	font-family: "Open Sans", sans-serif;

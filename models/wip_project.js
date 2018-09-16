@@ -58,6 +58,9 @@ var WipProjectSchema = new Schema({
 
   user_emails: cf.fields.emails,
 
+  // Whether to perform automatic tagging on commonly-tagged tokens
+  automatic_tagging: cf.fields.automatic_tagging,
+
   // Some metadata about the WIP Project.
   file_metadata: cf.fields.file_metadata,
 
@@ -69,6 +72,15 @@ var WipProjectSchema = new Schema({
 
   // How many times each document should be annotated.
   overlap: cf.fields.overlap,
+
+
+  // A simple field to keep track of whether the user clicked 'distribute myself' on the form. (is not passed on to Project)
+  distribute_self: {
+    type: String,
+    enum: ["true", "false", "undecided"],
+    default: "undecided"
+  },
+
 }, {
   timestamps: { 
     createdAt: "created_at",
@@ -174,7 +186,7 @@ WipProjectSchema.methods.updateCategoryMetadata = function() {
         var c = (h[i].match(/\//g) || []).length;
         m = c > m ? c : m;
       }
-      console.log(m, h, '...');
+      //console.log(m, h, '...');
       return m;
     }
     function getAvgDepth(h) {
@@ -451,12 +463,12 @@ WipProjectSchema.pre('save', function(next) {
 
   // 1. Validate admin exists
   var User = require('./user')
-  t.verifyAssociatedExists(User, t.user_id, function(err) {
+  t.verifyAssociatedExists(User, t.user_id, function(err, user) {
     if(err) { next(err); return }
     //next()
 
     // 2. Remove invalid and duplicate emails.
-    t.removeInvalidAndDuplicateEmails(function() {
+    t.removeInvalidAndDuplicateEmails(user.email, function() {
       
       // 3. Verify that no other WIP Project has the same user_id as this one (only one WIP Project per user), provided this is a new WIP Project.
       if (t.isNew) {

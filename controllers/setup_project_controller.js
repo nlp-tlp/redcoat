@@ -57,8 +57,8 @@ exports.index = function(req, res, next) {
 
     // If they don't, create a new one
 
-    function renderPage(wip_project, project_name, project_desc, file_metadata, category_hierarchy, category_metadata, user_emails, category_hierarchy_permissions) {
-       res.render('setup-project', { wip_project_id: wip_project._id, project_name: project_name, project_desc: project_desc, file_metadata: file_metadata, category_hierarchy: category_hierarchy, category_metadata: category_metadata, user_emails: user_emails, csrfToken: req.csrfToken(), path: req.path, title: "Setup project", max_filesize_mb: MAX_FILESIZE_MB, max_emails: USERS_PER_PROJECT_MAXCOUNT, category_hierarchy_permissions: category_hierarchy_permissions });
+    function renderPage(wip_project, project_name, project_desc, file_metadata, category_hierarchy, category_metadata, user_emails, category_hierarchy_permissions, user_email, automatic_tagging, overlap, distribute_self) {
+       res.render('setup-project', { wip_project_id: wip_project._id, project_name: project_name, project_desc: project_desc, file_metadata: file_metadata, category_hierarchy: category_hierarchy, category_metadata: category_metadata, user_emails: user_emails, csrfToken: req.csrfToken(), path: req.path, title: "Setup project", max_filesize_mb: MAX_FILESIZE_MB, max_emails: USERS_PER_PROJECT_MAXCOUNT, category_hierarchy_permissions: category_hierarchy_permissions, user_email: user_email, automatic_tagging: automatic_tagging, overlap: overlap, distribute_self: distribute_self });
     }
 
     WipProject.findWipByUserId(testuser._id, function(err, wip_project) {
@@ -85,7 +85,11 @@ exports.index = function(req, res, next) {
                    wip_project.category_metadata ? JSON.stringify(wip_project.categoryMetadataToArray()) : "null",
                    //valid_labels ? JSON.stringify(valid_labels) : "null",
                    wip_project.user_emails ? JSON.stringify(wip_project.user_emails) : "null",
-                   wip_project.category_hierarchy_permissions ? wip_project.category_hierarchy_permissions : "null")
+                   wip_project.category_hierarchy_permissions ? wip_project.category_hierarchy_permissions : "null",
+                   testuser.email,
+                   wip_project.automatic_tagging,
+                   wip_project.overlap,
+                   wip_project.distribute_self ? wip_project.distribute_self : false)
 
 
         // if(wip_project.file_metadata["Filename"] != undefined) {
@@ -97,7 +101,7 @@ exports.index = function(req, res, next) {
         console.log("No existing WIP Project found - creating a new one.")
         wip_project = new WipProject({ user_id: testuser._id });
         wip_project.save(function(err, wip_project) {
-          renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", "null", "null", "null", "null"); 
+          renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", "null", "null", "null", "null", testuser.email, "", "1", "false"); 
         });   
       }
    
@@ -171,9 +175,15 @@ function processErrors(err_lines, field) {
 
 exports.upload_emails = function(req, res, next) {
   wip_project = res.locals.wip_project;
-
+  console.log(req.body)
   var emails = req.body.emails;
+  if(req.body.distribute_self == 'true') {
+    wip_project.distribute_self = true;
+  } else {
+    wip_project.distribute_self = false;
+  }
   wip_project.user_emails = emails;
+
   wip_project.save(function(err, wip_project) { // Duplicates/invalid emails are removed before saving.
     console.log("Emails:", wip_project.user_emails);
     if(err) { console.log(err); res.send( { "success": false} ); }
@@ -236,9 +246,29 @@ exports.upload_hierarchy_permissions = function(req, res, next) {
   wip_project.save(function(err) {
     if(err) res.send( {"success": false, err: err});
     res.send({ "success": true })
+  });  
+}
 
+exports.upload_automatic_tagging = function(req, res, next) {
+  wip_project = res.locals.wip_project;
+  var d = req.body.val;
+  console.log(d)
+  wip_project.automatic_tagging = d;
+  wip_project.save(function(err) {
+    if(err) res.send( {"success": false, err: err});
+    res.send({ "success": true })
   });
-  
+}
+
+exports.upload_overlap = function(req, res, next) {
+  wip_project = res.locals.wip_project;
+  var d = req.body.val;
+  console.log(d)
+  wip_project.overlap = parseInt(d);
+  wip_project.save(function(err) {
+    if(err) res.send( {"success": false, err: err});
+    res.send({ "success": true })
+  });
 }
 
 // // Upload the label categories

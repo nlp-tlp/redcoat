@@ -407,8 +407,8 @@ module.exports = {
 	// Verify an associated record exists in the database.
 	verifyAssociatedExists: function(model, asso_id, next) {	
 	  model.findOne({_id: asso_id}, function(err, obj) {
-	    if(obj == null) { next( { "association": new Error("Associated " + model.collection.collectionName + " record must exist in database.") } )  }
-	    else { next() }
+	    if(obj == null) { next( { "association": new Error("Associated " + model.collection.collectionName + " record must exist in database.") }, null )  }
+	    else { next(null, obj) }
 	  });
 	},
 	// Verify that all records in an associated array exist in the database.
@@ -463,11 +463,12 @@ module.exports = {
 	},
 
   // Removes invalid and duplicate emails, and truncates the list of emails to n = USERS_PER_PROJECT_MAXCOUNT
-  removeInvalidAndDuplicateEmails: function(next) {
+  removeInvalidAndDuplicateEmails: function(user_email, next) {
     if(this.user_emails) {
       var emails_set = Array.from(new Set(this.user_emails));
       var valid_emails = [];
       for(var i = 0; i < emails_set.length; i++) {
+        if(emails_set[i] == user_email) continue;
         if(validateEmailRegex(emails_set[i]) && emails_set[i].length <= 254) {
           if(i < USERS_PER_PROJECT_MAXCOUNT)
             valid_emails.push(emails_set[i]);
@@ -555,6 +556,11 @@ module.exports = {
       // Need to validate based on users (shouldn't exceed user count)
     },
 
+    automatic_tagging: {
+      type: Boolean,
+      required: true,
+    },
+
 		// valid_labels:	{
 		//     type: [
 		//       { 
@@ -569,6 +575,7 @@ module.exports = {
     category_hierarchy_permissions: {
       type: String,
       enum: ["full_permission", "create_edit_only", "no_modification"],
+      required: true,
     },
 
 		user_ids: {

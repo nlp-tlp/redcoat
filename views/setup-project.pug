@@ -96,10 +96,10 @@ block content
 					blockquote
 						a(id="distribute-to-emails-button" class="subsection-open-button") I have a list of the email addresses of people who will annotate my data.
 			
-					div#distribute-self.subsection.subsection-hidden
-						h3 Self Annotation
-						p OK then.
-					div#distribute-to-emails.subsection
+					//- div#distribute-self.subsection.subsection-hidden
+					//- 	h3 Self Annotation
+					//- 	p OK then.
+					div#distribute-to-emails.subsection.subsection-hidden
 						//.subsection-hidden
 						h3 Distribute via Email
 						p Please enter a list of emails below, one per line. An invitation to annotate your dataset will be sent to every valid email address via Redcoat's mail server.
@@ -131,18 +131,19 @@ block content
 								div.inner
 									div.input-range-summary#input-overlap-summary
 										p <span class="num">1</span> annotation<span class="plural"></span>/document<br>
-										p.small Each annotator labels approximately <span class="avg">100</span>% of the corpus
+										p.small Each annotator labels approximately <span class="avg">100</span>% of the corpus 
+										//&nbsp;&nbsp;<i class="fa fa-info-circle" title="This is assuming each annotator contributes equally. "></i>
 									div.input-range-container
 										div.left 1
 										input(id="input-overlap" name="input-overlap" type="range" min="1" max="10" value="1")
 										div.right 10
-									div.form-help More overlap can result in a more robust set of results, but requires longer annotation time. 
+									div.form-help More overlap can result in a more robust set of results, but requires longer annotation time. You can mark your project as "complete" at any time.
 						div.form-group
 							label(for="input-automatically-tag") Should commonly-tagged words be automatically tagged?
-							select#input-hierarchy-permissions
-								option(disabled selected value="not-selected") (click to select)
-								option(value="yes") Yes.
-								option(value="no") No.
+							select#input-automatic-tagging
+								option(disabled selected value="") (click to select)
+								option(value="true") Yes.
+								option(value="false") No.
 							div.form-help Redcoat can automatically tag words that have been seen more than 20 times by the annotators of your project. Only words that have been labelled more than 90% of the time as a particular class will be automatically tagged. Annotators may modify or delete these automatic annotations before they are saved.
 
 				div#saved-notification-project-options.saved-notification
@@ -211,7 +212,7 @@ block scripts
 	script(src="/javascripts/setup_project/jquery.autosize.js")
 	script(src="/javascripts/setup_project/jquery-linedtextarea.js")
 	script(src="/javascripts/shared/hierarchy_presets.js")
-
+	script(src="/javascripts/setup_project/page_scrolling.js")
 	
 	script.
 		csrfToken = "#{csrfToken}";
@@ -233,15 +234,19 @@ block scripts
 			sidenav_li_ele.addClass('completed');
 		}
 
-
+	script.
+		var errorBannerTimeout;
+		function displayServerErrorBanner() {
+			$("#error-banner").addClass("show");
+			//errorBannerTimeout = window.setTimeout(function() {				
+			//}, 5000);
+		}
+		$("#close-error-banner").on('click', function(e) {
+			e.preventDefault();
+			$("#error-banner").removeClass("show");
+		})
 
 	script.
-
-		//- presets = {
-		//- 	"NER": "person\norganisation\nlocation\nmisc",
-		//- 	"FIGER": "person\n actor\n architect\n artist\n athlete\n author\n coach\n director\n doctor\n engineer\n monarch\n musician\n politician\n religious_leader\n soldier\n terrorist\norganization\n airline\n company\n educational_institution\n fraternity_sorority\n sports_league\n sports_team\n terrorist_organisation\n government_agency\n government\n political_party\n educational_department\n military\n news_agency\nlocation\n city\n country\n county\n province\n railway\n road\n bridge\n body_of_water\n island\n mountain\n glacier\n astral_body\n cemetary\n park\nproduct\n engine\n airplane\n car\n ship\n spacecraft\n train\n camera\n mobile_phone\n computer\n software\n game\n instrument\n weapon\nart\n film\n play\n written_work\n newspaper\n music\nevent\n attack\n election\n protest\n military_conflict\n natural_disaster\n sports_event\n terrorist_attack\n building\n airport\n dam\n hospital\n hotel\n library\n power_station\n restaurant\n sports_facility\n theater\ntime\ncolor\naward\neducational_degree\ntitle\nlaw\nethnicity\nlanguage\nreligion\ngod\nchemical_thing\nbiological_thing\nmedical_treatment\ndisease\nsymptom\ndrug\nbody_part\nliving_thing\nanimal\nfood\nwebsite\nbroadcast_network\nbroadcast_program\ntv_channel\ncurrency\nstock_exchange\nalgorithm\nprogramming_language\ntransit_system\ntransit_line"
-		//- }
-
 		var categoryHierarchy = new CategoryHierarchy();
 
 		function uploadCategoryHierarchy(data) {
@@ -416,14 +421,27 @@ block scripts
 
 
 	script.
-		var p = "!{category_hierarchy_permissions}";
-		var o = $("#input-hierarchy-permissions option[value=\"" + p + "\"]");
-		if(o) {
-			// TODO: check the overlap slider before marking complete
-			$("#saved-notification-project-options").addClass('show');
-			$("#li-project-options").addClass('completed');			
-			o.attr("selected", "selected")
+
+		function checkProjectOptionsCompletion() {
+			if($("#input-automatic-tagging").val() != null && $("#input-hierarchy-permissions").val() != null) {
+				$("#saved-notification-project-options").addClass('show');
+				$("#li-project-options").addClass('completed');
+				$("#error-banner").removeClass("show");					
+			}
 		}
+
+
+	script.
+		(function() {
+			var p = "!{category_hierarchy_permissions}";
+			var o = $("#input-hierarchy-permissions option[value=\"" + p + "\"]");
+			if(o) {
+				console.log(o, p)
+				// TODO: check the overlap slider before marking complete				
+				o.attr("selected", "selected");
+				checkProjectOptionsCompletion();
+			}
+		})();
 
 		$("#input-hierarchy-permissions").on('change', function(e) {
 			$("#saved-notification-project-options").removeClass('show');
@@ -438,9 +456,7 @@ block scripts
 				headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
 				success: function( data )
 				{
-					$("#saved-notification-project-options").addClass('show');
-					$("#li-project-options").addClass('completed');
-					$("#error-banner").removeClass("show");					
+					checkProjectOptionsCompletion();
 				},
 				error: displayServerErrorBanner
 			});						
@@ -459,26 +475,74 @@ block scripts
 			ioa.html((1 / numAnnotators * v * 100).toFixed(2));
 			if(v > 1) iop.html("s");
 			else iop.html("");
+
+			$.ajax(
+			{
+				url: 			'upload-overlap',
+				type:			'POST',
+				data: 			{ val: iov.val() },
+				dataType: 		"json",
+				headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
+				success: function( data )
+				{
+					checkProjectOptionsCompletion();
+				},
+				error: displayServerErrorBanner
+			});	
 		}
 
 		iov.on('input', function() {
 			updateOverlapSummary();
 		});
+
+		(function() {			
+			var p = "!{overlap}";
+			var o = $("#input-overlap");
+			console.log(o, p)
+			if(o) {
+				o.val(p);
+				checkProjectOptionsCompletion();		
+			}
+		})();
+
+
 		updateOverlapSummary();
 
-
 	script.
-		var errorBannerTimeout;
-		function displayServerErrorBanner() {
-			$("#error-banner").addClass("show");
-			//errorBannerTimeout = window.setTimeout(function() {
-				
-			//}, 5000);
-		}
-		$("#close-error-banner").on('click', function(e) {
-			e.preventDefault();
-			$("#error-banner").removeClass("show");
+
+		var iat = $("#input-automatic-tagging");
+
+		(function() {			
+			var p = "!{automatic_tagging}";
+			var o = $("#input-automatic-tagging option[value=\"" + p + "\"]");
+			console.log(o, p)
+			if(o) {
+				o.attr("selected", "selected");
+				checkProjectOptionsCompletion();		
+			}
+		})();
+
+		iat.on('change', function() {
+			$("#saved-notification-project-options").removeClass('show');
+			$("#li-project-options").removeClass('completed');
+			console.log(this.value);
+			$.ajax(
+			{
+				url: 			'upload-automatic-tagging',
+				type:			'POST',
+				data: 			{ val: this.value },
+				dataType: 		"json",
+				headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
+				success: function( data )
+				{
+					checkProjectOptionsCompletion();				
+				},
+				error: displayServerErrorBanner
+			});							
 		})
+
+
+
 
 	
 
@@ -488,6 +552,8 @@ block scripts
 		var validateEmailRegex = function(val) {
 		  return (/.+\@.+\..+/i.test(val) && val.length <= 254);
 		}
+
+		var userEmail = "!{user_email}";
 
 		var MAX_EMAILS = !{max_emails};
 
@@ -500,31 +566,29 @@ block scripts
 		var safeToValidateEmails = true;
 
 		function uploadEmails() {
-
-
 			var devHtml = "";
-			var emails = det.val().split("\n");
 
 			console.log("Validating emails...");
-
-			
+		
 			var emails = det.val().split("\n");
 			var validEmails = new Set();
 			
 			for(var i = 0; i < emails.length; i++) {
-				if(validateEmailRegex(emails[i])) {
-					validEmails.add(emails[i]);
-					if(validEmails.size > MAX_EMAILS) {
-						devHtml += "<i class=\"fa fa-exclamation-triangle\" title=\"You may only enter up to " + MAX_EMAILS + " unique emails.\"></i><br/>\n"
-					} else{
-						devHtml += "<i class=\"fa fa-check\" title=\"This is a valid email address.\"></i><br/>\n"
-					}
-
-					
-					
+				if(emails[i] == userEmail) {
+					devHtml += "<i class=\"fa fa-close " + (emails[i].length == 0 ? "hide" : "") + "\" title=\"There is no need to add your own email address to the list.\"></i><br/>\n"
 				} else {
-					devHtml += "<i class=\"fa fa-close " + (emails[i].length == 0 ? "hide" : "") + "\" title=\"This is not a valid email address.\"></i><br/>\n"
+					if(validateEmailRegex(emails[i])) {
+						validEmails.add(emails[i]);
+						if(validEmails.size > MAX_EMAILS) {
+							devHtml += "<i class=\"fa fa-exclamation-triangle\" title=\"You may only enter up to " + MAX_EMAILS + " unique emails.\"></i><br/>\n"
+						} else{
+							devHtml += "<i class=\"fa fa-check\" title=\"This is a valid email address.\"></i><br/>\n"
+						}	
+					} else {
+						devHtml += "<i class=\"fa fa-close " + (emails[i].length == 0 ? "hide" : "") + "\" title=\"This is not a valid email address.\"></i><br/>\n"
+					}				
 				}
+
 			}
 			dev.html(devHtml)
 			$("#distribute-emails-count").html(validEmails.size);
@@ -534,14 +598,12 @@ block scripts
 				$("#distribute-emails-count").addClass("too-many");
 				$("#distribute-emails-warning").addClass("show");
 			}
-
-
-
+			console.log(emails)
 			$.ajax(
 			{
 				url: 			'upload-emails',
 				type:			'POST',
-				data: 			{emails},
+				data: 			{emails: emails, distribute_self: false},
 				dataType: 		"json",
 				headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
 				complete: function()
@@ -550,7 +612,8 @@ block scripts
 				},
 				success: function( data )
 				{					
-					$("#input-range-group havent-started").hide();
+					//$("#input-range-group .havent-started").hide();
+					$("#input-range-group .inapplicable").hide();
 					$("#error-banner").removeClass("show");
 					console.log("done")
 					// Only display the 'saved' notification if there is at least one valid email.
@@ -572,60 +635,50 @@ block scripts
 						$("#input-range-group inapplicable").show();
 					}
 					updateOverlapSummary();
+				},
+				error: function()
+				{								
+					displayServerErrorBanner();
+				}
+			});			
+		}
 
-
-
-					//if($("#project-name-form input").val().length > 0) {
-					//window.clearTimeout(rowValidatingTimeout);
-					//- if(safeToValidateEmails) {
-					//- 	if(data.errors) {	
-					//- 		console.log(data.errors);						
-					//- 		for(var i = 0; i < data.errors.length; i++) {
-					//- 			if(data.errors[i].length == 0) {
-					//- 				devHtml += "<i class=\"fa fa-check\" title=\"This is a valid email address.\"></i><br/>\n";
-					//- 			} else {
-					//- 				devHtml += "<i class=\"fa fa-close " + (emails[i].length == 0 ? "hide" : "") + "\" title=\"This is not a valid email address.\"></i><br/>\n"
-					//- 			}
-					//- 		}
-					//- 	} else {
-					//- 		for(var i = 0; i < emails.length; i++) {
-					//- 			devHtml += "<i class=\"fa fa-check\" title=\"This is a valid email address.\"></i><br/>\n";
-					//- 		}
-					//- 	}						
-					//- 	dev.html(devHtml);
-					//- } else {
-					//- 	console.log("Not safe to validate emails (changed since pinged)")
-					//- 	window.clearTimeout(emailsValidatingTimeout);
-					//- 	validlabelsTimeout = window.setTimeout(uploadEmails, 1000);						
-					//- 	safeToValidateEmails = true;						
-					//- }
-					//- uploadingEmails = false;
-
-
-
-					// Add the 'saved' thing
-
+		function uploadEmailsSelf() {
+			$("#input-range-group").addClass("disabled");
+			$("#input-range-group .havent-started").show();
+			$("#input-range-group .inapplicable").hide();
+			var emails = [''];
+			$.ajax(
+			{
+				url: 			'upload-emails',
+				type:			'POST',
+				data: 			{emails: emails, distribute_self: true},
+				dataType: 		"json",
+				headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
+				success: function( data )
+				{					
+					$("#input-overlap").attr("max", 1);
+					$("#saved-notification-distribution").addClass("show");
+					$("#li-distribution").addClass("completed");
+					$("#input-range-group .havent-started").hide();
+					$("#error-banner").removeClass("show");
+					$("#input-range-group").addClass("disabled");
+					$("#input-range-group .inapplicable").show();
+					$("#input-range-group .right").html(1);	
+					updateOverlapSummary();
 				},
 				error: function()
 				{								
 					displayServerErrorBanner();
 				}
 			});				
-
-
-
-			
-			//console.log(validEmails);
-
-			
-
 		}
 		
 			
 	 
 
 		det.on('input', function(e) {
-		
+
 			$("#input-range-group").addClass("disabled");
 			$("#input-range-group inapplicable").show();
 
@@ -645,10 +698,29 @@ block scripts
 			uploadingEmails = true;
 		})
 
+		$("#distribute-self-button").on('click', function() {
+			$("#saved-notification-distribution").removeClass("show");
+			$("#li-distribution").removeClass("completed");	
+			$("#input-range-group .inapplicable").show();		
+			$("#input-range-group .havent-started").hide();	
+			window.clearTimeout(emailsValidatingTimeout);
+			emailsValidatingTimeout = window.setTimeout(uploadEmailsSelf, 1000);
+			uploadingEmails = true;
+		});
+		$("#distribute-to-emails-button").on('click', function() {
+			$("#saved-notification-distribution").removeClass("show");
+			$("#li-distribution").removeClass("completed");	
+			$("#input-range-group .inapplicable").hide();		
+			$("#input-range-group .havent-started").show();		
+			window.clearTimeout(emailsValidatingTimeout);
+			emailsValidatingTimeout = window.setTimeout(uploadEmails, 1000);
+			uploadingEmails = true;
+		});
 
 		// Populate the textarea when emails already entered previously
 
 		var existingEmails   = !{user_emails};
+		var distributeSelf   = "!{distribute_self}";
 		if(existingEmails && existingEmails.length > 0) {
 			var existingEmailsStr = existingEmails.join("\n");
 			det.val(existingEmailsStr);
@@ -669,14 +741,17 @@ block scripts
 			updateOverlapSummary();
 
 		}
+		if(distributeSelf == "true") {
+			$("#distribute-self-button").click();
+		} else if(distributeSelf == "false") {
+			$("#input-range-group havent-started").show();
+			$("#distribute-to-emails-button").click();
+		}
 
 		det.autosize( {
 			minRows: 10,
 
 		});  
-
-	script(src="/javascripts/setup_project/page_scrolling.js")
-
 
 	// Project Name/Description
 	script.

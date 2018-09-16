@@ -41,6 +41,9 @@ var ProjectSchema = new Schema({
   // An array of all of the labels in the category hierarchy.
   //valid_labels: cf.fields.valid_labels,
 
+  // Whether to perform automatic tagging on commonly-tagged tokens
+  automatic_tagging: cf.fields.automatic_tagging,
+
   // The users who are annotating the project.
   user_ids: cf.fields.user_ids,
 
@@ -52,6 +55,9 @@ var ProjectSchema = new Schema({
 
   // How many times each document should be annotated.
   overlap: cf.fields.overlap,
+
+  // Determines the extent to which users may modify the hierarchy
+  category_hierarchy_permissions: cf.fields.category_hierarchy_permissions,
 
   frequent_tokens: {
     type: Schema.Types.ObjectId,

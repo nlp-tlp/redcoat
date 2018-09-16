@@ -915,6 +915,7 @@ button.large-button {
 	justify-content: center;
 	border: 1px solid #ddd;
 	margin-top: 20px;
+	padding-bottom: 20px;
 	.disabled-message {
 		display: none;
 		text-align: center;
@@ -979,6 +980,7 @@ div.input-range-container {
 }
 
 input[type=range] {
+  cursor: pointer;
   -webkit-appearance: none;
   margin: 18px 0;
   width: 100%;
@@ -1024,6 +1026,7 @@ input[type=range]::-moz-range-track {
   height: 8.4px;
   cursor: pointer;
   animate: 0.2s;
+  background: #f2f2f2;
   // background: #3071a9;
 }
 input[type=range]::-moz-range-thumb {
