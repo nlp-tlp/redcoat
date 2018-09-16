@@ -8,6 +8,7 @@ nav#navbar {
 	width: 100%;
 	z-index: 1000;
 	background: $primary-color;
+	
 	padding: 0px 0;
 	height: $navbar-height;
 	box-sizing: border-box;
@@ -30,6 +31,19 @@ nav#navbar .navbar-left {
 	border-left: 1px solid rgba(0, 0, 0, 0);
 	border-right: 1px solid rgba(0, 0, 0, 0);
 	box-sizing: border-box;
+	span.inner {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #444;
+		padding: 0 15px;
+		padding-left: 10px;
+		border-radius: 5px;
+		overflow: hidden;
+		background: url('/images/triangles3.png');
+		background-size: cover;		
+	}
+
 	span.img {
 		width: 40px;
 		height: 40px;
@@ -48,8 +62,12 @@ nav#navbar .navbar-left {
 		text-align: center;
 		text-decoration: none;
 		color: #eee;
+		text-shadow: 2px 2px #111;
 		&:hover {
 			color: white;
+			span.inner {
+				//background: #555;
+			}
 		}
 	}
 }
