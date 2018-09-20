@@ -1,75 +1,226 @@
 extends layout
 
+block head
+	<link rel='stylesheet' href='/stylesheets/datatables/datatables.css' />
+
+block header
+	header.bg-header
+		div.title
+			h1 Projects
+			div
+				a.button(href="/setup-project") <i class="fa fa-plus-circle"></i>New project
+		canvas#background(height="120px" width="1920")
+
+block sidenav
+
+	nav#sidenav.sidenav-project
+		ul
+			li#li-search-projects
+				span
+					label(for="projects-search") <i class="fa fa-search"></i>Search projects
+					input(id="projects-search" placeholder="Search...")
+
+			li#li-filter-projects
+				span
+					label(for="projects-filter") <i class="fa fa-filter"></i>Project creator
+					select(id="projects-filter")
+						option(value="") Anyone
+						option(value="Your projects") Your projects
+						option(value="Projects you've joined") Joined projects
+						option(value="Global projects") Global projects
+			li#li-sort-projects
+				span
+					label(for="projects-sort") <i class="fa fa-sort-amount-desc"></i>Sort projects
+					select(id="projects-sort")
+						option Project name
+						option # Annotators
+						option Date created
+						option Progress
+			//- li#li-sort-projects
+			//- 	span
+			//- 		label(for="projects-sort") <i class="fa fa-sort"></i>Sort projects
+			//- 		select
+			//- 			option Most recent
+			//- 			option Title
+			//- 			option # Annotators
+			//- 			option Progress
+			//- 			option Documents
+			li#li-projects-display
+				span
+					label(for="projects-display") <i class="fa fa-align-justify"></i>Display
+					select(id="projects-display")
+						option(value="detailed") Detailed view
+						option(value="list") List view
+
 block content
 
-	nav#sidenav.white
-		h3.page-title Projects
-		ul.page-list
-			li#li-your-projects.current
-				span
-					i.fa.fa-folder
-					| Your projects
-			li#li-joined-projects
-				span 
-					i.fa.fa-group
-					| Joined projects
-			li#li-global-projects
-				span 
-					i.fa.fa-globe
-					| Global projects
+
+
 
 	div#dashboard
+		article#project-details.article-heading.pad-header
 
-		article#project-details.article-heading
+			table#projects-table.detailed-view
 
-			h1 Your projects
-			div.pad
-				each proj in projects
-					a.dashboard-hover(href="projects/" + proj._id + "/tagging")
-						table.dashboard-project
-							thead
-								tr
-									th(colspan="3")
-										=proj.project_name						
-							tbody
-								tr
-									td(colspan="3")
-										table
-											thead 
-												tr 
-													th 
-														span Description 
-													th 
-														span # Annotators 
-													th 
-														span Progress 
-											tbody 
-												tr
-													td 	<span class="desc">#{proj.project_description || "(No description)"}</span>
-													td 	#{proj.user_ids.length}
-													td  <span class="progress-bar"><span class="inner" data-width="30%">&nbsp;&nbsp;<span class="done"></span>/<span class="total"></span></span>
-												tr 
-													td(colspan="3")
-														ul.metadata 
-															li Filename: #{proj.file_metadata.Filename}
-															li Number of documents: <span class="num-docs">#{proj.file_metadata['Number of documents']}</span>
-															li Number of tokens: #{proj.file_metadata["Number of tokens"]}
-															li Average tokens/document: #{proj.file_metadata["Average tokens/document"]}
+
+			if false
+				div.pad
+					each proj in projects
+						a.dashboard-hover(href="projects/" + proj._id + "/tagging")
+							table.dashboard-project
+								thead
+									tr
+										th(colspan="3")
+											=proj.project_name						
+								tbody
+									tr
+										td(colspan="3")
+											table
+												thead 
+													tr 
+														th 
+															span Description 
+														th 
+															span # Annotators 
+														th 
+															span Progress 
+												tbody 
+													tr
+														td 	<span class="desc">#{proj.project_description || "(No description)"}</span>
+														td 	#{proj.user_ids.length}
+														td  <span class="progress-bar"><span class="inner" data-width="30%">&nbsp;&nbsp;<span class="done"></span>/<span class="total"></span></span>
+													tr 
+														td(colspan="3")
+															ul.metadata 
+																li Filename: #{proj.file_metadata.Filename}
+																li Number of documents: <span class="num-docs">#{proj.file_metadata['Number of documents']}</span>
+																li Number of tokens: #{proj.file_metadata["Number of tokens"]}
+																li Average tokens/document: #{proj.file_metadata["Average tokens/document"]}
 
 
 									
 block scripts
+
+	script(src="/javascripts/datatables/datatables.min.js")
+	script(src="/javascripts/lipsumBG.js")
+
+
+
+	script.
+		//$(document).ready(function() {
+
+
+
+		$(document).ready(function() {
+		    var dataTable = $('#projects-table').DataTable( {
+		        "ajax": {
+		        	"url": "projects/getprojects",
+		        	"dataSrc": "projects"
+		        },
+		        "columnDefs": [
+		        	{"title": "Name", "targets": 0, "width": "35%" },
+		        	{"title": "Annotators", "targets": 1, "width": "15%", "className": "dt-center",
+		        	 //- "render": function ( data, type, row ) {
+		        	 //- 	return data.toString();
+
+		        	 //- },
+
+		        	},
+		        	{"title": "Progress", "targets": 2, "data": null, "width": "50%",
+					 "render": function ( data, type, row ) {
+
+						if ( type === "sort" || type === 'type' ) {
+							return data;
+						}
+
+					 	var nd = row["file_metadata"]["Number of documents"] * 3;
+
+						return '<span class="progress-bar"><span class="inner" style="width: ' + data + '%">' + data.toFixed(0) +'%</span></span>';
+						}
+					},
+		        ],
+		        "columns": [
+		            { "data": "project_name" },
+		            { "data": "num_annotators" },
+		            { "data": "percent_complete" },
+		            { "data": "owner", "visible": false, "searchable": true },
+		        ],
+		        "orderFixed": [3, 'desc'],
+		        "rowGroup": {
+		        	dataSrc: "owner",
+		        },
+		    } );
+
+
+			$("#projects-search").on("keyup search input paste cut", function() {
+			   dataTable.search(this.value).draw();
+			});    
+
+			$("#projects-display").on("change", function() {
+				console.log($(this).val())
+				if($(this).val() == "list")
+					$("#projects-table").removeClass("detailed-view");
+				else
+					$("#projects-table").addClass("detailed-view");
+			});
+
+			$("#projects-filter").on("change", function() {
+				var f = $(this).val();
+				dataTable.column(3).search(f).draw();
+
+			});
+
+
+		    $("#background").lipsumBG(false, false);
+		} );
+
+
+			//- function createTable() {
+
+			//-     table = $('#project-table').DataTable( {
+			//-         data: data,
+		
+			//-         //- "columns": [
+			//-         //-     {
+			//-         //-         "className":      'details-control',
+			//-         //-         "orderable":      false,
+			//-         //-         "data":           null,
+			//-         //-         "defaultContent": ''
+			//-         //-     },
+			//-         //-     { title: " Why", "data": "project_name" },
+			//-         //-     { "data": "description" },
+			//-         //- ],
+			//-         //"order": [[1, 'asc']]
+			//-     } );
+			//- }
+
+			//- var data;
+			//- $.ajax({
+		 //-        type: 'GET',
+		 //-        url: 'projects/getprojects',
+		 //-        success: function(d) {
+		 //-        	data = d.projects;
+		 //-        	console.log(data)
+		 //-        	createTable();
+		 //-        }
+		 //-    });
+
+
+		//- });
+		     
+
 	script.
 		$(document).ready(function() {
 			$(".progress-bar .inner").each(function() {
 				var total = parseInt($(this).closest("tbody").find(".num-docs").html()) * 3;
 				var done = Math.floor(Math.random() * total);
 				
-				console.log(total);
-				console.log($(this).find(".done"))
-				console.log($(this).find(".total"))
+				//console.log(total);
+				//console.log($(this).find(".done"))
+				//console.log($(this).find(".total"))
 				$(this).find(".done").html(done);
 				$(this).find(".total").html(total);
 				$(this).css("width", (done/total*100) + "%");
 			});
 		});
+

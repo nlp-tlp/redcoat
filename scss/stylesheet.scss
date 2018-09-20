@@ -129,12 +129,22 @@ canvas#background {
 	left: 0;
 	z-index: -10000;
 	background: none;
-	opacity: 0;
+	opacity: 0.2;
 	font-family: "Droid Sans Mono", monospace;
-	transition: opacity 2s ease;
+	
 	&.fade-in {
 		opacity: 0.2;
+		
 	}
+	&.faded-out {
+		opacity: 0;		
+	}
+	&.faded-out-trans {
+		transition: opacity 2s ease;	
+	}
+}
+header canvas#background {
+	position: absolute;
 }
 
 body {
@@ -180,6 +190,7 @@ hr {
 }
 
 main {
+
 	//width: 1152px;
 	max-width: 100%;
 	margin: 0 auto;
@@ -206,13 +217,116 @@ nav#sidenav {
 	left: 0;
 	top: 0;
 	height: 100%;
+	z-index: 10;
 	@if($sidenav-color == $primary-red-dark) {
 		border-right: 12px double $primary-gold;
 	}
 	//border-right: 12px double $primary-gold;
 	//max-width: 350px;
-	&.white {
+	h3.page-title {
+		padding: 10px 0;
+		margin: 0;
+		text-align: center;
+		color: #444;
+		margin-top: 15px;
+		border-bottom: 1px solid #ccc;
+	}
+	&.sidenav-project {
 		background: $sidenav-white-color;
 		border-right: 1px solid darken($sidenav-white-color, 5);
+		select {
+			font-family: $primary-font, 'FontAwesome';
+		}
+	}
+	&.sidenav-project ul {
+		padding :0;
+		color: #444;
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		margin-top: 175px;
+		li {
+			transition: border 0.3s ease;
+			color: rgba(0, 0, 0, 0.7);
+			padding: 5px 20px;
+
+			label {
+				font-weight: bold;
+			}
+			&.hoverable {
+				cursor: pointer;
+			}
+			&.hoverable:hover {
+				background: #f2f2f2;
+
+			}
+			span {
+				padding-left: 25px;
+
+			}
+			a {
+				color: #444;
+			}
+			select, input {
+				padding: 5px 10px;
+			}
+			
+			&.current {
+				//background: darken($primary-red, 21);
+				color: #222;
+				font-weight: bold;
+				background: #f2f2f2;
+			}
+			i {
+				opacity: 1;
+				margin-top: 2px;
+				float: none;
+				margin-right: 12px;
+			}
+
+		}
+	}
+}
+
+
+
+header.bg-header {
+	margin-top: $navbar-height;
+	height: $navbar-height*2;
+	background: linear-gradient(135deg, rgb(200, 89, 41), rgb(185, 12, 5)) no-repeat;
+	background-size: cover;
+	width: 100%;
+	z-index: 100;
+	position: relative;
+	overflow: hidden;
+	box-shadow: inset 0px -2px 6px -3px rgba(0, 0, 0, 0.5);
+	.title {
+		padding-left: 17.5%;
+		padding-right: 190px;
+		color: white;
+		
+		h1 {
+			text-shadow: 1px 1px #111;
+			margin: 0;
+			padding: 16px 0;
+			margin-left: 90px;
+			font-size: 50px;
+			float: left;
+		}
+		div {
+			float: right;
+		}
+		a.button {
+			border-radius: 3px;
+			text-decoration: none;
+			width: auto;
+			margin: 0;
+			padding: 10px 20px;
+			margin-top: 25px;
+			font-weight: bold;
+			i {
+				margin-right: 12px;
+			}
+		}
 	}
 }

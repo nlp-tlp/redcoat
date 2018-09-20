@@ -82,23 +82,7 @@ table.dashboard-project {
 		span.desc {
 			color: #555;
 		}
-		span.progress-bar {
-			color: #eee;
-			border: 1px solid darken($primary-red-dark, 9);
-			display: inline-block;
-			width: 100%;
-			padding: 0;
-			text-align: left;
-			background: darken($primary-red-dark, 7);
-			.inner {
-				transition: width 0.5s ease;
-				background: linear-gradient(lighten($primary-red-dark, 16), lighten($primary-red-dark, 10));
-				width: 0%;
-				padding: 0;
-				display: inline-block;
-				text-align: center;
-			}
-		}
+
 	}
 
 	
@@ -107,4 +91,144 @@ table.dashboard-project {
 
 
 
+}
+
+@keyframes animatedBackground {
+	from { background-position: 0 0; }
+	to { background-position: 100% 0; }
+}
+
+span.progress-bar {
+	color: #222;
+	display: inline-block;
+	width: 100%;
+	padding: 0;
+	text-align: left;
+	background: rgba(0, 0, 0, 0.05);
+	line-height: 130%;
+	.inner {
+		transition: width 0.5s ease;
+		background: linear-gradient(#ddd, #cacaca);
+		width: 0%;
+		padding: 0;
+		display: inline-block;
+		text-align: center;
+		position: relative;
+		z-index: 0;
+
+		&:before {
+			content: " ";
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			z-index: -1;
+			background-image: url('/images/bars.png');
+			background-blend-mode: lighten;
+			opacity: 0.2;
+			animation: animatedBackground 40s linear infinite;
+
+		}
+	}
+}
+
+
+
+// Dashboard
+
+.dataTables_filter, .dataTables_length {
+   display: none;
+}
+
+
+#projects-table {
+	thead {
+		display: none;
+	}
+	background: none;
+	border-bottom: 1px solid #d7d7d7;
+	&.detailed-view {
+		display: block;
+
+		tbody {
+			display: block;
+		}
+		tbody tr {
+			display: block;
+			&:not(.group) {
+				border: 1px solid #ccc;
+			}
+		}
+		thead tr {
+			border: none !important;
+		}
+		td {
+			display: block;
+			background: #f6f6f6;
+			border: none;
+
+		}
+		td:last-child {
+			border-right: none;
+		}
+		tr:not(.group) td:first-child {
+			padding: 12px 24px;
+			background: white;
+			border-left: none;
+			border-bottom: 1px solid #ccc;
+			font-weight: bold;
+			text-align: center;
+
+		}
+	
+		tr:not(.group):hover {
+			cursor: pointer;
+			border: 1px solid $primary-red;
+
+		}
+	}
+	thead {
+		//background: #eee;
+	}
+
+	th {
+
+		border-bottom: none;
+	}
+	tr.group {
+		background: none;
+		td {
+			background: none;
+			border: 1px solid #ddd;
+			background: $sidenav-white-color;
+			color: #222;
+		}
+	}
+	tr {
+		margin-bottom: 40px;
+	}
+	tr.even td {
+		background: #f5f5f5;
+	}
+	td:first-child {
+		border-left: 1px solid #d7d7d7;
+	}
+	td:last-child {
+		border-right: 1px solid #d7d7d7;
+	}
+	&:not(.detailed-view) {
+		tr:not(.group):hover {
+			cursor: pointer;
+			td:first-child {
+				border-left: 4px solid darken($primary-red, 21);
+			}
+		}
+		tr:hover span.progress-bar {
+			color: white;
+			.inner {
+				background: linear-gradient(darken($primary-red, 21), darken($primary-red, 28));
+			}	
+		}
+	}
 }

@@ -22,13 +22,34 @@ function isLoggedIn(req, res, next) {
 }
 
 
+router.get('/getprojects', function(req, res) {
+  console.log(req.user)
+  console.log("WHY")
+  req.user.getProjects(function(err, projects) {
+    if(err) {
+      console.log(err)
+      res.send(err);
+    }
+    else {
+      for(var i = 0; i < projects.length; i++) {
+        projects[i]["owner"] = ["Your projects", "Projects you've joined"][Math.floor(Math.random() * 2)];
+        projects[i]["num_annotators"] = projects[i].user_ids.length;
+        projects[i]["percent_complete"] = Math.random() * 100;
+      }
+      console.log(projects)
+      res.send({projects: projects});
+    }
+  });
+
+
+});
+
 router.get('/', isLoggedIn, function(req, res) {
   req.user.getProjects(function(err, projects) {
     if(err)
       res.send(err);
     else {
-      console.log(res.locals.user_stars, "<<")
-      res.render('dashboard', { projects: projects, title: "Dashboard" })
+      res.render('dashboard', { projects: projects, projects_json: JSON.stringify(projects), title: "Dashboard" })
     }
   });  
 });

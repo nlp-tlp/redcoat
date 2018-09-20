@@ -5,13 +5,10 @@ block head
 	<link rel='stylesheet' href='/stylesheets/spectrum.css' />
 
 
-
-block content
-
-
+block sidenav
 
 	section#setup-menu
-		nav#sidenav
+		nav#sidenav.sidenav-setup
 
 			ul.setup-stages#nav-setup-stages
 				li#li-project-details 
@@ -38,6 +35,11 @@ block content
 					span 
 						i.fa.fa-check
 						| Submission
+
+block content
+
+
+
 		div#error-banner
 			<i class="fa fa-exclamation-triangle"></i>&nbsp;&nbsp; There was a problem communicating with the server. Data entered into the form may not be saved.<a href="#" id="close-error-banner"><i class="fa fa-close"></i></a>
 		div#setup-questions
@@ -176,32 +178,32 @@ block content
 
 
 
-	div#entity-categories-window
-		div.inner
-			div.category-hierarchy
-				h3 Category Hierarchy
-				label Preset
-				select#entity-categories-preset
-					option(disabled selected value="no-preset") (no preset)
-					option(value="NER") NER (4 classes)
-					option(value="FIGER") FIGER (113 classes)
-					option(value="Mining") Mining accidents (177 classes)
-					option(value="Ultra-fine") Ultra-Fine (10,331 classes)
-				form#entity-categories-text-form.special-textarea-form
-					//div#entity-categories-validation.special-textarea-validation
-					//div.special-textarea-container
-						
-					textarea#entity-categories-textarea(rows="12", wrap="off"  cols="254" placeholder="example_class_1\nexample_class_2\n   example_child_1\n   example_child_2\nexample_class_3")
-					div#entity-categories-count-container
+		div#entity-categories-window
+			div.inner
+				div.category-hierarchy
+					h3 Category Hierarchy
+					label Preset
+					select#entity-categories-preset
+						option(disabled selected value="no-preset") (no preset)
+						option(value="NER") NER (4 classes)
+						option(value="FIGER") FIGER (113 classes)
+						option(value="Mining") Mining accidents (177 classes)
+						option(value="Ultra-fine") Ultra-Fine (10,331 classes)
+					form#entity-categories-text-form.special-textarea-form
+						//div#entity-categories-validation.special-textarea-validation
+						//div.special-textarea-container
+							
+						textarea#entity-categories-textarea(rows="12", wrap="off"  cols="254" placeholder="example_class_1\nexample_class_2\n   example_child_1\n   example_child_2\nexample_class_3")
+						div#entity-categories-count-container
 
 
 
-			div.category-tree
-				h3 Category Tree
-				svg#svg-entity-categories
-				div#category-hierarchy-error
-					div.message Generate a category hierarchy using the menu on the left.
-			a.close <span>Save and close</span>&nbsp;<i class="fa fa-close"></i>
+				div.category-tree
+					h3 Category Tree
+					svg#svg-entity-categories
+					div#category-hierarchy-error
+						div.message Generate a category hierarchy using the menu on the left.
+				a.close <span>Save and close</span>&nbsp;<i class="fa fa-close"></i>
 
 block scripts
 
