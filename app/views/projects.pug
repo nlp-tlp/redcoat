@@ -19,7 +19,6 @@ block sidenav
 				span
 					label(for="projects-search") <i class="fa fa-search"></i>Search projects
 					input(id="projects-search" placeholder="Search...")
-
 			li#li-filter-projects
 				span
 					label(for="projects-filter") <i class="fa fa-filter"></i>Project creator
@@ -38,16 +37,6 @@ block sidenav
 							option(value="2") Progress
 							option(value="4") Date created
 						a.button.sort-button#sort-order-button <i class="fa fa-sort-up"></i>
-
-			//- li#li-sort-projects
-			//- 	span
-			//- 		label(for="projects-sort") <i class="fa fa-sort"></i>Sort projects
-			//- 		select
-			//- 			option Most recent
-			//- 			option Title
-			//- 			option # Annotators
-			//- 			option Progress
-			//- 			option Documents
 			li#li-projects-display
 				span
 					label(for="projects-display") <i class="fa fa-align-justify"></i>Display
@@ -58,7 +47,10 @@ block sidenav
 block content
 
 
+	div
+		a(href="/projects/aZUO4c-Pr" id="projlink") Test project
 
+	div(style="height: 100px")
 
 	div#dashboard
 		article#project-details.article-heading.pad-header
@@ -66,47 +58,64 @@ block content
 			table#projects-table.detailed-view
 
 
-			if false
-				div.pad
-					each proj in projects
-						a.dashboard-hover(href="projects/" + proj._id + "/tagging")
-							table.dashboard-project
-								thead
-									tr
-										th(colspan="3")
-											=proj.project_name						
-								tbody
-									tr
-										td(colspan="3")
-											table
-												thead 
-													tr 
-														th 
-															span Description 
-														th 
-															span # Annotators 
-														th 
-															span Progress 
-												tbody 
-													tr
-														td 	<span class="desc">#{proj.project_description || "(No description)"}</span>
-														td 	#{proj.user_ids.length}
-														td  <span class="progress-bar"><span class="inner" data-width="30%">&nbsp;&nbsp;<span class="done"></span>/<span class="total"></span></span>
-													tr 
-														td(colspan="3")
-															ul.metadata 
-																li Filename: #{proj.file_metadata.Filename}
-																li Number of documents: <span class="num-docs">#{proj.file_metadata['Number of documents']}</span>
-																li Number of tokens: #{proj.file_metadata["Number of tokens"]}
-																li Average tokens/document: #{proj.file_metadata["Average tokens/document"]}
+			//- if false
+			//- 	div.pad
+			//- 		each proj in projects
+			//- 			a.dashboard-hover(href="projects/" + proj._id + "/tagging")
+			//- 				table.dashboard-project
+			//- 					thead
+			//- 						tr
+			//- 							th(colspan="3")
+			//- 								=proj.project_name						
+			//- 					tbody
+			//- 						tr
+			//- 							td(colspan="3")
+			//- 								table
+			//- 									thead 
+			//- 										tr 
+			//- 											th 
+			//- 												span Description 
+			//- 											th 
+			//- 												span # Annotators 
+			//- 											th 
+			//- 												span Progress 
+			//- 									tbody 
+			//- 										tr
+			//- 											td 	<span class="desc">#{proj.project_description || "(No description)"}</span>
+			//- 											td 	#{proj.user_ids.length}
+			//- 											td  <span class="progress-bar"><span class="inner" data-width="30%">&nbsp;&nbsp;<span class="done"></span>/<span class="total"></span></span>
+			//- 										tr 
+			//- 											td(colspan="3")
+			//- 												ul.metadata 
+			//- 													li Filename: #{proj.file_metadata.Filename}
+			//- 													li Number of documents: <span class="num-docs">#{proj.file_metadata['Number of documents']}</span>
+			//- 													li Number of tokens: #{proj.file_metadata["Number of tokens"]}
+			//- 													li Average tokens/document: #{proj.file_metadata["Average tokens/document"]}
 
 
-									
+			
+
 block scripts
 
 	script(src="/javascripts/datatables/datatables.min.js")
 	script(src="/javascripts/lipsumBG.js")
 
+
+	script.
+
+		$('#projlink').click(function(){
+			$.ajax({
+				type: "GET",
+				url: "/projects/aZUO4c-Pr",
+				async: true,
+				data: {  },
+				success: function(data) {
+
+					console.log(data);
+				}
+			});
+			return false;
+		})
 
 
 	script.
@@ -162,7 +171,7 @@ block scripts
 		        	 	return '<a href="/projects/' + row['_id'] + '/tagging">' + data + "</a>";
 		        	 }
 		        	},
-		        	{"title": "Annotators", "targets": 1, "width": "15%", "className": "dt-center", "type": "html",
+		        	{"title": "Annotators", "targets": 1, "width": "15%", "className": "dt-center", "type": "numeric",
 		        	 "render": function (data, type, row) {
 						if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order.
 							return data;
@@ -170,9 +179,10 @@ block scripts
 		        	 	return '<a href="/projects/' + row['_id'] + '/tagging"><span class="detailed-table"><span class="detailed-show"><em>\"' + row['project_description'] + '\"</em></span><span>' + data + ' annotator' + (data > 1 ? "s" : "") + "</span></span></a>";
 		        	 }
 		        	},
-		        	{"title": "Progress", "targets": 2, "data": null, "width": "50%", "type": "html",
+		        	{"title": "Progress", "targets": 2, "width": "50%", "type": "numeric",
 					 "render": function ( data, type, row ) {
 						if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order.
+							console.log(row, data)
 							return data;
 						}
 					 	var nd = row["file_metadata"]["Number of documents"] * 3;

@@ -26,6 +26,9 @@ nav#sidenav {
 		select {
 			font-family: $primary-font, 'FontAwesome';
 		}
+		input:not(:focus), select:not(:active) {
+			border: 2px solid #c2c2c2;
+		}
 	}
 	&.sidenav-project ul {
 		padding :0;
@@ -66,19 +69,18 @@ nav#sidenav {
 				padding-right: 10px;
 				width: 100%;
 				display: flex;
+				margin-bottom: -25px;
 
 				
-				select {
-					width: 80%;
-				}
 				.sort-button {
 					width: 33px;
 					padding: 5px 10px;
 					padding-top: 10px;
 					margin: 0;		
+					margin-right: 4px;
 					margin-top: 10px;	
 					margin-bottom: 10px;
-					border: 2px solid #ddd;
+					border: 2px solid #c2c2c2;
 					background: white;
 					&:after {
 						display: none;

@@ -154,6 +154,7 @@ span.progress-bar {
 	}
 	&.detailed-view {
 		display: block;
+		border-bottom: none;
 
 		tbody {
 			display: block;
@@ -261,6 +262,7 @@ span.progress-bar {
 			border: 1px solid #ddd;
 			background: $sidenav-white-color;
 			color: #222;
+			border: 1px solid darken($sidenav-white-color, 5);
 		}
 		span.sort-info {
 			font-weight: normal;

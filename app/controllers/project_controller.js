@@ -62,3 +62,9 @@ module.exports.tagging = function(req, res) {
     });
   });
 }
+
+
+module.exports.getProject = function(req, res) {
+  var id = req.params.id;
+  res.render("error");
+}
