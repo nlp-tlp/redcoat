@@ -1,4 +1,7 @@
-var userController = require('../controllers/user.js');
+require('rootpath')();
+var logger = require('config/winston');
+
+var userController = require('../controllers/user_controller.js');
 var express = require('express');
 var router = express.Router();
 

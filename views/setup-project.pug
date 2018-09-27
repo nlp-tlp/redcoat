@@ -290,6 +290,7 @@ block scripts
 		function showEntityCategoriesWindow() {
 			$("#entity-categories-window").addClass("show");
 			$('#main > *:not(#entity-categories-window').addClass("blur");
+			$('#sidenav').addClass("blur");
 			$('#navbar').addClass("blur");
 			$('#entity-categories-summary').removeClass("is-success");
 			$('#entity-categories-summary').removeClass("is-error");
@@ -298,6 +299,7 @@ block scripts
 			$("#entity-categories-window").removeClass("show");
 			$('#main > *:not(#entity-categories-window').removeClass("blur");
 			$('#navbar').removeClass("blur");
+			$('#sidenav').removeClass("blur");
 
 			// Need to save the entities 
 			//var entitySlashData = txt2slash($("#entity-categories-textarea").val().replace(/\t/g, " "));

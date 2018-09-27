@@ -148,6 +148,12 @@ span.progress-bar {
 	}
 	background: none;
 	border-bottom: 1px solid #d7d7d7;
+	.detailed-show {
+		display: none;
+	}
+	.detailed-table {
+		display: block;
+	}
 	&.detailed-view {
 		display: block;
 
@@ -187,6 +193,54 @@ span.progress-bar {
 			border: 1px solid $primary-red;
 
 		}
+		.detailed-show {
+			display: block;
+		}
+		.detailed-table {
+			margin-top: 10px;
+			display: table;
+			width: 100%;
+			> * {
+				display: table-cell;
+				width: 50%;
+			}
+		}
+		.detailed-fullwidth {
+			display: block;
+			text-align: center;
+			padding: 0 20px;
+		}
+
+	}
+	&:not(.detailed-view) {
+
+		tr:not(.group) {
+			td {
+				border: 1px solid rgba(0, 0, 0, 0);
+				border-left: none;
+				border-right: none;
+			}
+			td:first-child { border-left: 1px solid rgba(0, 0, 0, 0); }
+			td:last-child { border-right: 1px solid rgba(0, 0, 0, 0); }
+
+			td:nth-child(1) { width: 35%; }
+			td:nth-child(2) { width: 15%; text-align: right; }
+			td:nth-child(3) { width: 50%; }
+		}
+		tr:not(.group):hover {
+			cursor: pointer;
+			td {
+				border-top: 1px solid $primary-red;
+				border-bottom: 1px solid $primary-red;
+			}
+			td:first-child {
+				border-left: 1px solid $primary-red;
+			}
+			td:last-child {
+				border-right: 1px solid $primary-red;
+			}
+
+		}
 	}
 	thead {
 		//background: #eee;
@@ -217,18 +271,45 @@ span.progress-bar {
 	td:last-child {
 		border-right: 1px solid #d7d7d7;
 	}
-	&:not(.detailed-view) {
-		tr:not(.group):hover {
-			cursor: pointer;
-			td:first-child {
-				border-left: 4px solid darken($primary-red, 21);
-			}
+	// &:not(.detailed-view) {
+	// 	tr:not(.group):hover {
+	// 		cursor: pointer;
+	// 		td:first-child {
+	// 			border-left: 4px solid darken($primary-red, 21);
+	// 		}
+	// 	}
+	// }
+	tr:not(.group) td {
+		padding: 0;
+	}
+	td a {
+		padding: 10px 10px;
+		color: #222;
+		display: block;
+		&:hover {
+			text-decoration: none;
 		}
-		tr:hover span.progress-bar {
-			color: white;
-			.inner {
-				background: linear-gradient(darken($primary-red, 21), darken($primary-red, 28));
-			}	
+	}
+	tr:hover span.progress-bar {
+		color: white;
+		.inner {
+			background: linear-gradient(darken($primary-red, 21), darken($primary-red, 28));
+		}	
+	}
+
+	ul.metadata {
+		font-size: 14px;
+		color: #777;
+		padding: 0;
+		li {
+			display: inline-block;
+			padding: 0 10px;
+			&:not(:last-child):after {
+				margin: 0 20px 0 40px;
+				content: "|";
+				color: #ccc;
+
+			}
 		}
 	}
 }

@@ -1,10 +1,6 @@
 extends layout
 
-block head
-	link(rel='stylesheet', href='/stylesheets/tagging-interface.css')
-
-
-block content
+block sidenav
 	nav#sidenav.sidenav-project
 		nav#legend
 			h3 Legend
@@ -28,6 +24,8 @@ block content
 			<li><b>1-9</b>: tag entity</li>
 			</ul>
 			</nav>
+
+block content
 	div#tagging-container
 		#sentence-tagging
 

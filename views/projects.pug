@@ -32,10 +32,11 @@ block sidenav
 				span
 					label(for="projects-sort") <i class="fa fa-sort-amount-desc"></i>Sort projects
 					select(id="projects-sort")
-						option Project name
-						option # Annotators
-						option Date created
-						option Progress
+						option(value="0") Project name
+						option(value="1") # Annotators
+						option(value="2") Progress
+						option(value="4") Date created
+
 			//- li#li-sort-projects
 			//- 	span
 			//- 		label(for="projects-sort") <i class="fa fa-sort"></i>Sort projects
@@ -118,24 +119,37 @@ block scripts
 		        	"dataSrc": "projects"
 		        },
 		        "columnDefs": [
-		        	{"title": "Name", "targets": 0, "width": "35%" },
+		        	{"title": "Name", "targets": 0, "width": "35%",
+		        	 "render": function (data, type, row) {
+		        	 	return '<a href="/projects/' + row['_id'] + '/tagging">' + data + "</a>";
+		        	 }
+		        	},
 		        	{"title": "Annotators", "targets": 1, "width": "15%", "className": "dt-center",
-		        	 //- "render": function ( data, type, row ) {
-		        	 //- 	return data.toString();
-
-		        	 //- },
-
+		        	 "render": function (data, type, row) {
+		        	 	console.log(row);
+		        	 	return '<a href="/projects/' + row['_id'] + '/tagging"><span class="detailed-table"><span class="detailed-show"><em>\"' + row['project_description'] + '\"</em></span><span>' + data + ' annotator' + (data > 1 ? "s" : "") + "</span></span></a>";
+		        	 }
 		        	},
 		        	{"title": "Progress", "targets": 2, "data": null, "width": "50%",
 					 "render": function ( data, type, row ) {
-
-						if ( type === "sort" || type === 'type' ) {
+						if ( type === "sort" || type === 'type' ) { // Ensure it sorts in the correct order.
 							return data;
 						}
-
 					 	var nd = row["file_metadata"]["Number of documents"] * 3;
-
-						return '<span class="progress-bar"><span class="inner" style="width: ' + data + '%">' + data.toFixed(0) +'%</span></span>';
+						return '<a href="/projects/' + row['_id'] + '/tagging">' +
+							   '<span class="detailed-fullwidth">' +
+							   '<span class="progress-bar"><span class="inner" style="width: ' + data + '%">' + data.toFixed(0) +'%</span></span></span>' +
+							   '<span class="detailed-fullwidth detailed-show">' +
+							   '<ul class="metadata">' +
+							   '<li> Filename: ' + row["file_metadata"]["Filename"] + '</li>' +
+							   '<li> Number of documents: ' + row["file_metadata"]["Number of documents"] + '</li>' +
+							   '<li> Number of tokens: ' + row["file_metadata"]["Number of tokens"] + '</li>' +
+							   '<li> Average tokens/document: ' + row["file_metadata"]["Average tokens/document"] + '</li>' +
+							   '</ul></span>' +
+							   '<span class="detailed-fullwidth detailed-show">' +
+							   '<ul class="metadata" style="margin-bottom: 0px">' +
+							   '<li>Created at ' + row["created_at"] + '</li></ul></span>'
+							   '</a>';
 						}
 					},
 		        ],
@@ -143,7 +157,8 @@ block scripts
 		            { "data": "project_name" },
 		            { "data": "num_annotators" },
 		            { "data": "percent_complete" },
-		            { "data": "owner", "visible": false, "searchable": true },
+		            { "data": "owner", "visible": false, "searchable": true},
+		            { "data": "created_at", "visible": false, "sortable": true},
 		        ],
 		        "orderFixed": [3, 'desc'],
 		        "rowGroup": {
@@ -167,6 +182,14 @@ block scripts
 			$("#projects-filter").on("change", function() {
 				var f = $(this).val();
 				dataTable.column(3).search(f).draw();
+
+			});
+
+
+			$("#projects-sort").on("change", function() {
+				var f = parseInt($(this).val());
+				console.log(f)
+				dataTable.order([ [ f, 'asc' ] ]).draw();
 
 			});
 

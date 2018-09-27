@@ -1,10 +1,9 @@
-main {
+#tagging-container {
 	width: 1152px;
+	padding-top: 120px;
+	padding-left: 100px;
+	padding-bottom: 300px;
 	max-width: 100%;
-	margin: 0 auto;
-	position: relative;
-	padding-top: 150px;
-	padding-left: 200px;
 }
 #sentence-tagging, #ending-message {
 	font-size: 32px;

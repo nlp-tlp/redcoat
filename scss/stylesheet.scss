@@ -1,73 +1,58 @@
 @import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
 @import url('https://fonts.googleapis.com/css?family=Droid+Sans+Mono:400,700');
 
-
-@import "navbar";
-@import "setup-project";
 @import "mixins";
-@import "upload-widget";
+@import "navbar";
+@import "sidenav";
+
+// The homepage
+@import "homepage";
+
+// The form for logging in/registering
 @import "user-form";
-@import "dashboard";
+
+// The setup project page
+@import "setup-project";
+@import "upload-widget";
 @import "category-tree";
 @import "d3-context-menu";
 @import "jquery-linedtextarea";
 
-$navbar-height: 50px;
+// The project dashboard
+@import "projects";
 
-#welcome {
-	.title-container {
-		display: flex;
-		justify-items: center;
-		img {
-			margin-left: 30px;
-		}
-		.title-words {
-			width: 70%;
-			margin-left: -70px;
-		}
+// The tagging interface
+@import "tagging-interface";
+
+html {
+	height: 100%;
+}
+body {
+	font-family: $primary-font;
+	padding: 0;
+	margin: 0;
+	background: #f2f2f2;
+	color: #222;
+	font-size: 20px;
+	//background-image: url("/images/pattern.svg")
+	//background: gradient()
+	//background-image: url("/images/squairy_light_@2X.png");
+	//background-size: cover;
+	&.homepage {
+		background: linear-gradient(rgb(250, 139, 91), rgb(185, 12, 5)) no-repeat;
+		background-size: cover;
+		height: 100%;
+		transition: background 0.5s ease;
 	}
-	h1, h2#h2-byline  {
-		text-align: center;
-		//text-transform: uppercase;
-		font-size: 140px;
-		position: relative;
-		margin-bottom:  0px;
-		color: white;
-		letter-spacing: 2px;
-		margin-top: 60px;
 
-		&:before {
-			content: attr(data-content);
-			top: 2px;
-			left: 2px;
-			position: absolute;
-			opacity: 0.7;
-			text-align: center;
-			width: 100%;
-			color: darken(rgb(185, 12, 5),30);
-			z-index: -100;
+	&.setup-menu {
+		background: #f4f4f4;
+	}
+}
 
 
-		}
-	}
-	h2#h2-byline {
-		font-size: 27px;
-		margin-top: 10px;
-		margin-bottom: 40px;
-		text-transform: uppercase;
-	}
-	p {
-		color: #444;
-		font-size: 28px;
-	}
-	div.buttons {
-
-		width: 90%;
-		margin: 0 5%;
-		box-sizing: border-box;
-		text-align: center;
-		margin-top: 27vh;
-	}
+pre.error-stack {
+	font-size: 14px;
 }
 
 .button {
@@ -90,7 +75,6 @@ $navbar-height: 50px;
 	i {
 		margin-right: 10px;
 	}
-	
 
 	h2 {
 
@@ -101,7 +85,6 @@ $navbar-height: 50px;
 		color: black;
 		color: rgb(185, 12, 5);
 		//transform: translate(0, 2px);
-
 	}
 	&:after {
 		border-right: 2px solid darken(rgb(185, 12, 5), 30);
@@ -121,57 +104,10 @@ code {
 	font-family: "Courier New", serif;
 }
 
-canvas#background {
-	position: fixed;
-	width: 100%;
-	height: 100%;
-	top: 0;
-	left: 0;
-	z-index: -10000;
-	background: none;
-	opacity: 0.2;
-	font-family: "Droid Sans Mono", monospace;
-	
-	&.fade-in {
-		opacity: 0.2;
-		
-	}
-	&.faded-out {
-		opacity: 0;		
-	}
-	&.faded-out-trans {
-		transition: opacity 2s ease;	
-	}
-}
 header canvas#background {
 	position: absolute;
 }
 
-body {
-	font-family: $primary-font;
-	padding: 0;
-	margin: 0;
-	background: #f2f2f2;
-	color: #222;
-	font-size: 20px;
-	//background-image: url("/images/pattern.svg")
-	//background: gradient()
-	//background-image: url("/images/squairy_light_@2X.png");
-	//background-size: cover;
-	&.homepage {
-		background: linear-gradient(rgb(250, 139, 91), rgb(185, 12, 5)) no-repeat;
-		background-size: cover;
-		height: 100%;
-		transition: background 0.5s ease;
-	}
-
-}
-body.setup-menu {
-	background: #f4f4f4;
-}
-html {
-	height: 100%;
-}
 input, button {
 	font-family: $primary-font;
 }
@@ -190,7 +126,6 @@ hr {
 }
 
 main {
-
 	//width: 1152px;
 	max-width: 100%;
 	margin: 0 auto;
@@ -205,88 +140,8 @@ main {
 		margin-left: 20%; 
 	}
 }
-body.homepage main {
-	width: 1152px;
-	margin: 0 auto;
-}
 
-nav#sidenav {
-	width: 17.5%;
-	background: $sidenav-color;
-	position: fixed;
-	left: 0;
-	top: 0;
-	height: 100%;
-	z-index: 10;
-	@if($sidenav-color == $primary-red-dark) {
-		border-right: 12px double $primary-gold;
-	}
-	//border-right: 12px double $primary-gold;
-	//max-width: 350px;
-	h3.page-title {
-		padding: 10px 0;
-		margin: 0;
-		text-align: center;
-		color: #444;
-		margin-top: 15px;
-		border-bottom: 1px solid #ccc;
-	}
-	&.sidenav-project {
-		background: $sidenav-white-color;
-		border-right: 1px solid darken($sidenav-white-color, 5);
-		select {
-			font-family: $primary-font, 'FontAwesome';
-		}
-	}
-	&.sidenav-project ul {
-		padding :0;
-		color: #444;
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		margin-top: 175px;
-		li {
-			transition: border 0.3s ease;
-			color: rgba(0, 0, 0, 0.7);
-			padding: 5px 20px;
 
-			label {
-				font-weight: bold;
-			}
-			&.hoverable {
-				cursor: pointer;
-			}
-			&.hoverable:hover {
-				background: #f2f2f2;
-
-			}
-			span {
-				padding-left: 25px;
-
-			}
-			a {
-				color: #444;
-			}
-			select, input {
-				padding: 5px 10px;
-			}
-			
-			&.current {
-				//background: darken($primary-red, 21);
-				color: #222;
-				font-weight: bold;
-				background: #f2f2f2;
-			}
-			i {
-				opacity: 1;
-				margin-top: 2px;
-				float: none;
-				margin-right: 12px;
-			}
-
-		}
-	}
-}
 
 
 

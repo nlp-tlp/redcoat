@@ -1,12 +1,17 @@
+require('rootpath')();
+var logger = require('config/winston');
+
 var User = require('../models/user');
 var passport = require('passport');
 
+// The registration page.
 exports.registerPage = function(req, res) {
   res.render('users/register', { title: "Register", formData: {} });
 }
 
+// The register action.
 exports.register = function(req, res, next) {
-    console.log('registering user');
+    logger.info('Registering user "' + req.body.username + '".');
     User.register(new User({username: req.body.username, email: req.body.email}), req.body.password, function(err, user) {
       if (err) {
         var msg = err.message
@@ -29,12 +34,14 @@ exports.register = function(req, res, next) {
     });
   }
 
+// The login page.
 exports.loginPage = function(req, res) {
   if(req.user)
     res.redirect('/projects');
   res.render('users/login', {formData: {}, title: "Login"});
 }
 
+// The login action.
 exports.login = function(req, res, next) {
   passport.authenticate('local', function(err, user, info) {
     if(err) return next(err);
@@ -56,6 +63,7 @@ exports.login = function(req, res, next) {
    
 }
 
+// The logout action.
 exports.logout = function(req, res) {
   req.logout();
   res.redirect('/');

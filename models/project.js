@@ -149,7 +149,6 @@ ProjectSchema.methods.recommendDocgroupToUser = function(user, next) {
   var q = { $and: [{ project_id: t._id}, { times_annotated: { $lt: t.overlap } }, { _id: { $nin: user.docgroups_annotated }} ] };
 
   DocumentGroup.count(q, function(err, count) {
-    console.log(count)
     var random = Math.random() * count; // skip over a random number of records. Much faster than using find() and then picking a random one.
     DocumentGroup.findOne(q).lean().skip(random).exec(function(err, docgroup) {
       if(err) return next(err);

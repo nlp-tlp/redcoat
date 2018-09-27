@@ -1,3 +1,6 @@
+require('rootpath')();
+var logger = require('config/winston');
+
 var WipProject = require('../models/wip_project');
 var formidable = require('formidable');
 var User = require('../models/user');
@@ -13,21 +16,6 @@ var fs = require('fs')
 var util = require('util')
 var path = require('path');
 
-// Verifies that the WIP Project ID is the same as the logged in user's WIP Project Id.
-// This middleware function should be used for every POST request on the Setup Project page.
-exports.verifyWippid = function(req, res, next) {
-  testuser = res.locals.user;
-
-  //console.log(req.body["_wippid"], res.locals.user, "BODY")
-  var wippid = req.headers.wippid || req.body["_wippid"];
-  WipProject.verifyWippid(testuser._id, wippid, function(err, wip_project) {
-    if(!wip_project) { console.log("incorrect user"); res.send({ "success": false }); }
-    else {
-      res.locals.wip_project = wip_project;
-      next();
-    }
-  });
-}
 
 
 
@@ -38,76 +26,63 @@ exports.index = function(req, res, next) {
   res.header('Expires', '-1');
   res.header('Pragma', 'no-cache');
 
+  var testuser = res.locals.user;
+  // Check if the user has a WIP Project
+  // <code here>
 
-  // // (for now) create a new User for the wip_project to belong to
-  //  user = new User({
-  //    username: "Pingu99",
-  //    email: "pingu@nootnoot-" + Math.random().toString(36).substring(4) + ".com",
-  //  });
- 
-  // //var user = req.user;
+  // If they don't, create a new one
 
-  // //User.authenticate ......
-  // User.register(user, "password", function(err, user) {})
-  //User.findOne({ username: "Pingu99" }, function(err, user) {
-    var testuser = res.locals.user;
-    console.log("username:", testuser.username, "email:", testuser.email);
-    // Check if the user has a WIP Project
-    // <code here>
+  function renderPage(wip_project, project_name, project_desc, file_metadata, category_hierarchy, category_metadata, user_emails, category_hierarchy_permissions, user_email, automatic_tagging, overlap, distribute_self) {
+     res.render('setup-project', { wip_project_id: wip_project._id, project_name: project_name, project_desc: project_desc, file_metadata: file_metadata, category_hierarchy: category_hierarchy, category_metadata: category_metadata, user_emails: user_emails, csrfToken: req.csrfToken(), path: req.path, title: "Setup project", max_filesize_mb: MAX_FILESIZE_MB, max_emails: USERS_PER_PROJECT_MAXCOUNT, category_hierarchy_permissions: category_hierarchy_permissions, user_email: user_email, automatic_tagging: automatic_tagging, overlap: overlap, distribute_self: distribute_self });
+  }
 
-    // If they don't, create a new one
+  WipProject.findWipByUserId(testuser._id, function(err, wip_project) {
+    if(err) { console.log("E", err); next(err); return; }
+    if(wip_project) {
+      logger.info("Existing WIP Project found.");
+      logger.info(wip_project)
+      logger.info(wip_project.category_metadata)
 
-    function renderPage(wip_project, project_name, project_desc, file_metadata, category_hierarchy, category_metadata, user_emails, category_hierarchy_permissions, user_email, automatic_tagging, overlap, distribute_self) {
-       res.render('setup-project', { wip_project_id: wip_project._id, project_name: project_name, project_desc: project_desc, file_metadata: file_metadata, category_hierarchy: category_hierarchy, category_metadata: category_metadata, user_emails: user_emails, csrfToken: req.csrfToken(), path: req.path, title: "Setup project", max_filesize_mb: MAX_FILESIZE_MB, max_emails: USERS_PER_PROJECT_MAXCOUNT, category_hierarchy_permissions: category_hierarchy_permissions, user_email: user_email, automatic_tagging: automatic_tagging, overlap: overlap, distribute_self: distribute_self });
+      // var valid_labels = [];
+      // if(wip_project.valid_labels) {
+      //   for(var i = 0; i < wip_project.valid_labels.length; i++) {
+      //     valid_labels.push({ label: wip_project.valid_labels[i].label, abbreviation: wip_project.valid_labels[i].abbreviation, color: wip_project.valid_labels[i].color });
+      //   }
+      // } else {
+      //   valid_labels = null;
+      // }
+
+
+
+      renderPage(wip_project,
+                 wip_project.project_name,
+                 wip_project.project_description,
+                 wip_project.file_metadata["Filename"] != undefined ? JSON.stringify(wip_project.fileMetadataToArray()) : "null",
+                 JSON.stringify(wip_project.category_hierarchy),
+                 wip_project.category_metadata ? JSON.stringify(wip_project.categoryMetadataToArray()) : "null",
+                 //valid_labels ? JSON.stringify(valid_labels) : "null",
+                 wip_project.user_emails ? JSON.stringify(wip_project.user_emails) : "null",
+                 wip_project.category_hierarchy_permissions ? wip_project.category_hierarchy_permissions : "null",
+                 testuser.email,
+                 wip_project.automatic_tagging,
+                 wip_project.overlap,
+                 wip_project.distribute_self)
+
+
+      // if(wip_project.file_metadata["Filename"] != undefined) {
+      //   renderPage(wip_project, wip_project.project_name, wip_project.project_description, JSON.stringify(wip_project.fileMetadataToArray()), wip_project.valid_labels ? wip_project.valid_labels : "null");
+      // } else {
+      //   renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", wip_project.valid_labels ? wip_project.valid_labels : "null");
+      // }        
+    } else {
+      console.log("No existing WIP Project found - creating a new one.")
+      wip_project = new WipProject({ user_id: testuser._id });
+      wip_project.save(function(err, wip_project) {
+        renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", "null", "null", "null", "null", testuser.email, "", "1", "undecided"); 
+      });   
     }
-
-    WipProject.findWipByUserId(testuser._id, function(err, wip_project) {
-      if(err) { console.log("E", err); next(err); return; }
-      if(wip_project) {
-        console.log("Existing WIP Project found.");
-        console.log(wip_project)
-        console.log(wip_project.category_metadata)
-
-        // var valid_labels = [];
-        // if(wip_project.valid_labels) {
-        //   for(var i = 0; i < wip_project.valid_labels.length; i++) {
-        //     valid_labels.push({ label: wip_project.valid_labels[i].label, abbreviation: wip_project.valid_labels[i].abbreviation, color: wip_project.valid_labels[i].color });
-        //   }
-        // } else {
-        //   valid_labels = null;
-        // }
-
-
-
-        renderPage(wip_project,
-                   wip_project.project_name,
-                   wip_project.project_description,
-                   wip_project.file_metadata["Filename"] != undefined ? JSON.stringify(wip_project.fileMetadataToArray()) : "null",
-                   JSON.stringify(wip_project.category_hierarchy),
-                   wip_project.category_metadata ? JSON.stringify(wip_project.categoryMetadataToArray()) : "null",
-                   //valid_labels ? JSON.stringify(valid_labels) : "null",
-                   wip_project.user_emails ? JSON.stringify(wip_project.user_emails) : "null",
-                   wip_project.category_hierarchy_permissions ? wip_project.category_hierarchy_permissions : "null",
-                   testuser.email,
-                   wip_project.automatic_tagging,
-                   wip_project.overlap,
-                   wip_project.distribute_self)
-
-
-        // if(wip_project.file_metadata["Filename"] != undefined) {
-        //   renderPage(wip_project, wip_project.project_name, wip_project.project_description, JSON.stringify(wip_project.fileMetadataToArray()), wip_project.valid_labels ? wip_project.valid_labels : "null");
-        // } else {
-        //   renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", wip_project.valid_labels ? wip_project.valid_labels : "null");
-        // }        
-      } else {
-        console.log("No existing WIP Project found - creating a new one.")
-        wip_project = new WipProject({ user_id: testuser._id });
-        wip_project.save(function(err, wip_project) {
-          renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", "null", "null", "null", "null", testuser.email, "", "1", "undecided"); 
-        });   
-      }
-   
-    });
+ 
+  });
   //});
   
 }
@@ -118,10 +93,7 @@ exports.index = function(req, res, next) {
 
 // Upload the name and description of the project.
 exports.upload_name_desc = function(req, res, next) {
-
   wip_project = res.locals.wip_project;
-
-  console.log(req.body.name)
 
   wip_project.project_name = req.body.name.length > 0 ? req.body.name : null;
   wip_project.project_description = req.body.desc.length > 0 ? req.body.desc : null;
@@ -243,7 +215,6 @@ exports.upload_hierarchy = function(req, res, next) {
 exports.upload_hierarchy_permissions = function(req, res, next) {
   wip_project = res.locals.wip_project;
   var d = req.body.val;
-  console.log(d)
   wip_project.category_hierarchy_permissions = d;
   wip_project.save(function(err) {
     if(err) res.send( {"success": false, err: err});
@@ -254,7 +225,6 @@ exports.upload_hierarchy_permissions = function(req, res, next) {
 exports.upload_automatic_tagging = function(req, res, next) {
   wip_project = res.locals.wip_project;
   var d = req.body.val;
-  console.log(d)
   wip_project.automatic_tagging = d;
   wip_project.save(function(err) {
     if(err) res.send( {"success": false, err: err});
@@ -265,77 +235,12 @@ exports.upload_automatic_tagging = function(req, res, next) {
 exports.upload_overlap = function(req, res, next) {
   wip_project = res.locals.wip_project;
   var d = req.body.val;
-  console.log(d)
   wip_project.overlap = parseInt(d);
   wip_project.save(function(err) {
     if(err) res.send( {"success": false, err: err});
     res.send({ "success": true })
   });
 }
-
-// // Upload the label categories
-// exports.upload_valid_labels = function(req, res, next) {
-//   wip_project = res.locals.wip_project;
-
-//   console.log('labels', req.body.validLabelData);
-
-//   setTimeout(function() {
-
-
-
-//   wip_project.valid_labels = req.body.validLabelData;
-//   if(!req.body.validLabelData)
-//     wip_project.valid_labels = [];
-//   console.log(req.body.validLabelData)
-//   wip_project.validate(function(err) {
-
-
-//     var errors = null;
-
-//     if(err) {
-//       if(err.errors.valid_labels) {
-
-//         console.log(err.errors.valid_labels)
-//         //console.log("VALID LABEL ERRORS:");
-
-//         //console.log(err.errors.valid_labels.message)
-
-//         //var em = err.errors.valid_labels.message;
-//         //var error_label = parseInt(em.slice(em.indexOf("<%") + 2, em.indexOf("%>")));
-//         var errors;
-//         try {
-//           var field = wip_project.valid_labels;
-//           var err_lines = err.errors.valid_labels.message.split("\n");
-//           errors = processErrors(err_lines, field);
-//         } catch(e) {
-//           // Other errors, such as none or too many labels
-//           errors = err.errors.valid_labels;
-//         }
- 
-
-//         // Reset the valid_labels if invalid to prevent weird behaviour on refresh
-//         wip_project.valid_labels = [];
-      
-
-//         //console.log("ERROR:", error_label);
-//       }
-
-//     }
-
-    
-//     wip_project.save(function(err) {
-//       if(errors) {
-//         console.log("ERRORS", errors)
-//         res.send( { "success": false, "errors": errors });
-//       } else {
-
-//         res.send({ "success": true });
-//       }
-//     });
-
-//   });
-//   }, 10);
-// }
 
 // Reset the WIP Project's documents and file metadata.
 // This method is necessary because without it, a user who submits an invalid file after
@@ -484,10 +389,6 @@ exports.upload_tokenized = function(req, res, next) {
 
 
 exports.submit_new_project_form = function(req, res, next) {
-
-
-
-  console.log("hello there")
   wip_project = res.locals.wip_project;
   wip_project.convertToProject(function(err, project) {
     //console.log(err);
@@ -504,20 +405,8 @@ exports.submit_new_project_form = function(req, res, next) {
           } else {
             res.render("temp-render-form", {project: JSON.stringify(project, null, 4), frequent_tokens: JSON.stringify(frequent_tokens, null, 4), wip_project: JSON.stringify(wip_project, null, 4), n_document_groups: document_groups.length, document_groups: JSON.stringify(document_groups.splice(0, 1), null, 4), path: req.path});
           }
-
-
         });
       });
-
     }
-
-
-
-
-
   });
-
-  
-
-
 }

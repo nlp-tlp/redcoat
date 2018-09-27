@@ -63,9 +63,11 @@
     "passport-local-mongoose": "^5.0.0",
     "prompt": "^1.0.0",
     "pug": "^2.0.3",
+    "rootpath": "^0.1.2",
     "serve-favicon": "^2.4.5",
     "shortid": "^2.2.13",
-    "stopword": "^0.1.10"
+    "stopword": "^0.1.10",
+    "winston": "^3.1.0"
   },
   "nodemonConfig": {
     "ignore": [

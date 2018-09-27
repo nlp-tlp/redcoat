@@ -1,120 +1,12 @@
+require('rootpath')();
+var logger = require('config/winston');
+
 var express = require('express');
 var router = express.Router();
-var WipProject = require('../models/wip_project');
-var User = require('../models/user');
-var setupProjectController = require("../controllers/setup_project_controller");
-var extend = require('util')._extend
-var Project = require('../models/project')
+var projectController = require("../controllers/project_controller");
 
-// route middleware to make sure a user is logged in
-function isLoggedIn(req, res, next) {
-
-    // if user is authenticated in the session, carry on 
-    if (req.isAuthenticated()) {
-        res.locals.user_stars = req.user.docgroups_annotated.length;
-    //res.locals.user = testuser;
-        return next();
-    //next();
-    }
-
-    //if they aren't redirect them to the home page
-    res.redirect('/login');
-}
-
-
-router.get('/getprojects', function(req, res) {
-  console.log(req.user)
-  console.log("WHY")
-  req.user.getProjects(function(err, projects) {
-    if(err) {
-      console.log(err)
-      res.send(err);
-    }
-    else {
-      for(var i = 0; i < projects.length; i++) {
-        projects[i]["owner"] = ["Your projects", "Projects you've joined"][Math.floor(Math.random() * 2)];
-        projects[i]["num_annotators"] = projects[i].user_ids.length;
-        projects[i]["percent_complete"] = Math.random() * 100;
-      }
-      console.log(projects)
-      res.send({projects: projects});
-    }
-  });
-
-
-});
-
-router.get('/', isLoggedIn, function(req, res) {
-  req.user.getProjects(function(err, projects) {
-    if(err)
-      res.send(err);
-    else {
-      res.render('dashboard', { projects: projects, projects_json: JSON.stringify(projects), title: "Dashboard" })
-    }
-  });  
-});
-
-router.get('/:id/tagging', isLoggedIn, function(req, res) {
-  var id = req.params.id;
-
-
-  //
-
-  Project.findOne({ _id: id }, function(err, proj) {
-    if(err) {
-      res.send("nope");
-    }
-    proj.recommendDocgroupToUser(req.user, function(err, docgroup) {
-      if(err == null && docgroup == null) {
-        res.render("tagging-complete"); // User has annotated every docgroup they need to.
-        return;
-      }
-      if(err) {
-        res.send("nope");
-      } else {
-        res.render('tagging', { 
-          tagging: true,
-          data: JSON.stringify(docgroup.documents),
-          entity_classes: JSON.stringify(proj.category_hierarchy),
-          entity_classes_abbr: JSON.stringify(proj.category_hierarchy),
-          //colors: JSON.stringify(proj.getValidLabelColors()),
-          title: "Tagging group: \"" + (docgroup.display_name || "UnnamedGroup") + "\"" })      
-      }
-    });
-
-  });
-
-
-  // // TODO: Ensure user can only access their own projects
-  // Project.findOne({ _id: id }, function(err, proj) {
-  //   if(!proj) {
-  //     res.status(404);
-  //     res.render('error', {
-  //       message: "The requested project does not exist.",
-  //       error: {}
-  //     });
-  //   }
-
-  //   proj.getDocumentGroups(function(err, docgroups) {
-  //     console.log(err, docgroups.length);
-  //     if(err)
-  //       res.send(err);
-  //     else {
-  //       try {
-  //       res.render('tagging', { 
-  //         data: JSON.stringify(docgroups[0].documents),
-  //         entity_classes: JSON.stringify(proj.category_hierarchy),
-  //         entity_classes_abbr: JSON.stringify(proj.category_hierarchy),
-  //         //colors: JSON.stringify(proj.getValidLabelColors()),
-  //         title: "Tagging group: \"" + (docgroups[0].display_name || "UnnamedGroup") + "\"" })
-  //     } catch(e) {
-  //       console.log(e)
-  //     }
-  //     }
-  //   });
-    
-
-  // });  
-});
+router.get('/getprojects', projectController.getProjects);
+router.get('/',            projectController.index);
+router.get('/:id/tagging', projectController.tagging);
 
 module.exports = router;
