@@ -16,7 +16,7 @@ mongoose.connect('mongodb://localhost/redcoat-db-dev', function(err) {
 var expressSanitizer = require('express-sanitizer');
 
 
-var User = require('./models/user');
+var User = require('./app/models/user');
 
 
 //var users = require('./routes/users');
@@ -29,7 +29,7 @@ var app = express();
 
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', path.join(__dirname, 'app/views'));
 app.set('view engine', 'pug');
 
 app.locals.pretty = true;
@@ -43,7 +43,7 @@ app.use(cookieParser());
 app.use(expressSanitizer());
 app.use(
    sassMiddleware({
-       src: __dirname + '/scss', 
+       src: __dirname + '/app/stylesheets', 
        dest: __dirname + '/public/stylesheets',
        prefix:  '/stylesheets',
        outputStyle: 'compressed',

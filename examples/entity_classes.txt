@@ -1,4 +1,0 @@
-Person	PER
-Time	TIM
-Organisation	ORG
-Location	LOC

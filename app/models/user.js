@@ -1,3 +1,6 @@
+require('rootpath')();
+var logger = require('config/winston');
+
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var cf = require("./common/common_functions");

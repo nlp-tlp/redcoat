@@ -3,9 +3,9 @@ var logger = require('config/winston');
 
 var express = require('express');
 var router = express.Router();
-var WipProject = require('../models/wip_project');
-var User = require('../models/user');
-var setupProjectController = require("../controllers/setup_project_controller");
+var WipProject = require('app/models/wip_project');
+var User = require('app/models/user');
+var setupProjectController = require("app/controllers/setup_project_controller");
 
 // Verifies that the WIP Project ID is the same as the logged in user's WIP Project Id.
 // This middleware function should be used for every POST request on the Setup Project page.

@@ -1,3 +1,0 @@
-test
-hello there
-i am a test file

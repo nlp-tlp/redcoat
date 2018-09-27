@@ -1,3 +1,6 @@
+require('rootpath')();
+var logger = require('config/winston');
+
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
 var cf = require("./common/common_functions")
@@ -7,7 +10,7 @@ var DocumentGroup = require("./document_group")
 var FrequentTokens = require("./frequent_tokens")
 var natural = require('natural');
 var tokenizer = new natural.TreebankWordTokenizer();
-var hp = require('../public/javascripts/shared/hierarchy_presets');
+var hp = require('public/javascripts/shared/hierarchy_presets');
 
 // Get the base64 encoded versions of each of the presets
 var presets_enc = {}
