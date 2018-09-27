@@ -31,11 +31,13 @@ block sidenav
 			li#li-sort-projects
 				span
 					label(for="projects-sort") <i class="fa fa-sort-amount-desc"></i>Sort projects
-					select(id="projects-sort")
-						option(value="0" selected) Project name
-						option(value="1") # Annotators
-						option(value="2") Progress
-						option(value="4") Date created
+					span.sort-container
+						select(id="projects-sort")
+							option(value="0" selected) Project name
+							option(value="1") # Annotators
+							option(value="2") Progress
+							option(value="4") Date created
+						a.button.sort-button#sort-order-button <i class="fa fa-sort-up"></i>
 
 			//- li#li-sort-projects
 			//- 	span
@@ -116,15 +118,31 @@ block scripts
 
 
 			var sortedBy = "";
-			var sortOrder = "";
+			var sortOrder = "asc";
 
 			// Updates the 'sorted by' field in the group rows.
 			function updateSortedBy() {
-				console.log($("#projects-sort :selected").text());
 				sortedBy  = $("#projects-sort :selected").text();
-				sortOrder = "Ascending";
+				
 			}
 
+			function updateSortOrder() {
+				sortOrder = sortOrder == "asc" ? "desc" : "asc";
+				if(sortOrder == "desc") {
+					$("#sort-order-button .fa").removeClass("fa-sort-up");
+					$("#sort-order-button .fa").addClass("fa-sort-down");
+				} else {
+					$("#sort-order-button .fa").removeClass("fa-sort-down");
+					$("#sort-order-button .fa").addClass("fa-sort-up");				
+				}
+				var f = parseInt($("#projects-sort").val());
+				dataTable.order([ [ f, sortOrder ] ]).draw();
+			}
+
+
+			$("#sort-order-button").click(function() {
+				updateSortOrder();
+			});
 
 
 
@@ -187,7 +205,7 @@ block scripts
 		        "rowGroup": {
 		        	dataSrc: "owner",
 		        	"startRender": function(rows, group) {
-					  	return "" + group + ' <span class="sort-info">Sorted by <span class="sorted-by">' + sortedBy + '</span> <span class="sort-order">(' + sortOrder + ')</span></span>';
+					  	return "" + group + ' <span class="sort-info">Sorted by <span class="sorted-by">' + sortedBy + '</span> <span class="sort-order">(' + (sortOrder == "asc" ? 'Ascending' : 'Descending') + ')</span></span>';
 					}
 		        }
 		    } );
@@ -214,7 +232,7 @@ block scripts
 				var f = parseInt($(this).val());
 				console.log(f);
 				updateSortedBy();
-				dataTable.order([ [ f, 'asc' ] ]).draw();
+				dataTable.order([ [ f, sortOrder ] ]).draw();
 			});
 
 
