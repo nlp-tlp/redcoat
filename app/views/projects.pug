@@ -32,7 +32,7 @@ block sidenav
 				span
 					label(for="projects-sort") <i class="fa fa-sort-amount-desc"></i>Sort projects
 					select(id="projects-sort")
-						option(value="0") Project name
+						option(value="0" selected) Project name
 						option(value="1") # Annotators
 						option(value="2") Progress
 						option(value="4") Date created
@@ -113,26 +113,48 @@ block scripts
 
 
 		$(document).ready(function() {
+
+
+			var sortedBy = "";
+			var sortOrder = "";
+
+			// Updates the 'sorted by' field in the group rows.
+			function updateSortedBy() {
+				console.log($("#projects-sort :selected").text());
+				sortedBy  = $("#projects-sort :selected").text();
+				sortOrder = "Ascending";
+			}
+
+
+
+
+			updateSortedBy();
+
 		    var dataTable = $('#projects-table').DataTable( {
 		        "ajax": {
 		        	"url": "projects/getprojects",
 		        	"dataSrc": "projects"
 		        },
 		        "columnDefs": [
-		        	{"title": "Name", "targets": 0, "width": "35%",
+		        	{"title": "Name", "targets": 0, "width": "35%", "type": "html",
 		        	 "render": function (data, type, row) {
+						if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order.
+							return data;
+						}
 		        	 	return '<a href="/projects/' + row['_id'] + '/tagging">' + data + "</a>";
 		        	 }
 		        	},
-		        	{"title": "Annotators", "targets": 1, "width": "15%", "className": "dt-center",
+		        	{"title": "Annotators", "targets": 1, "width": "15%", "className": "dt-center", "type": "html",
 		        	 "render": function (data, type, row) {
-		        	 	console.log(row);
+						if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order.
+							return data;
+						}
 		        	 	return '<a href="/projects/' + row['_id'] + '/tagging"><span class="detailed-table"><span class="detailed-show"><em>\"' + row['project_description'] + '\"</em></span><span>' + data + ' annotator' + (data > 1 ? "s" : "") + "</span></span></a>";
 		        	 }
 		        	},
-		        	{"title": "Progress", "targets": 2, "data": null, "width": "50%",
+		        	{"title": "Progress", "targets": 2, "data": null, "width": "50%", "type": "html",
 					 "render": function ( data, type, row ) {
-						if ( type === "sort" || type === 'type' ) { // Ensure it sorts in the correct order.
+						if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order.
 							return data;
 						}
 					 	var nd = row["file_metadata"]["Number of documents"] * 3;
@@ -148,10 +170,11 @@ block scripts
 							   '</ul></span>' +
 							   '<span class="detailed-fullwidth detailed-show">' +
 							   '<ul class="metadata" style="margin-bottom: 0px">' +
-							   '<li>Created at ' + row["created_at"] + '</li></ul></span>'
+							   '<li>Created on ' + row["created_at"] + '</li></ul></span>'
 							   '</a>';
 						}
 					},
+
 		        ],
 		        "columns": [
 		            { "data": "project_name" },
@@ -163,7 +186,10 @@ block scripts
 		        "orderFixed": [3, 'desc'],
 		        "rowGroup": {
 		        	dataSrc: "owner",
-		        },
+		        	"startRender": function(rows, group) {
+					  	return "" + group + ' <span class="sort-info">Sorted by <span class="sorted-by">' + sortedBy + '</span> <span class="sort-order">(' + sortOrder + ')</span></span>';
+					}
+		        }
 		    } );
 
 
@@ -182,18 +208,18 @@ block scripts
 			$("#projects-filter").on("change", function() {
 				var f = $(this).val();
 				dataTable.column(3).search(f).draw();
-
 			});
-
 
 			$("#projects-sort").on("change", function() {
 				var f = parseInt($(this).val());
-				console.log(f)
+				console.log(f);
+				updateSortedBy();
 				dataTable.order([ [ f, 'asc' ] ]).draw();
-
 			});
 
 
+
+			
 		    $("#background").lipsumBG(false, false);
 		} );
 

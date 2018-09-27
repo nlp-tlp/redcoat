@@ -35,7 +35,7 @@ app.set('view engine', 'pug');
 app.locals.pretty = true;
 
 // uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+app.use(favicon(path.join(__dirname, 'public', 'images/favicon.png')));
 app.use(morgan("short", { stream: logger.stream }));
 app.use(bodyParser.json()); // use bodyParser to parse form data
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -50,7 +50,7 @@ app.use(
        debug: false,       
    })
 );
-app.use(session({keys: ['kjdhzzzkjhkukg', 'kufkg8feeeeyukukfkuyf']}));
+app.use(session({keys: ['redcoatisaprettycoolannotationtool!']}));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Setup Passport

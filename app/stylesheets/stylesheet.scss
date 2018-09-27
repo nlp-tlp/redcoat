@@ -9,20 +9,22 @@
 @import "homepage";
 
 // The form for logging in/registering
-@import "user-form";
+@import "users/user-form";
 
 // The setup project page
-@import "setup-project";
-@import "upload-widget";
-@import "category-tree";
-@import "d3-context-menu";
-@import "jquery-linedtextarea";
+@import "setup_project/setup-project";
+@import "setup_project/upload-widget";
+@import "setup_project/jquery-linedtextarea";
+
+// The category tree
+@import "category_tree/category-tree";
+@import "category_tree/d3-context-menu";
 
 // The project dashboard
-@import "projects";
+@import "projects/projects";
 
 // The tagging interface
-@import "tagging-interface";
+@import "tagging/tagging-interface";
 
 html {
 	height: 100%;
@@ -44,6 +46,8 @@ body {
 		height: 100%;
 		transition: background 0.5s ease;
 	}
+	
+	background-repeat: repeat;
 
 	&.setup-menu {
 		background: #f4f4f4;

@@ -28,6 +28,7 @@ module.exports.getProjects = function(req, res) {
         projects[i]["owner"] = ["Your projects", "Projects you've joined"][Math.floor(Math.random() * 2)];
         projects[i]["num_annotators"] = projects[i].user_ids.length;
         projects[i]["percent_complete"] = Math.random() * 100;
+        projects[i]["created_at"] = projects[i].created_at + ""; // This formats it correctly (???)
       }
       res.send({projects: projects});
     }

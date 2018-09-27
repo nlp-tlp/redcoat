@@ -10,7 +10,7 @@
     "initial-setup": "node initial_setup.js",
     "start": "node ./bin/www",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build-css": "node-sass scss/stylesheet.scss -o public/stylesheets --output-style compressed",
+    "build-css": "node-sass app/stylesheets/stylesheet.scss -o public/stylesheets --output-style compressed",
     "watch-css": "nodemon --watch scss -V -e scss -x \"npm run build-css\"",
     "dev": "concurrently --kill-others \"nodemon\" \"npm run watch-css\"",
     "seed": "node db/seed.js"
