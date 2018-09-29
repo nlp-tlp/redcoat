@@ -8,6 +8,7 @@ var cf = require("./common/common_functions")
 var User = require("./user")
 var nanoid = require('nanoid')
 var FrequentTokens = require('./frequent_tokens')
+
 //USERS_PER_PROJECT_MAXCOUNT = cf.USERS_PER_PROJECT_MAXCOUNT;
 
 
@@ -142,7 +143,6 @@ ProjectSchema.methods.getUsers = function(next) {
     else { next(null, users); return; }
   });
 }
-
 
 // Recommend a document group to a user. This is based on the document groups that the user is yet to annotate.
 // Only document groups that have been annotated less than N times will be recommended, where N = a field that is yet to be implemented.

@@ -5,16 +5,40 @@ block head
 
 block header
 	header.bg-header
-		div.title
+		div#header-project-list.title.can-fade
 			h1 Projects
-			div
+			div.right
 				a.button(href="/setup-project") <i class="fa fa-plus-circle"></i>New project
+		div#header-project-details.title.can-fade
+			h1#d-project_name ---
+			div.left
+				a#back-to-projects.button(href="javascript:void(0)") <i class="fa fa-chevron-left"></i>Projects
 		canvas#background(height="120px" width="1920")
 
 block sidenav
 
 	nav#sidenav.sidenav-project
-		ul
+
+		ul#sidenav-project-details.project-details
+			li#li-details.current
+				a(href="#") <i class="fa fa-info-circle"></i>Details
+			li#li-hierarchy
+				a(href="#") <i class="fa fa-tree"></i>Category Hierarchy
+			li#annotators
+				a(href="#") <i class="fa fa-users"></i>Annotators
+			li#metrics
+				a(href="#") <i class="fa fa-bar-chart"></i>Metrics
+			li#settings
+				a(href="#") <i class="fa fa-wrench"></i>Settings
+
+	
+		ul#sidenav-project-list
+			li#li-projects-display
+				span
+					label(for="projects-display") <i class="fa fa-align-justify"></i>Display
+					select(id="projects-display")
+						option(value="detailed") Detailed view
+						option(value="list") List view
 			li#li-search-projects
 				span
 					label(for="projects-search") <i class="fa fa-search"></i>Search projects
@@ -32,65 +56,61 @@ block sidenav
 					label(for="projects-sort") <i class="fa fa-sort-amount-desc"></i>Sort projects
 					span.sort-container
 						select(id="projects-sort")
-							option(value="0" selected) Project name
+							option(value="4" selected) Date created
+							option(value="0") Project name
 							option(value="1") # Annotators
 							option(value="2") Progress
-							option(value="4") Date created
-						a.button.sort-button#sort-order-button <i class="fa fa-sort-up"></i>
-			li#li-projects-display
-				span
-					label(for="projects-display") <i class="fa fa-align-justify"></i>Display
-					select(id="projects-display")
-						option(value="detailed") Detailed view
-						option(value="list") List view
+
+						a.button.sort-button#sort-order-button <i class="fa fa-sort-down"></i>
+
 
 block content
 
 
-	div
-		a(href="/projects/aZUO4c-Pr" id="projlink") Test project
-
-	div(style="height: 100px")
-
 	div#dashboard
-		article#project-details.article-heading.pad-header
 
-			table#projects-table.detailed-view
+		div#loading-table.loading-item.show
+			<i class="fa fa-cog fa-spin"></i>Loading...
+
+		include project-details
+
+		div#project-list
+			table#projects-table.not-loaded.detailed-view
 
 
-			//- if false
-			//- 	div.pad
-			//- 		each proj in projects
-			//- 			a.dashboard-hover(href="projects/" + proj._id + "/tagging")
-			//- 				table.dashboard-project
-			//- 					thead
-			//- 						tr
-			//- 							th(colspan="3")
-			//- 								=proj.project_name						
-			//- 					tbody
-			//- 						tr
-			//- 							td(colspan="3")
-			//- 								table
-			//- 									thead 
-			//- 										tr 
-			//- 											th 
-			//- 												span Description 
-			//- 											th 
-			//- 												span # Annotators 
-			//- 											th 
-			//- 												span Progress 
-			//- 									tbody 
-			//- 										tr
-			//- 											td 	<span class="desc">#{proj.project_description || "(No description)"}</span>
-			//- 											td 	#{proj.user_ids.length}
-			//- 											td  <span class="progress-bar"><span class="inner" data-width="30%">&nbsp;&nbsp;<span class="done"></span>/<span class="total"></span></span>
-			//- 										tr 
-			//- 											td(colspan="3")
-			//- 												ul.metadata 
-			//- 													li Filename: #{proj.file_metadata.Filename}
-			//- 													li Number of documents: <span class="num-docs">#{proj.file_metadata['Number of documents']}</span>
-			//- 													li Number of tokens: #{proj.file_metadata["Number of tokens"]}
-			//- 													li Average tokens/document: #{proj.file_metadata["Average tokens/document"]}
+		//- if false
+		//- 	div.pad
+		//- 		each proj in projects
+		//- 			a.dashboard-hover(href="projects/" + proj._id + "/tagging")
+		//- 				table.dashboard-project
+		//- 					thead
+		//- 						tr
+		//- 							th(colspan="3")
+		//- 								=proj.project_name						
+		//- 					tbody
+		//- 						tr
+		//- 							td(colspan="3")
+		//- 								table
+		//- 									thead 
+		//- 										tr 
+		//- 											th 
+		//- 												span Description 
+		//- 											th 
+		//- 												span # Annotators 
+		//- 											th 
+		//- 												span Progress 
+		//- 									tbody 
+		//- 										tr
+		//- 											td 	<span class="desc">#{proj.project_description || "(No description)"}</span>
+		//- 											td 	#{proj.user_ids.length}
+		//- 											td  <span class="progress-bar"><span class="inner" data-width="30%">&nbsp;&nbsp;<span class="done"></span>/<span class="total"></span></span>
+		//- 										tr 
+		//- 											td(colspan="3")
+		//- 												ul.metadata 
+		//- 													li Filename: #{proj.file_metadata.Filename}
+		//- 													li Number of documents: <span class="num-docs">#{proj.file_metadata['Number of documents']}</span>
+		//- 													li Number of tokens: #{proj.file_metadata["Number of tokens"]}
+		//- 													li Average tokens/document: #{proj.file_metadata["Average tokens/document"]}
 
 
 			
@@ -99,6 +119,7 @@ block scripts
 
 	script(src="/javascripts/datatables/datatables.min.js")
 	script(src="/javascripts/lipsumBG.js")
+	script(src="/javascripts/jquery.cookie.js")
 
 
 	script.
@@ -121,133 +142,282 @@ block scripts
 	script.
 		//$(document).ready(function() {
 
-
+		$.cookie.json = true;
 
 		$(document).ready(function() {
 
 
-			var sortedBy = "";
-			var sortOrder = "asc";
+			var $projectListEles = $("#project-list, #sidenav-project-list, #header-project-list");
+			var $projectDetailsEles = $("#project-details, #sidenav-project-details, #header-project-details");
 
-			// Updates the 'sorted by' field in the group rows.
-			function updateSortedBy() {
-				sortedBy  = $("#projects-sort :selected").text();
-				
-			}
+		    // Keep track of the field to sort by, and the sortOrder ('asc' or 'desc')
+			var sortedBy = "Date created";
+			var sortedById = 4;
+			var sortOrder = "desc";
+			var filterBy = null;
+			var display = null;
 
-			function updateSortOrder() {
-				sortOrder = sortOrder == "asc" ? "desc" : "asc";
-				if(sortOrder == "desc") {
-					$("#sort-order-button .fa").removeClass("fa-sort-up");
-					$("#sort-order-button .fa").addClass("fa-sort-down");
-				} else {
+			// If the user has visited this page before, load the sort/filtering parameters from a cookie.
+			(function loadParamsFromCookie() {
+				var c = $.cookie('projectsTableParams')
+				if(!c) return;
+				display = c.display;
+				sortedBy = c.sortedBy;
+				sortedById = c.sortedById;
+				sortOrder = c.sortOrder;
+				filterBy = c.filterBy;
+				// Modify the relevant elements to display the options stored in the cookie.
+				$("#projects-sort option[value='" + sortedById + "']").attr('selected', 'selected');
+				if(sortOrder == "asc") {
+					$("#sort-order-button .fa").addClass("fa-sort-up");
 					$("#sort-order-button .fa").removeClass("fa-sort-down");
-					$("#sort-order-button .fa").addClass("fa-sort-up");				
 				}
-				var f = parseInt($("#projects-sort").val());
-				dataTable.order([ [ f, sortOrder ] ]).draw();
+				$('#projects-filter option[value="' + filterBy + '"]').attr('selected', 'selected');
+				$('#projects-display option[value="' + display + '"]').attr('selected', 'selected');
+			})();
+
+			// Save the sort/filtering parameters to a cookie.
+			function saveParamsToCookie() {
+				$.cookie('projectsTableParams', {
+					display: display,
+					sortedBy: sortedBy,
+					sortedById: sortedById,
+					sortOrder: sortOrder,
+					filterBy: filterBy,
+				}, { expires: 365 });
+			}
+
+			function initProjectsTable(next) {		
+
+				var $loadingTable = $("#loading-table");
+			    var dataTable = $('#projects-table').DataTable( {
+			        "ajax": {
+			        	"url": "projects/getprojects",
+			        	"dataSrc": "projects"
+			        },
+			        "columnDefs": [
+			        	{ "title": "Name", "targets": 0, "width": "35%" },
+			        	{ "title": "Annotators", "targets": 1, "width": "15%", "className": "dt-center", "type": "numeric",
+			        	 "render": function (data, type, row) {
+							if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order.
+								return data;
+							}
+			        	 	return '<span class="detailed-table"><span class="detailed-show"><em>\"' + row['project_description'] + '\"</em></span><span>' + data + ' annotator' + (data > 1 ? "s" : "") + "</span></span>";
+			        	 }
+			        	},
+			        	{ "title": "Progress", "targets": 2, "width": "50%", "type": "numeric",
+						 "render": function ( data, type, row ) {
+							if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order.
+								console.log(row, data)
+								return data;
+							}
+						 	var nd = row["file_metadata"]["Number of documents"] * 3;
+							return '' +
+								   '<span class="detailed-fullwidth">' +
+								   '<span class="progress-bar"><span class="inner" style="width: ' + data + '%">' + data.toFixed(0) +'%</span></span></span>' +
+								   '<span class="detailed-fullwidth detailed-show">' +
+								   '<ul class="metadata">' +
+								   '<li> Filename: ' + row["file_metadata"]["Filename"] + '</li>' +
+								   '<li> Number of documents: ' + row["file_metadata"]["Number of documents"] + '</li>' +
+								   '<li> Number of tokens: ' + row["file_metadata"]["Number of tokens"] + '</li>' +
+								   '<li> Average tokens/document: ' + row["file_metadata"]["Average tokens/document"] + '</li>' +
+								   '</ul></span>' +
+								   '<span class="detailed-fullwidth detailed-show">' +
+								   '<ul class="metadata" style="margin-bottom: 0px">' +
+								   '<li>Created on ' + row["created_at"] + '</li></ul></span>'
+								   '';
+							}
+						},
+
+			        ],
+			        "columns": [
+			            { "data": "project_name" },
+			            { "data": "num_annotators" },
+			            { "data": "percent_complete" },
+			            { "data": "owner", "visible": false, "searchable": true},
+			            { "data": "_created_at", "visible": false, "sortable": true},
+			        ],
+			        "order": [[sortedById, sortOrder]],
+			        "orderFixed": [3, 'desc'],
+			        "rowGroup": {
+			        	dataSrc: "owner",
+			        	"startRender": function(rows, group) {			        		
+						  	return "" + group + ' <span class="sort-info">Sorted by <span class="sorted-by">' + sortedBy + '</span> <span class="sort-order">(' +
+						  		(sortOrder == "asc" ? 'Ascending' : 'Descending') + ')</span></span>';
+						}
+			        },
+			        "initComplete": function() {
+			        	initComplete();	// Call a function that calls the callback function. This ensures the table is created before proceeding with the rest of the code.
+			        },
+			        "drawCallback": function() {
+			        	saveParamsToCookie();
+			        }
+			    } );
+
+
+
+				// Sort the table based on the sort order of the button.
+				function sortTable() {
+					sortedBy   = $("#projects-sort :selected").text();
+					sortedById = parseInt($("#projects-sort").val());
+					dataTable.order([ [ sortedById, sortOrder ] ]).draw();
+				}
+
+				// Update the sort order ('asc' or 'desc')
+				function swapSortOrder() {
+					sortOrder = sortOrder == "asc" ? "desc" : "asc";
+					if(sortOrder == "desc") {
+						$("#sort-order-button .fa").removeClass("fa-sort-up");
+						$("#sort-order-button .fa").addClass("fa-sort-down");
+					} else {
+						$("#sort-order-button .fa").removeClass("fa-sort-down");
+						$("#sort-order-button .fa").addClass("fa-sort-up");				
+					}					
+				}
+
+			    // Search box
+				$("#projects-search").on("keyup search input paste cut", function() {
+				   dataTable.search(this.value).draw();
+				});    
+
+				// Filter box
+				$("#projects-filter").on("change", function() {
+					filterBy = $(this).val();
+					dataTable.column(3).search(filterBy).draw();
+				});
+
+				// Sort box
+				$("#projects-sort").on("change", function() {
+					var f = parseInt($(this).val());					
+					sortTable();
+				});
+
+				// Sort button (next to sort box)
+				$("#sort-order-button").click(function() {
+					swapSortOrder();
+					sortTable();
+				});
+
+				function changeDisplay(d) {
+					if(d == "list") {
+						$("#projects-table").removeClass("detailed-view");
+					}
+					else {
+						$("#projects-table").addClass("detailed-view");
+					}
+					display = d;
+					saveParamsToCookie();
+				}
+
+				// Display box (list or detailed view)
+				$("#projects-display").on("change", function() {
+					changeDisplay($(this).val());
+				});
+
+
+				// Modify table depending on whether filterBy and display exist (from the cookie)
+				if(filterBy) dataTable.column(3).search(filterBy).draw();				
+				if(display) changeDisplay(display);
+
+				function initComplete() {
+					$loadingTable.removeClass("show");
+					$("#projects-table").removeClass("not-loaded");
+					$("#project-details").removeClass("not-loaded");
+					//sortTable('desc');
+					next(dataTable);
+				}
+			}
+
+			function initPageDisplay(dataTable) {
+
+				var $detailEles = $('[id^="d-"]'); // All elements with ids starting with 'd-' should contain data relevant to the current project.
+				
+				// Displays the details page of a particular project.
+				// Hides the projects list and projects lists sidenav.
+				function displayProjectDetails(project) {
+					$projectListEles.removeClass("show");
+					$projectDetailsEles.addClass("show");
+					window.location.hash = project._id;
+					$detailEles.each(function(e) {
+						var tid = $(this).attr('id').substr(2, $(this).attr('id').length);
+
+						// Tables are generated differently to other tags.
+						if($(this).prop('tagName') == "TABLE") {
+							// Build table
+							var tableHtml =  "<tbody>";
+							for(var key in project[tid]) {
+
+								tableHtml += "<tr>";
+								tableHtml += "<td>" + key + "</td>";
+								tableHtml += "<td>" + project[tid][key] + "</td>";
+								tableHtml += "</tr>";
+							}
+							tableHtml += "</tbody>";
+							$(this).html(tableHtml);
+						} else {
+							if(tid in project) {
+								$(this).html(project[tid]);
+							} else {
+								$(this).html("???");
+							}			
+						}
+						
+					});	
+					window.scrollTo(0, 0);
+				}
+
+				// Displays the projects list.
+				function displayProjectsList() {
+					$projectListEles.addClass("show");
+					$projectDetailsEles.removeClass("show");	
+					history.pushState("", document.title, window.location.pathname + window.location.search);	
+				}
+
+				// Event handler for the table rows to display their corresponding project details.
+				$("#projects-table tbody").on("click", "tr", function(event){
+					var d = dataTable.row(this).data();
+					if(d) displayProjectDetails(d);			
+				});
+
+				// Go back to projects when the button is pressed.
+				$("#back-to-projects").click(displayProjectsList);
+
+				// If the page is loaded with a hash, load the corresponding project.
+				function checkHash() {
+					if(!window.location.hash) displayProjectsList();
+					var data = dataTable.rows().data();
+					for(var i in data) {
+						if(data[i]._id == window.location.hash.substr(1, window.location.hash.length)) {
+							displayProjectDetails(data[i]);
+						}
+					}
+				};
+				checkHash();
+				$(window).on('hashchange', function() {
+					checkHash();
+				});
+
 			}
 
 
-			$("#sort-order-button").click(function() {
-				updateSortOrder();
-			});
+
+			// Load the correct page depending on the hash (such as #project-1-id)
+			if(window.location.hash) {				
+				$projectDetailsEles.addClass("show");
+			} else {
+				$projectListEles.addClass("show");
+			}
+
+
+			// Initialise table first, then initialise page display
+			initProjectsTable(
+			initPageDisplay
+			);
 
 
 
-			updateSortedBy();
 
-		    var dataTable = $('#projects-table').DataTable( {
-		        "ajax": {
-		        	"url": "projects/getprojects",
-		        	"dataSrc": "projects"
-		        },
-		        "columnDefs": [
-		        	{"title": "Name", "targets": 0, "width": "35%", "type": "html",
-		        	 "render": function (data, type, row) {
-						if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order.
-							return data;
-						}
-		        	 	return '<a href="/projects/' + row['_id'] + '/tagging">' + data + "</a>";
-		        	 }
-		        	},
-		        	{"title": "Annotators", "targets": 1, "width": "15%", "className": "dt-center", "type": "numeric",
-		        	 "render": function (data, type, row) {
-						if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order.
-							return data;
-						}
-		        	 	return '<a href="/projects/' + row['_id'] + '/tagging"><span class="detailed-table"><span class="detailed-show"><em>\"' + row['project_description'] + '\"</em></span><span>' + data + ' annotator' + (data > 1 ? "s" : "") + "</span></span></a>";
-		        	 }
-		        	},
-		        	{"title": "Progress", "targets": 2, "width": "50%", "type": "numeric",
-					 "render": function ( data, type, row ) {
-						if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order.
-							console.log(row, data)
-							return data;
-						}
-					 	var nd = row["file_metadata"]["Number of documents"] * 3;
-						return '<a href="/projects/' + row['_id'] + '/tagging">' +
-							   '<span class="detailed-fullwidth">' +
-							   '<span class="progress-bar"><span class="inner" style="width: ' + data + '%">' + data.toFixed(0) +'%</span></span></span>' +
-							   '<span class="detailed-fullwidth detailed-show">' +
-							   '<ul class="metadata">' +
-							   '<li> Filename: ' + row["file_metadata"]["Filename"] + '</li>' +
-							   '<li> Number of documents: ' + row["file_metadata"]["Number of documents"] + '</li>' +
-							   '<li> Number of tokens: ' + row["file_metadata"]["Number of tokens"] + '</li>' +
-							   '<li> Average tokens/document: ' + row["file_metadata"]["Average tokens/document"] + '</li>' +
-							   '</ul></span>' +
-							   '<span class="detailed-fullwidth detailed-show">' +
-							   '<ul class="metadata" style="margin-bottom: 0px">' +
-							   '<li>Created on ' + row["created_at"] + '</li></ul></span>'
-							   '</a>';
-						}
-					},
-
-		        ],
-		        "columns": [
-		            { "data": "project_name" },
-		            { "data": "num_annotators" },
-		            { "data": "percent_complete" },
-		            { "data": "owner", "visible": false, "searchable": true},
-		            { "data": "created_at", "visible": false, "sortable": true},
-		        ],
-		        "orderFixed": [3, 'desc'],
-		        "rowGroup": {
-		        	dataSrc: "owner",
-		        	"startRender": function(rows, group) {
-					  	return "" + group + ' <span class="sort-info">Sorted by <span class="sorted-by">' + sortedBy + '</span> <span class="sort-order">(' + (sortOrder == "asc" ? 'Ascending' : 'Descending') + ')</span></span>';
-					}
-		        }
-		    } );
-
-
-			$("#projects-search").on("keyup search input paste cut", function() {
-			   dataTable.search(this.value).draw();
-			});    
-
-			$("#projects-display").on("change", function() {
-				console.log($(this).val())
-				if($(this).val() == "list")
-					$("#projects-table").removeClass("detailed-view");
-				else
-					$("#projects-table").addClass("detailed-view");
-			});
-
-			$("#projects-filter").on("change", function() {
-				var f = $(this).val();
-				dataTable.column(3).search(f).draw();
-			});
-
-			$("#projects-sort").on("change", function() {
-				var f = parseInt($(this).val());
-				console.log(f);
-				updateSortedBy();
-				dataTable.order([ [ f, sortOrder ] ]).draw();
-			});
-
-
-
-			
+			// Decorate the header with random text
 		    $("#background").lipsumBG(false, false);
 		} );
 

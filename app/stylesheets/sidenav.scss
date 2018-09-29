@@ -31,16 +31,23 @@ nav#sidenav {
 		}
 	}
 	&.sidenav-project ul {
+		width: 100%;
 		padding :0;
 		color: #444;
 		list-style: none;
 		padding: 0;
 		margin: 0;
 		margin-top: 175px;
+		&.project-details li {
+			padding: 0;
+		}
 		li {
 			transition: border 0.3s ease;
 			color: #222;
 			padding: 5px 20px;
+
+
+
 
 			label {
 				font-weight: bold;
@@ -56,24 +63,36 @@ nav#sidenav {
 				padding-left: 25px;
 
 			}
-			a {
-				color: #444;
-			}
 			select, input {
 				padding: 5px 10px;
 			}
-			
+			&.current a {
+				background: white;
+			}
+			a {
+				i {
+					margin-right: 8px;
+				}
+				font-weight: bold;
+				color: #444;
+				text-decoration: none;
+				display: block;
+				padding: 20px 20px;
+			}
+
+			&:hover a {
+				color: #222;
+				background: white;
+			}
 
 			span.sort-container {
 				padding: 0;
 				padding-right: 10px;
 				width: 100%;
 				display: flex;
-				margin-bottom: -25px;
-
 				
 				.sort-button {
-					width: 33px;
+					width: 34px;
 					padding: 5px 10px;
 					padding-top: 10px;
 					margin: 0;		

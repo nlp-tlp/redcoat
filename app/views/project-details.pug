@@ -1,0 +1,77 @@
+div#project-details.not-loaded
+	div.row
+		div.column-50
+			h3 Description
+			div.details-box
+				p#d-project_description ---
+
+			h3 File Metadata
+			div.details-box
+				table.metadata#d-file_metadata
+					tbody
+						tr
+							td Filename:
+							td ---
+						tr
+							td Number of documents:
+							td ---
+						tr
+							td Number of tokens:
+							td ---
+						tr
+							td Average tokens/document:
+							td ---
+
+			h3 Category Hierarchy <a href="#">Manage</a>
+			div.details-box
+				table.metadata#d-category_metadata
+					tbody
+						tr
+							td Preset:
+							td ---
+						tr
+							td Number of entity classes:
+							td ---
+						tr
+							td Maximum depth:
+							td ---
+						tr
+							td Average depth:
+							td ---
+				p.less-spacing
+					span#d-hierarchy_permissions ---
+					//| Annotators may add new categories to the hierarchy but may not delete or rename existing categories.
+
+			h3 Annotators <a href="#">Manage</a>
+			div.details-box
+				table.metadata
+					tbody
+						tr
+							td Total annotators:
+							td#d-num_annotators ---
+						tr
+							td Registered annotators:
+							td#d-registered_annotators ---
+
+		div.column-50
+			h3 Progress
+			div.details-box
+				p <span class="progress-bar coloured"><span class="inner" style="width: 50%">50%</span></span>
+				p <strong><span id="d-completed_annotations">---</span>/<span id="d-annotations_required">---</span></strong> annotations complete. <br/>
+				p Each document will be annotated by <strong id="d-overlap">---</strong> annotator(s).
+
+			h3 Activity <a href="#">View metrics</a>
+			div.details-box
+				div(style="height: 396px")
+					img(src="/images/activity-example.png" style="height: 396px")
+
+			h3 Other info
+			div.details-box
+				table.metadata
+					tbody
+						tr
+							td Created on:
+							td#d-created_at 29 September 2019 8:45am
+						tr
+							td Last modified:
+							td#d-updated_at 29 September 2019 12:45pm

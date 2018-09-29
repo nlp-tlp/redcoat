@@ -5,6 +5,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var cf = require("./common/common_functions");
 const passportLocalMongoose = require('passport-local-mongoose');
+var moment = require('moment');
 
 
 
@@ -106,8 +107,33 @@ UserSchema.methods.getProjects = function(done) {
     if(err) { done(new Error("There was an error attempting to run the find projects query.")); return; }
     else { done(null, projs); return; }
   });
-
 }
+
+// Gets all projects the user is involved in.
+// Returns the data in a format suitable for display in the 'projects' page.
+UserSchema.methods.getProjectsTableData = function(done) {
+  this.getProjects(function(err, projects) {
+    if(err) return done(err);
+    var tableData = [];
+    for(var i in projects) {
+      var project = projects[i];
+      logger.debug(project.category_hierarchy_permissions)
+
+      project["owner"] = ["Your projects", "Projects you've joined"][Math.floor(Math.random() * 2)];
+      project["num_annotators"] = projects[i].user_ids.length;
+      project["percent_complete"] = Math.random() * 100;
+      project["_created_at"] = projects[i].created_at,
+      project["created_at"] = moment(projects[i].created_at).format("DD/MM/YYYY [at] h:mm a");
+      project["updated_at"] = moment(projects[i].updated_at).format("DD/MM/YYYY [at] h:mm a");
+      project["hierarchy_permissions"] = {"no_modification": "Annotators may not modify the category hierarchy.",
+                                          "create_edit_only": "Annotators may add new categories to the hierarchy but may not delete or rename existing categories.",
+                                          "full_permission": "Annotators may add, rename, and delete categories."}[project.category_hierarchy_permissions]
+      tableData.push(project);
+    }
+    done(null, tableData);
+  });
+}
+
 
 // Removes this user from all projects it is involved in.
 UserSchema.methods.removeSelfFromAllProjects = function(done) {

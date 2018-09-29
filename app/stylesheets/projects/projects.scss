@@ -1,3 +1,6 @@
+#dashboard {
+	position: relative;
+}
 #dashboard a.dashboard-hover {
 	&:hover {
 		text-decoration: none;
@@ -129,6 +132,10 @@ span.progress-bar {
 
 		}
 	}
+	&.coloured .inner {
+		background: linear-gradient(darken($primary-red, 21), darken($primary-red, 28));
+		color: white;
+	}	
 }
 
 
@@ -137,6 +144,9 @@ span.progress-bar {
 
 .dataTables_filter, .dataTables_length {
    display: none;
+}
+.dataTables_info {
+	margin-bottom: 100px;
 }
 
 
@@ -183,7 +193,7 @@ span.progress-bar {
 			border-right: none;
 		}
 		tr:not(.group) td:first-child {
-			padding: 0px 24px;
+			padding: 10px 24px;
 			background: white;
 			border-left: none;
 			border-bottom: 1px solid #ccc;
@@ -259,10 +269,10 @@ span.progress-bar {
 		td {
 			padding: 10px 20px;
 			background: none;
-			border: 1px solid #ddd;
 			background: $sidenav-white-color;
 			color: #222;
-			border: 1px solid darken($sidenav-white-color, 5);
+			//border: 1px solid darken($sidenav-white-color, 5);
+			border-left: 18px solid darken($primary-red, 16);
 		}
 		span.sort-info {
 			font-weight: normal;
@@ -290,16 +300,16 @@ span.progress-bar {
 	// 	}
 	// }
 	tr:not(.group) td {
-		padding: 0;
+		padding: 10px;
 	}
-	td a {
-		padding: 10px 10px;
-		color: #222;
-		display: block;
-		&:hover {
-			text-decoration: none;
-		}
-	}
+	// td a {
+	// 	padding: 10px 10px;
+	// 	color: #222;
+	// 	display: block;
+	// 	&:hover {
+	// 		text-decoration: none;
+	// 	}
+	// }
 	tr:hover span.progress-bar {
 		color: white;
 		.inner {
@@ -322,4 +332,129 @@ span.progress-bar {
 			}
 		}
 	}
+}
+
+
+
+
+#project-details {
+	h3 {
+		margin-top: 0;
+		margin-bottom: 10px;
+		a {
+			float: right;
+			font-size: 0.75em;
+			margin-right: 10px;
+			border-radius: 3px;
+			padding: 0 10px;
+			i {
+				margin-left: 5px;
+				max-width: 0px;
+				overflow: hidden;
+			}
+			&:hover {
+				text-decoration: none;
+				color: white;
+				background: lighten($primary-blue, 5);
+			}
+			&:hover i {
+				max-width: 1em;
+			}
+
+		}
+	}
+	.details-box {
+		padding: 10px 20px;
+		border: 1px solid #ddd;
+		background: white;
+		border-radius: 3px;
+		margin-left: 10px;
+		margin-right: 10px;
+		margin-bottom: 30px;
+	}
+	table.metadata { 
+		margin-left: -2px;
+		td:first-child {
+			font-weight: bold;
+			padding-right: 15px;
+		}
+	}
+	p {
+		margin: 0;
+		padding: 1px 0;
+		&.less-spacing {
+			margin-top: 5px;
+			line-height: 150%;
+		}
+	}
+
+}
+
+
+
+#project-details, #project-list {
+	opacity: 0;
+	pointer-events: none;
+	transform: translate(100px, 0px);
+	transition: all 0.2s ease;
+	position: absolute;
+	width: 100%;
+	height: 70vh;
+	overflow-y: hidden;
+	&.show {
+		overflow-y: visible;
+		transform: translate(0, 0);
+		opacity: 1;
+		pointer-events: auto;
+	}
+	&.quick {
+		transition: none;
+	}
+}
+
+#project-list {
+	transform: translate(-100px, 0);
+}
+
+
+#sidenav-project-details, #sidenav-project-list {
+	opacity: 0;
+	pointer-events: none;
+	position: absolute;
+	&.show {
+		opacity: 1;
+		pointer-events: auto;
+	}
+	&.quick {
+		transition: none;
+	}
+}
+
+.loading-item {
+	min-height: 70vh;
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	top: 0;
+	pointer-events: none;
+	background: #f2f2f2;
+	z-index: 100;
+	font-size: 24px;
+	color: #777;
+	transition: opacity 0.2s ease;
+	opacity: 0;
+	top: 0;
+	i {
+		margin-right: 8px;
+	}
+	&.show {
+		opacity: 1;
+		pointer-events: auto;
+	}
+}
+.not-loaded {
+	visibility: hidden;
 }
