@@ -151,7 +151,16 @@ block scripts
 			        	"dataSrc": "projects"
 			        },
 			        "columnDefs": [
-			        	{ "title": "Name", "targets": 0, "width": "35%" },
+			        	{ "title": "Name", "targets": 0, "width": "35%",
+			        	 "render": function(data, type, row) {
+							if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order, irrespective of html tags.
+								return data;
+							}
+							return data + '<span class="right detailed-show"><a href="/projects/' + row["_id"] + '/tagging" class="button goto-tagging-button"><i class="fa fa-lg fa-pencil"></i>Annotate project</a></span>';        	 	
+
+			        	 }
+
+			        	 },
 			        	{ "title": "Annotators", "targets": 1, "width": "15%", "className": "dt-center", "type": "numeric",
 			        	 "render": function (data, type, row) {
 							if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order, irrespective of html tags.
@@ -168,8 +177,8 @@ block scripts
 						 	//var nd = row["file_metadata"]["Number of documents"] * 3;
 							return '' +
 								   '<span class="detailed-fullwidth">' +
-								   '<span class="progress-bar"><span class="inner" style="width: ' + data + '%">' + data.toFixed(0) +'%</span></span></span>' +
-								   '<span class="detailed-fullwidth detailed-show">' +
+								   '<span class="progress-bar"><span class="inner" style="width: ' + data + '%">' + data.toFixed(0) +'%</span></span></span>' +						   
+								   '<span class="detailed-fullwidth detailed-show">' +								   
 								   '<ul class="metadata">' +
 								   '<li> Filename: ' + row["file_metadata"]["Filename"] + '</li>' +
 								   '<li> Number of documents: ' + row["file_metadata"]["Number of documents"] + '</li>' +
@@ -182,6 +191,11 @@ block scripts
 								   '';
 							}
 						},
+						{ "targets": 6,
+						  "render": function(data) {
+						  	return '<span class="right list-show"><a href="/projects/' + data + '/tagging"class="button goto-tagging-button"><i class="fa fa-lg fa-pencil"></i></a></span>';
+						  }
+						}
 			        ],
 			        "columns": [
 			            { "data": "project_name" },
@@ -190,6 +204,7 @@ block scripts
 			            { "data": "owner", "visible": false, "searchable": true},
 			            { "data": "_created_at", "visible": false, "sortable": true},
 			            { "data": "project_description", "visible": false, "sortable": false, "searchable": true},
+			            { "data": "_id", "sortable": false, "searchable": false},
 			        ],
 			        "order": [[sortedById, sortOrder]],
 			        "orderFixed": [3, 'desc'],
@@ -206,6 +221,10 @@ block scripts
 			        	initComplete();	// Call a function that calls the callback function. This ensures the table is created before proceeding with the rest of the code.
 			        },
 			        "drawCallback": function() {
+			        	// Prevent the tagging buttons from propagating to the table row click events when clicked.
+			        	$(".goto-tagging-button").on('click', function(e) {
+			        		e.stopPropagation();
+			        	})
 			        	saveParamsToCookie(); // Save params to the cookie whenever the table is redrawn.
 			        }
 			    } );
