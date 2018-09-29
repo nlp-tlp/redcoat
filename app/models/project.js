@@ -9,6 +9,8 @@ var User = require("./user")
 var nanoid = require('nanoid')
 var FrequentTokens = require('./frequent_tokens')
 
+var moment = require('moment');
+
 //USERS_PER_PROJECT_MAXCOUNT = cf.USERS_PER_PROJECT_MAXCOUNT;
 
 
@@ -107,6 +109,24 @@ ProjectSchema.methods.verifyAssociatedObjectsExist = cf.verifyAssociatedObjectsE
 //   return r;
 // }
 
+// Get the data to appear in the Projects table.
+ProjectSchema.statics.getTableData = function(p) {
+  var project = p;
+  project["owner"] = ["Your projects", "Projects you've joined"][Math.floor(Math.random() * 2)];
+  project["num_annotators"] = p.user_ids.length;
+  var pc = Math.random() * 100;
+  project["percent_complete"] = pc;
+  project["project_description"] = p["project_description"] ? p["project_description"] : "(no description)";
+  project["_created_at"] = p.created_at,
+  project["created_at"] = moment(p.created_at).format("DD/MM/YYYY [at] h:mm a");
+  project["updated_at"] = moment(p.updated_at).format("DD/MM/YYYY [at] h:mm a");
+  project["hierarchy_permissions"] = {"no_modification": "Annotators may not modify the category hierarchy.",
+                                      "create_edit_only": "Annotators may add new categories to the hierarchy but may not delete or rename existing categories.",
+                                      "full_permission": "Annotators may add, rename, and delete categories."}[p.category_hierarchy_permissions]
+  project["annotations_required"] = p.file_metadata["Number of documents"] * p.overlap;
+  project["completed_annotations"] = Math.floor(pc / 100 * p["annotations_required"]); // TODO: update this to a proper value.
+  return project;
+}
 
 
 // Returns a set of the labels in the category hierarchy, without spaces or newlines.
@@ -165,6 +185,7 @@ ProjectSchema.methods.recommendDocgroupToUser = function(user, next) {
     });
   });
 }
+
 
 // Adds the creator of the project to its user_ids (as the creator should always be able to annotate the project).
 ProjectSchema.methods.addCreatorToUsers = cf.addCreatorToUsers;

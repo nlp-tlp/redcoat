@@ -510,7 +510,7 @@ module.exports = {
 	    required: false,
 	    minlength: 1,
 	    maxlength: PROJECT_DESCRIPTION_MAXLENGTH,
-	    validate: validateNotBlank
+	    validate: validateNotBlank,
 	  },
 
     email: { 

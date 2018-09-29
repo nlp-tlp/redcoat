@@ -13,6 +13,8 @@ block header
 			h1#d-project_name ---
 			div.left
 				a#back-to-projects.button(href="javascript:void(0)") <i class="fa fa-chevron-left"></i>Projects
+			div.right
+				a#annotate-project-button.button(href="/") <i class="fa fa-pencil"></i>Annotate project
 		canvas#background(height="120px" width="1920")
 
 block sidenav
@@ -187,6 +189,7 @@ block scripts
 			            { "data": "percent_complete" },
 			            { "data": "owner", "visible": false, "searchable": true},
 			            { "data": "_created_at", "visible": false, "sortable": true},
+			            { "data": "project_description", "visible": false, "sortable": false, "searchable": true},
 			        ],
 			        "order": [[sortedById, sortOrder]],
 			        "orderFixed": [3, 'desc'],
@@ -279,7 +282,8 @@ block scripts
 			function initPageDisplay(dataTable) {
 
 				var $detailEles = $('[id^="d-"]'); // All elements with ids starting with 'd-' should contain data relevant to the current project.
-				
+				var $apButton = $("#annotate-project-button");
+
 				// Displays the details page of a particular project.
 				// Hides the projects list and projects lists sidenav.
 				function displayProjectDetails(project) {
@@ -287,9 +291,11 @@ block scripts
 					$projectDetailsEles.addClass("show");
 					window.location.hash = project._id;
 					categoryHierarchy.buildTree(project.category_hierarchy);
+					$apButton.attr('href', "/projects/" + project._id + "/tagging");
 					$detailEles.each(function(e) {
 						var tid = $(this).attr('id').substr(2, $(this).attr('id').length);
 
+						// Handle the 'percent_complete' elements separately.
 						if($(this).attr('id') == "d-percent_complete") {
 							$(this).css('width', '' + project["percent_complete"] + "%");
 							$(this).html(project["percent_complete"].toFixed(0) + "%");
@@ -308,11 +314,7 @@ block scripts
 							tableHtml += "</tbody>";
 							$(this).html(tableHtml);
 						} else {
-							if(tid in project) {
-								$(this).html(project[tid]);
-							} else {
-								$(this).html("???");
-							}			
+							$(this).html((tid in project ? project[tid] : "-"))			
 						}
 						
 					});	
