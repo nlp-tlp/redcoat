@@ -119,13 +119,16 @@ UserSchema.methods.getProjectsTableData = function(done) {
       var project = projects[i];
       project["owner"] = ["Your projects", "Projects you've joined"][Math.floor(Math.random() * 2)];
       project["num_annotators"] = projects[i].user_ids.length;
-      project["percent_complete"] = Math.random() * 100;
+      var pc = Math.random() * 100;
+      project["percent_complete"] = pc;
       project["_created_at"] = projects[i].created_at,
       project["created_at"] = moment(projects[i].created_at).format("DD/MM/YYYY [at] h:mm a");
       project["updated_at"] = moment(projects[i].updated_at).format("DD/MM/YYYY [at] h:mm a");
       project["hierarchy_permissions"] = {"no_modification": "Annotators may not modify the category hierarchy.",
                                           "create_edit_only": "Annotators may add new categories to the hierarchy but may not delete or rename existing categories.",
                                           "full_permission": "Annotators may add, rename, and delete categories."}[project.category_hierarchy_permissions]
+      project["annotations_required"] = project.file_metadata["Number of documents"] * project.overlap;
+      project["completed_annotations"] = Math.floor(pc / 100 * project["annotations_required"]); // TODO: update this to a proper value.
       tableData.push(project);
     }
     done(null, tableData);

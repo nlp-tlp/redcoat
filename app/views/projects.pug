@@ -102,7 +102,7 @@ block scripts
 			}
 
 			// Initialise the projects table.
-			function initProjectsTable(next) {		
+			function initProjectsTable(next) {
 
 			    // Keep track of the field to sort by, and the sortOrder ('asc' or 'desc')
 				var sortedBy = "Date created";
@@ -141,7 +141,7 @@ block scripts
 					}, { expires: 365 });
 				}
 
-
+				// Create the dataTable.
 				var $loadingTable = $("#loading-table");
 			    var dataTable = $('#projects-table').DataTable( {
 			        "ajax": {
@@ -152,7 +152,7 @@ block scripts
 			        	{ "title": "Name", "targets": 0, "width": "35%" },
 			        	{ "title": "Annotators", "targets": 1, "width": "15%", "className": "dt-center", "type": "numeric",
 			        	 "render": function (data, type, row) {
-							if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order.
+							if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order, irrespective of html tags.
 								return data;
 							}
 			        	 	return '<span class="detailed-table"><span class="detailed-show"><em>\"' + row['project_description'] + '\"</em></span><span>' + data + ' annotator' + (data > 1 ? "s" : "") + "</span></span>";
@@ -160,10 +160,10 @@ block scripts
 			        	},
 			        	{ "title": "Progress", "targets": 2, "width": "50%", "type": "numeric",
 						 "render": function ( data, type, row ) {
-							if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order.
+							if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order, irrespective of html tags.
 								return data;
 							}
-						 	var nd = row["file_metadata"]["Number of documents"] * 3;
+						 	//var nd = row["file_metadata"]["Number of documents"] * 3;
 							return '' +
 								   '<span class="detailed-fullwidth">' +
 								   '<span class="progress-bar"><span class="inner" style="width: ' + data + '%">' + data.toFixed(0) +'%</span></span></span>' +
@@ -180,7 +180,6 @@ block scripts
 								   '';
 							}
 						},
-
 			        ],
 			        "columns": [
 			            { "data": "project_name" },
@@ -291,6 +290,11 @@ block scripts
 					$detailEles.each(function(e) {
 						var tid = $(this).attr('id').substr(2, $(this).attr('id').length);
 
+						if($(this).attr('id') == "d-percent_complete") {
+							$(this).css('width', '' + project["percent_complete"] + "%");
+							$(this).html(project["percent_complete"].toFixed(0) + "%");
+							return;
+						}
 						// Tables are generated differently to other tags.
 						if($(this).prop('tagName') == "TABLE") {
 							// Build table
@@ -317,6 +321,7 @@ block scripts
 
 				// Displays the projects list.
 				function displayProjectsList() {
+					$("#d-percent_complete").css('width', '0%');	// Shrink the bar down to 0% so it grows when opening a new project.
 					$projectListEles.addClass("show");
 					$projectDetailsEles.removeClass("show");	
 					clearHash();
