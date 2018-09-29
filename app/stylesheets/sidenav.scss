@@ -80,9 +80,13 @@ nav#sidenav {
 				padding: 20px 20px;
 			}
 
-			&:hover a {
+			&:not(.disabled):hover a {
 				color: #222;
 				background: white;
+			}
+			&.disabled a {
+				cursor: default;
+				color: #999;				
 			}
 
 			span.sort-container {

@@ -21,15 +21,15 @@ block sidenav
 
 		ul#sidenav-project-details.project-details
 			li#li-details.current
-				a(href="#") <i class="fa fa-info-circle"></i>Details
+				a(href="#details") <i class="fa fa-info-circle"></i>Details
 			li#li-hierarchy
-				a(href="#") <i class="fa fa-tree"></i>Category Hierarchy
-			li#annotators
-				a(href="#") <i class="fa fa-users"></i>Annotators
-			li#metrics
-				a(href="#") <i class="fa fa-bar-chart"></i>Metrics
-			li#settings
-				a(href="#") <i class="fa fa-wrench"></i>Settings
+				a(href="#hierarchy") <i class="fa fa-tree"></i>Category Hierarchy
+			li#annotators.disabled
+				a() <i class="fa fa-users"></i>Annotators
+			li#metrics.disabled
+				a() <i class="fa fa-bar-chart"></i>Metrics
+			li#settings.disabled
+				a() <i class="fa fa-wrench"></i>Settings
 
 	
 		ul#sidenav-project-list
@@ -116,10 +116,13 @@ block content
 			
 
 block scripts
-
+	script(src="/javascripts/d3/d3.min.js")
+	script(src="/javascripts/d3/d3-context-menu.js")
+	script(src="/javascripts/shared/hierarchy_validator.js")
 	script(src="/javascripts/datatables/datatables.min.js")
 	script(src="/javascripts/lipsumBG.js")
 	script(src="/javascripts/jquery.cookie.js")
+	script(src="/javascripts/category-tree-visualisation.js")
 
 
 	script.
@@ -146,9 +149,12 @@ block scripts
 
 		$(document).ready(function() {
 
+			var categoryHierarchy = new CategoryHierarchy(); // To display for a particular project
 
 			var $projectListEles = $("#project-list, #sidenav-project-list, #header-project-list");
 			var $projectDetailsEles = $("#project-details, #sidenav-project-details, #header-project-details");
+
+			
 
 		    // Keep track of the field to sort by, and the sortOrder ('asc' or 'desc')
 			var sortedBy = "Date created";
@@ -241,9 +247,11 @@ block scripts
 			        "orderFixed": [3, 'desc'],
 			        "rowGroup": {
 			        	dataSrc: "owner",
-			        	"startRender": function(rows, group) {			        		
+			        	"startRender": function(rows, group) {
+			        		var orderText = sortOrder == "asc" ? 'Ascending' : 'Descending';
+			        		if(sortedById == 4) orderText = sortOrder == "asc" ? "Oldest first" : "Newest first";
 						  	return "" + group + ' <span class="sort-info">Sorted by <span class="sorted-by">' + sortedBy + '</span> <span class="sort-order">(' +
-						  		(sortOrder == "asc" ? 'Ascending' : 'Descending') + ')</span></span>';
+						  		orderText + ')</span></span>';
 						}
 			        },
 			        "initComplete": function() {
@@ -338,6 +346,7 @@ block scripts
 					$projectListEles.removeClass("show");
 					$projectDetailsEles.addClass("show");
 					window.location.hash = project._id;
+					categoryHierarchy.buildTree(project.category_hierarchy);
 					$detailEles.each(function(e) {
 						var tid = $(this).attr('id').substr(2, $(this).attr('id').length);
 
@@ -396,8 +405,29 @@ block scripts
 				$(window).on('hashchange', function() {
 					checkHash();
 				});
-
 			}
+
+
+
+			(function initProjectDetailsButtons() {
+				var $projectDetailsButtons  = $("#sidenav-project-details li:not(.disabled)");
+				var $projectDetailsButtonsA = $("#sidenav-project-details li:not(.disabled) a");
+				var $projectDetailsTabs     = $("#project-details .tab");
+
+				$projectDetailsButtonsA.on('click', function(e) {
+					$projectDetailsTabs.removeClass('show');
+					$projectDetailsButtons.removeClass('current');
+					var ind = $(this).closest('li').index();
+					$($projectDetailsTabs[ind]).addClass('show');
+					$($projectDetailsButtons[ind]).addClass('current');					
+					return false;
+				});			
+				
+
+			})();
+
+
+
 
 
 

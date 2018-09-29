@@ -136,6 +136,9 @@ hr {
 	margin: 40px 0;
 }
 
+.center {
+	text-align: center;
+}
 #main-container {
 	width: 1600px;
 	position: relative;
@@ -218,6 +221,26 @@ header.bg-header {
 			i {
 				margin-right: 12px;
 			}
+		}
+	}
+}
+
+
+
+footer {
+	background: #222;
+	color: white;
+	width: 100%;
+	z-index: 30000;
+	padding: 20px 0;
+	position: relative;
+	font-size: 16px;
+	color: #aaa;
+	.container {
+		padding-left: 17.5%;
+		padding-right: 20px;
+		.right {
+			float: right;
 		}
 	}
 }

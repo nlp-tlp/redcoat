@@ -16,7 +16,7 @@ class CategoryHierarchy {
     // https://bl.ocks.org/mbostock/4339083
     this.margin = {top: 20, right: 120, bottom: 20, left: 120};
     this.width = 1520 - this.margin.right - this.margin.left;
-    this.height = 800 - this.margin.top - this.margin.bottom;
+    this.height = 700 - this.margin.top - this.margin.bottom;
     this.i = 0;
     this.duration = 750;
     this.root;

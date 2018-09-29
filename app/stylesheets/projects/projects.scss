@@ -107,6 +107,9 @@ span.progress-bar {
 	text-align: left;
 	background: #eaeaea;
 	line-height: 130%;
+	&.large {
+		line-height: 260%;
+	}
 	.inner {
 		transition: width 0.5s ease;
 		background: linear-gradient(#ddd, #cacaca);
@@ -363,6 +366,7 @@ span.progress-bar {
 
 		}
 	}
+
 	.details-box {
 		padding: 10px 20px;
 		border: 1px solid #ddd;
@@ -371,6 +375,9 @@ span.progress-bar {
 		margin-left: 10px;
 		margin-right: 10px;
 		margin-bottom: 30px;
+		.progress-bar {
+			margin-top: 10px;
+		}
 	}
 	table.metadata { 
 		margin-left: -2px;
@@ -414,8 +421,36 @@ span.progress-bar {
 
 #project-list {
 	transform: translate(-100px, 0);
+	height: auto;
+	position: relative;
+	&:not(.show) {
+		height: 950px;
+	}
 }
 
+#project-details .tab {
+	opacity: 0;
+	pointer-events: none;
+	position: absolute;
+	width: 100%;
+	transition: all 0.2s ease;
+	transform: translate(0, 100px);
+	&.show {
+		opacity: 1;
+		pointer-events: auto;
+		transform: translate(0, 0);
+	}
+	#svg-entity-categories {
+		height: 70vh;
+		border: 1px solid #ddd;
+	}
+	&#tab-category-hierarchy {
+		margin-top: -30px;
+		h2 {
+			margin-top: 0;
+		}
+	}
+}
 
 #sidenav-project-details, #sidenav-project-list {
 	opacity: 0;
@@ -433,7 +468,7 @@ span.progress-bar {
 .loading-item {
 	min-height: 70vh;
 	width: 100%;
-	height: 100%;
+	height: 70vh;
 	position: absolute;
 	display: flex;
 	justify-content: center;
@@ -458,3 +493,15 @@ span.progress-bar {
 .not-loaded {
 	visibility: hidden;
 }
+
+
+// #projects-table_paginate .paginate_button {
+// 	&.current {
+// 		background: #ddd;
+// 		border: 1px solid #ddd;
+// 	}
+// 	&:hover {
+// 		background: darken($primary-red, 14);
+// 		border: 1px solid darken($primary-red, 18);
+// 	}
+// }
