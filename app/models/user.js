@@ -117,8 +117,6 @@ UserSchema.methods.getProjectsTableData = function(done) {
     var tableData = [];
     for(var i in projects) {
       var project = projects[i];
-      logger.debug(project.category_hierarchy_permissions)
-
       project["owner"] = ["Your projects", "Projects you've joined"][Math.floor(Math.random() * 2)];
       project["num_annotators"] = projects[i].user_ids.length;
       project["percent_complete"] = Math.random() * 100;

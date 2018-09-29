@@ -66,7 +66,6 @@ block sidenav
 
 block content
 
-
 	div#dashboard
 
 		div#loading-table.loading-item.show
@@ -76,44 +75,7 @@ block content
 
 		div#project-list
 			table#projects-table.not-loaded.detailed-view
-
-
-		//- if false
-		//- 	div.pad
-		//- 		each proj in projects
-		//- 			a.dashboard-hover(href="projects/" + proj._id + "/tagging")
-		//- 				table.dashboard-project
-		//- 					thead
-		//- 						tr
-		//- 							th(colspan="3")
-		//- 								=proj.project_name						
-		//- 					tbody
-		//- 						tr
-		//- 							td(colspan="3")
-		//- 								table
-		//- 									thead 
-		//- 										tr 
-		//- 											th 
-		//- 												span Description 
-		//- 											th 
-		//- 												span # Annotators 
-		//- 											th 
-		//- 												span Progress 
-		//- 									tbody 
-		//- 										tr
-		//- 											td 	<span class="desc">#{proj.project_description || "(No description)"}</span>
-		//- 											td 	#{proj.user_ids.length}
-		//- 											td  <span class="progress-bar"><span class="inner" data-width="30%">&nbsp;&nbsp;<span class="done"></span>/<span class="total"></span></span>
-		//- 										tr 
-		//- 											td(colspan="3")
-		//- 												ul.metadata 
-		//- 													li Filename: #{proj.file_metadata.Filename}
-		//- 													li Number of documents: <span class="num-docs">#{proj.file_metadata['Number of documents']}</span>
-		//- 													li Number of tokens: #{proj.file_metadata["Number of tokens"]}
-		//- 													li Average tokens/document: #{proj.file_metadata["Average tokens/document"]}
-
-
-			
+	
 
 block scripts
 	script(src="/javascripts/d3/d3.min.js")
@@ -124,27 +86,7 @@ block scripts
 	script(src="/javascripts/jquery.cookie.js")
 	script(src="/javascripts/category-tree-visualisation.js")
 
-
 	script.
-
-		$('#projlink').click(function(){
-			$.ajax({
-				type: "GET",
-				url: "/projects/aZUO4c-Pr",
-				async: true,
-				data: {  },
-				success: function(data) {
-
-					console.log(data);
-				}
-			});
-			return false;
-		})
-
-
-	script.
-		//$(document).ready(function() {
-
 		$.cookie.json = true;
 
 		$(document).ready(function() {
@@ -154,46 +96,51 @@ block scripts
 			var $projectListEles = $("#project-list, #sidenav-project-list, #header-project-list");
 			var $projectDetailsEles = $("#project-details, #sidenav-project-details, #header-project-details");
 
-			
-
-		    // Keep track of the field to sort by, and the sortOrder ('asc' or 'desc')
-			var sortedBy = "Date created";
-			var sortedById = 4;
-			var sortOrder = "desc";
-			var filterBy = null;
-			var display = null;
-
-			// If the user has visited this page before, load the sort/filtering parameters from a cookie.
-			(function loadParamsFromCookie() {
-				var c = $.cookie('projectsTableParams')
-				if(!c) return;
-				display = c.display;
-				sortedBy = c.sortedBy;
-				sortedById = c.sortedById;
-				sortOrder = c.sortOrder;
-				filterBy = c.filterBy;
-				// Modify the relevant elements to display the options stored in the cookie.
-				$("#projects-sort option[value='" + sortedById + "']").attr('selected', 'selected');
-				if(sortOrder == "asc") {
-					$("#sort-order-button .fa").addClass("fa-sort-up");
-					$("#sort-order-button .fa").removeClass("fa-sort-down");
-				}
-				$('#projects-filter option[value="' + filterBy + '"]').attr('selected', 'selected');
-				$('#projects-display option[value="' + display + '"]').attr('selected', 'selected');
-			})();
-
-			// Save the sort/filtering parameters to a cookie.
-			function saveParamsToCookie() {
-				$.cookie('projectsTableParams', {
-					display: display,
-					sortedBy: sortedBy,
-					sortedById: sortedById,
-					sortOrder: sortOrder,
-					filterBy: filterBy,
-				}, { expires: 365 });
+			// Clear the hash in the URL.
+			function clearHash() {
+				history.pushState("", document.title, window.location.pathname + window.location.search);
 			}
 
+			// Initialise the projects table.
 			function initProjectsTable(next) {		
+
+			    // Keep track of the field to sort by, and the sortOrder ('asc' or 'desc')
+				var sortedBy = "Date created";
+				var sortedById = 4;
+				var sortOrder = "desc";
+				var filterBy = null;
+				var display = null;
+
+				// If the user has visited this page before, load the sort/filtering parameters from a cookie.
+				(function loadParamsFromCookie() {
+					var c = $.cookie('projectsTableParams')
+					if(!c) return;
+					display = c.display;
+					sortedBy = c.sortedBy;
+					sortedById = c.sortedById;
+					sortOrder = c.sortOrder;
+					filterBy = c.filterBy;
+					// Modify the relevant elements to display the options stored in the cookie.
+					$("#projects-sort option[value='" + sortedById + "']").attr('selected', 'selected');
+					if(sortOrder == "asc") {
+						$("#sort-order-button .fa").addClass("fa-sort-up");
+						$("#sort-order-button .fa").removeClass("fa-sort-down");
+					}
+					$('#projects-filter option[value="' + filterBy + '"]').attr('selected', 'selected');
+					$('#projects-display option[value="' + display + '"]').attr('selected', 'selected');
+				})();
+
+				// Save the sort/filtering parameters to a cookie.
+				function saveParamsToCookie() {
+					$.cookie('projectsTableParams', {
+						display: display,
+						sortedBy: sortedBy,
+						sortedById: sortedById,
+						sortOrder: sortOrder,
+						filterBy: filterBy,
+					}, { expires: 365 });
+				}
+
 
 				var $loadingTable = $("#loading-table");
 			    var dataTable = $('#projects-table').DataTable( {
@@ -214,7 +161,6 @@ block scripts
 			        	{ "title": "Progress", "targets": 2, "width": "50%", "type": "numeric",
 						 "render": function ( data, type, row ) {
 							if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order.
-								console.log(row, data)
 								return data;
 							}
 						 	var nd = row["file_metadata"]["Number of documents"] * 3;
@@ -258,10 +204,9 @@ block scripts
 			        	initComplete();	// Call a function that calls the callback function. This ensures the table is created before proceeding with the rest of the code.
 			        },
 			        "drawCallback": function() {
-			        	saveParamsToCookie();
+			        	saveParamsToCookie(); // Save params to the cookie whenever the table is redrawn.
 			        }
 			    } );
-
 
 
 				// Sort the table based on the sort order of the button.
@@ -271,7 +216,7 @@ block scripts
 					dataTable.order([ [ sortedById, sortOrder ] ]).draw();
 				}
 
-				// Update the sort order ('asc' or 'desc')
+				// Update the sort order ('asc' or 'desc').
 				function swapSortOrder() {
 					sortOrder = sortOrder == "asc" ? "desc" : "asc";
 					if(sortOrder == "desc") {
@@ -306,13 +251,10 @@ block scripts
 					sortTable();
 				});
 
+				// Change the display to list or detailed view, and save the current view option to the cookie.
 				function changeDisplay(d) {
-					if(d == "list") {
-						$("#projects-table").removeClass("detailed-view");
-					}
-					else {
-						$("#projects-table").addClass("detailed-view");
-					}
+					if(d == "list") $("#projects-table").removeClass("detailed-view");
+					else $("#projects-table").addClass("detailed-view");
 					display = d;
 					saveParamsToCookie();
 				}
@@ -322,7 +264,6 @@ block scripts
 					changeDisplay($(this).val());
 				});
 
-
 				// Modify table depending on whether filterBy and display exist (from the cookie)
 				if(filterBy) dataTable.column(3).search(filterBy).draw();				
 				if(display) changeDisplay(display);
@@ -331,11 +272,11 @@ block scripts
 					$loadingTable.removeClass("show");
 					$("#projects-table").removeClass("not-loaded");
 					$("#project-details").removeClass("not-loaded");
-					//sortTable('desc');
 					next(dataTable);
 				}
 			}
 
+			// Initialise the page display (the ability to click on a project and view its details, hierarchy, etc).
 			function initPageDisplay(dataTable) {
 
 				var $detailEles = $('[id^="d-"]'); // All elements with ids starting with 'd-' should contain data relevant to the current project.
@@ -355,7 +296,6 @@ block scripts
 							// Build table
 							var tableHtml =  "<tbody>";
 							for(var key in project[tid]) {
-
 								tableHtml += "<tr>";
 								tableHtml += "<td>" + key + "</td>";
 								tableHtml += "<td>" + project[tid][key] + "</td>";
@@ -379,7 +319,7 @@ block scripts
 				function displayProjectsList() {
 					$projectListEles.addClass("show");
 					$projectDetailsEles.removeClass("show");	
-					history.pushState("", document.title, window.location.pathname + window.location.search);	
+					clearHash();
 				}
 
 				// Event handler for the table rows to display their corresponding project details.
@@ -395,109 +335,56 @@ block scripts
 				function checkHash() {
 					if(!window.location.hash) displayProjectsList();
 					var data = dataTable.rows().data();
+					var project = null;
 					for(var i in data) {
 						if(data[i]._id == window.location.hash.substr(1, window.location.hash.length)) {
-							displayProjectDetails(data[i]);
+							project = data[i];
 						}
+					}
+					if(project) displayProjectDetails(project);
+					else {
+						displayProjectsList();
+						clearHash();
 					}
 				};
 				checkHash();
-				$(window).on('hashchange', function() {
+				// Also load the corresponding project if the hash is modified, such as when pressing Back in the browser.
+				$(window).on('hashchange', function() {	
 					checkHash();
 				});
 			}
 
-
-
+			// Initialise the buttons on the side nav when looking at a particular project.
 			(function initProjectDetailsButtons() {
 				var $projectDetailsButtons  = $("#sidenav-project-details li:not(.disabled)");
 				var $projectDetailsButtonsA = $("#sidenav-project-details li:not(.disabled) a");
 				var $projectDetailsTabs     = $("#project-details .tab");
 
-				$projectDetailsButtonsA.on('click', function(e) {
+				function displayTab(index) {
 					$projectDetailsTabs.removeClass('show');
 					$projectDetailsButtons.removeClass('current');
-					var ind = $(this).closest('li').index();
-					$($projectDetailsTabs[ind]).addClass('show');
-					$($projectDetailsButtons[ind]).addClass('current');					
-					return false;
-				});			
-				
+					$($projectDetailsTabs[index]).addClass('show');
+					$($projectDetailsButtons[index]).addClass('current');
+				}
 
+				$projectDetailsButtonsA.on('click', function(e) {
+					displayTab($(this).closest('li').index());
+					return false;
+				});	
+
+				// Event handlers for buttons on the details page.
+				$("#jump-to-category-hierarchy").on('click', function() { displayTab(1); return false; });
 			})();
 
-
-
-
-
-
-			// Load the correct page depending on the hash (such as #project-1-id)
-			if(window.location.hash) {				
-				$projectDetailsEles.addClass("show");
-			} else {
-				$projectListEles.addClass("show");
-			}
-
+			// Load the projectDetails page if the hash contains something on page load, otherwise show the list of projects.
+			if(window.location.hash) $projectDetailsEles.addClass("show");
+			else $projectListEles.addClass("show");
 
 			// Initialise table first, then initialise page display
 			initProjectsTable(
 			initPageDisplay
 			);
 
-
-
-
 			// Decorate the header with random text
 		    $("#background").lipsumBG(false, false);
 		} );
-
-
-			//- function createTable() {
-
-			//-     table = $('#project-table').DataTable( {
-			//-         data: data,
-		
-			//-         //- "columns": [
-			//-         //-     {
-			//-         //-         "className":      'details-control',
-			//-         //-         "orderable":      false,
-			//-         //-         "data":           null,
-			//-         //-         "defaultContent": ''
-			//-         //-     },
-			//-         //-     { title: " Why", "data": "project_name" },
-			//-         //-     { "data": "description" },
-			//-         //- ],
-			//-         //"order": [[1, 'asc']]
-			//-     } );
-			//- }
-
-			//- var data;
-			//- $.ajax({
-		 //-        type: 'GET',
-		 //-        url: 'projects/getprojects',
-		 //-        success: function(d) {
-		 //-        	data = d.projects;
-		 //-        	console.log(data)
-		 //-        	createTable();
-		 //-        }
-		 //-    });
-
-
-		//- });
-		     
-
-	script.
-		$(document).ready(function() {
-			$(".progress-bar .inner").each(function() {
-				var total = parseInt($(this).closest("tbody").find(".num-docs").html()) * 3;
-				var done = Math.floor(Math.random() * total);
-				
-				//console.log(total);
-				//console.log($(this).find(".done"))
-				//console.log($(this).find(".total"))
-				$(this).find(".done").html(done);
-				$(this).find(".total").html(total);
-				$(this).css("width", (done/total*100) + "%");
-			});
-		});
-
