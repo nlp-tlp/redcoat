@@ -484,32 +484,53 @@ function removeEmptyChildren(obj) {
 // category_3
 // etc. Children are specified by spaces, as shown above.
 // Algorithm adapted from here: https://stackoverflow.com/questions/25170715/creating-a-json-object-from-a-tabbed-tree-text-file
-function txt2json(text) {
+function txt2json(text, jstree_format) {
+  if(!jstree_format) fieldname = "name";
+  else fieldname = "text";
+
   var lines = text.split('\n');  
   var depth = 0; // Current indentation
   var root = {
-    "name": "entity",
     "children": []
   };
+  root["" + fieldname] = "entity";
   var parents = [];
   var node = root;
+  var colorId = -1;
   for(var i = 0; i < lines.length; i++) {
+    console.log(i, lines[i]);
     var cleanLine = lines[i].trim()//replace(/\s/g, "");
     var newDepth  = lines[i].search(/\S/) + 1;
+    if(newDepth == 1) colorId++;
     if(newDepth < depth) {
-      parents = parents.slice(0, newDepth);
-    } else if (newDepth == depth + 1) {
+      parents = parents.slice(0, newDepth);      
+    } else if (newDepth == depth + 1) {      
       parents.push(node);
     } else if(newDepth > depth + 1){
       return new Error("Unparsable tree.");
     }
     depth = newDepth;
-    node = {"name": cleanLine, "children": []};
-    if(parents.length > 0)
+    node = {"children": []};
+    node["" + fieldname] = cleanLine;
+    if(jstree_format) {
+      var color = (colorId % colors.length) + 1;
+      node["li_attr"] = { "data-index": i, "class": "color-" + color, "data-color": color };
+    }
+    if(parents.length > 0) {
       parents[parents.length-1]["children"].push(node);
+    }
   }
   removeEmptyChildren(root);
-  return root;
+  if(jstree_format) {
+    var data = [];
+    for(var i in root.children) {
+      data.push(root.children[i]);
+    }
+    console.log(data);
+    return data;
+  } else {
+    return root;
+  }
 }
 
 // Converts 'space' notation to 'slash' notation, e.g.
@@ -576,8 +597,8 @@ function json2text(root) {
   return allNodes.join("\n");
 }
 
-function slash2json(slash) {
-  return txt2json(slash2txt(slash));
+function slash2json(slash, fieldname) {
+  return txt2json(slash2txt(slash), fieldname);
 }
 
 function slash2txt(slash) {

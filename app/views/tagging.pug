@@ -25,6 +25,9 @@ block entity_categories_window
 					span.right <a href="#" id="ec-read-more" target="_blank">Read more <i class="fa fa-sm fa-external-link"></i></a>
 			div.label-search
 				input(placeholder="Search categories..." autofocus id="ec-search")
+			div#category-hierarchy-tree
+			div#category-hierarchy-tree-no-results
+				| No results found.
 
 	div#entity-categories-window.tagging
 		div.inner
@@ -37,14 +40,88 @@ block entity_categories_window
 	div#window-mask
 
 block scripts
-	//script(type='text/javascript', src='/javascripts/dummy_data/json_data.js')
-
+	script(src="/javascripts/jstree/dist/jstree.js")
 	script(src="/javascripts/d3/d3.min.js")
 	script(src="/javascripts/d3/d3-context-menu.js")
 	script(src="/javascripts/shared/hierarchy_validator.js")
 	script(src="/javascripts/category-tree-visualisation.js")
 
 	script.
+
+		// Construct the JSTree from the category hierarchy data.
+		function buildJsTree(hierarchy) {
+
+
+			var $tree = $("#category-hierarchy-tree");
+			var $ecSearch = $("#ec-search");
+			var $noSearchResults = $("#category-hierarchy-tree-no-results")
+
+			for(var j in hierarchy) {
+				console.log(j, hierarchy[j]);
+
+			}
+			console.log("---------")
+
+			$tree.jstree(
+				{ 
+				"plugins" : [ "search" ],//, "sort" ],
+				"search": {
+					show_only_matches: true,
+				},
+				'core' : {
+				    'data' : slash2json(hierarchy, 'text'),
+				    'dblclick_toggle' : false,
+
+				},
+				//- 'sort' : function(a, b) {
+				//- 	a1 = this.get_node(a);
+				//- 	b1 = this.get_node(b);
+				//- 	return (a1.text > b1.text) ? 1 : -1;			        
+				//- }
+			});
+
+			//- var dblClickTimeout = null;
+
+			$tree.on('click', '.jstree-anchor', function (e) {		
+				//- if(!dblClickTimeout) {
+					//- dblClickTimeout = setTimeout( function() {
+				$tree.jstree(true).toggle_node(e.target);
+				console.log($tree.jstree('get_selected', true)[0].text);
+						//- dblClickTimeout = null;
+					//- }, 100);
+				//- }
+			});
+
+			//- $tree.bind("dblclick.jstree", function (e, data) {
+			//- 	var node = $(e.target).closest("li");
+			//- 	var id = node[0].id; //id of the selected node
+			//- 	clearTimeout(dblClickTimeout);
+			//- 	dblClickTimeout = null;
+			//- 	e.preventDefault();
+			//- });
+
+			$tree.on('search.jstree', function(e, data) {
+				if(data.res.length == 0 && $ecSearch.val().length > 0) {
+					$noSearchResults.show();
+					$tree.hide();
+				} else {
+					$noSearchResults.hide();
+					$tree.show();
+				}
+			})
+
+			$ecSearch.keyup(function () {
+				var v = $ecSearch.val();
+				$tree.jstree(true).search(v, { "show_only_matches": true });
+				if($ecSearch.val().length == 0) {
+					$noSearchResults.hide();
+					$tree.show();				
+				}
+			});
+
+			return $tree;
+
+		}
 
 		function initTagging() {
 
@@ -57,6 +134,7 @@ block scripts
 			var entity_classes = !{entity_classes};
 
 			categoryHierarchy.buildTree(entity_classes);
+			var $tree = buildJsTree(entity_classes);
 			//var entity_classes_abbr = !{entity_classes_abbr};
 
 			var $entityCategoriesWindow = $("#entity-categories-window");
@@ -224,22 +302,25 @@ block scripts
 			}
 
 
-			function tagSelected(tagClass) {
+			function tagSelected(tagClass, colorIndex, moveAfterwards=true) {
+
 				$("span.word.selected").removeClass(function (index, className) {
 					return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
 				});
-
+				if(colorIndex == null) colorIndex = tagClass;
 				$("span.word.selected").addClass("tag");
-				$("span.word.selected").addClass("tag-" + tagClass);
-				var tc = tagClass - 1;
-				if(tc == -1) tc = 9
-				$("span.word.selected").attr("data-content", entity_classes_abbr[tc])
+				$("span.word.selected").addClass("tag-" + colorIndex);
+				
+				$("span.word.selected").attr("data-content", entity_classes_abbr[tagClass])
 				$("span.word.selected").each(function(e) {
-					annotatedTags[sentenceIndex][$(this).index()] = entity_classes[tc];//tagClass - 1;
+					annotatedTags[sentenceIndex][$(this).index()] = entity_classes[tagClass];//tagClass - 1;
 				});
 
-				$(".word").removeClass("selected");
-				moveForwards();
+				
+				if(moveAfterwards) {
+					$(".word").removeClass("selected");
+					moveForwards();
+				}
 			}
 
 			// Highlights the currently selected word(s). 
@@ -573,6 +654,13 @@ block scripts
 			})();
 
 
+			// Toggle tagging when clicking elements in the jsTree
+			$tree.on('click', '.jstree-anchor', function (e) {		
+				var ind = $tree.jstree('get_selected', true)[0].li_attr["data-index"];
+				var color = $tree.jstree('get_selected', true)[0].li_attr["data-color"];
+				console.log(ind, color);
+				tagSelected(ind, color, false);
+			});
 
 
 

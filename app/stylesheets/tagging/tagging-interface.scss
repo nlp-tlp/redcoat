@@ -86,7 +86,6 @@
 	text-align: center;
 	color: rgba(0, 0, 0, 0.5);
 	overflow: hidden;
-	padding: 0 2px;
 }
 #sentence-tagging .sentence .word.tag:nth-child(odd):before {
 	//line-height: 14px;
@@ -402,6 +401,7 @@ span.punctuation.selected::-moz-selection {
 	.category-hierarchy {
 		width: 100%;
 		padding: 0px;
+
 	}
 	.category-tree {
 		width: 66.66666%;
@@ -466,3 +466,117 @@ span.punctuation.selected::-moz-selection {
 		padding: 0px 20px;
 	}
 }
+
+
+
+#category-hierarchy-tree {
+	overflow-y: scroll;
+	height: 60vh;
+	margin-top: 10px;
+
+}
+#category-hierarchy-tree-no-results {
+	display: none;
+	color: #999;
+	padding: 14px 24px;
+}
+.jstree {
+	padding: 0 20px;
+	ul {
+		margin-top: 0;
+		padding: 0;
+		li {
+			list-style: none;
+			&.jstree-hidden {
+				display: none;
+			}
+			&.jstree-closed > a {
+				&:before {
+					font-family: FontAwesome;
+					display: inline;
+					content: "\f078";
+					margin-right: 7px;
+					font-size: 0.9em;
+				}
+			}
+			&.jstree-open > a {
+				&:before {
+					font-family: FontAwesome;
+					display: inline;
+					content: "\f077";
+					margin-right: 7px;
+					font-size: 0.9em;
+				}
+			}
+			a {
+				color: #999;
+				display: block;
+				padding: 4px 6px;
+				&:hover {
+					color: #222;
+				}
+				&.jstree-clicked {
+					background: lighten($primary-blue, 40);
+					color: #222;
+					outline: none;
+					padding: 4px 6px;
+				}
+			}
+			ul {
+				a {
+					padding: 4px 20px;
+				}
+			}
+			.jstree-search {
+				color: #444;
+			}
+
+		}
+	}
+	
+	a {
+		color: #333;
+		text-decoration: none;
+	}
+}
+
+
+.jstree > ul > li.color-1 { border-left: 3px solid #99FFCC; }
+.jstree > ul > li.color-2 { border-left: 3px solid #FFCCCC; }
+.jstree > ul > li.color-3 { border-left: 3px solid #CCCCFF; }
+.jstree > ul > li.color-4 { border-left: 3px solid #CCFF99; }
+.jstree > ul > li.color-5 { border-left: 3px solid #CCFFCC; }
+.jstree > ul > li.color-6 { border-left: 3px solid #CCFFFF; }
+.jstree > ul > li.color-7 { border-left: 3px solid #FFCC99; }
+.jstree > ul > li.color-8 { border-left: 3px solid #FFCCFF; }
+.jstree > ul > li.color-9 { border-left: 3px solid #FFFF99; }
+.jstree > ul > li.color-10 { border-left: 3px solid #FFFFCC; }
+.jstree > ul > li.color-11 { border-left: 3px solid #CCCC99; }
+.jstree > ul > li.color-12 { border-left: 3px solid #fbafff; }
+
+
+.jstree li.color-1 a:hover  { background: #99FFCC; }
+.jstree li.color-2 a:hover  { background: #FFCCCC; }
+.jstree li.color-3 a:hover  { background: #CCCCFF; }
+.jstree li.color-4 a:hover  { background: #CCFF99; }
+.jstree li.color-5 a:hover  { background: #CCFFCC; }
+.jstree li.color-6 a:hover  { background: #CCFFFF; }
+.jstree li.color-7 a:hover  { background: #FFCC99; }
+.jstree li.color-8 a:hover  { background: #FFCCFF; }
+.jstree li.color-9 a:hover  { background: #FFFF99; }
+.jstree li.color-10 a:hover { background: #FFFFCC; }
+.jstree li.color-11 a:hover { background: #CCCC99; }
+.jstree li.color-12 a:hover { background: #fbafff; }
+
+.jstree li.color-1 a.jstree-clicked  { background: #99FFCC; }
+.jstree li.color-2 a.jstree-clicked  { background: #FFCCCC; }
+.jstree li.color-3 a.jstree-clicked  { background: #CCCCFF; }
+.jstree li.color-4 a.jstree-clicked  { background: #CCFF99; }
+.jstree li.color-5 a.jstree-clicked  { background: #CCFFCC; }
+.jstree li.color-6 a.jstree-clicked  { background: #CCFFFF; }
+.jstree li.color-7 a.jstree-clicked  { background: #FFCC99; }
+.jstree li.color-8 a.jstree-clicked  { background: #FFCCFF; }
+.jstree li.color-9 a.jstree-clicked  { background: #FFFF99; }
+.jstree li.color-10 a.jstree-clicked { background: #FFFFCC; }
+.jstree li.color-11 a.jstree-clicked { background: #CCCC99; }
+.jstree li.color-12 a.jstree-clicked { background: #fbafff; }
