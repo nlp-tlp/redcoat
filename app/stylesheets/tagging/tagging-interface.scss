@@ -12,27 +12,34 @@
 }
 
 #sentence-tagging .sentence {
-	margin-bottom: 50px;
+	margin-bottom: 80px;
 	transition: margin-top 0.2s linear;
 	margin-top: 0;
 	opacity: 0.6;
 	transition: opacity 0.5s ease;
 	position: relative;
 
-	// &:before {
-	// 	position: absolute;
-	// 	left: -120px;
-	// 	top: 0;
-	// 	vertical-align: middle;
-	// 	content: "1";
-	// 	color: #bbb;
-	// 	pointer-events: none;
-	// 	font-size: 22px;
-	// 	display: table-cell;
-	// 	height: 100%;
-	// 	padding: 0 20px;
-	// 	border-right: 1px dotted #ddd;
-	// }
+	&:before {
+		position: absolute;
+		left: -105px;
+		top: calc(50% - 34px);
+		vertical-align: middle;
+		content: attr(data-ind1);
+		color: #bbb;
+		pointer-events: none;
+		font-size: 22px;
+		display: table-cell;
+		padding: 0 20px;
+		text-align: right;
+	}
+	&:after {
+		border-left: 2px solid #e2e2e2;
+		position: absolute;
+		left: -40px;
+		top: 0;
+		height: 100%;
+		content: " ";
+	}
 }
 #sentence-tagging .sentence .word, #sentence-tagging .sentence .punctuation {
 	background: none;
@@ -44,12 +51,12 @@
 
 }
 #sentence-tagging .sentence .punctuation {
-	opacity: 0.5;
+	color: #ccc;
 }
 
 /* $color-list: #99FFCC, #FFCCCC, #CCCCFF, #CCFF99, #CCFFCC, #CCFFFF, #FFCC99, #FFCCFF, #FFFF99, #FFFFCC, #CCCC99, #fbafff, #ffbfaf, #c6ffcb;  */
 
-.word:not(.tag):not(.selected) {
+#sentence-tagging span:not(.tag):not(.selected) {
 	border-bottom: 1px solid #ccc;
 	box-sizing: border-box;
 }
@@ -62,13 +69,16 @@
 	position: absolute;
 	z-index: -1;
 	border-bottom: 2px solid rgba(0, 0, 0, 0.3);
-	font-size: 12px;
+	font-size: 10px;
 	line-height: 125px;
 	font-weight: bold;
 	text-align: center;
 	color: rgba(0, 0, 0, 0.5);
 	overflow: hidden;
-
+	padding: 0 2px;
+}
+#sentence-tagging .sentence .word.tag:nth-child(odd):before {
+	//line-height: 14px;
 }
 
 #sentence-tagging .sentence .word.tag-1::before { background: #99FFCC; }
@@ -83,7 +93,6 @@
 #sentence-tagging .sentence .word.tag-0::before { background: #FFFFCC; }
 #sentence-tagging .sentence .word.tag-a::before { background: #CCCC99; }
 #sentence-tagging .sentence .word.tag-b::before { background: #fbafff; }
-
 
 #sentence-tagging .sentence .word.selected::after {
 	background: rgba(230, 230, 230, 0.8);
@@ -282,4 +291,33 @@ span#saving-filename {
 	border-style: solid;
 	border-width: 0 10px 10px 10px;
 	border-color: transparent transparent #FFCCCC transparent;
+}
+
+
+span.word::selection, span.word::-webkit-selection {
+  background: lighten($primary-blue, 40); /* WebKit/Blink Browsers */
+}
+span.punctuation::selection, span.punctuation::-webkit-selection {
+  background: lighten($primary-blue, 40); /* WebKit/Blink Browsers */
+}
+span.word::-moz-selection {
+  background: lighten($primary-blue, 40); /* Gecko Browsers */
+}
+span.punctuation::-moz-selection {
+  background: lighten($primary-blue, 40); /* Gecko Browsers */
+}
+
+
+
+span.word.selected::selection, span.word.selected::-webkit-selection {
+  background: rgba(0, 0, 0, 0); /* WebKit/Blink Browsers */
+}
+span.punctuation.selected::selection, span.punctuation.selected::-webkit-selection {
+  background: rgba(0, 0, 0, 0); /* WebKit/Blink Browsers */
+}
+span.word.selected::-moz-selection {
+  background: rgba(0, 0, 0, 0); /* Gecko Browsers */
+}
+span.punctuation.selected::-moz-selection {
+  background: rgba(0, 0, 0, 0); /* Gecko Browsers */
 }

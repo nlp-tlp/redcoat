@@ -39,8 +39,9 @@ block sidenav
 				span
 					label(for="projects-display") <i class="fa fa-align-justify"></i>Display
 					select(id="projects-display")
+						option(value="list" selected) List view
 						option(value="detailed") Detailed view
-						option(value="list") List view
+
 			li#li-search-projects
 				span
 					label(for="projects-search") <i class="fa fa-search"></i>Search projects
@@ -52,16 +53,16 @@ block sidenav
 						option(value="") Anyone
 						option(value="Your projects") Your projects
 						option(value="Projects you've joined") Joined projects
-						option(value="Global projects") Global projects
+						//option(value="Global projects") Global projects
 			li#li-sort-projects
 				span
 					label(for="projects-sort") <i class="fa fa-sort-amount-desc"></i>Sort projects
 					span.sort-container
 						select(id="projects-sort")
-							option(value="4" selected) Date created
 							option(value="0") Project name
-							option(value="1") # Annotators
-							option(value="2") Progress
+							option(value="1" selected) Date created
+							option(value="2") # Annotators
+							option(value="3") Progress
 
 						a.button.sort-button#sort-order-button <i class="fa fa-sort-down"></i>
 
@@ -156,20 +157,36 @@ block scripts
 							if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order, irrespective of html tags.
 								return data;
 							}
-							return data + '<span class="right detailed-show"><a href="/projects/' + row["_id"] + '/tagging" class="button goto-tagging-button"><i class="fa fa-lg fa-pencil"></i>Annotate project</a></span>';        	 	
-
+							return data + '<span class="right detailed-show"><a href="/projects/' + row["_id"] + '/tagging" class="button goto-tagging-button"><i class="fa fa-lg fa-pencil"></i>Annotate project</a></span>';
 			        	 }
 
 			        	 },
-			        	{ "title": "Annotators", "targets": 1, "width": "15%", "className": "dt-center", "type": "numeric",
+			        	{ "title": "Date created", "targets": 1, "width": "15%" ,
+			        	  "render": function(data, type, row) {
+			        	    if ( type === "sort" || type === 'type' || type === "search" ) {
+								return row["_created_at"]; // Sort by actual created_at date, not the nicely-formatted one.
+							}
+			        	  	return '<span class="list-show">' + data.match(/[^\s]+/)[0] + '</span>';
+
+			        	  }
+
+			        	},			        	 
+			        	{ "title": "Annotators", "targets": 2, "width": "15%", "className": "dt-center", "type": "numeric",
 			        	 "render": function (data, type, row) {
 							if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order, irrespective of html tags.
 								return data;
 							}
-			        	 	return '<span class="detailed-table"><span class="detailed-show"><em>\"' + row['project_description'] + '\"</em></span><span>' + data + ' annotator' + (data > 1 ? "s" : "") + "</span></span>";
+			        	 	return '<span class="detailed-table">' +
+			        	 		   '<span class="detailed-show">' +
+			        	 		   '<em>\"' + row['project_description'] + '\"</em>' +
+			        	 		   '</span>' +
+			        	 		   '<span class="list-show">' + data + ' <i class="fa fa-xs fa-xxs fa-user"></i></span>' +
+			        	 		   '<span class="detailed-show">' + data + ' annotator' + (data > 1 ? "s" : "") + '</span>' +
+			        	 		   '</span>';
 			        	 }
 			        	},
-			        	{ "title": "Progress", "targets": 2, "width": "50%", "type": "numeric",
+
+			        	{ "title": "Progress", "targets": 3, "width": "50%", "type": "numeric",
 						 "render": function ( data, type, row ) {
 							if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order, irrespective of html tags.
 								return data;
@@ -195,27 +212,32 @@ block scripts
 						  "render": function(data) {
 						  	return '<span class="right list-show"><a href="/projects/' + data + '/tagging"class="button goto-tagging-button"><i class="fa fa-lg fa-pencil"></i></a></span>';
 						  }
-						}
+						},
 			        ],
 			        "columns": [
 			            { "data": "project_name" },
-			            { "data": "num_annotators" },
+			            { "data": "created_at" },
+			            { "data": "num_annotators" },			           
 			            { "data": "percent_complete" },
 			            { "data": "owner", "visible": false, "searchable": true},
-			            { "data": "_created_at", "visible": false, "sortable": true},
 			            { "data": "project_description", "visible": false, "sortable": false, "searchable": true},
 			            { "data": "_id", "sortable": false, "searchable": false},
 			        ],
 			        "order": [[sortedById, sortOrder]],
-			        "orderFixed": [3, 'desc'],
+			        "orderFixed": [4, 'desc'],
 			        "rowGroup": {
 			        	dataSrc: "owner",
 			        	"startRender": function(rows, group) {
 			        		var orderText = sortOrder == "asc" ? 'Ascending' : 'Descending';
-			        		if(sortedById == 4) orderText = sortOrder == "asc" ? "Oldest first" : "Newest first";
+			        		if(sortedById == 1) orderText = sortOrder == "asc" ? "Oldest first" : "Newest first";
 						  	return "" + group + ' <span class="sort-info">Sorted by <span class="sorted-by">' + sortedBy + '</span> <span class="sort-order">(' +
 						  		orderText + ')</span></span>';
 						}
+			        },
+			        "language": {
+			        	"info": "Showing _START_ to _END_ of _TOTAL_ projects",
+			        	"infoFiltered": "(filtered from _MAX_ projects)"
+
 			        },
 			        "initComplete": function() {
 			        	initComplete();	// Call a function that calls the callback function. This ensures the table is created before proceeding with the rest of the code.
@@ -257,7 +279,7 @@ block scripts
 				// Filter box
 				$("#projects-filter").on("change", function() {
 					filterBy = $(this).val();
-					dataTable.column(3).search(filterBy).draw();
+					dataTable.column(4).search(filterBy).draw();
 				});
 
 				// Sort box
@@ -286,7 +308,7 @@ block scripts
 				});
 
 				// Modify table depending on whether filterBy and display exist (from the cookie)
-				if(filterBy) dataTable.column(3).search(filterBy).draw();				
+				if(filterBy) dataTable.column(4).search(filterBy).draw();				
 				if(display) changeDisplay(display);
 
 				function initComplete() {
@@ -333,7 +355,7 @@ block scripts
 							tableHtml += "</tbody>";
 							$(this).html(tableHtml);
 						} else {
-							$(this).html((tid in project ? project[tid] : "-"))			
+							$(this).html((tid in project ? project[tid] : '<span class="data-unknown">(unknown)</span>'))			
 						}
 						
 					});	

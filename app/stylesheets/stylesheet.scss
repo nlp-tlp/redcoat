@@ -162,6 +162,10 @@ main {
 	}
 }
 
+i.fa-xxs {
+	font-size: 0.8em;
+	transform: translate(0, -1px);
+}
 
 
 
@@ -229,6 +233,7 @@ header.bg-header {
 
 
 footer {
+	display: none;
 	background: #222;
 	color: white;
 	width: 100%;

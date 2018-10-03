@@ -80,11 +80,9 @@ exports.index = function(req, res, next) {
       wip_project.save(function(err, wip_project) {
         renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", "null", "null", "null", "null", testuser.email, "", "1", "undecided"); 
       });   
-    }
- 
+    } 
   });
-  //});
-  
+ 
 }
 
 

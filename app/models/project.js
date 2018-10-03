@@ -29,23 +29,20 @@ var ProjectSchema = new Schema({
   // The user who created the project.
   user_id: cf.fields.user_id,
 
+  // The username of the user who created the project.
+  author: cf.fields.author,
+
   // The name of the project.
   project_name: cf.fields.project_name,
 
   // A description of the project.
   project_description: cf.fields.project_description,
 
-  // The valid labels to use for annotation within the project.
-  //valid_labels: cf.fields.valid_labels,
-
   // The category hierarchy of the project, stored as a string. "name\nperson\norganisation\n business" etc
   category_hierarchy: cf.fields.category_hierarchy,
 
   // Determines the extent to which users may modify the hierarchy
   category_hierarchy_permissions: cf.fields.category_hierarchy_permissions,
-
-  // An array of all of the labels in the category hierarchy.
-  //valid_labels: cf.fields.valid_labels,
 
   // Whether to perform automatic tagging on commonly-tagged tokens
   automatic_tagging: cf.fields.automatic_tagging,

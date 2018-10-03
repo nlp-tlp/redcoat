@@ -39,6 +39,9 @@ var WipProjectSchema = new Schema({
   // The user who created the project.
   user_id: cf.fields.user_id_unique,
 
+  // The username of the user who created the project.
+  author: cf.fields.author,
+
   // The name of the project.
   project_name: cf.fields.project_name,
 
@@ -459,16 +462,14 @@ WipProjectSchema.pre('validate', function(next) {
 WipProjectSchema.pre('save', function(next) {
   var t = this;
 
-  // If the project is new, addCreatorToUsers.
-  if (t.isNew) {
-    t.addCreatorToUsers();
-  }
+  if (t.isNew) t.addCreatorToUsers();
 
   // 1. Validate admin exists
   var User = require('./user')
   t.verifyAssociatedExists(User, t.user_id, function(err, user) {
     if(err) { next(err); return }
-    //next()
+
+    if (t.isNew) t.author = user.username;   // Set author field if new project
 
     // 2. Remove invalid and duplicate emails.
     t.removeInvalidAndDuplicateEmails(user.email, function() {
@@ -493,6 +494,8 @@ WipProjectSchema.pre('save', function(next) {
           }
       }
     });
+    
+
   });
 });
 

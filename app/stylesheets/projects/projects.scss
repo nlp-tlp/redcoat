@@ -171,7 +171,7 @@ span.progress-bar {
 		border-bottom: none;
 
 		.list-show {
-			display: none;
+			display: none !important;
 		}
 		tbody {
 			display: block;
@@ -244,10 +244,11 @@ span.progress-bar {
 			td:first-child { border-left: 1px solid rgba(0, 0, 0, 0); }
 			td:last-child { border-right: 1px solid rgba(0, 0, 0, 0); }
 
-			td:nth-child(1) { width: 35%; }
+			td:nth-child(1) { width: 45%; }
 			td:nth-child(2) { width: 15%; text-align: right; }
-			td:nth-child(3) { width: 45%; }
-			td:nth-child(4) { width: 5%; }
+			td:nth-child(3) { width: 5%; text-align: right; }
+			td:nth-child(4) { width: 35%; }
+			td:nth-child(5) { width: 5%; }
 		}
 		tr:not(.group):hover {
 			cursor: pointer;
@@ -428,13 +429,16 @@ span.progress-bar {
 			line-height: 150%;
 		}
 	}
+	span.data-unknown {
+		color: #aaa;
+	}
 
 }
 
 
 
 
-	#dashboard {
+#dashboard {
 	#project-details, #project-list {
 		opacity: 0;
 		pointer-events: none;

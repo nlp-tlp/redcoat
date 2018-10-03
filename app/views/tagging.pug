@@ -35,528 +35,560 @@ block scripts
 
 	script.
 
-		var data = !{data};
-		var entity_classes = !{entity_classes}
-		var entity_classes_abbr = !{entity_classes_abbr}
+		(function initTagging() {
 
-		
-		var tagClassNames = entity_classes_abbr // from the js file
-
-
-		var loading = true // can't do anything if loading
-
-		//document.getElementById("sentence-tagging").innerHTML = data
-
-		var st = $("#sentence-tagging")
-		var WS = "<span class=\"word\">"
-		var WE	 = "</span>" 
-		var PS = "<span class=\"punctuation\">"
-		var PE	 = "</span>" 
-
-		var BATCH_SIZE = 10
-
-		var groupNumber = 1 // Each batch is 10 records
-		var groupTotal = Math.floor(data.length / BATCH_SIZE) + 1 // It's actually 5 for now
-
-		var annotatedTagNumbers = []
-		var annotatedTags = []
+			var groupData = !{data};
+			var entity_classes = !{entity_classes};
+			//var entity_classes_abbr = !{entity_classes_abbr};
 
 
+			
+			var tagClassNames = entity_classes_abbr; // The names of each of the classes.
 
-		var groupData
-		var sentenceIndex
-		var wordIndex
-		var sentenceLength
-		var selectedWord
-		var chainStart
-		var chainType
-		var currentlyScrolling = false
+			var st = $("#sentence-tagging");
+			const
+			WS = '<span class=\"word\" data-ind="$$$">', // Word start 
+			WE = "</span>", 	// Word end
+			PS = '<span class=\"punctuation\" data-ind="$$$">', // Punctuation start 
+			PE = "</span>"; // Punctuation end
 
-		var selectingJump = false
-		var ended = false
+			//var annotatedTagNumbers = [];		// The 'tag numbers' (indexes of the tags).
+			var annotatedTags = [];
 
-		function finishedScrolling() {
-				currentlyScrolling = false
-		}
+			var sentenceIndex;					// The index of the sentence currently selected.
+			var wordIndex;						// The index of the word currently selected.
+			var sentenceLength;					// The length of the sentence currently selected.
+			var chaining = false;				// Whether 'chaining' is currently happening (multiple tokens selected at once).
+			var chainStart;						// The index that the 'chain' (multiple tokens selected with shift) begins.
+			var chainType;						// The type of the chain (can be "forwards" or "backwards").
+			var currentlyScrolling = false;		// Whether the browser is currently scrolling to the top.
 
-		function generateLegend() {
-				var ll = $("#legend-list")
-				var count = 0
+			var loading = true;					// Whether the tagging interface is loading (can't do anything if it is).
+			var ended = false;					// Whether annotation is complete (i.e. the user has no more document groups to annotate).
+
+			function finishedScrolling() {
+				currentlyScrolling = false;
+			}
+
+
+			var entity_classes_abbr = [];
+			// Build abbreviated entity class names to display on the annotation labels.
+			(function generateAbbreviatedNames() {
+				for(var i in entity_classes) {
+					var ec = entity_classes[i].toLowerCase();
+					ecs = ec.split('/');
+					ec = (ecs.length > 1 ? '/' : '') + ecs[ecs.length-1];
+					var abbr = ec;
+					//var abbr = (ec.match(/[b-df-hj-np-tv-z]*[aeiou]+[b-df-hj-np-tv-z]+/g) || ['(unknown)'])[0];
+					entity_classes_abbr.push(abbr);
+				}
+			})();
+
+			// Generate the legend in the sidenav.
+			(function generateLegend() {
+				var ll = $("#legend-list");
+				var count = 0;
 				for(var i = 0; i < entity_classes.length; i++) {
-						count++
-						if(count == 10) {
-								count = 0
-						}
-						ll.append("<li><b>" + count + ". </b>" + entity_classes[i] + "</li>")
+					count++;
+					if(count == 10) {
+						count = 0;
+					}
+					ll.append("<li><b>" + count + ". </b>" + entity_classes[i] + "</li>");
 				}
-		}
-		generateLegend()
+			})();
 
-		function loadGroup() {
+			// Load a random document group from the project. Initialise the interface.
+			function loadGroup() {
+				console.log("Loading group...");
+				$("#ending-message").remove();
+				loading = true;
 
+				// TODO: Replace this with Ajax.
+				$("#tagging-container").children(0).fadeOut(300, continueLoading);
 
+				//} else {
+				//	$("#tagging-container").children(0).fadeOut(300, showEndingMessage);
+				//}
 
-				$("#ending-message").remove()
-
-				loading = true
-
-				if(groupNumber <= groupTotal) { 
-
-
-						groupStart = (groupNumber - 1) * BATCH_SIZE
-						groupEnd = groupStart + BATCH_SIZE
-						groupData = data.slice(groupStart, groupEnd)
-
-
-						$("#tagging-container").children(0).fadeOut(300, continueLoading);
-
-				} else {
-						$("#tagging-container").children(0).fadeOut(300, showEndingMessage);
-				}
-
-
-
+				// Continue the loading process.
+				// This function is called only after the sentence tagging ele has faded out.
 				function continueLoading() {
+					//annotatedTagNumbers = [];	// 
+					annotatedTags = [];
+					st.remove(); // Clear the sentence tagging div and create a new one.
+					$("<div id=\"sentence-tagging\"></div>").hide().appendTo("#tagging-container").fadeIn(300);
+					st = $("#sentence-tagging");
 
-						annotatedTagNumbers = []
-						annotatedTags = []
-
-						st.remove()
-						$("<div id=\"sentence-tagging\"></div>").hide().appendTo("#tagging-container").fadeIn(300)
-						st = $("#sentence-tagging")
-
-						//window.setTimeout(300, function() { st.addClass("show")})
-						//st.addClass("show");
-
-						//console.log(st)
-
-						showSentenceCounter()
-
-						$.each(groupData, function(key, value) {
-
-								var content = WS + value.join(WE + "" + WS);
-								content += WE
-								// Remove punctuation-only words
-								content = content.replace(/<span class="word">([.,\/#!$%\^&\*;:{}=\-_`~()"'])+<\/span>/g, "<span class=\"punctuation\">$1</span>")
-								var s = st.append("<div class=\"sentence\">" + content + "</div>")
-
-								annotatedTagNumbers.push(new Array(value.length).fill(-1))
-								annotatedTags.push(new Array(value.length).fill("O"))
-
-						});
-
-						sentenceIndex = 0
-						wordIndex = -1
-						sentenceLength = calculateSentenceLength()
-						selectedWord = getSelectedWord()
-						chainStart = -1
-						chainType = "forwards"
-						st.children(0).eq(sentenceIndex).addClass("selected")
-						moveForward()
-
-
-						$("#group-total").html(groupTotal)
-						$("#group-number").html(groupNumber)
-						if(currentlyScrolling) {
-								$("html, body").scrollTop(st.children().eq(sentenceIndex).offset().top - 150)
-						} else {
-								currentlyScrolling = true
-								$("html, body").animate({
-										scrollTop: st.children().eq(sentenceIndex).offset().top - 150
-								}, 200, finishedScrolling);										
+					
+					// Iterate over the sentences and create the annotatedTagNumbers and annotatedTags arrays.
+					var indSent = 0;
+					$.each(groupData, function(key, value) {
+						var content = "";
+						var ind = 0;
+						for(var i in value) {
+							// If all punctuation, use the punctuation class instead.
+							if((value[i].match(/[.,\/#!$%\^&\*;:{}=\-_`~()"']/g) || []).length == value[i].length) {
+								content += PS.replace(/\$\$\$/g, ind) + value[i] + PE;
+							} else {
+								content += WS.replace(/\$\$\$/g, ind) + value[i] + WE;
+								
+							}	
+							ind++;						
 						}
+						var s = st.append("<div class=\"sentence\" data-ind=\"" + indSent + "\" data-ind1=\"" + (indSent+1) + "\">" + content + "</div>");
+						//annotatedTagNumbers.push(new Array(value.length).fill(-1));
+						annotatedTags.push(new Array(value.length).fill("O"));
+						indSent++;
+					});
 
-						loading = false
-						selectedWord.addClass("selected")
+					sentenceIndex = 0;
+					wordIndex = -1;
+					sentenceLength = calculateSentenceLength();
+					
+					chainStart = -1;
+					chainType = "forwards";
+					st.children(0).eq(sentenceIndex).addClass("selected");
+					moveForwards();
 
+					if(currentlyScrolling) {
+						$("html, body").scrollTop(st.children().eq(sentenceIndex).offset().top - 150);
+					} else {
+						currentlyScrolling = true
+						$("html, body").animate({
+							//scrollTop: st.children().eq(sentenceIndex).offset().top - 150
+						}, 200, finishedScrolling);										
+					}
+					loading = false;
+					selectedWord = getSelectedWord();
+					selectedWord.addClass("selected");
 
+					initMouseEvents();
 				}
+
+				// TODO: Replace this with some kind of thing saying "Congratulations, you've finished annotating every document!" or something along those lines.
 				function showEndingMessage() {
-						showSentenceCounter()
-
-						st.remove()
-						$("<div id=\"sentence-tagging\"></div>").hide().appendTo("#tagging-container").fadeIn(300)
-						st = $("#sentence-tagging")
-
-						$("#tagging-container").append("<div id=\"ending-message\">Thanks for using Michael's tagging platform.<br/><br/>Please copy/paste all of the downloaded annotation files into the <code>annotated_data</code> folder and use the <code>combine_data.py</code> program to combine them.</div>")
-
-						showEndingNotification()
-						loading = false
-						ended = true
+					st.remove();
+					$("<div id=\"sentence-tagging\"></div>").hide().appendTo("#tagging-container").fadeIn(300);
+					st = $("#sentence-tagging");
+					$("#tagging-container").append("<div id=\"ending-message\">Well done!</div>")
+					//showEndingNotification()
+					loading = false;
+					ended = true;
 				}
-		}
-		loadGroup()
+			}
+			loadGroup();		
 
+			// A shortcut function to find the element corresponding to the selected word.
+			function getSelectedWord() {
+				return st.children().eq(sentenceIndex).children('span.word').eq(wordIndex);
+			}		
 
-
-		function generateAnnotatedTags() {
-				for(var i = 0; i < annotatedTagNumbers.length; i++) {
-						for(var j = annotatedTagNumbers[i].length - 1; j >= 0; j--) {
-								tagNumber = annotatedTagNumbers[i][j]
-								if(tagNumber == -1) {
-										annotatedTags[i][j] = "O"
-								} else {
-										annotatedTags[i][j] = "B-" + tagClassNames[tagNumber]
-										if(j > 0) {
-												if(annotatedTagNumbers[i][j - 1] == tagNumber) {
-														annotatedTags[i][j] = "I-" + tagClassNames[tagNumber]
-												}
-										}
-								}
-						}				
-
-				};
-		}
-		
-
-		function getSelectedWord() {
-				selectedWord = st.children().eq(sentenceIndex).children('span.word').eq(wordIndex)
-		}
-		
-
-		function calculateSentenceLength() {
+			// Calculate the sentence length of the current sentence.
+			function calculateSentenceLength() {
 				sentenceLength = st.children().eq(sentenceIndex).children('span.word').length		
-				return sentenceLength
-		}
+				return sentenceLength;
+			}
 
 
-		function tagSelected(tagClass) {
+			function tagSelected(tagClass) {
 				$("span.word.selected").removeClass(function (index, className) {
-						return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
+					return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
 				});
 
-				$("span.word.selected").addClass("tag")
-				$("span.word.selected").addClass("tag-" + tagClass)
-				var tc = tagClass - 1
-				console.log(tc)
-				if(tc == -1)
-						tc = 9
-				$("span.word.selected").attr("data-content", entity_classes[tc])
+				$("span.word.selected").addClass("tag");
+				$("span.word.selected").addClass("tag-" + tagClass);
+				var tc = tagClass - 1;
+				if(tc == -1) tc = 9
+				$("span.word.selected").attr("data-content", entity_classes_abbr[tc])
 				$("span.word.selected").each(function(e) {
-						annotatedTagNumbers[sentenceIndex][$(this).index()] = tagClass - 1;
+					annotatedTags[sentenceIndex][$(this).index()] = entity_classes[tc];//tagClass - 1;
 				});
 
+				$(".word").removeClass("selected");
+				moveForwards();
+			}
 
-		
-				$(".word").removeClass("selected")
-				moveForward()
-		}
-
-		function highlightSelected(direction) {						
+			// Highlights the currently selected word(s). 
+			// 'direction' can be either 'forwards' or 'backwards'. 
+			function highlightSelected(direction) {						
 				if(!chaining) {								
-						$(".word").removeClass("selected")
-						chainStart = -1
+					$(".word").removeClass("selected");
+					chainStart = -1;
 				} else {
+					var arr = st.children().eq(sentenceIndex).children('span.word.selected');
+					var last = $(arr[arr.length - 1]);
+					var first = $(arr[0]);
 
-						var arr = st.children().eq(sentenceIndex).children('span.word.selected')
-						var last = $(arr[arr.length - 1])
-						var first = $(arr[0])
-
-						if(direction == "forwards") {
-								if($('span.word.selected').length == 1) {
-										chainStart = wordIndex
-										chainType = "forwards"
-								}
-								if(chainType == "forwards") {
-										if(first.index() < chainStart - 1) {
-												first.removeClass("selected")
-										}
-								} else {
-										if(first.index() < chainStart) {
-												first.removeClass("selected")
-										}												
-								}
-
-						} else if (direction == "backwards") {
-								if($('span.word.selected').length == 1) {
-										chainStart = wordIndex + 1
-										chainType = "backwards"
-								}
-								if(last.index() >= chainStart && chainType == "forwards") {
-										last.removeClass("selected")
-								}
+					if(direction == "forwards") {
+						if($('span.word.selected').length == 1) {
+							chainStart = wordIndex;
+							chainType = "forwards";
 						}
+						if(chainType == "forwards") {
+							if(first.index() < chainStart - 1) {
+								first.removeClass("selected");
+							}
+						} else {
+							if(first.index() < chainStart) {
+								first.removeClass("selected");
+							}												
+						}
+
+					} else if (direction == "backwards") {
+						if($('span.word.selected').length == 1) {
+							chainStart = wordIndex + 1;
+							chainType = "backwards";
+						}
+						if(last.index() >= chainStart && chainType == "forwards") {
+							last.removeClass("selected");
+						}
+					}
 				}
 				if(!loading) {
-						selectedWord.addClass("selected")
-						var oft = selectedWord.offset().top
-						if($(window).height() - (oft - $("body").scrollTop()) < 150 || $("body").scrollTop() - oft > -150) {
-								if(currentlyScrolling) {
-										$("html, body").scrollTop(oft - 150)
-								} else {
-										currentlyScrolling = true
-										$("html, body").animate({
-												scrollTop: oft - 150
-										}, 200, finishedScrolling);
-								}
-						}
-				}
-				
-				//$("html, body").animate({
-				//		scrollTop: st.children().eq(sentenceIndex).offset().top - 150
-				//}, 100);
-		}
-
-		function nextSentence() {
-				if(sentenceIndex < groupData.length - 1) {
-						sentenceIndex++								
-						$(".sentence").removeClass("selected")
-						st.children().eq(sentenceIndex).addClass("selected")
-						$("#sentence-number").html(sentenceIndex + 1)		
+					var selectedWord = getSelectedWord();
+					selectedWord.addClass("selected");
+					var oft = selectedWord.offset().top;
+					// If the currently selected word is not in view, scroll to it.
+					if($(window).height() - (oft - $("body").scrollTop()) < 150 || $("body").scrollTop() - oft > -150) {
 						if(currentlyScrolling) {
-								$("html, body").scrollTop(st.children().eq(sentenceIndex).offset().top - 150)
+							$("html, body").scrollTop(oft - 150);
 						} else {
-								currentlyScrolling = true
-								$("html, body").animate({
-										scrollTop: st.children().eq(sentenceIndex).offset().top - 150
-								}, 200, finishedScrolling);
-						}																
+							currentlyScrolling = true;
+							$("html, body").animate({
+								scrollTop: oft - 150
+							}, 200, finishedScrolling);
+						}
+					}
+				}
+			}
 
-						wordIndex = 0
-						sentenceLength = calculateSentenceLength()
+			function scrollToSentence() {
+				if(currentlyScrolling) {
+					$("html, body").scrollTop(st.children().eq(sentenceIndex).offset().top - 150)
 				} else {
-						saveDataToFile()
-						groupNumber++
-						loadGroup(groupNumber)
+					currentlyScrolling = true
+					$("html, body").animate({
+						scrollTop: st.children().eq(sentenceIndex).offset().top - 150
+					}, 200, finishedScrolling);
 				}
-		}
-		function previousSentence() {
+			}
+
+			// Jumps to the sentence with the index of sentenceIndex.
+			function gotoSentence(preventScroll) {
+
+				$(".sentence").removeClass("selected");
+				st.children().eq(sentenceIndex).addClass("selected");
+				//$("#sentence-number").html(sentenceIndex + 1);	
+				if(!preventScroll) {
+					scrollToSentence();
+				}													
+				sentenceLength = calculateSentenceLength()
+
+			}
+
+			function nextSentence() {
+				if(sentenceIndex < groupData.length - 1) {
+					sentenceIndex++								
+					gotoSentence();					
+					wordIndex = 0;
+				} else {
+					saveDataToFile();
+					loadGroup();
+				}
+			}
+			function previousSentence() {
 				if(sentenceIndex > 0) {
-						sentenceIndex--		
-						$(".sentence").removeClass("selected")
-						st.children().eq(sentenceIndex).addClass("selected")
-				
-						if(currentlyScrolling) {
-								$("html, body").scrollTop(st.children().eq(sentenceIndex).offset().top - 150)
-						} else {
-								currentlyScrolling = true
-								$("html, body").animate({
-										scrollTop: st.children().eq(sentenceIndex).offset().top - 150
-								}, 200, finishedScrolling);
-						}				
-						$("#sentence-number").html(sentenceIndex + 1)
-
-						sentenceLength = calculateSentenceLength()
-						wordIndex = sentenceLength - 1
+					sentenceIndex--;
+					gotoSentence();			
+					//$("#sentence-number").html(sentenceIndex + 1);
+					//sentenceLength = calculateSentenceLength();
+					wordIndex = sentenceLength - 1;
 				}
-		}
+			}
 
-		function moveForward() {
-				wordIndex++
-
-				if(wordIndex >= sentenceLength) {
-						nextSentence()
-				}
-				getSelectedWord()
+			function moveForwards() {
+				wordIndex++;
+				if(wordIndex >= sentenceLength)	nextSentence();
 				highlightSelected("forwards");
-		}
-		function moveBackward() {
-				wordIndex--
-				if(wordIndex < 0) {
-						if(sentenceIndex > 0) {
-
-								previousSentence()
-						}
-				}
-				if(wordIndex == -1) {
-						wordIndex = 0
-				}
-				getSelectedWord()
+			}
+			function moveBackwards() {
+				wordIndex--;
+				if(wordIndex < 0 && sentenceIndex > 0) previousSentence();
+				if(wordIndex == -1) wordIndex = 0;
 				highlightSelected("backwards");
-		}
+			}
 
-		function deleteTag() {
+			function deleteTag() {
+				var selectedWord = getSelectedWord();
 				selectedWord.removeClass(function (index, className) {
-						return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
+					return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
 				});
 				selectedWord.removeClass("tag")
-				annotatedTagNumbers[sentenceIndex][selectedWord.index()] = - 1;
+				annotatedTags[sentenceIndex][selectedWord.index()] = - 1;
+			}		
+
+			function initMouseEvents() {
+
+				var wordClicked = false;
+				var startSentenceIndex = -1;
+				$(".sentence span").mousedown(function() { // Whenever a span is clicked, begin the selection process.
+					$(".word").removeClass("selected");
+					var si = $(this).closest(".sentence").data("ind");
+					startSentenceIndex = sentenceIndex;
+					if(si != sentenceIndex) {
+						sentenceIndex = si;
+						gotoSentence(true);
+						wordIndex = 0;
+					}
+					wordClicked = true;
+				});
 				
+				$(document).mouseup(function() {
 
-		}
+					if(wordClicked) {
+						$(".word").removeClass("selected");
+						
+						var start = $(window.getSelection().getRangeAt(0).startContainer.parentNode);
+						var end =   $(window.getSelection().getRangeAt(0).endContainer.parentNode);
 
+						//console.log(window.getSelection().getRangeAt(0))
 
-		function jumpButtonFocus() {
+						var startIndex = start.data('ind');
+						var endIndex = end.data('ind');
 
-		}
+						var startSentenceIndex = start.parent().data('ind');
+						var endSentenceIndex = end.parent().data('ind');
 
-		$("#jump-to-batch").focus(function() {
-				selectingJump = true
+						// Some code to ensure the correct part of the sentence is selected when selecting multiple sentences at the same time.
+						// Only one sentence can be selected at a time (the one initially clicked).
+						var csi = -1;
+						if(startSentenceIndex != sentenceIndex) csi = startSentenceIndex;
+						if(endSentenceIndex != sentenceIndex) csi = endSentenceIndex;
+						if(csi >= 0) {
+							if(sentenceIndex < csi) endIndex = calculateSentenceLength();
+					   		else if(sentenceIndex > csi) startIndex = 0;
+					    }
 
+						wordIndex = endIndex;
 
-		})
-		$("#jump-to-batch").blur(function() {
-				selectingJump = false
-
-		})
-
-		var chaining = false
-		var map = {37: false, 39: false, 16: false};
-		$(document).keydown(function(e) {
-						if(!selectingJump && !loading && !ended) {
-								if (e.keyCode in map) {
-										if(e.keyCode == 16) {
-												chaining = true
-										}
-										map[e.keyCode] = true;
-										if (map[37]) {				// Left
-												
-												if (map[16]) {
-														chaining = true
-												} else {
-														chaining = false
-												}
-												moveBackward()
-										} else if (map[39]) {	// Right
-												
-												if (map[16]) {
-														chaining = true
-												} else {
-														chaining = false
-												}
-												moveForward()
-										}
-								}
-								if(e.keyCode >= 48 && e.keyCode <= 57) {
-										tagSelected(e.keyCode - 48)
-								}
-
-								if(e.keyCode == 40) {								
-										nextSentence()
-										wordIndex = -1
-										moveForward()
-								}
-								if(e.keyCode == 38) {
-										previousSentence();
-										wordIndex = -1
-										moveForward()
-								}
-								if(e.keyCode == 46) {
-										deleteTag()
-								}
-								if(e.keyCode == 8) {
-										moveBackward()
-										deleteTag()
-								}
-
-				} else {
-						if(e.keyCode == 13) {
-								$("#jump-to-batch-go").click()
+						console.log(startIndex, endIndex);
+						
+						// Add the 'selected' class to all selected words.
+						var qt = [];
+						for(var i = startIndex; i <= endIndex; i++) {						
+							var sw = st.children().eq(sentenceIndex).children().eq(i);
+							console.log(sw);
+							sw.addClass("selected");
+							qt.push(sw.text());
 						}
-						if(e.keyCode == 27) {
-								$("#jump-to-batch").blur()
-						}
-				}
+						qt = qt.join(" ");
 
-				if(e.keyCode == 74) { // j
-						console.log('j')
-						$("#jump-to-batch").focus()
-				}
+
+						// Prints the result of a Wikipedia query.
+						function printResult(data) {
+							function stripTags(str) {
+								return str.replace(/<\/?[^>]+(>|$)/g, "");
+							}
+							try {
+								var title = data.query.search[0].title;
+								var snippet = stripTags(data.query.search[0].snippet);
+								console.log(title);
+								console.log(snippet);
+							} catch(err) {
+								console.log("No article found.");
+							}
+						}
+
+						$.ajax({
+			                url: 'http://en.wikipedia.org/w/api.php',
+			                data: { action: 'query', list: 'search', srsearch: qt, format: 'json' },
+			                dataType: 'jsonp',
+			                success: printResult
+			            });
+
+						document.getSelection().removeAllRanges();	// Deselect all text afterwards.
+						scrollToSentence();
+					}
+					wordClicked = false;
+
+					
+				})
+
+
+
+			}	
+			
+			(function initKeyEvents() {
+
+				const
+				LEFT_ARROW = 37,
+				UP_ARROW = 38,
+				RIGHT_ARROW = 39,
+				DOWN_ARROW = 40,
+				ONE = 49,
+				NINE = 57,
+				SHIFT = 16,
+				DELETE = 46,
+				BACKSPACE = 8;
+				
+				var map = { 37: false, 39: false, 16: false };
+				$(document).keydown(function(e) {
+					if(!loading && !ended) {
+						if (e.keyCode in map) {
+							if(e.keyCode == SHIFT) {
+								chaining = true;
+							}
+							map[e.keyCode] = true;
+							if (map[LEFT_ARROW]) {
+								chaining = map[SHIFT];			
+								moveBackwards();
+							} else if (map[RIGHT_ARROW]) {
+								chaining = map[SHIFT];
+								moveForwards();
+							}
+						}
+						if(e.keyCode >= ONE && e.keyCode <= NINE) {	// Tagging via the arrow keys
+							tagSelected(e.keyCode - 48);
+						}
+						if(e.keyCode == DOWN_ARROW) {								
+							nextSentence()
+							wordIndex = -1;
+							moveForwards()
+						}
+						if(e.keyCode == UP_ARROW) {
+							previousSentence();
+							wordIndex = -1;
+							moveForwards()
+						}
+						if(e.keyCode == DELETE) {
+							deleteTag();
+						}
+						if(e.keyCode == BACKSPACE) {
+							moveBackwards();
+							deleteTag();
+						}
+					}					
 				}).keyup(function(e) {
-				if (e.keyCode in map) {
-						/*if(e.keyCode == 16 && 16 in map) {
-								chaining = false
-						}*/
+					if (e.keyCode in map) {
 						map[e.keyCode] = false;
+					}
+				});
+			})();
+
+
+
+
+
+			// Keypress events
+			/*$("body").keydown(function(e) {
+					console.log(e)
+				if(e.keyCode == 37 || e.keyCode == 65 ) { // left
+					console.log("left")
+					moveBackwards()
 				}
-		});
-
-		// Keypress events
-		/*$("body").keydown(function(e) {
-				console.log(e)
-			if(e.keyCode == 37 || e.keyCode == 65 ) { // left
-				console.log("left")
-				moveBackward()
-			}
-			else if(e.keyCode == 39 || e.keyCode == 68) { // right
-				console.log("right")
-				moveForward()
-			}
-		});*/
+				else if(e.keyCode == 39 || e.keyCode == 68) { // right
+					console.log("right")
+					moveForwards()
+				}
+			});*/
 
 
 
 
-		function showSavingNotification(filename) {
-				$("#loading-notification").hide()
-				$("#ending-notification").hide()
-				$("#saving-notification").show();
-				$("#saving-filename").html(filename + "...")
-				$("#sentence-counter").hide();
-		}
-		function showSentenceCounter() {
-				$("#loading-notification").hide()
-				$("#ending-notification").hide()
-				$("#saving-notification").hide();
-				$("#sentence-counter").show();
-		}
-		function showEndingNotification() {
-				$("#loading-notification").hide()
-				$("#ending-notification").show()
-				$("#saving-notification").hide();
-				$("#sentence-counter").hide();						
-		}
+			//- function showSavingNotification(filename) {
+			//- 	$("#loading-notification").hide()
+			//- 	$("#ending-notification").hide()
+			//- 	$("#saving-notification").show();
+			//- 	$("#saving-filename").html(filename + "...")
+			//- 	$("#sentence-counter").hide();
+			//- }
+			//- function showSentenceCounter() {
+			//- 	$("#loading-notification").hide()
+			//- 	$("#ending-notification").hide()
+			//- 	$("#saving-notification").hide();
+			//- 	$("#sentence-counter").show();
+			//- }
+			//- function showEndingNotification() {
+			//- 	$("#loading-notification").hide()
+			//- 	$("#ending-notification").show()
+			//- 	$("#saving-notification").hide();
+			//- 	$("#sentence-counter").hide();						
+			//- }
 
 
-		$("#jump-to-batch-go").click(function() {
-				console.log($("#jump-to-batch")[0].value)
-				console.log("clicked")
-				function validateValue(value) {
-						var val = parseInt(value)
-						if(val > 0 && val < groupTotal + 1) {
-								return val
-						} else {
-								return -1
+			//- $("#jump-to-batch-go").click(function() {
+			//- 	console.log($("#jump-to-batch")[0].value)
+			//- 	console.log("clicked")
+			//- 	function validateValue(value) {
+			//- 		var val = parseInt(value)
+			//- 		if(val > 0 && val < groupTotal + 1) {
+			//- 				return val
+			//- 		} else {
+			//- 				return -1
+			//- 		}
+			//- 	}
+			//- 	var v = validateValue($("#jump-to-batch")[0].value)
+			//- 	if(v > 0) {
+			//- 		groupNumber = v;
+			//- 		ended = false
+			//- 		loadGroup()
+			//- 		$("#jump-to-batch").val("")
+			//- 		$("#jump-to-batch").blur()
+			//- 	} else {
+			//- 		showJumpToGroupError()
+			//- 	}
+			//- });
+
+
+			//- function showJumpToGroupError() {
+			//- 	function fadeBackOut() {
+			//- 		window.setTimeout(function() { $("#jump-to-batch-error").fadeOut(300)}, 1000 )
+			//- 	}
+			//- 	if($("#jump-to-batch-error:visible").length == 0)
+			//- 		$("#jump-to-batch-error").fadeIn(300, fadeBackOut)
+			//- }
+
+
+			function generateAnnotatedTags() {
+				for(var i in annotatedTags) {
+					for(var j = annotatedTags[i].length - 1; j >= 0; j--) {
+						var tag = annotatedTags[i][j];									
+						annotatedTags[i][j] = tag != "O" ? "B-" + tag : tag;
+						if(j > 0 && tag != "O" && annotatedTags[i][j - 1] == tag) {
+							annotatedTags[i][j] = "I-" + tag;
 						}
-				}
-				var v = validateValue($("#jump-to-batch")[0].value)
-				if(v > 0) {
-						groupNumber = v;
-						ended = false
-						loadGroup()
-						$("#jump-to-batch").val("")
-						$("#jump-to-batch").blur()
-				} else {
-						showJumpToGroupError()
-				}
-		})
+					}
+				};
+			}
 
-
-		function showJumpToGroupError() {
-				function fadeBackOut() {
-						window.setTimeout(function() { $("#jump-to-batch-error").fadeOut(300)}, 1000 )
-				}
-				if($("#jump-to-batch-error:visible").length == 0)
-						$("#jump-to-batch-error").fadeIn(300, fadeBackOut)
-		}
-
-		function saveDataToFileOutput(dataFilename) {
-				generateAnnotatedTags()
-				outputData = ""
+			function saveDataToFileOutput(dataFilename) {
+				generateAnnotatedTags();
+				outputData = "";
 				for(var i = 0; i < groupData.length; i++) {
-						for(var j = 0; j < groupData[i].length; j++) {
-								outputData += groupData[i][j] + " " + annotatedTags[i][j] + "\n"
-						}
-						outputData += "\n"
+					for(var j = 0; j < groupData[i].length; j++) {
+						outputData += groupData[i][j] + " " + annotatedTags[i][j] + "\n";
+					}
+					outputData += "\n";
 				}
 
 				var dlfile = document.createElement('a');
 				dlfile.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(outputData));
-						dlfile.setAttribute('download', dataFilename);
+				dlfile.setAttribute('download', dataFilename);
 				var event = document.createEvent('MouseEvents');
-					event.initEvent('click', true, true);
+				event.initEvent('click', true, true);
 				dlfile.dispatchEvent(event);
-		}
+			}
 
-		function saveDataToFileSuppressNotification() {
-				var dataFilename = "annotated_data_" + groupNumber + ".txt"
+			function saveDataToFileSuppressNotification() {
+				var dataFilename = "annotated_data_" + 1 + ".txt"
 				saveDataToFileOutput(dataFilename)
-		}
+			}
 
-		function saveDataToFile() {
-				var dataFilename = "annotated_data_" + groupNumber + ".txt"
-				showSavingNotification(dataFilename)
+			function saveDataToFile() {
+				var dataFilename = "annotated_data_" + 1 + ".txt"
+				//showSavingNotification(dataFilename)
 				saveDataToFileOutput(dataFilename)						
-		}
+			}
 
-		$("#save-to-file").click(saveDataToFileSuppressNotification)
+			//- $("#save-to-file").click(saveDataToFileSuppressNotification)
+		})();

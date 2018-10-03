@@ -5,7 +5,7 @@ var shortid = require('shortid')
 
 var hv = require('public/javascripts/shared/hierarchy_validator');
 
-
+var User = require('app/models/user.js');
 DOCUMENT_GROUP_TOTAL_MAXCOUNT = 11000; // Number of groups that can be in a project.
 
 USERS_PER_PROJECT_MAXCOUNT = 100;
@@ -563,6 +563,10 @@ module.exports = {
       required: true,
     },
 
+    // The author of the project.
+    author: {
+      type: String,
+    },
 		// valid_labels:	{
 		//     type: [
 		//       { 
