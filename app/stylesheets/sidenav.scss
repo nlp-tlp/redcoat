@@ -29,6 +29,17 @@ nav#sidenav {
 		input:not(:focus), select:not(:active) {
 			border: 2px solid #c2c2c2;
 		}
+		&.hotkeys {
+			h3 {
+				margin-top: 130px;
+				padding: 0 20px;
+				margin-bottom: 10px;
+			}
+			ul {
+				padding: 0 10px;
+				margin-top: 0;
+			}
+		}
 	}
 	&.sidenav-project ul {
 		width: 100%;
