@@ -24,7 +24,7 @@ block entity_categories_window
 					span.left Results from Wikipedia
 					span.right <a href="#" id="ec-read-more" target="_blank">Read more <i class="fa fa-sm fa-external-link"></i></a>
 			div.label-search
-				input(placeholder="Search categories..." autofocus id="ec-search")
+				input(placeholder="Search categories..." id="ec-search")
 			div#category-hierarchy-tree
 			div#category-hierarchy-tree-no-results
 				| No results found.
@@ -54,23 +54,28 @@ block scripts
 
 			var $tree = $("#category-hierarchy-tree");
 			var $ecSearch = $("#ec-search");
-			var $noSearchResults = $("#category-hierarchy-tree-no-results")
+			var $noSearchResults = $("#category-hierarchy-tree-no-results");
 
-			for(var j in hierarchy) {
-				console.log(j, hierarchy[j]);
+			var searching = false;
+			var currentSearchResultsCount = 0;
 
-			}
-			console.log("---------")
-
+			const MAX_SEARCH_RESULTS = 20;
+			
 			$tree.jstree(
 				{ 
 				"plugins" : [ "search" ],//, "sort" ],
 				"search": {
 					show_only_matches: true,
+					search_callback: function(str, node) {											
+						if(currentSearchResultsCount >= MAX_SEARCH_RESULTS) return false;
+						var m = node.li_attr["data-full"].includes(str);	
+						if(m) currentSearchResultsCount++;
+						return m;
+					},					
 				},
 				'core' : {
-				    'data' : slash2json(hierarchy, 'text'),
-				    'dblclick_toggle' : false,
+				    'data' : slash2jstree(hierarchy),
+				    //'dblclick_toggle' : false,
 
 				},
 				//- 'sort' : function(a, b) {
@@ -80,18 +85,65 @@ block scripts
 				//- }
 			});
 
-			//- var dblClickTimeout = null;
-
-			$tree.on('click', '.jstree-anchor', function (e) {		
-				//- if(!dblClickTimeout) {
-					//- dblClickTimeout = setTimeout( function() {
-				$tree.jstree(true).toggle_node(e.target);
-				console.log($tree.jstree('get_selected', true)[0].text);
-						//- dblClickTimeout = null;
-					//- }, 100);
-				//- }
+			// Display the hotkeys for the top-level categories as soon as the tree has been drawn.
+			$tree.on('ready.jstree', function() {
+				$($(".jstree-children")[0]).addClass("jstree-current");
 			});
 
+			// Open a node upon a single click (instead of a double click).
+			//$tree.on('click', '.jstree-anchor', function (e) {	
+			//	$tree.jstree(true).toggle_node(e.target);
+			//});
+
+			// Hide the hotkeys when a node is closed.
+			$tree.on('close_node.jstree', function(e, data) {
+				$(".jstree-children").removeClass("jstree-current");
+				$($("#" + data.node.id).parents('.jstree-children')[0]).addClass("jstree-current");
+			});
+
+			// Close all nodes adjacent to a node.
+			// Code found at https://stackoverflow.com/questions/38765843/keep-only-one-li-node-open-in-tree-view-display.
+			function closeSiblingNodes(data) {
+				var nodesToKeepOpen = [];
+
+		        // get all parent nodes to keep open
+		        $('#'+data.node.id).parents('.jstree-node').each(function() {
+		           nodesToKeepOpen.push(this.id);
+		        });
+
+		        // add current node to keep open
+		        nodesToKeepOpen.push( data.node.id );
+
+		        // close all other nodes
+		        $('.jstree-node').each( function() {
+		            if( nodesToKeepOpen.indexOf(this.id) === -1 ) {
+		            	if(this.classList.contains("jstree-open")) {
+		                	$tree.jstree(true).toggle_node(this.id);
+		                	$(".jstree-children").removeClass("jstree-current");
+		                	$("#" + data.node.id).children('.jstree-children').addClass("jstree-current");
+
+		            	}
+
+		            }
+		        })
+			}
+
+			// Ensure only one branch can be opened at a time so that the hotkey display works properly.
+			$tree.on('open_node.jstree', function (e, data) {
+				$(".jstree-children").removeClass("jstree-current");
+				$("#" + data.node.id).children('.jstree-children').addClass("jstree-current");
+			    if(!searching) closeSiblingNodes(data);
+
+
+			});
+
+			$tree.on('activate_node.jstree', function (e, data) {
+				if(data.node.children.length == 0) {
+					closeSiblingNodes(data);
+			       	$(".jstree-children").removeClass("jstree-current");
+					$($("#" + data.node.id).parents('.jstree-children')[0]).addClass("jstree-current");	
+				}
+			});			
 			//- $tree.bind("dblclick.jstree", function (e, data) {
 			//- 	var node = $(e.target).closest("li");
 			//- 	var id = node[0].id; //id of the selected node
@@ -103,19 +155,24 @@ block scripts
 			$tree.on('search.jstree', function(e, data) {
 				if(data.res.length == 0 && $ecSearch.val().length > 0) {
 					$noSearchResults.show();
-					$tree.hide();
+					$tree.hide();										
 				} else {
 					$noSearchResults.hide();
 					$tree.show();
+					$(".jstree-container-ul").addClass("jstree-current");
 				}
 			})
 
-			$ecSearch.keyup(function () {
+			$ecSearch.on('keyup', function () {
 				var v = $ecSearch.val();
+				searching = true;
+				currentSearchResultsCount = 0;
 				$tree.jstree(true).search(v, { "show_only_matches": true });
+				console.log($(".jstree-node:not(.jstree-hidden)"));
 				if($ecSearch.val().length == 0) {
 					$noSearchResults.hide();
-					$tree.show();				
+					$tree.show();			
+					searching = false;	
 				}
 			});
 
@@ -125,6 +182,12 @@ block scripts
 
 		function initTagging() {
 
+			const TAG_MODE = 0;
+			const EXPLORE_MODE = 1;
+
+			// Keeps track of the current mode the user is in. If they're looking for entity categories in the left hand window, they're in tag mode,
+			// otherwise they're in explore mode while navigating the documents.
+			var currentMode = TAG_MODE;
 
 			var categoryHierarchy = new CategoryHierarchy();
 
@@ -138,12 +201,13 @@ block scripts
 			//var entity_classes_abbr = !{entity_classes_abbr};
 
 			var $entityCategoriesWindow = $("#entity-categories-window");
+			var $ecSearch = $("#ec-search");
 
 			var $taggingMenuTokens = $("#tagging-menu .tokens");
 			var $taggingMenuSummary = $("#tagging-menu .summary");
 			var $taggingMenuMore = $("#tagging-menu .more");
 			var $taggingMenuReadMore = $("#ec-read-more");
-			var $taggingMenuSearch = $("#ec-search");
+			var $ecSearch = $("#ec-search");
 			var $windowMask = $("#window-mask");
 
 			$("#entity-categories-window .close").click(function() {
@@ -161,6 +225,8 @@ block scripts
 			WE = "</span>", 	// Word end
 			PS = '<span class=\"punctuation\" data-ind="$$$">', // Punctuation start 
 			PE = "</span>"; // Punctuation end
+
+			var $sentences;
 
 			//var annotatedTagNumbers = [];		// The 'tag numbers' (indexes of the tags).
 			var annotatedTags = [];
@@ -276,7 +342,7 @@ block scripts
 					loading = false;
 					selectedWord = getSelectedWord();
 					selectedWord.addClass("selected");
-
+					$sentences = $("#sentence-tagging").children();
 
 
 					initMouseEvents();
@@ -308,6 +374,7 @@ block scripts
 
 
 			function tagSelected(tagClass, colorIndex, moveAfterwards=true) {
+				if(tagClass == -1) return deleteTags();
 
 				$("span.word.selected").removeClass(function (index, className) {
 					return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
@@ -441,7 +508,6 @@ block scripts
 
 			function moveForwards() {
 				wordIndex++;
-				console.log("Word index:", wordIndex);				
 				if(wordIndex >= sentenceLength)	nextSentence();
 				highlightSelected("forwards");
 				if($($currentWords[wordIndex]).hasClass("punctuation")) {
@@ -453,19 +519,20 @@ block scripts
 				if($($currentWords[wordIndex]).hasClass("punctuation")) {
 					return moveBackwards();
 				}
-				console.log("Word index:", wordIndex);
 				if(wordIndex < 0 && sentenceIndex > 0) previousSentence();
 				if(wordIndex == -1) wordIndex = 0;
 				highlightSelected("backwards");
 			}
 
-			function deleteTag() {
-				var selectedWord = getSelectedWord();
-				selectedWord.removeClass(function (index, className) {
-					return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
+			function deleteTags() {
+				$("span.word.selected").each(function(e) {
+					annotatedTags[sentenceIndex][$(this).index()] = -1;//tagClass - 1;
+					$(this).removeClass(function (index, className) {
+						return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
+					});
+					$(this).removeClass("tag");
 				});
-				selectedWord.removeClass("tag")
-				annotatedTags[sentenceIndex][selectedWord.index()] = - 1;
+				//annotatedTags[sentenceIndex][selectedWord.index()] = - 1;
 			}		
 
 			// Display the tagging window overlay.
@@ -503,10 +570,12 @@ block scripts
 		            });
 				}
 
-				$taggingMenuSearch.val('');
-				setTimeout( function () {
-					$taggingMenuSearch[0].focus();	
-				}, 5)
+				$ecSearch.val('');
+				$ecSearch.keyup();	
+			
+				//- setTimeout( function () {
+				//- 	$ecSearch[0].focus();	
+				//- }, 5)
 				
 
 				$taggingMenuMore.removeClass("show");
@@ -538,72 +607,61 @@ block scripts
 			// Initialise the mouse events, i.e. selecting tokens to tag them.
 			function initMouseEvents() {
 
-				var wordClicked = false;
-				var startSentenceIndex = -1;
-				$(".sentence span").mousedown(function() { // Whenever a span is clicked, begin the selection process.
-					$(".word").removeClass("selected");
-					var si = $(this).closest(".sentence").data("ind");
-					startSentenceIndex = sentenceIndex;
-					if(si != sentenceIndex) {
-						sentenceIndex = si;
-						gotoSentence(true);
-						wordIndex = 0;
+				// Apply tags to the current selection.
+				function tagSelection() {
+					// Get the starting and ending index of the selection.
+					var start = $(window.getSelection().getRangeAt(0).startContainer.parentNode);
+					var end =   $(window.getSelection().getRangeAt(0).endContainer.parentNode);
+					var startIndex = start.data('ind');
+					var endIndex = end.data('ind');
+
+					// Get the starting and ending index of the sentences containing the start and end of the selection.
+					var startSentenceIndex = start.parent().data('ind');	// The starting sentence 
+					var endSentenceIndex = end.parent().data('ind');		// The ending sentence
+
+					// Some code to ensure the correct part of the sentence is selected when selecting multiple sentences at the same time.
+					// Only one sentence can be selected at a time (the one initially clicked).
+					var csi = -1;
+					if(startSentenceIndex != initialSentenceIndex) csi = startSentenceIndex;
+					if(endSentenceIndex != initialSentenceIndex) csi = endSentenceIndex;
+					if(csi >= 0) {
+						if(initialSentenceIndex < csi) endIndex = calculateSentenceLength();
+				   		else if(initialSentenceIndex > csi) startIndex = 0;
+				    }
+
+					// Add the 'selected' class to all selected words.
+					var sws = [];
+					for(var i = startIndex; i <= endIndex; i++) {						
+						var sw = $($sentences[initialSentenceIndex]).children().eq(i);
+						if(sw.hasClass("word")) {
+							sws.push(sw);
+						}							
 					}
-					wordClicked = true;
+					
+					// Only continue to add the selected class to each word if there are actually any words in the selection.
+					// Don't do anything if the user only selected punctuation.
+					if(sws.length > 0) {
+						$(".word").removeClass("selected");
+						wordIndex = endIndex;
+						var qt = [];
+						for(var i in sws) {
+							$(sws[i]).addClass("selected");
+							qt.push(sws[i].text());
+						}
+						sentenceIndex = initialSentenceIndex;
+						gotoSentence();
+						refreshTaggingMenu(qt.join(" "));
+					}
+					document.getSelection().removeAllRanges();	// Deselect all text afterwards.
+				}
+
+				var initialSentenceIndex = -1;
+				$(".sentence span").mousedown(function() {
+					// Whenever a span is clicked, take note of the index of the sentence the user clicked on.
+					initialSentenceIndex = $(this).closest(".sentence").data("ind");
 				});
 				
-				$(document).mouseup(function() {
-
-					if(wordClicked) {
-						$(".word").removeClass("selected");
-						
-						var start = $(window.getSelection().getRangeAt(0).startContainer.parentNode);
-						var end =   $(window.getSelection().getRangeAt(0).endContainer.parentNode);
-
-						//console.log(window.getSelection().getRangeAt(0))
-
-						var startIndex = start.data('ind');
-						var endIndex = end.data('ind');
-
-						var startSentenceIndex = start.parent().data('ind');	// The starting sentence 
-						var endSentenceIndex = end.parent().data('ind');		// The ending sentence
-
-						// Some code to ensure the correct part of the sentence is selected when selecting multiple sentences at the same time.
-						// Only one sentence can be selected at a time (the one initially clicked).
-						var csi = -1;
-						if(startSentenceIndex != sentenceIndex) csi = startSentenceIndex;
-						if(endSentenceIndex != sentenceIndex) csi = endSentenceIndex;
-						if(csi >= 0) {
-							if(sentenceIndex < csi) endIndex = calculateSentenceLength();
-					   		else if(sentenceIndex > csi) startIndex = 0;
-					    }
-
-						wordIndex = endIndex;
-						
-						// Add the 'selected' class to all selected words.
-						var qt = [];
-						for(var i = startIndex; i <= endIndex; i++) {						
-							var sw = st.children().eq(sentenceIndex).children().eq(i);
-							console.log(sw);
-							sw.addClass("selected");
-							qt.push(sw.text());
-						}
-						qt = qt.join(" ");
-
-						refreshTaggingMenu(qt);
-
-						document.getSelection().removeAllRanges();	// Deselect all text afterwards.
-						//currentlyScrolling = true;
-						scrollToSentence();
-						//currentlyScrolling = false;
-					}
-					wordClicked = false;
-
-					
-				})
-
-
-
+				$("#tagging-container").mouseup(tagSelection);
 			}	
 			
 			(function initKeyEvents() {
@@ -618,6 +676,8 @@ block scripts
 				SHIFT = 16,
 				DELETE = 46,
 				BACKSPACE = 8,
+				Q = 81,
+				T = 84,
 				ESCAPE = 27;
 				
 				var map = { 37: false, 39: false, 16: false };
@@ -636,9 +696,9 @@ block scripts
 								moveForwards();
 							}
 						}
-						if(e.keyCode >= ONE && e.keyCode <= NINE) {	// Tagging via the arrow keys
-							tagSelected(e.keyCode - 48);
-						}
+						//- if(e.keyCode >= ONE && e.keyCode <= NINE) {	// Tagging via the arrow keys
+						//- 	tagSelected(e.keyCode - 48);
+						//- }
 						if(e.keyCode == DOWN_ARROW) {								
 							nextSentence()
 							wordIndex = -1;
@@ -650,7 +710,11 @@ block scripts
 							moveForwards()
 						}
 						if(e.keyCode == DELETE) {
-							deleteTag();
+							deleteTags();
+						}
+						if(e.keyCode == Q) {
+							$ecSearch[0].focus();
+							e.preventDefault();
 						}
 						//- if(e.keyCode == BACKSPACE) {
 						//- 	moveBackwards();
@@ -672,7 +736,6 @@ block scripts
 			$tree.on('click', '.jstree-anchor', function (e) {		
 				var ind = $tree.jstree('get_selected', true)[0].li_attr["data-index"];
 				var color = $tree.jstree('get_selected', true)[0].li_attr["data-color"];
-				console.log(ind, color);
 				tagSelected(ind, color, false);
 			});
 

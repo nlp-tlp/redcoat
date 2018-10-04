@@ -293,18 +293,18 @@ span.punctuation::-moz-selection {
 
 
 
-span.word.selected::selection, span.word.selected::-webkit-selection {
-  background: rgba(0, 0, 0, 0); /* WebKit/Blink Browsers */
-}
-span.punctuation.selected::selection, span.punctuation.selected::-webkit-selection {
-  background: rgba(0, 0, 0, 0); /* WebKit/Blink Browsers */
-}
-span.word.selected::-moz-selection {
-  background: rgba(0, 0, 0, 0); /* Gecko Browsers */
-}
-span.punctuation.selected::-moz-selection {
-  background: rgba(0, 0, 0, 0); /* Gecko Browsers */
-}
+// span.word.selected::selection, span.word.selected::-webkit-selection {
+//   background: rgba(0, 0, 0, 0); /* WebKit/Blink Browsers */
+// }
+// span.punctuation.selected::selection, span.punctuation.selected::-webkit-selection {
+//   background: rgba(0, 0, 0, 0); /* WebKit/Blink Browsers */
+// }
+// span.word.selected::-moz-selection {
+//   background: rgba(0, 0, 0, 0); /* Gecko Browsers */
+// }
+// span.punctuation.selected::-moz-selection {
+//   background: rgba(0, 0, 0, 0); /* Gecko Browsers */
+// }
 
 
 
@@ -360,6 +360,7 @@ span.punctuation.selected::-moz-selection {
 		box-sizing: border-box;
 	}
 }
+
 
 #tagging-menu {
 	position: fixed;
@@ -447,6 +448,7 @@ span.punctuation.selected::-moz-selection {
 	overflow-y: scroll;
 	height: 60vh;
 	margin-top: 10px;
+	padding-right: 5px;
 
 }
 #category-hierarchy-tree-no-results {
@@ -454,11 +456,21 @@ span.punctuation.selected::-moz-selection {
 	color: #999;
 	padding: 14px 24px;
 }
+a#untag-tokens {
+	color: #999;
+	padding: 4px 26px;
+	display: block;
+	margin-top: 4px;
+}
 .jstree {
 	padding: 0 20px;
 	ul {
 		margin-top: 0;
 		padding: 0;
+		&.jstree-current li a span { //, &.jstree-open .jstree-leaf a span  {
+			opacity: 1;
+			pointer-events: auto;
+		}
 		li {
 			list-style: none;
 			&.jstree-hidden {
@@ -482,18 +494,61 @@ span.punctuation.selected::-moz-selection {
 					font-size: 0.9em;
 				}
 			}
+			// &.jstree-closed ~ li a span {
+			// 	display: block;
+			// }
+			// &.jstree-open ~ li.jstree-anchor a span, &.jstree-open + li.jstree-anchor a span  {
+			//  	display: none;
+			// }
+			&#remove-label > a {
+				border-left: 4px solid rgba(0, 0, 0, 0);
+				// &:before {
+				// 	font-family: FontAwesome;
+				// 	display: inline;
+				// 	content: "\f068";
+				// 	margin-right: 7px;
+				// 	font-size: 0.9em;
+				// }	
+				&:hover {
+					background: #e2e2e2;
+				}
+			}
+
+			a:focus {
+				outline: none;
+			}
 			a {
 				color: #999;
 				display: block;
 				padding: 4px 6px;
-				&:hover {
-					color: #222;
-				}
 				&.jstree-clicked {
-					background: lighten($primary-blue, 40);
+					background: #e2e2e2;
 					color: #222;
 					outline: none;
 					padding: 4px 6px;
+					span {
+						border-color: #222;
+					}
+				}
+				span {
+					float: right;
+					font-size: 0.6em;
+					margin-top: 4px;
+					border: 1px solid #bbb;
+					padding: 0 4px;
+					border-radius: 2px;
+					text-align: center;
+					min-width: 1.1em;
+					transition: opacity 0.2s ease;
+					opacity: 0;
+					pointer-events: none;
+					background: #fafafa;
+				}
+			}
+			a:hover {
+				color: #222;
+				span {
+					border-color: #222;
 				}
 			}
 			ul {

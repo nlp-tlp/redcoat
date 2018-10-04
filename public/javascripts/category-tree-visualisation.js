@@ -484,9 +484,8 @@ function removeEmptyChildren(obj) {
 // category_3
 // etc. Children are specified by spaces, as shown above.
 // Algorithm adapted from here: https://stackoverflow.com/questions/25170715/creating-a-json-object-from-a-tabbed-tree-text-file
-function txt2json(text, jstree_format=false) {
-  if(!jstree_format) fieldname = "name";
-  else fieldname = "text";
+function txt2json(text) {
+  var fieldname = "name";
 
   var lines = text.split('\n');  
   var depth = 0; // Current indentation
@@ -510,25 +509,76 @@ function txt2json(text, jstree_format=false) {
     }
     depth = newDepth;
     node = {"children": []};
-    node["" + fieldname] = cleanLine;
-    if(jstree_format) {
-      var color = (colorId % colors.length) + 1;
-      node["li_attr"] = { "data-index": i, "class": "color-" + color, "data-color": color };
-    }
+    node[fieldname] = cleanLine;
     if(parents.length > 0) {
       parents[parents.length-1]["children"].push(node);
     }
   }
   removeEmptyChildren(root);
-  if(jstree_format) {
-    var data = [];
-    for(var i in root.children) {
-      data.push(root.children[i]);
+  return root;
+}
+
+function slash2jstree(slash) {
+  var hotkeys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+  var text = slash2txt(slash);
+  var fieldname = "text";
+
+  var lines = text.split('\n');  
+  var depth = 0; // Current indentation
+  var root = {
+    "children": []
+  };
+  root["" + fieldname] = "entity";
+  var parents = [];
+  var node = root;
+  var colorId = -1;
+
+  for(var i = 0; i < lines.length; i++) {
+    var cleanLine = lines[i].trim()//replace(/\s/g, "");
+    var newDepth  = lines[i].search(/\S/) + 1;
+
+    if(newDepth == 1)  {
+      colorId++;
     }
-    return data;
-  } else {
-    return root;
+    if(newDepth < depth) {
+      //console.log(cleanLine, parents.length, newDepth)
+      parents = parents.slice(0, newDepth);      
+    } else if (newDepth == depth + 1) {      
+      parents.push(node);
+      h = 0;
+    } else if(newDepth > depth + 1){
+      return new Error("Unparsable tree.");
+    }
+
+    depth = newDepth;
+    node = {"children": []};
+     node[fieldname] = cleanLine;// + '<span>' + hotkey + '</span>';
+    var color = (colorId % colors.length) + 1;
+    node["li_attr"] = { "data-index": i, "class": "color-" + color, "data-color": color, "data-full": slash[i] };
+    if(parents.length > 0) {
+      parents[parents.length-1]["children"].push(node);
+    }
+    h++;
   }
+  removeEmptyChildren(root);
+  var data = [];
+  data.push( { "text": "(No label) <span>~</span>", "li_attr": { "id": "remove-label", "data-index": -1, "data-full": "(No label)" } })
+  for(var i in root.children) {
+    data.push(root.children[i]);
+  }
+  function addHotkey(node, i) {
+    node["text"] = node["text"] + (i < hotkeys.length ? '<span>' + hotkeys[i] + '</span>' : '');
+    if(node.children) {
+      for(var i in node.children) {
+        addHotkey(node.children[i], i);
+      }
+    }
+  }
+  for(var i in data) {
+    if(i == 0) continue;
+    addHotkey(data[i], i-1);
+  }
+  return data;
 }
 
 // Converts 'space' notation to 'slash' notation, e.g.
@@ -596,7 +646,7 @@ function json2text(root) {
 }
 
 function slash2json(slash, fieldname) {
-  return txt2json(slash2txt(slash), fieldname);
+  return txt2json(slash2txt(slash), fieldname, slash);
 }
 
 function slash2txt(slash) {
