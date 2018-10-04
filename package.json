@@ -48,6 +48,7 @@
     "express-sanitize-escape": "^1.1.0",
     "express-sanitizer": "^1.0.4",
     "font-awesome": "^4.7.0",
+    "format": "^0.2.2",
     "formidable": "^1.2.0",
     "fs": "0.0.1-security",
     "jquery": "^3.2.1",

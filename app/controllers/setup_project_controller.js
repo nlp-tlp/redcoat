@@ -42,6 +42,7 @@ exports.index = function(req, res, next) {
       logger.info("Existing WIP Project found.");
       logger.info(wip_project)
       logger.info(wip_project.category_metadata)
+      res.locals.wip_project = wip_project;
 
       // var valid_labels = [];
       // if(wip_project.valid_labels) {
@@ -77,7 +78,9 @@ exports.index = function(req, res, next) {
     } else {
       console.log("No existing WIP Project found - creating a new one.")
       wip_project = new WipProject({ user_id: testuser._id });
+      logger.info(wip_project);
       wip_project.save(function(err, wip_project) {
+        logger.info(wip_project)
         renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", "null", "null", "null", "null", testuser.email, "", "1", "undecided"); 
       });   
     } 
@@ -93,6 +96,7 @@ exports.index = function(req, res, next) {
 exports.upload_name_desc = function(req, res, next) {
   wip_project = res.locals.wip_project;
 
+  logger.info(wip_project)
   wip_project.project_name = req.body.name.length > 0 ? req.body.name : null;
   wip_project.project_description = req.body.desc.length > 0 ? req.body.desc : null;
 
@@ -108,7 +112,7 @@ exports.upload_name_desc = function(req, res, next) {
     }    
 
     wip_project.save(function(err) {
-      if(err) { console.log(err); res.send( { "success": false} ); }
+      if(err) { logger.error(err); res.send( { "success": false} ); }
       else {
         res.send({ "success": true });
       }
@@ -280,7 +284,7 @@ exports.upload_tokenized = function(req, res, next) {
     form.parse(req);
 
     // store all uploads in the /uploads directory - cannot use it
-    form.uploadDir = path.join(__dirname, '../db/tmp');
+    form.uploadDir = path.join(__dirname, '../../db/tmp');
 
     // form.on('fileBegin', function(field, file) {
     //     responded = false;

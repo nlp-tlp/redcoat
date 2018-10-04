@@ -474,7 +474,7 @@ block scripts
 		var iop = $("#input-overlap-summary .plural");		
 		var iov = $("#input-overlap");		
 
-		function updateOverlapSummary() {
+		function updateOverlapSummary(upload=true) {
 			var numAnnotators = parseInt($("#input-range-group .right").html());
 			var v = iov.val();
 			ion.html(v);
@@ -482,19 +482,22 @@ block scripts
 			if(v > 1) iop.html("s");
 			else iop.html("");
 
-			$.ajax(
-			{
-				url: 			'upload-overlap',
-				type:			'POST',
-				data: 			{ val: iov.val() },
-				dataType: 		"json",
-				headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
-				success: function( data )
+			if(upload) {
+				$.ajax(
 				{
-					checkProjectOptionsCompletion();
-				},
-				error: displayServerErrorBanner
-			});	
+					url: 			'upload-overlap',
+					type:			'POST',
+					data: 			{ val: iov.val() },
+					dataType: 		"json",
+					headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
+					success: function( data )
+					{
+						checkProjectOptionsCompletion();
+					},
+					error: displayServerErrorBanner
+				});			
+			}
+				
 		}
 
 		iov.on('input', function() {
@@ -512,7 +515,7 @@ block scripts
 		})();
 
 
-		updateOverlapSummary();
+		updateOverlapSummary(false);
 
 	script.
 
@@ -787,6 +790,10 @@ block scripts
 				},
 				success: function( data )
 				{
+					if(!data.success) {
+						$("#error-banner").addClass("show");
+						return;
+					}
 					$("#error-banner").removeClass("show");
 					console.log("done");
 					if($("#project-name-form input").val().length > 0 && $("#project-name-form input")[0].checkValidity()) {
