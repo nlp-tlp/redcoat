@@ -178,6 +178,9 @@ block scripts
 
 			var queryWikipediaId = 0;			// A counter to keep track of the index of the current Wikipedia query (to prevent overlapping of results).
 
+			var $currentSentence;				// The current sentence the user is looking at.
+			var $currentWords;					// The words of the sentence the user is looking at.
+
 			function finishedScrolling() {
 				currentlyScrolling = false;
 			}
@@ -189,7 +192,7 @@ block scripts
 				for(var i in entity_classes) {
 					var ec = entity_classes[i].toLowerCase();
 					ecs = ec.split('/');
-					ec = (ecs.length > 1 ? '/' : '') + ecs[ecs.length-1];
+					ec = ecs[ecs.length-1]; //(ecs.length > 1 ? '/' : '') + ecs[ecs.length-1];
 					var abbr = ec;
 					//var abbr = (ec.match(/[b-df-hj-np-tv-z]*[aeiou]+[b-df-hj-np-tv-z]+/g) || ['(unknown)'])[0];
 					entity_classes_abbr.push(abbr);
@@ -255,11 +258,11 @@ block scripts
 
 					sentenceIndex = 0;
 					wordIndex = -1;
-					sentenceLength = calculateSentenceLength();
-					
+					gotoSentence();
+
 					chainStart = -1;
 					chainType = "forwards";
-					st.children(0).eq(sentenceIndex).addClass("selected");
+
 					moveForwards();
 
 					if(currentlyScrolling) {
@@ -273,6 +276,8 @@ block scripts
 					loading = false;
 					selectedWord = getSelectedWord();
 					selectedWord.addClass("selected");
+
+
 
 					initMouseEvents();
 				}
@@ -292,12 +297,12 @@ block scripts
 
 			// A shortcut function to find the element corresponding to the selected word.
 			function getSelectedWord() {
-				return st.children().eq(sentenceIndex).children('span.word').eq(wordIndex);
+				return st.children().eq(sentenceIndex).children('span').eq(wordIndex);
 			}		
 
 			// Calculate the sentence length of the current sentence.
 			function calculateSentenceLength() {
-				sentenceLength = st.children().eq(sentenceIndex).children('span.word').length		
+				sentenceLength = $currentSentence.children('span').length		
 				return sentenceLength;
 			}
 
@@ -329,14 +334,14 @@ block scripts
 				var arr = $('span.word.selected');
 				console.log(arr.length)
 				if(!chaining) {								
-					$(".word").removeClass("selected");
+					$("#sentence-tagging span").removeClass("selected");
 					chainStart = -1;
 				} else {		
-					var last = $(arr[arr.length]);
+					var last = $(arr[arr.length-1]);
 					var first = $(arr[0]);
 
 					if(direction == "forwards") {
-						if($('span.word.selected').length == 1) {
+						if($('span.selected').length == 1) {
 							chainStart = wordIndex;
 							chainType = "forwards";
 						}
@@ -351,7 +356,7 @@ block scripts
 						}
 
 					} else if (direction == "backwards") {
-						if($('span.word.selected').length == 1) {
+						if($('span.selected').length == 1) {
 							chainStart = wordIndex + 1;
 							chainType = "backwards";
 						}
@@ -391,34 +396,36 @@ block scripts
 
 			function scrollToSentence() {
 				if(currentlyScrolling) {
-					$("html, body").scrollTop(st.children().eq(sentenceIndex).offset().top - 150)
+					$("html, body").scrollTop($currentSentence.offset().top - 150)
 				} else {
 					currentlyScrolling = true
 					$("html, body").animate({
-						scrollTop: st.children().eq(sentenceIndex).offset().top - 150
+						scrollTop: $currentSentence.offset().top - 150
 					}, 200, finishedScrolling);
 				}
 			}
 
 			// Jumps to the sentence with the index of sentenceIndex.
-			function gotoSentence(preventScroll) {
+			function gotoSentence(preventScroll) {				
+				// Update sentence, words, and sentence lengths
+				$currentSentence = st.children().eq(sentenceIndex);
+				$currentWords = $currentSentence.children();				
+				sentenceLength = calculateSentenceLength();
 
 				$(".sentence").removeClass("selected");
-				st.children().eq(sentenceIndex).addClass("selected");
-				//$("#sentence-number").html(sentenceIndex + 1);	
-				if(!preventScroll) {
-					scrollToSentence();
-				}													
-				sentenceLength = calculateSentenceLength()
-
+				$currentSentence.addClass("selected");
+				if(!preventScroll) scrollToSentence();												
+				
 			}
 
 			function nextSentence() {
 				if(sentenceIndex < groupData.length - 1) {
 					sentenceIndex++								
-					gotoSentence();					
-					wordIndex = 0;
+					gotoSentence();
+					wordIndex = -1;
+					moveForwards();
 				} else {
+					// TODO: Modify this to load the next group (and submit the results rather than save to a file).
 					saveDataToFile();
 					loadGroup();
 				}
@@ -427,19 +434,26 @@ block scripts
 				if(sentenceIndex > 0) {
 					sentenceIndex--;
 					gotoSentence();			
-					//$("#sentence-number").html(sentenceIndex + 1);
-					//sentenceLength = calculateSentenceLength();
-					wordIndex = sentenceLength - 1;
+					wordIndex = sentenceLength;
+					moveBackwards();
 				}
 			}
 
 			function moveForwards() {
 				wordIndex++;
+				console.log("Word index:", wordIndex);				
 				if(wordIndex >= sentenceLength)	nextSentence();
 				highlightSelected("forwards");
+				if($($currentWords[wordIndex]).hasClass("punctuation")) {
+					return moveForwards();
+				}
 			}
 			function moveBackwards() {
 				wordIndex--;
+				if($($currentWords[wordIndex]).hasClass("punctuation")) {
+					return moveBackwards();
+				}
+				console.log("Word index:", wordIndex);
 				if(wordIndex < 0 && sentenceIndex > 0) previousSentence();
 				if(wordIndex == -1) wordIndex = 0;
 				highlightSelected("backwards");

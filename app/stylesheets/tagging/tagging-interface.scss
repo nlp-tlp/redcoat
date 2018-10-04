@@ -1,3 +1,14 @@
+// Apply the appropriate colours to each tag and jstree element.
+@for $i from 1 through 12 {
+	#sentence-tagging .sentence .word.tag-#{$i}::before { background: nth($colors, $i); }
+	#sentence-tagging .sentence .word.tag-#{$i}::before { border: 1px solid nth($colors, $i); }
+	#sentence-tagging .sentence .word.selected.tag-#{$i}::before { background: lighten(nth($colors, $i), 5); }
+	.jstree > ul > li.color-#{$i} { border-left: 3px solid nth($colors, $i); }
+	.jstree li.color-#{$i} a:hover  { background: nth($colors, $i); }
+	.jstree li.color-#{$i} a.jstree-clicked  { background: nth($colors, $i); }
+}
+
+
 #tagging-container {
 	width: 1152px;
 	padding-top: 120px;
@@ -68,6 +79,10 @@
 	border-bottom: 1px solid #ccc;
 	box-sizing: border-box;
 }
+#sentence-tagging span.punctuation.selected {
+	border-bottom: 1px solid #ccc;
+	box-sizing: border-box;
+}
 #sentence-tagging .sentence .word {
 	z-index: 0;
 }
@@ -91,18 +106,7 @@
 	//line-height: 14px;
 }
 
-#sentence-tagging .sentence .word.tag-1::before { background: #99FFCC; }
-#sentence-tagging .sentence .word.tag-2::before { background: #FFCCCC; }
-#sentence-tagging .sentence .word.tag-3::before { background: #CCCCFF; }
-#sentence-tagging .sentence .word.tag-4::before { background: #CCFF99; }
-#sentence-tagging .sentence .word.tag-5::before { background: #CCFFCC; }
-#sentence-tagging .sentence .word.tag-6::before { background: #CCFFFF; }
-#sentence-tagging .sentence .word.tag-7::before { background: #FFCC99; }
-#sentence-tagging .sentence .word.tag-8::before { background: #FFCCFF; }
-#sentence-tagging .sentence .word.tag-9::before { background: #FFFF99; }
-#sentence-tagging .sentence .word.tag-0::before { background: #FFFFCC; }
-#sentence-tagging .sentence .word.tag-a::before { background: #CCCC99; }
-#sentence-tagging .sentence .word.tag-b::before { background: #fbafff; }
+
 
 #sentence-tagging .sentence .word.selected::after {
 	background: rgba(230, 230, 230, 0.8);
@@ -116,8 +120,9 @@
 	border: 1px solid #bbb;
 }
 #sentence-tagging .sentence .word.selected.tag::after {
-	background-blend-mode: color-dodge;
-	background: rgba(255, 255, 255, 0.6);
+	//background-blend-mode: color-dodge;
+	//background: rgba(255, 255, 255, 0.6);
+	background: rgba(0, 0, 0, 0);
 }
 
 
@@ -200,20 +205,6 @@ button#jump-to-batch-go {
 
 }
 
-nav#legend {
-	box-sizing: border-box;
-	width: 100%;
-	padding: 0 40px;
-	font-size: 24px;
-	color: #222;
-	margin-top: 50px;
-
-
-}
-nav#legend ul, nav#hotkeys ul {
-	list-style: none;
-	padding-left: 0px;
-}
 nav#hotkeys {
 	position: fixed;
 	bottom: 0;
@@ -224,23 +215,6 @@ nav#hotkeys {
 }
 
 /* $color-list: #99FFCC, #FFCCCC, #CCCCFF, #CCFF99, #CCFFCC, #CCFFFF, #FFCC99, #FFCCFF, #FFFF99, #FFFFCC, #CCCC99, #fbafff, #ffbfaf, #c6ffcb;  */
-nav#legend ul li {
-	padding: 2px 8px;
-	margin-bottom: 6px;
-	border-bottom: 2px solid rgba(0, 0, 0, 0.3);
-}
-nav#legend ul li:nth-child(1) { background: #99FFCC; }
-nav#legend ul li:nth-child(2) { background: #FFCCCC; }
-nav#legend ul li:nth-child(3) { background: #CCCCFF; }
-nav#legend ul li:nth-child(4) { background: #CCFF99; }
-nav#legend ul li:nth-child(5) { background: #CCFFCC; }
-nav#legend ul li:nth-child(6) { background: #CCFFFF; }
-nav#legend ul li:nth-child(7) { background: #FFCC99; }
-nav#legend ul li:nth-child(8) { background: #FFCCFF; }
-nav#legend ul li:nth-child(9) { background: #FFFF99; }
-nav#legend ul li:nth-child(10) { background: #FFFFCC; }
-nav#legend ul li:nth-child(11) { background: #CCCC99; }
-nav#legend ul li:nth-child(12) { background: #fbafff; }
 
 #sentence-counter, #saving-notification, #loading-notification, #ending-notification {			
 	
@@ -523,9 +497,7 @@ span.punctuation.selected::-moz-selection {
 				}
 			}
 			ul {
-				a {
-					padding: 4px 20px;
-				}
+				padding-left: 25px;
 			}
 			.jstree-search {
 				color: #444;
@@ -541,42 +513,5 @@ span.punctuation.selected::-moz-selection {
 }
 
 
-.jstree > ul > li.color-1 { border-left: 3px solid #99FFCC; }
-.jstree > ul > li.color-2 { border-left: 3px solid #FFCCCC; }
-.jstree > ul > li.color-3 { border-left: 3px solid #CCCCFF; }
-.jstree > ul > li.color-4 { border-left: 3px solid #CCFF99; }
-.jstree > ul > li.color-5 { border-left: 3px solid #CCFFCC; }
-.jstree > ul > li.color-6 { border-left: 3px solid #CCFFFF; }
-.jstree > ul > li.color-7 { border-left: 3px solid #FFCC99; }
-.jstree > ul > li.color-8 { border-left: 3px solid #FFCCFF; }
-.jstree > ul > li.color-9 { border-left: 3px solid #FFFF99; }
-.jstree > ul > li.color-10 { border-left: 3px solid #FFFFCC; }
-.jstree > ul > li.color-11 { border-left: 3px solid #CCCC99; }
-.jstree > ul > li.color-12 { border-left: 3px solid #fbafff; }
 
 
-.jstree li.color-1 a:hover  { background: #99FFCC; }
-.jstree li.color-2 a:hover  { background: #FFCCCC; }
-.jstree li.color-3 a:hover  { background: #CCCCFF; }
-.jstree li.color-4 a:hover  { background: #CCFF99; }
-.jstree li.color-5 a:hover  { background: #CCFFCC; }
-.jstree li.color-6 a:hover  { background: #CCFFFF; }
-.jstree li.color-7 a:hover  { background: #FFCC99; }
-.jstree li.color-8 a:hover  { background: #FFCCFF; }
-.jstree li.color-9 a:hover  { background: #FFFF99; }
-.jstree li.color-10 a:hover { background: #FFFFCC; }
-.jstree li.color-11 a:hover { background: #CCCC99; }
-.jstree li.color-12 a:hover { background: #fbafff; }
-
-.jstree li.color-1 a.jstree-clicked  { background: #99FFCC; }
-.jstree li.color-2 a.jstree-clicked  { background: #FFCCCC; }
-.jstree li.color-3 a.jstree-clicked  { background: #CCCCFF; }
-.jstree li.color-4 a.jstree-clicked  { background: #CCFF99; }
-.jstree li.color-5 a.jstree-clicked  { background: #CCFFCC; }
-.jstree li.color-6 a.jstree-clicked  { background: #CCFFFF; }
-.jstree li.color-7 a.jstree-clicked  { background: #FFCC99; }
-.jstree li.color-8 a.jstree-clicked  { background: #FFCCFF; }
-.jstree li.color-9 a.jstree-clicked  { background: #FFFF99; }
-.jstree li.color-10 a.jstree-clicked { background: #FFFFCC; }
-.jstree li.color-11 a.jstree-clicked { background: #CCCC99; }
-.jstree li.color-12 a.jstree-clicked { background: #fbafff; }

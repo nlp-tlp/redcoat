@@ -484,7 +484,7 @@ function removeEmptyChildren(obj) {
 // category_3
 // etc. Children are specified by spaces, as shown above.
 // Algorithm adapted from here: https://stackoverflow.com/questions/25170715/creating-a-json-object-from-a-tabbed-tree-text-file
-function txt2json(text, jstree_format) {
+function txt2json(text, jstree_format=false) {
   if(!jstree_format) fieldname = "name";
   else fieldname = "text";
 
@@ -498,7 +498,6 @@ function txt2json(text, jstree_format) {
   var node = root;
   var colorId = -1;
   for(var i = 0; i < lines.length; i++) {
-    console.log(i, lines[i]);
     var cleanLine = lines[i].trim()//replace(/\s/g, "");
     var newDepth  = lines[i].search(/\S/) + 1;
     if(newDepth == 1) colorId++;
@@ -526,7 +525,6 @@ function txt2json(text, jstree_format) {
     for(var i in root.children) {
       data.push(root.children[i]);
     }
-    console.log(data);
     return data;
   } else {
     return root;
