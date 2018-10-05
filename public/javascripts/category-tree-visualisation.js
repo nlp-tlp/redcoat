@@ -522,6 +522,7 @@ function slash2jstree(slash) {
   var hotkeys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
   var text = slash2txt(slash);
   var fieldname = "text";
+  var tagClassMap = {};
 
   var lines = text.split('\n');  
   var depth = 0; // Current indentation
@@ -530,6 +531,7 @@ function slash2jstree(slash) {
   };
   root["" + fieldname] = "entity";
   var parents = [];
+  var parentIds = [];
   var node = root;
   var colorId = -1;
 
@@ -543,8 +545,10 @@ function slash2jstree(slash) {
     if(newDepth < depth) {
       //console.log(cleanLine, parents.length, newDepth)
       parents = parents.slice(0, newDepth);      
+      parentIds = parentIds.slice(0, newDepth);      
     } else if (newDepth == depth + 1) {      
       parents.push(node);
+      parentIds.push(i-1);
       h = 0;
     } else if(newDepth > depth + 1){
       return new Error("Unparsable tree.");
@@ -552,33 +556,53 @@ function slash2jstree(slash) {
 
     depth = newDepth;
     node = {"children": []};
-     node[fieldname] = cleanLine;// + '<span>' + hotkey + '</span>';
+    node[fieldname] = cleanLine;// + '<span>' + hotkey + '</span>';
     var color = (colorId % colors.length) + 1;
-    node["li_attr"] = { "data-index": i, "class": "color-" + color, "data-color": color, "data-full": slash[i] };
+    node["li_attr"] = { "data-index": i, "class": "color-" + color, "data-color": color, "data-full": slash[i], "id": "j1_" + (i) };
+    node["a_attr"] = { "id": "j1_" + (i) + "_anchor" };
     if(parents.length > 0) {
       parents[parents.length-1]["children"].push(node);
+    }
+    tagClassMap[i] = [];
+    for(var j in parentIds) {
+      if(j == 0) continue;
+      tagClassMap[i].push(parentIds[j]);
     }
     h++;
   }
   removeEmptyChildren(root);
   var data = [];
-  data.push( { "text": "(No label) <span>~</span>", "li_attr": { "id": "remove-label", "data-index": -1, "data-full": "(No label)" } })
+  data.push( { "text": "(No label) <span class=\"no-label\">~</span>", "li_attr": { "id": "remove-label", "data-index": -1, "data-full": "" } })
   for(var i in root.children) {
     data.push(root.children[i]);
   }
+  // Add the appropriate hotkey to the node inside a span tag.
   function addHotkey(node, i) {
-    node["text"] = node["text"] + (i < hotkeys.length ? '<span>' + hotkeys[i] + '</span>' : '');
-    if(node.children) {
-      for(var i in node.children) {
-        addHotkey(node.children[i], i);
-      }
+    node["text"] = node["text"] + (i < hotkeys.length ? '<span>' + hotkeys[i] + '</span>' : '<span class="hide"></span>');
+    for(var i in node.children) {
+      addHotkey(node.children[i], i);
+    }    
+  }
+  // Shorten a name to ensure it fits on the tree.
+  // Depth is considered 2 characters per level, and having children takes up 3 characters.
+  function shortenName(node, depth) {
+    var maxlength = 20;
+    var extra = 2 * depth;
+    if(node.children) extra += 3;
+    if(node[fieldname].length + extra > maxlength) {
+      node.li_attr["title"] = node[fieldname];
+      node[fieldname] = node[fieldname].substr(0, maxlength - extra) + "...";
     }
+    for (var i in node.children) {
+      shortenName(node.children[i], depth+1);
+    }    
   }
   for(var i in data) {
     if(i == 0) continue;
-    addHotkey(data[i], i-1);
+    shortenName(data[i], 0);
+    addHotkey(data[i], i-1);    
   }
-  return data;
+  return { "data": data, "tagClassMap": tagClassMap };
 }
 
 // Converts 'space' notation to 'slash' notation, e.g.

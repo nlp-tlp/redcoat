@@ -1,8 +1,9 @@
 // Apply the appropriate colours to each tag and jstree element.
 @for $i from 1 through 12 {
 	#sentence-tagging .sentence .word.tag-#{$i}::before { background: nth($colors, $i); }
-	#sentence-tagging .sentence .word.tag-#{$i}::before { border: 1px solid nth($colors, $i); }
+	//#sentence-tagging .sentence .word.tag-#{$i}::before { border: 2px solid nth($colors, $i); }
 	#sentence-tagging .sentence .word.selected.tag-#{$i}::before { background: lighten(nth($colors, $i), 5); }
+	#sentence-tagging .sentence .word.tag-#{i}.selected.tag::after { border-left: 2px solid nth($colors, $i) }
 	.jstree > ul > li.color-#{$i} { border-left: 3px solid nth($colors, $i); }
 	.jstree li.color-#{$i} a:hover  { background: nth($colors, $i); }
 	.jstree li.color-#{$i} a.jstree-clicked  { background: nth($colors, $i); }
@@ -89,27 +90,63 @@
 #sentence-tagging .sentence .word.tag::before {
 	content: attr(data-content);
 	width: 100%;
-	height: 100%;
+	height: calc(100% + 2px);
+	padding: 1px;
 	top: -1px;
 	left: 0;
 	position: absolute;
 	z-index: -1;
-	border-bottom: 2px solid rgba(0, 0, 0, 0.3);
+	border-top: 2px solid rgba(0, 0, 0, 0.15);
+	border-bottom: 2px solid rgba(0, 0, 0, 0.4);
 	font-size: 10px;
 	line-height: 125px;
 	font-weight: bold;
 	text-align: center;
 	color: rgba(0, 0, 0, 0.5);
 	overflow: hidden;
+	box-sizing: border-box;
 }
+
+#sentence-tagging .sentence .word.tag.tag-begin::before {
+	//width: calc(100% - 6px);
+	//left: 6px;
+	border-left: 2px solid rgba(0, 0, 0, 0.15);
+}
+#sentence-tagging .sentence .word.tag.tag-end::before {
+	//width: calc(100% - 6px);
+	border-right: 2px solid rgba(0, 0, 0, 0.15);
+}
+
 #sentence-tagging .sentence .word.tag:nth-child(odd):before {
 	//line-height: 14px;
 }
+#sentence-tagging .sentence .word.selected.tag::before {
+	//background-blend-mode: color-dodge;
+	//background: rgba(255, 255, 255, 0.6);
+	//border-left: 2px solid rgba(0, 0, 0, 0);
+	opacity: 1;
+	border-top: 2px solid rgba(0, 0, 0, 0.3);
+	
+	//border-right: 2px solid rgba(0, 0, 0, 0);
+}
+#sentence-tagging .sentence .word.selected.tag.tag-begin::before {
+	border-left: 2px solid rgba(0, 0, 0, 0.3);
+}
+#sentence-tagging .sentence .word.selected.tag.tag-end::before {
+	border-right: 2px solid rgba(0, 0, 0, 0.3);
+}
 
 
+
+
+@keyframes animatedBackground {
+	from { background-position: 0 0; }
+	to { background-position: 100% 0; }
+}
 
 #sentence-tagging .sentence .word.selected::after {
-	background: rgba(230, 230, 230, 0.8);
+	background-image: url('/images/stripes-light.png');
+	animation: animatedBackground 40s linear infinite;
 	content: " ";
 	width: 100%;
 	height: 100%;
@@ -120,9 +157,12 @@
 	border: 1px solid #bbb;
 }
 #sentence-tagging .sentence .word.selected.tag::after {
-	//background-blend-mode: color-dodge;
+	background-blend-mode: color-dodge;
 	//background: rgba(255, 255, 255, 0.6);
-	background: rgba(0, 0, 0, 0);
+	//background: rgba(0, 0, 0, 0);
+	background-image: url('/images/stripes-light-trans.png');
+	opacity: 0.35;
+	border: none;
 }
 
 
@@ -399,7 +439,7 @@ span.punctuation::-moz-selection {
 		}
 		.summary {
 			color: #555;
-			min-height: 110px;
+			min-height: 140px;
 			.different {
 				color: $primary-blue;
 			}
@@ -479,19 +519,21 @@ a#untag-tokens {
 			&.jstree-closed > a {
 				&:before {
 					font-family: FontAwesome;
-					display: inline;
+					display: inline-block;
 					content: "\f078";
 					margin-right: 7px;
-					font-size: 0.9em;
+					font-size: 0.7em;
+					transform: translate(0, -2px);
 				}
 			}
 			&.jstree-open > a {
 				&:before {
 					font-family: FontAwesome;
-					display: inline;
+					display: inline-block;
 					content: "\f077";
 					margin-right: 7px;
-					font-size: 0.9em;
+					font-size: 0.7em;
+					transform: translate(0, -2px);
 				}
 			}
 			// &.jstree-closed ~ li a span {
@@ -543,6 +585,14 @@ a#untag-tokens {
 					opacity: 0;
 					pointer-events: none;
 					background: #fafafa;
+					&.no-label {
+						opacity: 1;
+						pointer-events: auto;
+					}
+					&.hide {
+						display: none;
+					}
+					
 				}
 			}
 			a:hover {
