@@ -1,8 +1,8 @@
 // Apply the appropriate colours to each tag and jstree element.
 @for $i from 1 through 12 {
-	#sentence-tagging .sentence .word.tag-#{$i}::before { background: nth($colors, $i); }
+	#sentence-tagging .sentence .word.tag-#{$i}::before { background-color: nth($colors, $i); }
 	//#sentence-tagging .sentence .word.tag-#{$i}::before { border: 2px solid nth($colors, $i); }
-	#sentence-tagging .sentence .word.selected.tag-#{$i}::before { background: lighten(nth($colors, $i), 5); }
+	#sentence-tagging .sentence .word.selected.tag-#{$i}::before { background-color: lighten(nth($colors, $i), 5); }
 	#sentence-tagging .sentence .word.tag-#{i}.selected.tag::after { border-left: 2px solid nth($colors, $i) }
 	.jstree > ul > li.color-#{$i} { border-left: 3px solid nth($colors, $i); }
 	.jstree li.color-#{$i} a:hover  { background: nth($colors, $i); }
@@ -88,7 +88,7 @@
 	z-index: 0;
 }
 #sentence-tagging .sentence .word.tag::before {
-	content: attr(data-content);
+	content: " ";
 	width: 100%;
 	height: calc(100% + 2px);
 	padding: 1px;
@@ -125,15 +125,19 @@
 	//background: rgba(255, 255, 255, 0.6);
 	//border-left: 2px solid rgba(0, 0, 0, 0);
 	opacity: 1;
-	border-top: 2px solid rgba(0, 0, 0, 0.3);
+	border-top: 2px solid rgba(0, 0, 0, 0.1);
+	border-bottom: 2px solid rgba(0, 0, 0, 0.3);
+	content: " ";
+	background-image: url('/images/stripes-light-trans.png');
+	animation: animatedBackground 40s linear infinite;
 	
 	//border-right: 2px solid rgba(0, 0, 0, 0);
 }
 #sentence-tagging .sentence .word.selected.tag.tag-begin::before {
-	border-left: 2px solid rgba(0, 0, 0, 0.3);
+	border-left: 2px solid rgba(0, 0, 0, 0.1);
 }
 #sentence-tagging .sentence .word.selected.tag.tag-end::before {
-	border-right: 2px solid rgba(0, 0, 0, 0.3);
+	border-right: 2px solid rgba(0, 0, 0, 0.1);
 }
 
 
@@ -144,9 +148,7 @@
 	to { background-position: 100% 0; }
 }
 
-#sentence-tagging .sentence .word.selected::after {
-	background-image: url('/images/stripes-light.png');
-	animation: animatedBackground 40s linear infinite;
+#sentence-tagging .sentence .word::after {
 	content: " ";
 	width: 100%;
 	height: 100%;
@@ -154,17 +156,42 @@
 	left: 0;
 	position: absolute;
 	z-index: -1;
-	border: 1px solid #bbb;
+	
+	font-size: 10px;
+	line-height: 125px;
+	font-weight: bold;
+	text-align: center;
+	color: rgba(0, 0, 0, 0.5);
+	overflow: hidden;
+	//padding: 0px 2px;
+}
+#sentence-tagging .sentence .word.tag::after {
+	content: attr(data-content);
+}
+#sentence-tagging .sentence .word.selected::after {
+	border: 1px solid #bbb;	
 }
 #sentence-tagging .sentence .word.selected.tag::after {
-	background-blend-mode: color-dodge;
-	//background: rgba(255, 255, 255, 0.6);
-	//background: rgba(0, 0, 0, 0);
-	background-image: url('/images/stripes-light-trans.png');
-	opacity: 0.35;
-	border: none;
+	top: 1px;
+	height: calc(100% - 2px);
+	line-height: 120px;
+	border: none;	
 }
+#sentence-tagging .sentence .word.selected:not(.tag)::after {
+	animation: animatedBackground 40s linear infinite;
+	background-image: url('/images/stripes-light.png');
+}
+// #sentence-tagging .sentence .word.selected.tag.tag-begin::after {
+// 	left: 2px;
+// 	width: calc(100% - 2px);
+// }
+// #sentence-tagging .sentence .word.selected.tag.tag-end::after {
+// 	width: calc(100% - 8px);
 
+// }
+// #sentence-tagging .sentence .word.selected.tag.tag-end.tag-begin::after {
+// 	width: calc(100% - 8px);
+// }
 
 #sentence-tagging .sentence.selected {
 	opacity: 1;
@@ -439,7 +466,7 @@ span.punctuation::-moz-selection {
 		}
 		.summary {
 			color: #555;
-			min-height: 140px;
+			min-height: 150px;
 			.different {
 				color: $primary-blue;
 			}
@@ -450,6 +477,7 @@ span.punctuation::-moz-selection {
 				opacity: 1;
 				pointer-events: auto;
 			}
+			font-size: 0.9em;
 			opacity: 0;
 			pointer-events: none;
 			margin-top: 10px;

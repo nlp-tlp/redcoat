@@ -86,6 +86,7 @@ block scripts
 					'core' : {
 					    'data' : jstreeData["data"],
 					    'dblclick_toggle' : false,
+					    'animation': false,
 
 					},
 					//- 'sort' : function(a, b) {
@@ -380,8 +381,7 @@ block scripts
 				}
 
 
-				function tagSelected(tagClass, colorIndex, nodeId, moveAfterwards=true) {
-					
+				function tagSelected(tagClass, colorIndex, nodeId, moveAfterwards=true) {					
 
 					$("span.word.selected").removeClass(function (index, className) {
 						return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
@@ -404,12 +404,13 @@ block scripts
 						$("span.word.selected").attr("data-content", entity_classes_abbr[tagClass]);					
 					}
 
-					if(tagClass > -1) {
+					if(tagClass > -1)
 						addTags();
-					}
+					else 
+						deleteTags();
+					
 
 					// Ensure the tags display correctly when they are split between punctuation.
-					var tagMap = { undefined: "I-", "tag-begin": "B-", "tag-end": "I-" };
 					var startIndex = b.index();
 					var endIndex = e.index();
 					$currentWords.each(function(e) {
@@ -427,30 +428,32 @@ block scripts
 							// Change tag before start of selection to an ending tag if it does not have the same class as the selection.
 							if(t.hasClass("tag") && !t.attr("data-tag-class") != tagClass) {
 								tags.push("tag-end");
-							} else {
-								return;
 							}
 						} else if(i == endIndex + 1) {
-							// Change tag after end of selection to an beginning tag if it does not have the same class as the selection.
+							// Change tag after end of selection to a beginning tag if it does not have the same class as the selection.
 							if(t.hasClass("tag") && !t.attr("data-tag-class") != tagClass) {
 								tags.push("tag-begin");
-							} else {
-								return;
 							}
-						} else {
-							if(t.prev().hasClass("punctuation") && !t.is(b)) tags.push("tag-begin");
-							if(t.is(b)) tags.push("tag-begin");
-							if(t.next().hasClass("punctuation")) tags.push("tag-end");	
-						}			
-						for(var i in tags) {
-							t.addClass(tags[i]);
 						}
-						annotatedTags[sentenceIndex][$(this).index()] = tagMap[tags[0]] + entity_classes[tagClass];//tagClass - 1;
-
-
-					})
-
-					if(tagClass == -1) deleteTags();					
+						if(!t.prev().hasClass("tag")) tags.push("tag-begin");
+						if(!t.next().hasClass("tag")) tags.push("tag-end");
+						if(t.prev().hasClass("punctuation") && !t.is(b)) tags.push("tag-begin");
+						if(t.is(b)) tags.push("tag-begin");
+						if(t.next().hasClass("punctuation")) tags.push("tag-end");	
+						
+						//console.log(t, tags, $(this).attr("data-tag-class"));
+						if($(this).hasClass("tag")) {
+							for(var j in tags) {
+								t.addClass(tags[j]);
+							}
+						}
+						if(tags.includes("tag-begin")) var prefix = "B-";
+						else var prefix = "I-";
+						var tc =  entity_classes[$(this).attr("data-tag-class")] || "O";
+						if(tc == "O") prefix = "";
+						annotatedTags[sentenceIndex][i] = prefix + tc;//tagClass - 1;
+					});
+									
 					if(moveAfterwards) {
 						$(".word").removeClass("selected");
 						moveForwards();
@@ -595,11 +598,16 @@ block scripts
 				// Delete the tags of any selected elements.
 				function deleteTags() {
 					$("span.word.selected").each(function(e) {
-						annotatedTags[sentenceIndex][$(this).index()] = -1;//tagClass - 1;
+						annotatedTags[sentenceIndex][$(this).index()] = "O";//tagClass - 1;
 						$(this).removeClass(function (index, className) {
 							return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
 						});
+						$(this).removeAttr("data-tag-class");
+						$(this).removeAttr("data-node-id");
+						$(this).removeAttr("data-content");
 						$(this).removeClass("tag");
+						$(this).removeClass("tag-begin");
+						$(this).removeClass("tag-end");
 					});
 				}		
 
@@ -652,19 +660,26 @@ block scripts
 				}
 
 				// Refresh the tree and click on the tagClass corresponding to the first highlighted element's class.
-				function refreshTree(tagClassElementId) {		
+				function refreshTree(tagClassElementId) {	
+
+					var nodeid = "#" + tagClassElementId;
+					var currentNode = "#" + $($(".jstree-clicked")[0]).attr('id');
+					
+					// Clear the search window
 					if($ecSearch.val().length > 0) {
 						$ecSearch.val('');
 						$ecSearch.keyup();
 					}
-					// Clear the search window
 
+					// If the current node is the same as the new one, there's no need to refresh the tree.
+					if(currentNode == nodeid) return;
+
+					// Close the tree.
+					$tree.jstree("close_all");
 					$(".jstree-anchor").removeClass("jstree-clicked");
-					if(!tagClassElementId) return $("#remove-label_anchor").click();
-					var nodeid = "#" + tagClassElementId;
-
+					if(!tagClassElementId) return $("#remove-label_anchor").addClass('jstree-clicked');
+					
 					// Open all parents of the node, based on the tagClassMap
-
 					var nodeNumber = tagClassElementId.substr(3, tagClassElementId.length - 10);
 					var parents = tagClassMap[nodeNumber];
 					
