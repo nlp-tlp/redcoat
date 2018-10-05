@@ -129,7 +129,9 @@ block scripts
 					$(".jstree-children").removeClass("jstree-current");
 					$($("#" + data.node.id).parents('.jstree-children')[0]).addClass("jstree-current");
 					$(".jstree-anchor").removeClass('backspace-hotkey');
-					$("#" + data.node.id).parent().parent().children(".jstree-anchor").first().addClass('backspace-hotkey');
+					var parentNode = $("#" + data.node.id).parent().parent().children(".jstree-anchor").first();
+					parentNode.addClass('backspace-hotkey');		
+					
 					updateHotkeyMap();
 				});
 
@@ -165,7 +167,7 @@ block scripts
 				    if(!searching) closeSiblingNodes(data);
 				    // Add the backspace hotkey 
 				    $(".jstree-anchor").removeClass('backspace-hotkey');
-				    $("#" + data.node.id).children(".jstree-anchor").first().addClass('backspace-hotkey');
+				    $("#" + data.node.id).children(".jstree-anchor").first().addClass('backspace-hotkey');				    
 				    updateHotkeyMap();
 				});
 
@@ -392,34 +394,53 @@ block scripts
 
 				function tagSelected(tagClass, colorIndex, nodeId, moveAfterwards=true) {					
 
-					$("span.word.selected").removeClass(function (index, className) {
+					var $selectedWords = $("span.word.selected")
+
+					$selectedWords.removeClass(function (index, className) {
 						return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
 					});
 					
-					$("span.word.selected").removeClass("tag-begin");
-					$("span.word.selected").removeClass("tag-end");
-					var b = $("span.word.selected").first()
-					var e = $("span.word.selected").last()
+					$selectedWords.removeClass("tag-begin");
+					$selectedWords.removeClass("tag-end");
+					var b = $selectedWords.first()
+					var e = $selectedWords.last()
 
 
+					// Add tags to the selecteed elements.
 					function addTags() {
 						if(colorIndex == null) colorIndex = tagClass;
 						b.addClass("tag-begin");
 						e.addClass("tag-end");
-						$("span.word.selected").addClass("tag");
-						$("span.word.selected").attr("data-node-id", nodeId);
-						$("span.word.selected").addClass("tag-" + colorIndex);
-						$("span.word.selected").attr("data-tag-class", tagClass);					
-						$("span.word.selected").attr("data-content", entity_classes_abbr[tagClass]);					
+						$selectedWords.addClass("tag");
+						$selectedWords.attr("data-node-id", nodeId);
+						$selectedWords.addClass("tag-" + colorIndex);
+						$selectedWords.attr("data-tag-class", tagClass);					
+						$selectedWords.attr("data-content", entity_classes_abbr[tagClass]);					
 					}
 
-					if(tagClass > -1)
-						addTags();
-					else 
-						deleteTags();
+					// Delete the tags of any selected elements.
+					function deleteTags() {
+						$selectedWords.each(function(e) {
+							annotatedTags[sentenceIndex][$(this).index()] = "O";//tagClass - 1;
+							$(this).removeClass(function (index, className) {
+								return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
+							});
+							$(this).removeAttr("data-tag-class");
+							$(this).removeAttr("data-node-id");
+							$(this).removeAttr("data-content");
+							$(this).removeClass("tag");
+							$(this).removeClass("tag-begin");
+							$(this).removeClass("tag-end");
+						});
+					}	
+
+					if(tagClass > -1) addTags();
+					else deleteTags();
 					
 
 					// Ensure the tags display correctly when they are split between punctuation.
+					// Iterate over all words in the sentence but only actually start on the word immedidiately before the start of the selection,
+					// and end on the word immediately after the selection.
 					var startIndex = b.index();
 					var endIndex = e.index();
 					$currentWords.each(function(e) {
@@ -444,13 +465,13 @@ block scripts
 								tags.push("tag-begin");
 							}
 						}
+						if(t.is(b)) tags.push("tag-begin");
 						if(!t.prev().hasClass("tag")) tags.push("tag-begin");
 						if(!t.next().hasClass("tag")) tags.push("tag-end");
-						if(t.prev().hasClass("punctuation") && !t.is(b)) tags.push("tag-begin");
-						if(t.is(b)) tags.push("tag-begin");
+						if(t.prev().hasClass("punctuation") && !t.is(b)) tags.push("tag-begin");						
 						if(t.next().hasClass("punctuation")) tags.push("tag-end");	
 						
-						//console.log(t, tags, $(this).attr("data-tag-class"));
+						// Add the beginning/end class to this tag if necessary.
 						if($(this).hasClass("tag")) {
 							for(var j in tags) {
 								t.addClass(tags[j]);
@@ -604,21 +625,7 @@ block scripts
 					highlightSelected("backwards");
 				}
 
-				// Delete the tags of any selected elements.
-				function deleteTags() {
-					$("span.word.selected").each(function(e) {
-						annotatedTags[sentenceIndex][$(this).index()] = "O";//tagClass - 1;
-						$(this).removeClass(function (index, className) {
-							return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
-						});
-						$(this).removeAttr("data-tag-class");
-						$(this).removeAttr("data-node-id");
-						$(this).removeAttr("data-content");
-						$(this).removeClass("tag");
-						$(this).removeClass("tag-begin");
-						$(this).removeClass("tag-end");
-					});
-				}		
+	
 
 				// Display the tagging window overlay (the information about the tokens that are currently selected).
 				function refreshTokensInfo(tokens) {
@@ -835,11 +842,22 @@ block scripts
 							}
 
 							if(e.keyCode == BACKSPACE && "BACKSPACE" in hotkeyMap) {
-								$("#" + hotkeyMap["BACKSPACE"]).children("a").first().click();
+								var node = $("#" + hotkeyMap["BACKSPACE"]).children("a").first();
+								node.click();
+
+								// Scroll to appropriate spot in the tree
+								var parentNode = node.parent().parent().children(".jstree-anchor").first();
+								var postop = 0;
+								if(parentNode.position()) postop = parentNode.position().top;				
+								$tree.scrollTop($tree.scrollTop() + postop);
 							}
 
 							if((e.keyCode-48) in hotkeyMap) {	// Tag an element based on the hotkey pressed.
-								$("#" + hotkeyMap[e.keyCode-48]).children("a").first().click();
+								var node = $("#" + hotkeyMap[e.keyCode-48]).children("a").first();
+								node.click();
+
+								// Scroll to appropriate spot in the tree
+								$tree.scrollTop($tree.scrollTop() + node.position().top);
 							}
 							if(e.keyCode == ESCAPE) {	// TODO: Hide the category hierarchy.
 								$entityCategoriesWindow.removeClass("show");

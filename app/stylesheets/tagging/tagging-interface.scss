@@ -517,7 +517,7 @@ span.punctuation::-moz-selection {
 	height: 60vh;
 	margin-top: 10px;
 	padding-right: 5px;
-
+	position: relative;
 }
 #category-hierarchy-tree-no-results {
 	display: none;
@@ -612,14 +612,11 @@ a#untag-tokens {
 					//transition: opacity 0.2s ease;
 					opacity: 0;
 					pointer-events: none;
-					background: #fafafa;
-					&.no-label {
-						opacity: 1;
-						pointer-events: auto;
-					}
-					&.hide {
-						display: none;
-					}					
+					background: #fafafa;				
+				}
+				span.no-label {
+					opacity: 1;
+					pointer-events: auto;
 				}
 				span.hide {
 					display: none;
