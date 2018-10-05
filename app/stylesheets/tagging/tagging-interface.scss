@@ -129,7 +129,7 @@
 	border-bottom: 2px solid rgba(0, 0, 0, 0.3);
 	content: " ";
 	background-image: url('/images/stripes-light-trans.png');
-	animation: animatedBackground 40s linear infinite;
+	animation: animatedBackground 20s linear infinite;
 	
 	//border-right: 2px solid rgba(0, 0, 0, 0);
 }
@@ -178,7 +178,7 @@
 	border: none;	
 }
 #sentence-tagging .sentence .word.selected:not(.tag)::after {
-	animation: animatedBackground 40s linear infinite;
+	animation: animatedBackground 20s linear infinite;
 	background-image: url('/images/stripes-light.png');
 }
 // #sentence-tagging .sentence .word.selected.tag.tag-begin::after {
@@ -600,7 +600,7 @@ a#untag-tokens {
 						border-color: #222;
 					}
 				}
-				span {
+				span, &.backspace-hotkey::after {
 					float: right;
 					font-size: 0.6em;
 					margin-top: 4px;
@@ -609,7 +609,7 @@ a#untag-tokens {
 					border-radius: 2px;
 					text-align: center;
 					min-width: 1.1em;
-					transition: opacity 0.2s ease;
+					//transition: opacity 0.2s ease;
 					opacity: 0;
 					pointer-events: none;
 					background: #fafafa;
@@ -619,8 +619,19 @@ a#untag-tokens {
 					}
 					&.hide {
 						display: none;
-					}
-					
+					}					
+				}
+				span.hide {
+					display: none;
+				}
+				&.backspace-hotkey:after {
+					content: "\f177";
+					font-family: FontAwesome;
+					opacity: 1;
+					padding: 3px 4px;
+				}
+				&.backspace-hotkey span {
+					display: none;
 				}
 			}
 			a:hover {

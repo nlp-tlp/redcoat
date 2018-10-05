@@ -118,12 +118,18 @@ block scripts
 						if(h.length > 0) hotkeyMap[h] = nid;
 					});
 					delete hotkeyMap["~"];
+
+					var bksp = $(".backspace-hotkey").parent().first().attr('id');
+					if(bksp) hotkeyMap["BACKSPACE"] = bksp;
+					console.log(hotkeyMap);
 				}
 
 				// Hide the hotkeys when a node is closed.
 				$tree.on('close_node.jstree', function(e, data) {
 					$(".jstree-children").removeClass("jstree-current");
 					$($("#" + data.node.id).parents('.jstree-children')[0]).addClass("jstree-current");
+					$(".jstree-anchor").removeClass('backspace-hotkey');
+					$("#" + data.node.id).parent().parent().children(".jstree-anchor").first().addClass('backspace-hotkey');
 					updateHotkeyMap();
 				});
 
@@ -157,6 +163,9 @@ block scripts
 					$(".jstree-children").removeClass("jstree-current");
 					$("#" + data.node.id).children('.jstree-children').addClass("jstree-current");
 				    if(!searching) closeSiblingNodes(data);
+				    // Add the backspace hotkey 
+				    $(".jstree-anchor").removeClass('backspace-hotkey');
+				    $("#" + data.node.id).children(".jstree-anchor").first().addClass('backspace-hotkey');
 				    updateHotkeyMap();
 				});
 
@@ -823,10 +832,14 @@ block scripts
 							}
 							if(e.keyCode == PAGE_DOWN) {
 								e.preventDefault();	// TODO: Navigate through the tagging menu.
-							}			
+							}
+
+							if(e.keyCode == BACKSPACE && "BACKSPACE" in hotkeyMap) {
+								$("#" + hotkeyMap["BACKSPACE"]).children("a").first().click();
+							}
 
 							if((e.keyCode-48) in hotkeyMap) {	// Tag an element based on the hotkey pressed.
-								$($("#" + hotkeyMap[e.keyCode-48]).children("a")[0]).click();
+								$("#" + hotkeyMap[e.keyCode-48]).children("a").first().click();
 							}
 							if(e.keyCode == ESCAPE) {	// TODO: Hide the category hierarchy.
 								$entityCategoriesWindow.removeClass("show");
