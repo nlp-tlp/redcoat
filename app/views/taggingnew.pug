@@ -48,7 +48,7 @@ block scripts
 
 	script.
 		var noodle;
-
+		var $tree;
 		function initTaggingInterface() {
 
 			
@@ -60,7 +60,7 @@ block scripts
 			function buildJsTree(hierarchy) {
 
 
-				var $tree = $("#category-hierarchy-tree");
+				$tree = $("#category-hierarchy-tree");
 				var $ecSearch = $("#ec-search");
 				var $noSearchResults = $("#category-hierarchy-tree-no-results");
 
@@ -73,7 +73,6 @@ block scripts
 
 				var jstreeData = slash2jstree(hierarchy);
 				tagClassMap = jstreeData["tagClassMap"];
-
 
 				$tree.jstree(
 					{ 
@@ -99,12 +98,11 @@ block scripts
 					//- 	return (a1.text > b1.text) ? 1 : -1;			        
 					//- }
 				});
-				
+
 				// Display the hotkeys for the top-level categories as soon as the tree has been drawn.
 				$tree.on('ready.jstree', function() {
 					$($(".jstree-children")[0]).addClass("jstree-current");
-					//$("#remove-label_anchor").addClass('jstree-clicked');
-					$tree.jstree("select_node", '#remove-label');
+					$("#remove-label_anchor").addClass('jstree-clicked');
 					updateHotkeyMap();
 				});
 
@@ -399,7 +397,7 @@ block scripts
 
 
 				function tagSelected(tagClass, colorIndex, nodeId, moveAfterwards=true) {					
-					if(!$currentWords) return;
+
 					var $selectedWords = $("span.word.selected")
 
 					$selectedWords.removeClass(function (index, className) {
@@ -685,9 +683,7 @@ block scripts
 				function refreshTree(tagClassElementId) {	
 
 					var nodeid = "#" + tagClassElementId;
-					var currentNode = "#" + $tree.jstree('get_selected')[0];
-
-					console.log(currentNode, nodeid)
+					var currentNode = "#" + $($(".jstree-clicked")[0]).attr('id');
 					
 					// Clear the search window
 					if($ecSearch.val().length > 0) {
@@ -700,40 +696,23 @@ block scripts
 
 					// Close the tree.
 					$tree.jstree("close_all");
-					$tree.jstree('deselect_node', currentNode)
-					if(!tagClassElementId) return $tree.jstree('select_node', '#remove-label')
+					$(".jstree-anchor").removeClass("jstree-clicked");
+					if(!tagClassElementId) return $("#remove-label_anchor").addClass('jstree-clicked');
 					
-					console.log(">>", tagClassElementId);
 					// Open all parents of the node, based on the tagClassMap
-					var nodeNumber = tagClassElementId.substr(3, tagClassElementId.length);
-					console.log(nodeNumber);
+					var nodeNumber = tagClassElementId.substr(3, tagClassElementId.length - 10);
 					var parents = tagClassMap[nodeNumber];
 					
 					for(var i in parents) {
 						var p = "#j1_" + tagClassMap[nodeNumber][i];
 						$tree.jstree('open_node', p);
+
 					}
-					console.log(parents);
-					$tree.jstree('select_node', nodeid)				
+					$(nodeid).addClass("jstree-clicked");				
 					$tree.jstree('open_node', nodeid);
-					console.log($(nodeid).parents(".jstree-children").first().parent())
-					if(parents.length == 0) { scrollToNode($(nodeid), -100) }
-					else scrollToNode($(nodeid).parents(".jstree-children").first().parent());
-
 
 				}
 
-
-
-
-				// Scroll to the position of a node in the tree.
-				function scrollToNode(node, offset=0) {					
-					// Scroll to appropriate spot in the tree
-					var postop = 0;
-					if(node.position()) postop = node.position().top;	
-					console.log(postop);
-					$tree.scrollTop($tree.scrollTop() + postop + offset);
-				}
 				// Initialise the mouse events, i.e. selecting tokens to tag them.
 				function initMouseEvents() {
 
@@ -805,61 +784,6 @@ block scripts
 				// Initialise all the keyboard events.
 				function initKeyboardEvents() {
 
-					// Open the selected node in the tree and select its first child.
-					function openTreeNode() {
-						var currentNode = "#" + $tree.jstree('get_selected')[0];
-						var hasChildren = $(currentNode).hasClass("jstree-closed");
-						$tree.jstree('toggle_node', currentNode)
-						//- if(hasChildren) {
-						//- 	var firstChild = $(currentNode).children(".jstree-children").children().first().attr('id');
-						//- 	$tree.jstree('deselect_node', currentNode);
-						//- 	$tree.jstree('select_node', firstChild);
-						//- }
-					}
-
-					// Move through the jstree in the specified direction.
-					function moveThroughTree(direction) {
-						var currentNode = $("#" + $tree.jstree('get_selected')[0]);
-						var currentNodeIndex = currentNode.index();
-						var parent = currentNode.parents(".jstree-children").first();
-						var hasChildren = $(currentNode).hasClass("jstree-open");
-						var nextNode = parent.children().eq(currentNodeIndex + (direction == "up" ? -1 : 1));
-
-						if(direction == "down")	{					
-							if(hasChildren) {
-								nextNode = currentNode.children('.jstree-children').children('.jstree-node').first();
-							}
-						}
-						if(direction == "up") {
-							console.log("<<<", nextNode);
-							if(currentNodeIndex == 0) {
-								nextNode = parent.prev();
-							}
-							if(nextNode.hasClass('jstree-open')) {
-								nextNode = nextNode.children('.jstree-children').children('.jstree-node').last();
-							}
-						}
-								
-						if(!nextNode.attr('id')) {
-							if(direction == "up") {
-								nextNode = parent.parents('.jstree-node').first().prev();
-								if(!nextNode.length) nextNode = parent.children().last();
-							} else {
-								nextNode = parent.parents('.jstree-node').first().next();
-								if(!nextNode.length) nextNode = parent.children().eq(0);
-							}
-						}
-
-							//if(direction == "up") nextNode = parent.last();
-							//else nextNode = parent.children().eq(0);	
-						if(nextNode.attr('id')) {
-							$tree.jstree('deselect_node', "#" + currentNode.attr('id'));
-							$tree.jstree('select_node', "#" + nextNode.attr('id'));
-						}
-						scrollToNode($(nextNode), -100); // Do it 4 times (perhaps there's a better way?)
-					}
-
-
 					const
 					LEFT_ARROW = 37,
 					UP_ARROW = 38,
@@ -872,10 +796,9 @@ block scripts
 					BACKSPACE = 8,
 					Q = 81,
 					T = 84,
-					W = 87,
-					S = 83,
+					PAGE_UP = 33,
+					PAGE_DOWN = 34,
 					TILDE = 192,
-					ENTER = 13,
 					ESCAPE = 27;
 					
 					var map = { 37: false, 39: false, 16: false, 38: false, 40: false };
@@ -898,10 +821,10 @@ block scripts
 							if(e.keyCode == DELETE || e.keyCode == TILDE) {
 							 	$("#remove-label a").click();
 							}
-							//- if(e.keyCode == Q) {
-							//- 	$ecSearch[0].focus();
-							//- 	e.preventDefault();
-							//- }
+							if(e.keyCode == Q) {
+								$ecSearch[0].focus();
+								e.preventDefault();
+							}
 
 							if(e.keyCode == DOWN_ARROW) {			
 								chaining = false;					
@@ -915,24 +838,47 @@ block scripts
 								wordIndex = -1;
 								moveForwards()
 							}
-							if(e.keyCode == ENTER) {
-								openTreeNode();
-								event.preventDefault();
+							if(e.keyCode == PAGE_UP) {
 
-							}
-							if(e.keyCode == W) {
-								moveThroughTree("up")
 								e.preventDefault();	// TODO: Navigate through the tagging menu.
 							}
-							if(e.keyCode == S) {
-								moveThroughTree("down")
-								e.preventDefault();
+							if(e.keyCode == PAGE_DOWN) {
+
+								var currentNode = $(".jstree-clicked").first().parent();
+								var currentNodeIndex = currentNode.index();
+								console.log(currentNode, currentNodeIndex);
+
+								var parent = currentNode.parents(".jstree-children").first();
+
+								console.log(parent);
+
+								var nextNode = parent.children().eq(currentNodeIndex + 1);				
+
+								console.log("#"+nextNode.attr('id'));
+
+								if(nextNode.attr('id')) {
+									//$(".jstree-anchor").removeClass("jstree-clicked");
+									$tree.jstree('deselect_node', "#" + currentNode.attr('id'));
+									$tree.jstree('select_node', "#" + nextNode.attr('id'));
+								}
+
+								e.preventDefault();	// TODO: Navigate through the tagging menu.
+							}
+
+							function scrollToNode(node) {
+								console.log(node);
+								// Scroll to appropriate spot in the tree
+								var postop = 0;
+								if(node.position()) postop = node.position().top;	
+								console.log(postop);			
+								$tree.scrollTop($tree.scrollTop() + postop);
 							}
 
 							if(e.keyCode == BACKSPACE && "BACKSPACE" in hotkeyMap) {
 								var node = $("#" + hotkeyMap["BACKSPACE"]).children("a").first();
 								node.click();
 								scrollToNode(node.parents(".jstree-children").first().parent());
+
 							}
 
 							if((e.keyCode-48) in hotkeyMap) {	// Tag an element based on the hotkey pressed.
@@ -954,23 +900,21 @@ block scripts
 				};
 
 
-				function tagByNode(event, data) {
-					var node = data.node;
-					console.log(node.li_attr);
-					var ind = node.li_attr["data-index"];
-					var color = node.li_attr["data-color"];
+
+				$tree.on('select_node.jstree', function(e) {
+
+					var ind = $tree.jstree('get_selected', true)[0].li_attr["data-index"];
+					var color = $tree.jstree('get_selected', true)[0].li_attr["data-color"];
 					console.log('hi', ind, color)
 					console.log($tree.jstree('get_selected', true))
-					tagSelected(ind, color, node.li_attr['id'], false);					
-				}
-
-				$tree.on('select_node.jstree', tagByNode);
-
+					tagSelected(ind, color, $(this).attr('id'), false);			
+				})
 				// Toggle tagging when clicking elements in the jsTree
-				$tree.on('click', '.jstree-anchor', function() {
-					$tree.jstree('select_node', "#" + $(this).parent().attr('id'))
-				});
-			
+				//- $tree.on('click', '.jstree-anchor', function (e) {		
+				//- 	var ind = $tree.jstree('get_selected', true)[0].li_attr["data-index"];
+				//- 	var color = $tree.jstree('get_selected', true)[0].li_attr["data-color"];
+				//- 	tagSelected(ind, color, $(this).attr('id'), false);
+				//- });
 
 				/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
