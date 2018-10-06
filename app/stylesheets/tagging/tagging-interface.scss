@@ -651,8 +651,122 @@ a#untag-tokens {
 		color: #333;
 		text-decoration: none;
 	}
+	&.searching a span, &.searching a.backspace-hotkey::after {
+		display: none;
+	}
 }
 
 
 
 
+#category-hierarchy-tree.searching {
+	display: none;
+}
+.category-hierarchy .label-search {
+	position: relative;
+	.search-container {
+		display: flex;
+	}
+	p {
+		span#search-results-info, #search-results-none {
+			display: none;
+		}
+
+		color: #777;
+		margin: 2px 0 ;
+		margin-top: 6px;
+		margin-bottom: -3px;
+		font-size: 0.8em;
+		&.filtered {
+			display: none;
+		}
+		&.initial {
+			text-align: center;
+		}
+		a {
+			display: inline-block;
+			margin-top: -1px;
+			float: right;
+			text-decoration: none;
+			color: $primary-blue;
+			padding: 0 3px;
+			border: 1px solid rgba(0, 0, 0, 0);
+			&:hover {
+				color: white;
+				border: 1px solid $primary-blue;
+				background: lighten($primary-blue, 5);
+				border-radius: 2px;
+			}
+			span.esc {
+				font-size: 0.8em;
+				display: inline-block;
+				transform: translate(0, -1px);
+			}
+		}
+	}
+
+	
+	input {
+		width: auto;
+	}
+	&.searching {
+		p.initial {
+			display: none;
+		}
+		p.filtered {
+			display: block;
+		}	
+		input {
+			width: 80%;
+		}
+		button {
+			width: 20%;
+			padding: 5px 10px;
+			border: 2px solid #ccc
+		}
+	}
+	&:not(.searching):after {
+		content: attr(data-content);
+		position: absolute;
+		right: 26px;
+		top: 12px;
+		font-size: 0.6em;
+		margin-top: 4px;
+		border: 1px solid #bbb;
+		padding: 0 4px;
+		border-radius: 2px;
+		text-align: center;
+		min-width: 1.1em;
+		//transition: opacity 0.2s ease;
+		pointer-events: none;
+		background: #fafafa;	
+	}
+	// .button-container {
+	// 	margin-top: 10px;
+	// 	align-items: left;
+	// 	justify-content: center;
+	// 	display: none;
+	// 	width: 70%;
+	// 	margin-left: 30%;
+	// }
+	// &.searching .button-container {
+	// 	display: flex;
+	// }
+
+	button {
+		overflow: hidden;
+		margin: 0;
+		width: 0;
+		font-size: 0.9em;
+		background: #f2f2f2;
+		border: none;
+		cursor: pointer;
+		transition: none;
+		padding: 5px 0px;
+		&:hover {
+			border: 2px solid $primary-orange;
+			background: lighten($primary-orange, 8);
+			color: white;
+		}
+	}
+}

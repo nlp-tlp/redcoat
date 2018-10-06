@@ -23,8 +23,15 @@ block entity_categories_window
 				span.more 
 					span.left Results from Wikipedia
 					span.right <a href="#" id="ec-read-more" target="_blank">Read more <i class="fa fa-sm fa-external-link"></i></a>
-			div.label-search
-				input(placeholder="Search categories..." id="ec-search")
+			form.label-search(data-content = "Q")#ec-search-form
+				div.search-container
+					input(placeholder="Search categories..." id="ec-search")
+					button.go(type="submit") ↵
+				p.initial Showing all <b>177</b> categories.
+				p.filtered <span id="search-results-none">No results found.</span><span id='search-results-info'>Showing <b id="search-results-count">0</b> results.</span><a href="#">Clear <span class="esc">(ESC)</span></a>
+				//- .button-container
+				//- 	button(type="submit") Cancel
+					
 			div#category-hierarchy-tree
 			div#category-hierarchy-tree-no-results
 				| No results found.
@@ -55,21 +62,24 @@ block scripts
 
 			var hotkeyMap;   // A 'map' that stores the current hotkey bindings mapped to their corresponding nodes in the JSTree.
 			var tagClassMap; // A 'map' of nodes mapped to each of their parents, in order of closeness.
-
+			var currentlySearching = false;
 			// Construct the JSTree from the category hierarchy data.
 			function buildJsTree(hierarchy) {
 
 
 				var $tree = $("#category-hierarchy-tree");
 				var $ecSearch = $("#ec-search");
-				var $noSearchResults = $("#category-hierarchy-tree-no-results");
+				var $ecSearchForm = $("#ec-search-form");
+				var $noSearchResults = $("#search-results-none");
+				var $searchResultsInfo = $("#search-results-info");
+				var $searchResultsCount = $("#search-results-count");
 
 				const hotkeys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]; // TODO: Move into common js file along with slash2jstree, etc
 
 				var searching = false;
 				var currentSearchResultsCount = 0;
 
-				const MAX_SEARCH_RESULTS = 20;
+				const MAX_SEARCH_RESULTS = 2000;
 
 				var jstreeData = slash2jstree(hierarchy);
 				tagClassMap = jstreeData["tagClassMap"];
@@ -91,6 +101,7 @@ block scripts
 					    'data' : jstreeData["data"],
 					    'dblclick_toggle' : false,
 					    'animation': false,
+					    'multiple': false,
 
 					},
 					//- 'sort' : function(a, b) {
@@ -189,45 +200,82 @@ block scripts
 				$tree.on('search.jstree', function(e, data) {
 					if(data.res.length == 0 && $ecSearch.val().length > 0) {
 						$noSearchResults.show();
+						$searchResultsInfo.hide();						
 						$tree.hide();										
 					} else {
+						$searchResultsCount.html(data.res.length);
 						$noSearchResults.hide();
+						$searchResultsInfo.show();
+						$tree.jstree("activate_node", "#remove-label");
 						$tree.show();
 						$(".jstree-container-ul").addClass("jstree-current");
 					}
 				});				
 
-				$ecSearch.on('keyup', function () {
+				$ecSearchForm.on('submit', function (e) {
 					var v = $ecSearch.val();
 					searching = true;
 					currentSearchResultsCount = 0;
 					$tree.jstree(true).search(v, { "show_only_matches": true });
 					var $searchResults = $(".jstree-node:not(.jstree-hidden)");
+
 					//hotkeyMap = {};
 					if(currentSearchResultsCount > 0) {
+						$tree.addClass("searching");
 						hotkeyMap = {};
-						$searchResults.each(function(i) {
-							var span = $($(this).children("a").children("span")[0])
-							if(hotkeys[i]) {
-								span.html(hotkeys[i]);
-								hotkeyMap[hotkeys[i]] = $(this).attr('id');
-								span.removeClass("hide");
-							}
-							else {
-								span.addClass('hide');
-							}
-						});
+						//- $searchResults.each(function(i) {
+						//- 	var span = $($(this).children("a").children("span")[0]);
+
+						//- 	//- if(hotkeys[i]) {
+						//- 	//- 	span.html(hotkeys[i]);
+						//- 	//- 	hotkeyMap[hotkeys[i]] = $(this).attr('id');
+						//- 	//- 	span.removeClass("hide");
+						//- 	//- }
+						//- 	//- else {
+						//- 	//- 	span.addClass('hide');
+						//- 	//- }
+						//- 	span.addClass('hide');
+						//- });
+
+						$tree.jstree('deselect_node', $tree.jstree('get_selected'));
+						$tree.jstree('select_node', $searchResults.first().attr('id'));						
 					}
 
 					if($ecSearch.val().length == 0) {
+						$ecSearchForm.removeClass("searching");
+						$tree.removeClass("searching");
 						$noSearchResults.hide();
+						$searchResultsInfo.hide();
 						$tree.show();			
 						searching = false;	
+						$tree.jstree("activate_node", "#remove-label");
 						$($(".jstree-children")[0]).addClass("jstree-current");
-					}			
+					}
 
+					$ecSearch.blur();
+					e.preventDefault();
 				});
-
+				$ecSearch.on('focus', function() {
+					console.log('focs')
+					$ecSearchForm.addClass("selected");
+					$tree.addClass("searching");
+					$tree.hide();
+					$searchResultsInfo.hide();
+					currentlySearching = true;
+					$ecSearchForm.addClass("searching");
+				})
+				$ecSearch.on('blur', function() {
+					console.log('blur')
+					//$ecSearchForm.removeClass("searching");
+					
+					
+					currentlySearching = false;
+					//if($ecSearch.val().length == 0) {
+						//$ecSearchForm.removeClass("selected");
+						//$tree.removeClass("searching");
+						//$ecSearchForm.removeClass("searching");
+					//}
+				})
 				return $tree;
 			}
 
@@ -248,6 +296,7 @@ block scripts
 				// Set up jQuery handles.
 				var $entityCategoriesWindow = $("#entity-categories-window");
 				var $ecSearch = $("#ec-search");
+				var $ecSearchForm = $("#ec-search-form");
 
 				var $taggingMenuTokens = $("#tagging-menu .tokens");
 				var $taggingMenuSummary = $("#tagging-menu .summary");
@@ -687,12 +736,11 @@ block scripts
 					var nodeid = "#" + tagClassElementId;
 					var currentNode = "#" + $tree.jstree('get_selected')[0];
 
-					console.log(currentNode, nodeid)
-					
+
 					// Clear the search window
-					if($ecSearch.val().length > 0) {
+					if($ecSearchForm.hasClass("searching")) {
 						$ecSearch.val('');
-						$ecSearch.keyup();
+						$ecSearch.submit();
 					}
 
 					// If the current node is the same as the new one, there's no need to refresh the tree.
@@ -703,20 +751,16 @@ block scripts
 					$tree.jstree('deselect_node', currentNode)
 					if(!tagClassElementId) return $tree.jstree('select_node', '#remove-label')
 					
-					console.log(">>", tagClassElementId);
 					// Open all parents of the node, based on the tagClassMap
 					var nodeNumber = tagClassElementId.substr(3, tagClassElementId.length);
-					console.log(nodeNumber);
 					var parents = tagClassMap[nodeNumber];
 					
 					for(var i in parents) {
 						var p = "#j1_" + tagClassMap[nodeNumber][i];
 						$tree.jstree('open_node', p);
 					}
-					console.log(parents);
 					$tree.jstree('select_node', nodeid)				
 					$tree.jstree('open_node', nodeid);
-					console.log($(nodeid).parents(".jstree-children").first().parent())
 					if(parents.length == 0) { scrollToNode($(nodeid), -100) }
 					else scrollToNode($(nodeid).parents(".jstree-children").first().parent());
 
@@ -731,7 +775,6 @@ block scripts
 					// Scroll to appropriate spot in the tree
 					var postop = 0;
 					if(node.position()) postop = node.position().top;	
-					console.log(postop);
 					$tree.scrollTop($tree.scrollTop() + postop + offset);
 				}
 				// Initialise the mouse events, i.e. selecting tokens to tag them.
@@ -805,11 +848,28 @@ block scripts
 				// Initialise all the keyboard events.
 				function initKeyboardEvents() {
 
+					// Close the selected node in the tree.
+					function closeTreeNode() {
+						var $currentNode = $("#" + $tree.jstree('get_selected')[0]);
+						if($currentNode.hasClass("jstree-open")) {
+							$tree.jstree('close_node', $currentNode.attr('id'));
+							scrollToNode($currentNode, -100);
+						} else {
+							var $parentNode = $currentNode.parents('.jstree-node').first();
+							if($parentNode.length) {
+								$tree.jstree('close_node', $parentNode.attr('id'));
+								$tree.jstree('deselect_node',   $tree.jstree('get_selected')[0]);
+								$tree.jstree('select_node', $parentNode.attr('id'));							
+								scrollToNode($parentNode, -100);
+							}
+						}
+					}
+
 					// Open the selected node in the tree and select its first child.
 					function openTreeNode() {
 						var currentNode = "#" + $tree.jstree('get_selected')[0];
-						var hasChildren = $(currentNode).hasClass("jstree-closed");
-						$tree.jstree('toggle_node', currentNode)
+						//var hasChildren = $(currentNode).hasClass("jstree-closed");
+						$tree.jstree('open_node', currentNode)
 						//- if(hasChildren) {
 						//- 	var firstChild = $(currentNode).children(".jstree-children").children().first().attr('id');
 						//- 	$tree.jstree('deselect_node', currentNode);
@@ -820,6 +880,7 @@ block scripts
 					// Move through the jstree in the specified direction.
 					function moveThroughTree(direction) {
 						var currentNode = $("#" + $tree.jstree('get_selected')[0]);
+					
 						var currentNodeIndex = currentNode.index();
 						var parent = currentNode.parents(".jstree-children").first();
 						var hasChildren = $(currentNode).hasClass("jstree-open");
@@ -829,14 +890,21 @@ block scripts
 							if(hasChildren) {
 								nextNode = currentNode.children('.jstree-children').children('.jstree-node').first();
 							}
+							if(currentNodeIndex == $("#category-hierarchy-tree > ul.jstree-children > .jstree-node").length - 1
+							   && parent.hasClass('jstree-container-ul')) {
+								nextNode = $("#category-hierarchy-tree > ul.jstree-children > .jstree-node").first();
+							}
 						}
 						if(direction == "up") {
-							console.log("<<<", nextNode);
 							if(currentNodeIndex == 0) {
 								nextNode = parent.prev();
 							}
 							if(nextNode.hasClass('jstree-open')) {
-								nextNode = nextNode.children('.jstree-children').children('.jstree-node').last();
+								nodeChildren = nextNode;
+								while(nodeChildren.length) {
+									nextNode = nodeChildren;
+									nodeChildren = nextNode.children('.jstree-children').children('.jstree-node').last();
+								}
 							}
 						}
 								
@@ -845,8 +913,14 @@ block scripts
 								nextNode = parent.parents('.jstree-node').first().prev();
 								if(!nextNode.length) nextNode = parent.children().last();
 							} else {
-								nextNode = parent.parents('.jstree-node').first().next();
-								if(!nextNode.length) nextNode = parent.children().eq(0);
+								var nextNode = [];
+								parent = parent.parents('.jstree-node').first();
+
+								while(!nextNode.length) {
+									nextNode = parent.next();
+									parent = parent.parents('.jstree-children').first().parents('.jstree-node').first();
+								}							
+								
 							}
 						}
 
@@ -856,6 +930,7 @@ block scripts
 							$tree.jstree('deselect_node', "#" + currentNode.attr('id'));
 							$tree.jstree('select_node', "#" + nextNode.attr('id'));
 						}
+						if(nextNode.hasClass("jstree-hidden")) return moveThroughTree(direction);
 						scrollToNode($(nextNode), -100); // Do it 4 times (perhaps there's a better way?)
 					}
 
@@ -874,6 +949,8 @@ block scripts
 					T = 84,
 					W = 87,
 					S = 83,
+					D = 68,
+					A = 65,
 					TILDE = 192,
 					ENTER = 13,
 					ESCAPE = 27;
@@ -898,10 +975,10 @@ block scripts
 							if(e.keyCode == DELETE || e.keyCode == TILDE) {
 							 	$("#remove-label a").click();
 							}
-							//- if(e.keyCode == Q) {
-							//- 	$ecSearch[0].focus();
-							//- 	e.preventDefault();
-							//- }
+							if(e.keyCode == Q) {
+							 	$ecSearch[0].focus();
+							 	e.preventDefault();
+							}
 
 							if(e.keyCode == DOWN_ARROW) {			
 								chaining = false;					
@@ -915,34 +992,39 @@ block scripts
 								wordIndex = -1;
 								moveForwards()
 							}
-							if(e.keyCode == ENTER) {
-								openTreeNode();
-								event.preventDefault();
+							if(!currentlySearching) {
+								if(e.keyCode == D) {
+									openTreeNode();
+									event.preventDefault();
 
-							}
-							if(e.keyCode == W) {
-								moveThroughTree("up")
-								e.preventDefault();	// TODO: Navigate through the tagging menu.
-							}
-							if(e.keyCode == S) {
-								moveThroughTree("down")
-								e.preventDefault();
-							}
+								}
+								if(e.keyCode == W) {
+									moveThroughTree("up")
+									e.preventDefault();	// TODO: Navigate through the tagging menu.
+								}
+								if(e.keyCode == S) {
+									moveThroughTree("down")
+									e.preventDefault();
+								}
 
-							if(e.keyCode == BACKSPACE && "BACKSPACE" in hotkeyMap) {
-								var node = $("#" + hotkeyMap["BACKSPACE"]).children("a").first();
-								node.click();
-								scrollToNode(node.parents(".jstree-children").first().parent());
-							}
+								if((e.keyCode == BACKSPACE || e.keyCode == A)) {// && "BACKSPACE" in hotkeyMap) {
 
-							if((e.keyCode-48) in hotkeyMap) {	// Tag an element based on the hotkey pressed.
-								var node = $("#" + hotkeyMap[e.keyCode-48]).children("a").first();								
-								node.click();
-								if(node.parent().hasClass("jstree-open"))
-									scrollToNode(node.parent());
-								
+									closeTreeNode();
+									//var node = $("#" + hotkeyMap["BACKSPACE"]).children("a").first();
+									//node.click();
+									//scrollToNode(node.parents(".jstree-children").first().parent());
+								}
+
+								if(!currentlySearching && (e.keyCode-48) in hotkeyMap) {	// Tag an element based on the hotkey pressed.
+									var node = $("#" + hotkeyMap[e.keyCode-48]).children("a").first();								
+									node.click();
+									if(node.parent().hasClass("jstree-open"))
+										scrollToNode(node.parent());								
+								}
 							}
 							if(e.keyCode == ESCAPE) {	// TODO: Hide the category hierarchy.
+								$ecSearch.val('');
+								$ecSearchForm.submit();
 								$entityCategoriesWindow.removeClass("show");
 							}
 						}					
@@ -956,11 +1038,8 @@ block scripts
 
 				function tagByNode(event, data) {
 					var node = data.node;
-					console.log(node.li_attr);
 					var ind = node.li_attr["data-index"];
 					var color = node.li_attr["data-color"];
-					console.log('hi', ind, color)
-					console.log($tree.jstree('get_selected', true))
 					tagSelected(ind, color, node.li_attr['id'], false);					
 				}
 
