@@ -27,7 +27,7 @@ block entity_categories_window
 				div.search-container
 					input(placeholder="Search categories..." id="ec-search")
 					button.go(type="submit") ↵
-				p.initial Showing all <b>177</b> categories.
+				p.initial Showing all <b id="total-categories">-</b> categories.
 				p.filtered <span id="search-results-none">No results found.</span><span id='search-results-info'>Showing <b id="search-results-count">0</b> results.</span><a href="#">Clear <span class="esc">(ESC)</span></a>
 				//- .button-container
 				//- 	button(type="submit") Cancel
@@ -116,6 +116,7 @@ block scripts
 					$($(".jstree-children")[0]).addClass("jstree-current");
 					//$("#remove-label_anchor").addClass('jstree-clicked');
 					$tree.jstree("select_node", '#remove-label');
+					$("#total-categories").html(Object.keys(tagClassMap).length);
 					updateHotkeyMap();
 				});
 
