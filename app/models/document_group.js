@@ -53,7 +53,7 @@ DocumentGroupSchema.methods.getAnnotations = function(done) {
 }
 
 // Generate a display name for this doc group based on random words in its documents.
-DocumentGroupSchema.methods.generateDisplayName = function() {
+DocumentGroupSchema.methods.generateDisplayName = function(done) {
   try {
     var t = this;
     var allDocs = [].concat.apply([], t.documents);
@@ -71,9 +71,11 @@ DocumentGroupSchema.methods.generateDisplayName = function() {
       dn += words[wi].charAt(0).toUpperCase() + words[wi].slice(1);
     }
     t.display_name = dn;
-  } catch(eee) {
-    console.log(eee);
+    done()
+  } catch(err) {
+    done(err)
   }
+  
 
 }
 
@@ -81,12 +83,12 @@ DocumentGroupSchema.methods.generateDisplayName = function() {
 /* Middleware */
 
 DocumentGroupSchema.pre('save', function(next) {
-
+  var t = this;
   // 1. Verify associated exists
   var Project = require('./project')
-  this.verifyAssociatedExists(Project, this.project_id, function(err) {
+  t.verifyAssociatedExists(Project, this.project_id, function(err) {
     if(err) { next(err); return; }
-    this.generateDisplayName(function(err) {
+    t.generateDisplayName(function(err) {
       next(err);
     });
   })

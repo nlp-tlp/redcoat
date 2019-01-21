@@ -24,6 +24,10 @@ nav#navbar .navbar-left {
 .award-stars {
 	color: $primary-gold;
 }
+span.caret {
+	font-size: 0.8em;
+	padding-left: 5px;
+}
 #logo {
 	font-weight: bold;
 	vertical-align: middle;
@@ -76,12 +80,18 @@ nav .navbar-centre {
 	padding: 12px 0;
 	font-weight: bold;
 	width: 65%;
+	margin: 0 auto;
+	position: absolute;
+	left: 17.5%;
 }
 
 
 nav#navbar .navbar-right {
-	width: 17.5%;
+	//width: 17.5%;
+	position: absolute;
+	right: 0;
 	/*width: 190px;	*/	
+
 
 	.profile-circle-container {
 		
@@ -161,38 +171,56 @@ nav#navbar .navbar-right input, nav#navbar .navbar-right button {
 	height: 36px;
 }
 nav .dropdown-menu {
-
+	float: left;
+	
 	z-index: 1000;
-	width: 100%;
+	width: auto;
 	font-size: 14px;
 	display: inline-block;
-	padding: 16px 0;
-	min-width: 140px;
+	height: $navbar-height;
+	min-width: 120px;
+	&.short {
+		min-width: 40px;
+	}
 	position: relative;
 	text-align: center;
-	> span {
+	> a, > span {
+		padding: 0 15px;
 		text-align: center;
-		display: block;
+		text-decoration: none;
+		color: #fefefe;
+		height: $navbar-height;
+		vertical-align: middle;
+		align-items: center;
+		justify-content: center;
+		display: flex;
 	}
-	margin-right: 80px;
+
+
 	margin-top: 0px;
-	border-left: 1px solid rgba(0, 0, 0, 0);
-	border-right: 1px solid rgba(0, 0, 0, 0);
+	border-left: 1px solid rgba(255, 255, 255, 0);
+	border-right: 1px solid rgba(255, 255, 255, 0);
+
 }
 nav .dropdown-menu:hover, nav #logo:hover {
-	background: #333;
+	background: #444;
 	cursor: pointer;
 	border-left: 1px solid #444;
 	border-right: 1px solid #444;
 	color: white;
+	> a, > span {
+		color: white;
+	}
 }
 
 nav .dropdown-menu ul.dropdown-menu-items {
 	display: none;
 	position: absolute;
 	top: 36px;
-	right: -1px;
-	width: 100%;
+	left: -1px;
+	width: 200%;
+	max-width: 180px;
+
 	background: #fafafa;
 	padding: 0;
 	border: 1px solid #ccc;
@@ -203,7 +231,7 @@ nav .dropdown-menu .dropdown-menu-items li.separator {
 	color: white;
 	padding: 7px 15px;
 	text-transform: uppercase;
-	text-align: center;
+	text-align: left;
 	font-size: 0.9em;
 	cursor: default;
 }
@@ -217,9 +245,10 @@ nav .dropdown-menu .dropdown-menu-items li a {
 	font-size: 12px;
 	display: block;
 	text-decoration: none;
+	text-align: left;
 }
-nav .dropdown-menu .dropdown-menu-items li:hover a {
-	color: #111;
+nav .dropdown-menu .dropdown-menu-items li a:hover {
+	color: black;
 	background: #eee;
 }
 nav .dropdown-menu:hover .dropdown-menu-items {

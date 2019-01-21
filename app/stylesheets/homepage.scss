@@ -81,3 +81,10 @@ body.homepage main {
 	width: 1152px;
 	margin: 0 auto;
 }
+
+article.features-list {
+	line-height: 200%;
+	li.done {
+		text-decoration: line-through;
+	}
+}

@@ -68,3 +68,7 @@ exports.logout = function(req, res) {
   req.logout();
   res.redirect('/');
 }
+
+module.exports.user_profile = function(req, res) {
+  res.render('users/profile', {title: "Your Profile"} )
+}

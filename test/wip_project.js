@@ -1,10 +1,12 @@
+require('rootpath')();
+
 var cf = require('./common/common_functions');
 var expect = require('chai').expect;
-var Project = require('../models/project');
-var WipProject = require('../models/wip_project');
-var User = require('../models/user');
-var DocumentGroup = require('../models/document_group');
-var DocumentGroupAnnotation = require('../models/document_group_annotation');
+var Project = require('app/models/project');
+var WipProject = require('app/models/wip_project');
+var User = require('app/models/user');
+var DocumentGroup = require('app/models/document_group');
+var DocumentGroupAnnotation = require('app/models/document_group_annotation');
 var rid = require('mongoose').Types.ObjectId;
 var st = require('./common/shared_tests');
 

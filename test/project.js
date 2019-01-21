@@ -1,9 +1,11 @@
+require('rootpath')();
+
 var cf = require('./common/common_functions');
 var expect = require('chai').expect;
-var Project = require('../models/project');
-var User = require('../models/user');
-var DocumentGroup = require('../models/document_group');
-var DocumentGroupAnnotation = require('../models/document_group_annotation');
+var Project = require('app/models/project');
+var User = require('app/models/user');
+var DocumentGroup = require('app/models/document_group');
+var DocumentGroupAnnotation = require('app/models/document_group_annotation');
 var rid = require('mongoose').Types.ObjectId;
 var st = require('./common/shared_tests');
 
@@ -63,10 +65,12 @@ describe('Projects', function() {
 
       var user = cf.createValidUser();
       var projs = [cf.createValidProject(1, user._id), cf.createValidProject(4, user._id), cf.createValidProject(7, user._id), cf.createValidProject(18, user._id)];
+
       p1_id = projs[0]._id;
       var doc_groups = [cf.createValidDocumentGroup(5, projs[0]._id), cf.createValidDocumentGroup(5, projs[0]._id), cf.createValidDocumentGroup(5, projs[2]._id)];
       var doc_group_annotations = [cf.createValidDocumentGroupAnnotation(5, user._id, doc_groups[0]._id), cf.createValidDocumentGroupAnnotation(5, user._id, doc_groups[0]._id), cf.createValidDocumentGroupAnnotation(5, user._id, doc_groups[0]._id)];
      
+
       cf.registerUsers([user], function(err) { expect(err).to.not.exist; }, function() {
         cf.saveMany(projs, function(err) { expect(err).to.not.exist; }, function() {
           cf.saveMany(doc_groups, function(err) { expect(err).to.not.exist; }, function() {

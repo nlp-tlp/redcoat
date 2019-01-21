@@ -5,7 +5,6 @@ var shortid = require('shortid')
 
 var hv = require('public/javascripts/shared/hierarchy_validator');
 
-var User = require('app/models/user.js');
 DOCUMENT_GROUP_TOTAL_MAXCOUNT = 11000; // Number of groups that can be in a project.
 
 USERS_PER_PROJECT_MAXCOUNT = 100;
@@ -416,12 +415,6 @@ module.exports = {
 	// Verify that all records in an associated array exist in the database.
 	verifyAssociatedObjectsExist: function(model, asso_arr, next) {	
 		var len = asso_arr.length;
-		//console.log(asso_arr);
-		//console.log(asso_arr[0])
-		//model.findById(asso_arr[0], function(err, f) {
-		//	console.log(err, f);
-		//})
-
 		model.count( { _id: { $in : asso_arr } } , function(err, count) {
 			if(len != count) {
 				next( { "association": new Error("All associated " + model.collection.collectionName + " records must exist in database.") });
@@ -561,6 +554,7 @@ module.exports = {
     automatic_tagging: {
       type: Boolean,
       required: true,
+      default: false,
     },
 
     // The author of the project.
@@ -582,6 +576,7 @@ module.exports = {
       type: String,
       enum: ["full_permission", "create_edit_only", "no_modification"],
       required: true,
+      default: "no_modification"
     },
 
 		user_ids: {

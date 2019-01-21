@@ -275,8 +275,10 @@ WipProjectSchema.methods.createDocumentGroupsFromString = function(str, done) {
       docgroupsToCreate = [];
       for (i in docgroups) {
         var d = new DocumentGroup( { project_id : t._id, documents: docgroups[i] } )
-        d.generateDisplayName();
-        docgroupsToCreate.push(d);       
+        d.generateDisplayName(function(err) {
+          docgroupsToCreate.push(d);      
+        });
+         
       }
 
 

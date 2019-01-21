@@ -1,9 +1,11 @@
+require('rootpath')();
+
 var cf = require('./common/common_functions');
 var expect = require('chai').expect;
-var Project = require('../models/project');
-var User = require('../models/user');
-var DocumentGroup = require('../models/document_group');
-var DocumentGroupAnnotation = require('../models/document_group_annotation');
+var Project = require('app/models/project');
+var User = require('app/models/user');
+var DocumentGroup = require('app/models/document_group');
+var DocumentGroupAnnotation = require('app/models/document_group_annotation');
 var rid = require('mongoose').Types.ObjectId;
 var authenticate = User.authenticate();
 

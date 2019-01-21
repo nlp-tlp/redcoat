@@ -76,6 +76,7 @@ var ProjectSchema = new Schema({
 
 /* Common methods */
 
+
 ProjectSchema.methods.cascadeDelete = cf.cascadeDelete;
 ProjectSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists;
 ProjectSchema.methods.verifyAssociatedObjectsExist = cf.verifyAssociatedObjectsExist;
@@ -107,9 +108,10 @@ ProjectSchema.methods.verifyAssociatedObjectsExist = cf.verifyAssociatedObjectsE
 // }
 
 // Get the data to appear in the Projects table.
-ProjectSchema.statics.getTableData = function(p) {
+// user_id is the user calling the getTableData method, needed to determine whether the projects belong to the user or not.
+ProjectSchema.statics.getTableData = function(p, user_id) {
   var project = p;
-  project["owner"] = ["Your projects", "Projects you've joined"][Math.floor(Math.random() * 2)];
+  project["owner"] = p.user_id.equals(user_id) ? "Your projects" : "Projects you've joined";
   project["num_annotators"] = p.user_ids.length;
   var pc = Math.random() * 100;
   project["percent_complete"] = pc;

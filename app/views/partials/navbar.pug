@@ -19,23 +19,28 @@ nav#navbar
 					li: a(href="/login?previous=" + path) Login
 
 		else
-			//- div(class="dropdown-menu")
-			//- 	span <i class="fa fa-folder"></i>DMP Project
-			//- 		span(class="caret") &#9660;	
-			//- 	ul(class="dropdown-menu-items")
-			//- 		li: a(href="/setup-project") <i class="fa fa-plus"></i>New project
+			div(class="dropdown-menu")
+				a(href="/projects") Projects
+					//span(class="caret") &#9660;	
+				ul(class="dropdown-menu-items")
+					li: a(href="/projects") Projects list
+					li: a(href="/setup-project") Setup project
 
 			div(class="dropdown-menu")
 				span Logged in as #{user.username}
 					//span(class="caret") &#9660;	
 				ul(class="dropdown-menu-items")
-					li: a(href="/projects") Projects
-					li: a(href="/setup-project") Setup project
 					li: a(href="/profile") Profile
 					li: a(href="/logout") Logout
-			if (tagging)
-				div.profile-circle-container
-					div#profile-circle(style="background-image: url('/images/rank_icons/chevron.png')")
-					div#profile-banner
-						| Officer Cadet&nbsp;&nbsp;(#{user_stars}&nbsp;<i class="fa fa-star award-stars"></i>)
-						span.sneaky-border
+
+		div(class="dropdown-menu short")
+			a(href="/features") v0.1
+
+
+
+			//if (tagging)
+				//- div.profile-circle-container
+				//- 	div#profile-circle(style="background-image: url('/images/rank_icons/chevron.png')")
+				//- 	div#profile-banner
+				//- 		| Officer Cadet&nbsp;&nbsp;(#{user_stars}&nbsp;<i class="fa fa-star award-stars"></i>)
+				//- 		span.sneaky-border

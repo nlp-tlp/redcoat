@@ -5,7 +5,6 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var cf = require("./common/common_functions");
 const passportLocalMongoose = require('passport-local-mongoose');
-var Project = require('./project');
 
 
 USERNAME_MAXLENGTH = 50;
@@ -111,11 +110,13 @@ UserSchema.methods.getProjects = function(done) {
 // Gets all projects the user is involved in.
 // Returns the data in a format suitable for display in the 'projects' page.
 UserSchema.methods.getProjectsTableData = function(done) {
+  var Project = require('./project');
+  var user_id = this._id;
   this.getProjects(function(err, projects) {
     if(err) return done(err);
     var tableData = [];
     for(var i in projects) {
-      var project = Project.getTableData(projects[i]);
+      var project = Project.getTableData(projects[i], user_id);
       tableData.push(project);
     }
     done(null, tableData);
@@ -127,8 +128,9 @@ UserSchema.methods.getProjectsTableData = function(done) {
 UserSchema.methods.removeSelfFromAllProjects = function(done) {
 
   function removeFromProjects(projs, t_id, done) {
+    var Project = require('./project')
     proj = projs.pop()
-    proj.update( { $pull: { user_ids : t_id } }, function(err, proj) {
+    Project.update( {_id: proj._id}, { $pull: { user_ids : t_id } }, function(err, proj) {
       if(err) { done(new Error("Error removing user id from projects")); return; }
       if (projs.length > 0) removeFromProjects(projs, t_id, done);
       else done();

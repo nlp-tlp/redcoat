@@ -1,0 +1,71 @@
+extends layout
+
+block content
+	article.features-list
+		h2 List of current features (v0.1, 21 January 2019)
+
+		p Below is a list of features that are currently present in Redcoat.
+
+		ul
+			li Project Setup page
+				ul
+					li Create annotation projects for Entity Recognition on the Setup Project page
+					li Automatic tokenisation of data, with summary of number of tokens/documents
+					li Create a concept hierarchy via an interactive tree, or alternatively via text input
+					li Multiple built-in hierarchies: NER, FIGER, Mining
+					li New project and associated data is persistent across refreshes
+			li Projects page
+				ul
+					li Sort, search, and filter projects
+					li Detailed project summary
+			
+			li Annotation interface
+				ul
+					li Annotate projects via an intuitive user interface
+					li Keyboard support on the annotation interface (hotkeys, selection with arrow keys)
+					li Wikipedia summary of words in the annotation interface
+					li Search/filter category hierarchy to quickly find the relevant entity category
+			
+			
+
+		h2 Upcoming features
+
+		h3 Pre-release
+		
+		p The features below have yet to be added to Redcoat and will be added prior to release. The features are listed in descending order of importance.
+
+		ul
+			li.done Correct presentation of "Your projects" and "Projects you've joined" on the Projects page (it is currently randomised)
+			li Save annotation results to the database so the project creator may download them
+			li "Overlap" between annotators, so each document may be annotated more than once
+			li A progress bar on the annotation interface so users know how many documents remain
+			li A list of annotators on the Project summary page	
+			li Distribute annotation projects to annotators via email
+				ul
+					li An "invitation system" whereby Redcoat automatically sends invitations to users upon a project's creation, for them to accept or decline
+					li Integration with Sendgrid or other automated mailing service
+					// The invitation system just needs a new Invitation schema with two fields: email and project_id
+					// No need for user_id, as email is unique as well (remember to put index on it)
+					// Can retrieve all a User's invitations with a simple query (find all invitation where email = user.email)
+					// A mailer will send out email invitations to users upon a project's creation. If the email already exists, invitation
+					// may look different (i.e. "You have been invited to annotate project '...', click here to accept or decline the invitation" vs "You have been invited to annotate project '...', click here to sign up to Redcoat to begin annotating").
+					// Upon accepting an Invitation, the user_id of the accepting user is added to the project's user_ids array, and that invitation is destroyed
+					// (declining an invitation simply destroys that invitation).
+			li Password reset link			
+
+		h3 Post-release
+
+		p The features below will be added after the initial release (listed in descending order of importance).
+		ul
+			li User profile page
+			li Modify project settings on the Project summary page
+			li Automatic tagging of frequently-tagged words
+			li More concept hierarchies, such as medical
+			li Visualisation of annotation results for project creators
+			li Visualisation of annotator activity on Project page
+			li Modify category hierarchy during annotation
+			li Links to most recently-annotated projects under "Projects" in the navigation bar
+			li Support for the annotation of other NLP tasks, such as Lexical Normalisation
+			li Gamification, i.e. the ability to earn "points" during annotation and increase ranking
+			
+		div(style="height: 300px")

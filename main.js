@@ -77,7 +77,8 @@ app.use(function(req, res, next) {
 const NON_LOGIN_PATHS = new Set([
   "/",
   "/login",
-  "/register"
+  "/register",
+  "/features"
 ]);
 app.use(function(req, res, next) {
     logger.debug(req.path);
