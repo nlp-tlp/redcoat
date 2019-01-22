@@ -65,6 +65,8 @@ app.use(csrf({ cookie: true }));
 
 // Setup local variables that are used in almost every view.
 app.use(function(req, res, next) {
+  res.locals.base_url = process.env.BASE_URL || "/";
+  console.log(res.locals.base_url)
   res.locals.csrfToken = req.csrfToken();
   res.locals.user = req.user;
   res.locals.path = req.path;

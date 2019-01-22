@@ -8,7 +8,7 @@ block content
         if message
           div.error-message <span class="error">Error:</span> #{message}
 
-        form(action="/login",method="post")
+        form(action="" + base_url + "/login",method="post")
           input(type="hidden", name="_csrf", value="" + csrfToken)
           div
             label Username
@@ -20,7 +20,7 @@ block content
 
           div.buttons
             div
-              a.back-button(href="/") <i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back
+              a.back-button(href="" + base_url + "/") <i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back
             div
               input(type="submit",value="Login")
     canvas#background(height="1080" width="1920")

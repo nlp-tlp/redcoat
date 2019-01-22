@@ -67,7 +67,7 @@ block content
 				h1 Dataset				
 				div.form-section
 					p Please upload your  data using the form below.
-					p The dataset must be saved as a <code>.txt</code> file. Each token within your data must be separated by a space, and each document must be on a new line. <a href="/files/example_dataset.txt" download>Click here</a> to download a small example file.
+					p The dataset must be saved as a <code>.txt</code> file. Each token within your data must be separated by a space, and each document must be on a new line. <a href="" + base_url + "/files/example_dataset.txt" download>Click here</a> to download a small example file.
 
 					- var action = 'upload-tokenized';
 					include partials/upload_widget
@@ -209,14 +209,14 @@ block entity_categories_window
 
 block scripts
 
-	script(src="/javascripts/d3/d3.min.js")
-	script(src="/javascripts/d3/d3-context-menu.js")
-	script(src="/javascripts/shared/hierarchy_validator.js")
-	script(src="/javascripts/category-tree-visualisation.js")
-	script(src="/javascripts/setup_project/jquery.autosize.js")
-	script(src="/javascripts/setup_project/jquery-linedtextarea.js")
-	script(src="/javascripts/shared/hierarchy_presets.js")
-	script(src="/javascripts/setup_project/page_scrolling.js")
+	script(src="" + base_url + "/javascripts/d3/d3.min.js")
+	script(src="" + base_url + "/javascripts/d3/d3-context-menu.js")
+	script(src="" + base_url + "/javascripts/shared/hierarchy_validator.js")
+	script(src="" + base_url + "/javascripts/category-tree-visualisation.js")
+	script(src="" + base_url + "/javascripts/setup_project/jquery.autosize.js")
+	script(src="" + base_url + "/javascripts/setup_project/jquery-linedtextarea.js")
+	script(src="" + base_url + "/javascripts/shared/hierarchy_presets.js")
+	script(src="" + base_url + "/javascripts/setup_project/page_scrolling.js")
 	
 	script.
 		csrfToken = "#{csrfToken}";

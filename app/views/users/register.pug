@@ -8,7 +8,7 @@ block content
     .header
       h1 Register
     .body
-      form(action="/register",method="post")
+      form(action="" + base_url + "/register",method="post")
         if message
           div.error-message <span class="error">Error:</span> #{message}
 
@@ -28,7 +28,7 @@ block content
 
         div.buttons
           div
-            a.back-button(href="/") <i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back
+            a.back-button(href="" + base_url + "/") <i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back
           div
             input(type="submit",value="Register")
   canvas#background(height="1080" width="1920")
