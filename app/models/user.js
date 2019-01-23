@@ -62,7 +62,8 @@ var UserSchema = new Schema({
   // A list of all document groups the user has annotated.
   docgroups_annotated: {
     type: [mongoose.Schema.Types.ObjectId],
-    index: true
+    index: true,
+    default: [],
   }
 }, {
   timestamps: { 
@@ -115,6 +116,9 @@ UserSchema.methods.getProjectsTableData = function(done) {
   this.getProjects(function(err, projects) {
     if(err) return done(err);
     var tableData = [];
+
+
+
     for(var i in projects) {
       var project = Project.getTableData(projects[i], user_id);
       tableData.push(project);

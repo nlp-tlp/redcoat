@@ -140,7 +140,7 @@ table.dashboard-project {
 		}
 		tbody tr {
 			display: block;
-			background: url('/images/stripes-light.png');
+			background: url($base_url + 'images/stripes-light.png');
 			background-repeat: repeat;
 
 			&:not(.group) {
@@ -289,6 +289,7 @@ table.dashboard-project {
 			background: linear-gradient(darken($primary-red, 21), darken($primary-red, 28));
 		}	
 	}
+	
 
 	ul.metadata {
 		font-size: 14px;
@@ -332,7 +333,7 @@ table.dashboard-project {
 		}
 
 	}
-	
+
 }
 
 

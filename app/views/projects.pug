@@ -336,12 +336,19 @@ block scripts
 					$detailEles.each(function(e) {
 						var tid = $(this).attr('id').substr(2, $(this).attr('id').length);
 
+						if($(this).attr('id') == "d-percent_complete_yours") {
+							$(this).css('width', '' + project["percent_complete_yours"] + "%");
+							$(this).html("You: " + project["percent_complete_yours"].toFixed(0) + "%");
+							return;
+						}
+
 						// Handle the 'percent_complete' elements separately.
 						if($(this).attr('id') == "d-percent_complete") {
 							$(this).css('width', '' + project["percent_complete"] + "%");
-							$(this).html(project["percent_complete"].toFixed(0) + "%");
+							$(this).html("Global: " + project["percent_complete"].toFixed(0) + "%");
 							return;
 						}
+						
 						// Tables are generated differently to other tags.
 						if($(this).prop('tagName') == "TABLE") {
 							// Build table

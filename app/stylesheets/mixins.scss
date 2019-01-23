@@ -1,6 +1,9 @@
 @import "../../node_modules/font-awesome/scss/font-awesome";
 
-$base-url: "/redcoat/";
+//$base-url: "/redcoat/";
+
+@import "environment";
+
 
 $primary-color: #222222;
 

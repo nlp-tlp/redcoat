@@ -14,7 +14,7 @@ block header
 		div#tagging-progress-bar
 			span.progress-bar
 				span.inner.no-animation(style="width: 0%")
-				span.progress-text <span id="progress-text-num-annotated">-</span>&nbsp;/&nbsp;<span id="progress-text-num-total">#{numDocumentGroups}</span>
+				span.progress-text <span id="progress-text-num-annotated">-</span>&nbsp;/&nbsp;<span id="progress-text-num-total">#{numDocuments} complete</span>
 
 block content
 
@@ -355,7 +355,7 @@ block scripts
 
 				var $progressBarInner = $("#tagging-progress-bar .inner");
 				var $progressTextNumAnnotated = $("#progress-text-num-annotated");
-				var numDocumentGroups = #{numDocumentGroups};
+				var numDocuments = #{numDocuments};
 
 				// A function to call when scrolling has finished.
 				function finishedScrolling() {
@@ -421,7 +421,7 @@ block scripts
 
 						$progressTextNumAnnotated.html(documentGroupData.annotatedDocGroups);
 
-						$progressBarInner.css('width', '' + (documentGroupData.annotatedDocGroups / numDocumentGroups * 100) + "%");
+						$progressBarInner.css('width', '' + (documentGroupData.annotatedDocGroups / numDocuments * 100) + "%");
 						$("#tagging-container").children(0).fadeOut(300, continueLoading);
 
 						// Build the category hierarchy from the entity classes.

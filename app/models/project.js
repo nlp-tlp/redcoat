@@ -59,8 +59,14 @@ var ProjectSchema = new Schema({
   // How many times each document should be annotated.
   overlap: cf.fields.overlap,
 
-  // Determines the extent to which users may modify the hierarchy
+  // Determines the extent to which users may modify the hierarchy.
   category_hierarchy_permissions: cf.fields.category_hierarchy_permissions,
+
+  // The number of completed document group annotations of the project.
+  completed_annotations: {
+    type: Number,
+    default: 0
+  },
 
   frequent_tokens: {
     type: Schema.Types.ObjectId,
@@ -113,8 +119,7 @@ ProjectSchema.statics.getTableData = function(p, user_id) {
   var project = p;
   project["owner"] = p.user_id.equals(user_id) ? "Your projects" : "Projects you've joined";
   project["num_annotators"] = p.user_ids.length;
-  var pc = Math.random() * 100;
-  project["percent_complete"] = pc;
+  //var pc = Math.random() * 100;
   project["project_description"] = p["project_description"] ? p["project_description"] : "(no description)";
   project["_created_at"] = p.created_at,
   project["created_at"] = moment(p.created_at).format("DD/MM/YYYY [at] h:mm a");
@@ -123,8 +128,15 @@ ProjectSchema.statics.getTableData = function(p, user_id) {
                                       "create_edit_only": "Annotators may add new categories to the hierarchy but may not delete or rename existing categories.",
                                       "full_permission": "Annotators may add, rename, and delete categories."}[p.category_hierarchy_permissions]
   project["annotations_required"] = p.file_metadata["Number of documents"] * p.overlap;
-  project["completed_annotations"] = Math.floor(pc / 100 * p["annotations_required"]); // TODO: update this to a proper value.
+
+  project["completed_annotations"] = p.completed_annotations || 0;
+
+  project["percent_complete"] = project["completed_annotations"] / project["annotations_required"] * 100;
+  project["percent_complete_yours"] = project["completed_annotations"] / project["annotations_required"] * 100;
+
   return project;
+  
+ 
 }
 
 
@@ -153,6 +165,41 @@ ProjectSchema.methods.getDocumentGroupsAnnotatedByUserCount = function(next) {
   DocumentGroupAnnotation = require('./document_group_annotation');
   return DocumentGroupAnnotation.count( {project_id: this._id, user_id: this.user_id }).exec(next);
 }
+
+
+
+// Update the number of annotations for the project.
+// This seems a lot faster than querying it every single time the project page is loaded.
+ProjectSchema.methods.updateNumAnnotations = function(next) {
+  DocumentGroupAnnotation = require('./document_group_annotation');
+  var t = this;
+
+  try {
+    var d = DocumentGroupAnnotation.aggregate([
+    { $match: { project_id: t._id} },
+    { $unwind: "$labels"},
+    {
+      $group: {
+        _id: "$project_id",
+        count: {
+          $sum: 1
+        }
+      }
+    }
+    ], function(err, results) {
+      if(err) next(err);
+      console.log(err, results);
+      t.completed_annotations = results[0].count;
+
+      console.log(results[0].count, t.completed_annotations)
+      t.save(function(err, proj) {
+        next(err);
+      });
+    });
+  } catch(err) { next(err); }
+}
+
+
 
 // Retrieve the number of document groups each user must annotate for a project, based on the overlap, number of annotators, and number of document groups in the project.
 ProjectSchema.methods.getDocumentGroupsPerUser = function(next) {
@@ -196,6 +243,8 @@ ProjectSchema.methods.recommendDocgroupToUser = function(user, next) {
   var q = { $and: [{ project_id: t._id}, { times_annotated: { $lt: t.overlap } }, { _id: { $nin: user.docgroups_annotated }} ] };
 
   DocumentGroup.count(q, function(err, count) {
+    console.log(count, "<<<<");
+    console.log(user.docgroups_annotated)
     var random = Math.random() * count; // skip over a random number of records. Much faster than using find() and then picking a random one.
     DocumentGroup.findOne(q).lean().skip(random).exec(function(err, docgroup) {
       if(err) return next(err);

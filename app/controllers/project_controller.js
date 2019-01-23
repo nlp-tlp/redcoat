@@ -43,7 +43,7 @@ module.exports.tagging = function(req, res) {
        projectName: proj.project_name,
        tagging: true,
        title: "Annotation Interface",
-       numDocumentGroups: docGroupsPerUser,
+       numDocuments: proj.file_metadata['Number of documents'],
       });
 
     })
@@ -72,7 +72,7 @@ module.exports.getDocumentGroup = function(req, res) {
               documentGroupId: docgroup._id,
               documentGroup: docgroup.documents,
               entityClasses: proj.category_hierarchy,
-              annotatedDocGroups: annotatedDocGroups,
+              annotatedDocGroups: annotatedDocGroups * 10,
               pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\""          
           });
         });
@@ -83,6 +83,7 @@ module.exports.getDocumentGroup = function(req, res) {
 }
 
 module.exports.submitAnnotations = function(req, res) {
+  var User = require('app/models/user')
   var documentGroupId = req.body.documentGroupId;
   var userId = req.user._id;
   var projectId = req.params.id;
@@ -95,13 +96,31 @@ module.exports.submitAnnotations = function(req, res) {
     labels: labels,
   });
   documentGroupAnnotation.save(function(err, dga) {
+
     if(err) {
       logger.error(err.stack);
-      res.send({error: err})
-    } else {
-      logger.debug("Saved document group annotation " + dga._id)
-      res.send({success: true});
+      return res.send({error: err})
     }
+
+    // Add the docgroup to the user's docgroups_annotated array.
+
+    console.log(dga._id)
+    User.findByIdAndUpdate(userId, { $addToSet: { 'docgroups_annotated': documentGroupId }}, function(err) {
+      console.log(req.user);
+
+        if(err) {
+          logger.error(err.stack);
+          res.send({error: err})
+        } else {
+          logger.debug("Saved document group annotation " + dga._id)
+          res.send({success: true});
+        }      
+    })
+
+
+    
+
+    
 
     
   })

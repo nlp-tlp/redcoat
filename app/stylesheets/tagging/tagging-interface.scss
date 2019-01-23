@@ -128,7 +128,7 @@
 	border-top: 2px solid rgba(0, 0, 0, 0.1);
 	border-bottom: 2px solid rgba(0, 0, 0, 0.3);
 	content: " ";
-	background-image: url('/images/stripes-light-trans.png');
+	background-image: url($base_url + 'images/stripes-light-trans.png');
 	animation: animatedBackground 20s linear infinite;
 	
 	//border-right: 2px solid rgba(0, 0, 0, 0);
@@ -179,7 +179,7 @@
 }
 #sentence-tagging .sentence .word.selected:not(.tag)::after {
 	animation: animatedBackground 20s linear infinite;
-	background-image: url('/images/stripes-light.png');
+	background-image: url($base_url + 'images/stripes-light.png');
 }
 // #sentence-tagging .sentence .word.selected.tag.tag-begin::after {
 // 	left: 2px;
@@ -413,7 +413,7 @@ span.punctuation::-moz-selection {
 
 
 .tagging ~ #main-container {
-	background: url('/images/stripes-light.png');
+	background: url($base_url + 'images/stripes-light.png');
 	width: 100%;
 	main {
 		width: 78%;

@@ -272,6 +272,8 @@ span.progress-bar {
 		text-align: center;
 		position: relative;
 		z-index: 0;
+		white-space: pre;
+		font-size: 16px;
 
 		&:before {
 			content: " ";
@@ -281,7 +283,7 @@ span.progress-bar {
 			width: 100%;
 			height: 100%;
 			z-index: -1;
-			background-image: url('/images/bars.png');
+			background-image: url($base_url + 'images/bars.png');
 			background-blend-mode: lighten;
 			opacity: 0.2;			
 
@@ -303,9 +305,17 @@ span.progress-bar {
 		align-items: center;
 		justify-content: center;
 	}
+	.inner {
+		color: white;
+		text-shadow: 1px 1px #222;
+	}
+
 	&.coloured .inner {
 		background: linear-gradient(darken($primary-red, 21), darken($primary-red, 28));
 		color: white;
 	}	
+	&.coloured.green .inner {
+		background: linear-gradient(darken($primary-green, 1), darken($primary-green, 7));
+	}
 
 }

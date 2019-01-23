@@ -138,6 +138,15 @@ DocumentGroupAnnotationSchema.methods.verifyUserIdListedInProjectUserIds = funct
   });
 }
 
+DocumentGroupAnnotationSchema.methods.updateProjectNumAnnotations = function(done) {
+  var Project = require('./project');
+  Project.findById({_id: this.project_id}, function(err, proj) {
+    proj.updateNumAnnotations(function(err) {
+      done(err);
+    });
+  });
+}
+
 /* Middleware */
 
 DocumentGroupAnnotationSchema.pre('save', function(next) {
@@ -157,8 +166,8 @@ DocumentGroupAnnotationSchema.pre('save', function(next) {
       // 3. Set this DocumentGroupAnnotation's project_id to match that of its corresponding DocumentGroup.
       t.setProjectId(function(err){
         if(err) { next(err); return; }
-        
 
+   
         // 4. Verify labels are valid labels according to this object's project      
         t.verifyLabelsAreValid(function(err) {
           if(err) { next(err); return; }
@@ -166,13 +175,23 @@ DocumentGroupAnnotationSchema.pre('save', function(next) {
           // 5. Verify user_id of this doc group is in the project's users array
           t.verifyUserIdListedInProjectUserIds(function(err) {          
             if(err) { next(err); return; }
-            next();
-          });
-        });
+            next(err);
+
+          });        
+        }); 
       });
     });
   });
 });
+
+DocumentGroupAnnotationSchema.post('save', function(obj) {
+  var t = this;
+
+  // 1. Update the number of annotations of the project.
+  t.updateProjectNumAnnotations(function(err) {
+    
+  });
+})
 
 
 /* Model */

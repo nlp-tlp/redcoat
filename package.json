@@ -12,8 +12,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build-css": "node-sass app/stylesheets/stylesheet.scss -o public/stylesheets --output-style compressed",
     "watch-css": "nodemon --watch scss -V -e scss -x \"npm run build-css\"",
-    "dev": "concurrently --kill-others \"nodemon\" \"npm run watch-css\"",
-    "production": "PORT=5000 BASE_URL='/redcoat/' nodemon",
+    "dev": "echo '$base-url: \"/\";' > app/stylesheets/environment.scss && concurrently --kill-others \"nodemon\" \"npm run watch-css\"",
+    "production": "echo '$base-url: \"/redcoat/\";' > app/stylesheets/environment.scss && PORT=5000 BASE_URL='/redcoat/' nodemon",
     "seed": "node db/seed.js"
   },
   "repository": {
