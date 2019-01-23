@@ -1,20 +1,20 @@
 extends layout
 
 block head
-	<link rel='stylesheet' href='' + base_url + '/stylesheets/datatables/datatables.css' />
+	<link rel='stylesheet' href="#{base_url}stylesheets/datatables/datatables.css" />
 
 block header
 	header.bg-header
 		div#header-project-list.title.can-fade
 			h1 Projects
 			div.right
-				a.button(href="" + base_url + "/setup-project") <i class="fa fa-plus-circle"></i>New project
+				a.button(href="" + base_url + "setup-project") <i class="fa fa-plus-circle"></i>New project
 		div#header-project-details.title.can-fade
 			h1#d-project_name ---
 			div.left
 				a#back-to-projects.button(href="javascript:void(0)") <i class="fa fa-chevron-left"></i>Projects
 			div.right
-				a#annotate-project-button.button(href="" + base_url + "/") <i class="fa fa-pencil"></i>Annotate project
+				a#annotate-project-button.button(href="" + base_url + "") <i class="fa fa-pencil"></i>Annotate project
 		canvas#background(height="120px" width="1920")
 
 block sidenav
@@ -81,13 +81,13 @@ block content
 	
 
 block scripts
-	script(src="" + base_url + "/javascripts/d3/d3.min.js")
-	script(src="" + base_url + "/javascripts/d3/d3-context-menu.js")
-	script(src="" + base_url + "/javascripts/shared/hierarchy_validator.js")
-	script(src="" + base_url + "/javascripts/datatables/datatables.min.js")
-	script(src="" + base_url + "/javascripts/lipsumBG.js")
-	script(src="" + base_url + "/javascripts/jquery.cookie.js")
-	script(src="" + base_url + "/javascripts/category-tree-visualisation.js")
+	script(src="" + base_url + "javascripts/d3/d3.min.js")
+	script(src="" + base_url + "javascripts/d3/d3-context-menu.js")
+	script(src="" + base_url + "javascripts/shared/hierarchy_validator.js")
+	script(src="" + base_url + "javascripts/datatables/datatables.min.js")
+	script(src="" + base_url + "javascripts/lipsumBG.js")
+	script(src="" + base_url + "javascripts/jquery.cookie.js")
+	script(src="" + base_url + "javascripts/category-tree-visualisation.js")
 
 	script.
 		$.cookie.json = true;
@@ -157,7 +157,7 @@ block scripts
 							if ( type === "sort" || type === 'type' || type === "search" ) { // Ensure it sorts in the correct order, irrespective of html tags.
 								return data;
 							}
-							return data + '<span class="right detailed-show"><a href="" + "#{base_url}" + "/projects/' + row["_id"] + '/tagging" class="button goto-tagging-button"><i class="fa fa-lg fa-pencil"></i>Annotate project</a></span>';
+							return data + '<span class="right detailed-show"><a href="#{base_url}projects/' + row["_id"] + '/tagging" class="button goto-tagging-button"><i class="fa fa-lg fa-pencil"></i>Annotate project</a></span>';
 			        	 }
 
 			        	 },
@@ -210,7 +210,7 @@ block scripts
 						},
 						{ "targets": 6,
 						  "render": function(data) {
-						  	return '<span class="right list-show"><a href="" + "#{base_url}" + "/projects/' + data + '/tagging"class="button goto-tagging-button"><i class="fa fa-lg fa-pencil"></i></a></span>';
+						  	return '<span class="right list-show"><a href="#{base_url}projects/' + data + '/tagging"class="button goto-tagging-button"><i class="fa fa-lg fa-pencil"></i></a></span>';
 						  }
 						},
 			        ],
@@ -332,7 +332,7 @@ block scripts
 					$projectDetailsEles.addClass("show");
 					window.location.hash = project._id;
 					categoryHierarchy.buildTree(project.category_hierarchy);
-					$apButton.attr('href', "#{base_url}/projects/" + project._id + "/tagging");
+					$apButton.attr('href', "#{base_url}projects/" + project._id + "/tagging");
 					$detailEles.each(function(e) {
 						var tid = $(this).attr('id').substr(2, $(this).attr('id').length);
 

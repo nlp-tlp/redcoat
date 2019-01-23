@@ -250,3 +250,62 @@ footer {
 		}
 	}
 }
+
+span.progress-bar {
+	color: #222;
+	display: inline-block;
+	width: 100%;
+	padding: 0;
+	text-align: left;
+	background: #eaeaea;
+	line-height: 130%;
+	position: relative;
+	&.large {
+		line-height: 260%;
+	}
+	.inner {
+		transition: width 0.5s ease;
+		background: linear-gradient(#ddd, #cacaca);
+		width: 0%;
+		padding: 0;
+		display: inline-block;
+		text-align: center;
+		position: relative;
+		z-index: 0;
+
+		&:before {
+			content: " ";
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			z-index: -1;
+			background-image: url('/images/bars.png');
+			background-blend-mode: lighten;
+			opacity: 0.2;			
+
+		}
+		&:not(.no-animation):before {
+			animation: animatedBackground 40s linear infinite;
+		}
+	}
+	.progress-text {
+		color: white;
+		text-shadow: 1px 1px #222;
+		position: absolute;
+		top: 0;
+		left: 0;
+		text-align: center;
+		margin: 0 auto;
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	&.coloured .inner {
+		background: linear-gradient(darken($primary-red, 21), darken($primary-red, 28));
+		color: white;
+	}	
+
+}

@@ -1,8 +1,8 @@
 require('rootpath')();
 var logger = require('config/winston');
 
-var Project = require('../models/project');
-
+var Project = require('app/models/project');
+var DocumentGroupAnnotation = require('app/models/document_group_annotation')
 
 // The project dashboard. Renders the projects page that lists all the projects of a user.
 // Doesn't actually send any projects - that's done by 'getProjects', via AJAX.
@@ -34,26 +34,83 @@ module.exports.tagging = function(req, res) {
   var id = req.params.id;
   Project.findOne({ _id: id }, function(err, proj) {
     if(err) {
-      res.send("nope");
+      res.send("error");
+    }
+    console.log(proj)
+    proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
+      if(err) { res.send("error"); }
+      res.render('tagging', { 
+       projectName: proj.project_name,
+       tagging: true,
+       title: "Annotation Interface",
+       numDocumentGroups: docGroupsPerUser,
+      });
+
+    })
+
+  });
+}
+
+// Retrieve a single document group for the tagging interface.
+module.exports.getDocumentGroup = function(req, res) {
+  var id = req.params.id;
+  Project.findOne({ _id: id }, function(err, proj) {
+    if(err) {
+      res.send("error");
     }
     proj.recommendDocgroupToUser(req.user, function(err, docgroup) {
       if(err == null && docgroup == null) {
-        res.render("tagging-complete"); // User has annotated every docgroup they need to.
-        return;
+        return "tagging complete";
       }
       if(err) {
-        res.send("nope");
-      } else {
-        res.render('tagging', { 
-          tagging: true,
-          data: JSON.stringify(docgroup.documents),
-          entity_classes: JSON.stringify(proj.category_hierarchy),
-          entity_classes_abbr: JSON.stringify(proj.category_hierarchy),
-          //colors: JSON.stringify(proj.getValidLabelColors()),
-          title: "Tagging group: \"" + (docgroup.display_name || "UnnamedGroup") + "\"" }); 
+        res.send("error");
+      } else {     
+
+
+        proj.getDocumentGroupsAnnotatedByUserCount(function(err, annotatedDocGroups) {
+          res.send({
+              documentGroupId: docgroup._id,
+              documentGroup: docgroup.documents,
+              entityClasses: proj.category_hierarchy,
+              annotatedDocGroups: annotatedDocGroups,
+              pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\""          
+          });
+        });
       }
+      
     });
   });
+}
+
+module.exports.submitAnnotations = function(req, res) {
+  var documentGroupId = req.body.documentGroupId;
+  var userId = req.user._id;
+  var projectId = req.params.id;
+  var labels = req.body.labels;
+
+
+  var documentGroupAnnotation = new DocumentGroupAnnotation({
+    user_id: userId,
+    document_group_id: documentGroupId,
+    labels: labels,
+  });
+  documentGroupAnnotation.save(function(err, dga) {
+    if(err) {
+      logger.error(err.stack);
+      res.send({error: err})
+    } else {
+      logger.debug("Saved document group annotation " + dga._id)
+      res.send({success: true});
+    }
+
+    
+  })
+
+  // TODO: Save as a documentGroupAnnotation
+
+  
+  
+
 }
 
 

@@ -2,39 +2,39 @@ nav#navbar
 	.navbar-left
 		#logo
 
-			a(href="" + base_url + "/")
+			a(href="" + base_url + "")
 				span.inner
 					span.img
-						img(src='' + base_url + '/images/redcoat-1-grey-small.png')
+						img(src="" + base_url + "images/favicon.png")
 					span Redcoat
 	.navbar-centre
-		| #{title}
+		| <span id="navbar-page-title">#{title}</span>
 	.navbar-right
 		if (!user)
 			div(class="dropdown-menu")
 				span Not logged in
 					span(class="caret") &#9660;	
 				ul(class="dropdown-menu-items")
-					li: a(href="" + base_url + "/register") Register
-					li: a(href="" + base_url + "/login?previous=" + path) Login
+					li: a(href="" + base_url + "register") Register
+					li: a(href="" + base_url + "login?previous=" + path) Login
 
 		else
 			div(class="dropdown-menu")
-				a(href="" + base_url + "/projects") Projects
+				a(href="" + base_url + "projects") Projects
 					//span(class="caret") &#9660;	
 				ul(class="dropdown-menu-items")
-					li: a(href="" + base_url + "/projects") Projects list
-					li: a(href="" + base_url + "/setup-project") Setup project
+					li: a(href="" + base_url + "projects") Projects list
+					li: a(href="" + base_url + "setup-project") Setup project
 
 			div(class="dropdown-menu")
 				span Logged in as #{user.username}
 					//span(class="caret") &#9660;	
 				ul(class="dropdown-menu-items")
-					li: a(href="" + base_url + "/profile") Profile
-					li: a(href="" + base_url + "/logout") Logout
+					li: a(href="" + base_url + "profile") Profile
+					li: a(href="" + base_url + "logout") Logout
 
 		div(class="dropdown-menu short")
-			a(href="" + base_url + "/features") v0.1
+			a(href="" + base_url + "features") v0.1
 
 
 

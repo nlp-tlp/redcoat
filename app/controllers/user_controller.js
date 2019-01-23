@@ -1,8 +1,8 @@
 require('rootpath')();
 var logger = require('config/winston');
 
-var base_url = process.env.BASE_URL || "/";
-
+var BASE_URL = require('config/base_url').base_url;
+console.log("<<<", BASE_URL)
 var User = require('../models/user');
 var passport = require('passport');
 
@@ -31,7 +31,7 @@ exports.register = function(req, res, next) {
         return;
       }
       passport.authenticate('local')(req,res, function() {
-        res.redirect(base_url + '/projects');
+        res.redirect(BASE_URL + 'projects');
       });      
     });
   }
@@ -39,7 +39,7 @@ exports.register = function(req, res, next) {
 // The login page.
 exports.loginPage = function(req, res) {
   if(req.user)
-    res.redirect(base_url + '/projects');
+    res.redirect(BASE_URL + 'projects');
   res.render('users/login', {formData: {}, title: "Login"});
 }
 
@@ -58,7 +58,7 @@ exports.login = function(req, res, next) {
       });
     }
     req.logIn(user, function(err) {
-      return res.redirect(base_url + '/projects');
+      return res.redirect(BASE_URL + 'projects');
     });     
     
   })(req, res, next); 
@@ -68,7 +68,7 @@ exports.login = function(req, res, next) {
 // The logout action.
 exports.logout = function(req, res) {
   req.logout();
-  res.redirect(base_url);
+  res.redirect(BASE_URL);
 }
 
 module.exports.user_profile = function(req, res) {

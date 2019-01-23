@@ -10,6 +10,7 @@ var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 var logger = require("./config/winston.js");
 var mongoose = require('mongoose')
+var BASE_URL = require('./config/base_url.js').base_url;
 mongoose.connect('mongodb://localhost/redcoat-db-dev', function(err) {
   if(err) { console.log("\x1b[31m" + err.message); }
 });
@@ -65,8 +66,7 @@ app.use(csrf({ cookie: true }));
 
 // Setup local variables that are used in almost every view.
 app.use(function(req, res, next) {
-  res.locals.base_url = process.env.BASE_URL || "/";
-  console.log(res.locals.base_url)
+  res.locals.base_url = BASE_URL;
   res.locals.csrfToken = req.csrfToken();
   res.locals.user = req.user;
   res.locals.path = req.path;

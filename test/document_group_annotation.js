@@ -84,7 +84,6 @@ describe('Document Group Annotations', function() {
         var doc_group_ann = new DocumentGroupAnnotation({ 
           user_id: user2._id,
           document_group_id: doc_group._id,
-          project_id: proj._id,
           labels: [ ["O", "O"]]
         })
         doc_group_ann.save(function(err) {
@@ -129,6 +128,24 @@ describe('Document Group Annotations', function() {
       });
     }); 
   });
+
+  describe("project_id", function() {
+    it('should have the same project_id as its corresponding document_group', function(done) {
+      var proj = cf.createValidProject(1, user1._id);
+      var doc_group = cf.createValidDocumentGroup(5, proj._id);
+      console.log(doc_group)
+      proj.save(function(err) {
+        doc_group.save(function(err) {
+          var doc_group_ann = cf.createValidDocumentGroupAnnotation(5, user1._id, doc_group._id);
+          doc_group_ann.save(function(err, doc_group_ann) {
+            expect(err).to.not.exist;
+            expect(doc_group_ann.project_id).to.equal(doc_group.project_id)
+            done();
+          });
+        });       
+      });
+    });
+  })
 
 
 

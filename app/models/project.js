@@ -145,6 +145,31 @@ ProjectSchema.methods.getDocumentGroups = function(next) {
   return DocumentGroup.find({ project_id: this._id }).exec(next);  
 }
 
+ProjectSchema.methods.getNumDocumentGroups = function(next) {
+  return DocumentGroup.count({ project_id: this._id }).exec(next);  
+}
+
+ProjectSchema.methods.getDocumentGroupsAnnotatedByUserCount = function(next) {
+  DocumentGroupAnnotation = require('./document_group_annotation');
+  return DocumentGroupAnnotation.count( {project_id: this._id, user_id: this.user_id }).exec(next);
+}
+
+// Retrieve the number of document groups each user must annotate for a project, based on the overlap, number of annotators, and number of document groups in the project.
+ProjectSchema.methods.getDocumentGroupsPerUser = function(next) {
+  // documentGroup count = total number of document groups
+  // overlap: number of times each group must be annotated
+  // num users: number of users annotating
+  // ioa.html((1 / numAnnotators * v * 100).toFixed(2));
+  var numAnnotators = this.user_ids.length;
+  var overlap = this.overlap;
+ 
+  this.getNumDocumentGroups(function(err, numDocGroups) {
+    var docGroupsPerUser = (1 / numAnnotators * overlap) * numDocGroups;
+    next(err, docGroupsPerUser);
+  });
+  
+}
+
 // Sorts the project's document groups in ascending order of the number of times they have been annotated.
 ProjectSchema.methods.sortDocumentGroupsByTimesAnnotated = function(next) {
   return DocumentGroup.find({ project_id: this._id }).sort('times_annotated').exec(next);

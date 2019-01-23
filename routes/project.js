@@ -7,7 +7,10 @@ var projectController = require("app/controllers/project_controller");
 
 router.get('/getprojects', projectController.getProjects);
 router.get('/',            projectController.index);
-router.get('/:id/tagging', projectController.tagging);
 router.get('/:id',         projectController.getProject);
+router.get('/:id/tagging', projectController.tagging);
+router.get('/:id/tagging/getDocumentGroup', projectController.getDocumentGroup);
+
+router.post('/:id/tagging/submitAnnotations', projectController.submitAnnotations);
 
 module.exports = router;

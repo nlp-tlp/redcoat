@@ -8,7 +8,16 @@ extends layout
 				
 
 
+block header
+	div#tagging-progress-bar-background
+		span#tagging-project-title #{projectName}
+		div#tagging-progress-bar
+			span.progress-bar
+				span.inner.no-animation(style="width: 0%")
+				span.progress-text <span id="progress-text-num-annotated">-</span>&nbsp;/&nbsp;<span id="progress-text-num-total">#{numDocumentGroups}</span>
+
 block content
+
 	div#tagging-container
 		#sentence-tagging
 
@@ -47,11 +56,11 @@ block entity_categories_window
 	div#window-mask
 
 block scripts
-	script(src="" + base_url + "/javascripts/jstree/dist/jstree.js")
-	script(src="" + base_url + "/javascripts/d3/d3.min.js")
-	script(src="" + base_url + "/javascripts/d3/d3-context-menu.js")
-	script(src="" + base_url + "/javascripts/shared/hierarchy_validator.js")
-	script(src="" + base_url + "/javascripts/category-tree-visualisation.js")
+	script(src="" + base_url + "javascripts/jstree/dist/jstree.js")
+	script(src="" + base_url + "javascripts/d3/d3.min.js")
+	script(src="" + base_url + "javascripts/d3/d3-context-menu.js")
+	script(src="" + base_url + "javascripts/shared/hierarchy_validator.js")
+	script(src="" + base_url + "javascripts/category-tree-visualisation.js")
 
 	script.
 		var noodle;
@@ -282,18 +291,14 @@ block scripts
 
 			function initTagging() {
 
+
+
 				// The category hierarchy to be placed on the window.
 				var categoryHierarchy = new CategoryHierarchy();
 
-				var groupData = !{data};
-				var entity_classes = !{entity_classes};
+				
 
-				// Build the category hierarchy from the entity classes.
-				categoryHierarchy.buildTree(entity_classes);
-
-				// Initialise the jsTree (the tagging menu on the left).
-				var $tree = buildJsTree(entity_classes);
-
+				
 				// Set up jQuery handles.
 				var $entityCategoriesWindow = $("#entity-categories-window");
 				var $ecSearch = $("#ec-search");
@@ -307,6 +312,9 @@ block scripts
 				var $windowMask = $("#window-mask");
 				var st = $("#sentence-tagging");
 				var $sentences;
+				var $navbarPageTitle = $("#navbar-page-title");
+
+
 
 				// Close the entity categories tree window when the button is clicked, or the area outside the window is clicked.
 				$("#entity-categories-window .close").click(function() {
@@ -325,9 +333,10 @@ block scripts
 				PE = "</span>"; // Punctuation end
 
 				
-
+				var documentGroupId = null;			// The id of the current documentGroup being annotated.
 				var annotatedTags = [];				// An array to contain the annotated tags of each document.
 
+				var numberOfSentences;				// The number of sentences in the document.
 				var sentenceIndex;					// The index of the sentence currently selected.
 				var wordIndex;						// The index of the word currently selected.
 				var sentenceLength;					// The length of the sentence currently selected.
@@ -344,84 +353,150 @@ block scripts
 				var $currentSentence;				// The current sentence the user is looking at.
 				var $currentWords;					// The words of the sentence the user is looking at.
 
+				var $progressBarInner = $("#tagging-progress-bar .inner");
+				var $progressTextNumAnnotated = $("#progress-text-num-annotated");
+				var numDocumentGroups = #{numDocumentGroups};
+
 				// A function to call when scrolling has finished.
 				function finishedScrolling() {
 					currentlyScrolling = false;
 				}
 
 
-				// Build abbreviated entity class names to display on the annotation labels.
-				// This is required because something like "body_part/arm/left_arm/left_hand/fingers" is too long to display on the annotation tags.
-				var entity_classes_abbr = [];				
-				(function generateAbbreviatedNames() {
-					for(var i in entity_classes) {
-						var ec = entity_classes[i].toLowerCase();
-						ecs = ec.split('/');
-						ec = ecs[ecs.length-1]; //(ecs.length > 1 ? '/' : '') + ecs[ecs.length-1];
-						var abbr = ec;
-						entity_classes_abbr.push(abbr);
+				var entity_classes = [];				
+				var entity_classes_abbr = [];		
+				var $tree = null;		
+
+				
+				// Initialise the category tree. It must be initialised upon the loading of every group in case the tree changes.
+				function initialiseCategoryTree() {
+					$tree = buildJsTree(entity_classes);
+					function tagByNode(event, data) {
+						var node = data.node;
+						var ind = node.li_attr["data-index"];
+						var color = node.li_attr["data-color"];
+						tagSelected(ind, color, node.li_attr['id'], false);					
 					}
-				})();
+					$tree.on('select_node.jstree', tagByNode);
+					// Toggle tagging when clicking elements in the jsTree
+					$tree.on('click', '.jstree-anchor', function() {
+						$tree.jstree('select_node', "#" + $(this).parent().attr('id'))
+					});
+					return $tree;
+				}
+
+
+				// Retrieve a documentGroup via AJAX.
+				function loadDocumentGroup(done) {
+					$.ajax({
+						url: 'tagging/getDocumentGroup',
+						data: {},	
+						success: function(data) {
+							done(data);
+						},
+						error: function(err) {
+							console.log(err);
+						}
+				    });			
+					
+				}
 
 				// Load a random document group from the project. Initialise the interface.
 				function loadGroup() {
+
 					console.log("Loading group...");
 					$("#ending-message").remove();
 					loading = true;
 
-					// TODO: Replace this with Ajax.
-					$("#tagging-container").children(0).fadeOut(300, continueLoading);
+					
 
-					// Continue the loading process.
-					// This function is called only after the sentence tagging ele has faded out.
-					function continueLoading() {
+					
 
-						annotatedTags = [];
+					loadDocumentGroup(function(documentGroupData) {
 
-						// Clear the sentence tagging div and create a new one.
-						st.remove(); 
-						$("<div id=\"sentence-tagging\"></div>").hide().appendTo("#tagging-container").fadeIn(300);
-						st = $("#sentence-tagging");
+						var groupData = documentGroupData.documentGroup;
+						entity_classes = documentGroupData.entityClasses;
+						documentGroupId = documentGroupData.documentGroupId;
+						$navbarPageTitle.html(documentGroupData.pageTitle);
+
+						$progressTextNumAnnotated.html(documentGroupData.annotatedDocGroups);
+
+						$progressBarInner.css('width', '' + (documentGroupData.annotatedDocGroups / numDocumentGroups * 100) + "%");
+						$("#tagging-container").children(0).fadeOut(300, continueLoading);
+
+						// Build the category hierarchy from the entity classes.
+						categoryHierarchy.buildTree(entity_classes);
+
+						// Initialise the jsTree (the tagging menu on the left).
 						
-						// Iterate over the sentences and create the annotatedTagNumbers and annotatedTags arrays.
-						var indSent = 0;
-						$.each(groupData, function(key, value) {
-							var content = "";
-							var ind = 0;
-							for(var i in value) {
-								var allPunctuation = ((value[i].match(/[.,\/#!$%\^&\*;:{}=\-_`~()"']/g) || []).length == value[i].length)
-								// If all punctuation, use the punctuation class instead.
-								var ts = allPunctuation ? PS : WS;
-								var te = allPunctuation ? PE : WE;
-								content += ts.replace(/\$\$\$/g, ind) + value[i] + te;								
-								ind++;						
+						// Build abbreviated entity class names to display on the annotation labels.
+						// This is required because something like "body_part/arm/left_arm/left_hand/fingers" is too long to display on the annotation tags.
+						(function generateAbbreviatedNames() {
+							for(var i in entity_classes) {
+								var ec = entity_classes[i].toLowerCase();
+								ecs = ec.split('/');
+								ec = ecs[ecs.length-1]; //(ecs.length > 1 ? '/' : '') + ecs[ecs.length-1];
+								var abbr = ec;
+								entity_classes_abbr.push(abbr);
 							}
-							var s = st.append("<div class=\"sentence\" data-ind=\"" + indSent + "\" data-ind1=\"" + (indSent+1) + "\">" + content + "</div>");
-							annotatedTags.push(new Array(value.length).fill("O"));
-							indSent++;
-						});
+						})();
 
-						sentenceIndex = 0;
-						wordIndex = -1;
-						gotoSentence();
-						chainStart = -1;
-						chainType = "forwards";
-						moveForwards();
-						if(currentlyScrolling) {
-							$("html, body").scrollTop(st.children().eq(sentenceIndex).offset().top - 150);
-						} else {
-							currentlyScrolling = true
-							$("html, body").animate({
-								//scrollTop: st.children().eq(sentenceIndex).offset().top - 150
-							}, 200, finishedScrolling);										
+						// Initialise the tree again, just in case it has changed.
+						$tree = initialiseCategoryTree();
+						
+						
+						// Continue the loading process.
+						// This function is called only after the sentence tagging ele has faded out.
+						function continueLoading() {
+
+							annotatedTags = [];
+
+							// Clear the sentence tagging div and create a new one.
+							st.remove(); 
+							$("<div id=\"sentence-tagging\"></div>").hide().appendTo("#tagging-container").fadeIn(300);
+							st = $("#sentence-tagging");
+							
+							// Iterate over the sentences and create the annotatedTagNumbers and annotatedTags arrays.
+							var indSent = 0;
+							$.each(groupData, function(key, value) {
+								var content = "";
+								var ind = 0;
+								for(var i in value) {
+									var allPunctuation = ((value[i].match(/[.,\/#!$%\^&\*;:{}=\-_`~()"']/g) || []).length == value[i].length)
+									// If all punctuation, use the punctuation class instead.
+									var ts = allPunctuation ? PS : WS;
+									var te = allPunctuation ? PE : WE;
+									content += ts.replace(/\$\$\$/g, ind) + value[i] + te;								
+									ind++;						
+								}
+								var s = st.append("<div class=\"sentence\" data-ind=\"" + indSent + "\" data-ind1=\"" + (indSent+1) + "\">" + content + "</div>");
+								annotatedTags.push(new Array(value.length).fill("O"));
+								indSent++;
+							});
+
+							numberOfSentences = groupData.length;
+							sentenceIndex = 0;
+							wordIndex = -1;
+							gotoSentence();
+							chainStart = -1;
+							chainType = "forwards";
+							moveForwards();
+							if(currentlyScrolling) {
+								$("html, body").scrollTop(st.children().eq(sentenceIndex).offset().top - 150);
+							} else {
+								currentlyScrolling = true
+								$("html, body").animate({
+									//scrollTop: st.children().eq(sentenceIndex).offset().top - 150
+								}, 200, finishedScrolling);										
+							}
+							loading = false;
+							selectedWord = getSelectedWord();
+							selectedWord.addClass("selected");
+							$sentences = $("#sentence-tagging").children();
+							initMouseEvents();
+							initKeyboardEvents();
 						}
-						loading = false;
-						selectedWord = getSelectedWord();
-						selectedWord.addClass("selected");
-						$sentences = $("#sentence-tagging").children();
-						initMouseEvents();
-						initKeyboardEvents();
-					}
+					});
 
 					// TODO: Replace this with some kind of thing saying "Congratulations, you've finished annotating every document!" or something along those lines.
 					function showEndingMessage() {
@@ -434,7 +509,15 @@ block scripts
 						ended = true;
 					}
 				}
-				loadGroup();		
+
+
+
+
+				loadGroup();
+
+
+
+
 
 				// A shortcut function to find the element corresponding to the selected word.
 				function getSelectedWord() {
@@ -460,7 +543,6 @@ block scripts
 					$selectedWords.removeClass("tag-end");
 					var b = $selectedWords.first()
 					var e = $selectedWords.last()
-
 
 					// Add tags to the selecteed elements.
 					function addTags() {
@@ -533,8 +615,9 @@ block scripts
 								t.addClass(tags[j]);
 							}
 						}
-						if(tags.includes("tag-begin")) var prefix = "B-";
-						else var prefix = "I-";
+						//if(tags.includes("tag-begin")) var prefix = "B-";
+						//else var prefix = "I-";
+						var prefix = "";
 						var tc =  entity_classes[$(this).attr("data-tag-class")] || "O";
 						if(tc == "O") prefix = "";
 						annotatedTags[sentenceIndex][i] = prefix + tc;//tagClass - 1;
@@ -638,15 +721,19 @@ block scripts
 
 				// Move to the next sentence.
 				function nextSentence() {
-					if(sentenceIndex < groupData.length - 1) {
+					if(sentenceIndex < numberOfSentences - 1) {
 						sentenceIndex++								
 						gotoSentence();
 						wordIndex = -1;
 						moveForwards();
 					} else {
 						// TODO: Modify this to load the next group (and submit the results rather than save to a file).
-						saveDataToFile();
-						loadGroup();
+						submitAnnotations(function(err) {
+							if(err) { alert(err) } // TODO: Handle this appropriately
+							else {
+								loadGroup();
+							}
+						});						
 					}
 				}
 
@@ -838,11 +925,13 @@ block scripts
 					}
 
 					var initialSentenceIndex = -1;
+					$(".sentence span").unbind("mousedown");
 					$(".sentence span").mousedown(function() {
 						// Whenever a span is clicked, take note of the index of the sentence the user clicked on.
 						initialSentenceIndex = $(this).closest(".sentence").data("ind");
 					});
 					
+					$("#tagging-container").unbind("mouseup");
 					$("#tagging-container").mouseup(tagSelection);
 				}	
 				
@@ -957,6 +1046,8 @@ block scripts
 					ESCAPE = 27;
 					
 					var map = { 37: false, 39: false, 16: false, 38: false, 40: false };
+					$(document).unbind("keydown");
+					$(document).unbind("keyup");
 					$(document).keydown(function(e) {
 						if(!loading && !ended) {
 							if (e.keyCode in map) {
@@ -1037,50 +1128,67 @@ block scripts
 				};
 
 
-				function tagByNode(event, data) {
-					var node = data.node;
-					var ind = node.li_attr["data-index"];
-					var color = node.li_attr["data-color"];
-					tagSelected(ind, color, node.li_attr['id'], false);					
-				}
+				
+				function submitAnnotations(next) {
+					console.log("Annotations would be submitted at this point...");
+					console.log("id:", documentGroupId);
+					console.log(annotatedTags)
+					console.log(csrfToken);
+					$.ajax({
+						url: 'tagging/submitAnnotations',
+						method: 'post',
+						headers: { 'csrf-token': csrfToken },
+						data: {
+							documentGroupId: documentGroupId,
+							labels: annotatedTags
+						},	
+						success: function(data) {
+							console.log("done!");
+							next();
+						},
+						error: function(err) {
+							next(err);
+						}
+				    });			
 
-				$tree.on('select_node.jstree', tagByNode);
-
-				// Toggle tagging when clicking elements in the jsTree
-				$tree.on('click', '.jstree-anchor', function() {
-					$tree.jstree('select_node', "#" + $(this).parent().attr('id'))
-				});
-			
+				}			
 
 				/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 				// Save the annotatedTags to a file.
 				// TODO: Replace with AJAX POST to submit the annotations and save them to the database.
-				function saveDataToFileOutput(dataFilename) {
-					outputData = "";
-					for(var i = 0; i < groupData.length; i++) {
-						for(var j = 0; j < groupData[i].length; j++) {
-							outputData += groupData[i][j] + " " + annotatedTags[i][j] + "\n";
-						}
-						outputData += "\n";
-					}
-					var dlfile = document.createElement('a');
-					dlfile.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(outputData));
-					dlfile.setAttribute('download', dataFilename);
-					var event = document.createEvent('MouseEvents');
-					event.initEvent('click', true, true);
-					dlfile.dispatchEvent(event);
-				}
+				//- function saveDataToFileOutput(dataFilename) {
+				//- 	outputData = "";
+				//- 	for(var i = 0; i < groupData.length; i++) {
+				//- 		for(var j = 0; j < groupData[i].length; j++) {
+				//- 			outputData += groupData[i][j] + " " + annotatedTags[i][j] + "\n";
+				//- 		}
+				//- 		outputData += "\n";
+				//- 	}
+				//- 	console.log(groupData);
+				//- 	console.log(annotatedTags);
+				//- 	var dlfile = document.createElement('a');
+				//- 	dlfile.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(outputData));
+				//- 	dlfile.setAttribute('download', dataFilename);
+				//- 	var event = document.createEvent('MouseEvents');
+				//- 	event.initEvent('click', true, true);
+				//- 	dlfile.dispatchEvent(event);
+				//- }
 
-				function saveDataToFile() {
-					var dataFilename = "annotated_data_" + 1 + ".txt"
-					saveDataToFileOutput(dataFilename)
-				}
+				//- function saveDataToFile() {
+				//- 	var dataFilename = "annotated_data_" + 1 + ".txt"
+				//- 	saveDataToFileOutput(dataFilename)
+				//- }
 
 			}
 
 
+
+
+
+
 			initTagging();
+			
 
 		}
 

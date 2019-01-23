@@ -6,6 +6,7 @@ var Schema = mongoose.Schema;
 
 var cf = require("./common/common_functions.js")
 
+
 /* Validation */
 
 var labelsValidation =  
@@ -30,6 +31,10 @@ var DocumentGroupAnnotationSchema = new Schema({
     ref: 'Document Group',
     required: true
   },
+  project_id: {
+    type: String,
+    ref: 'Project',
+  },
   labels: { 
     type: [[String]],
     validate: labelsValidation
@@ -46,7 +51,18 @@ var DocumentGroupAnnotationSchema = new Schema({
 
 DocumentGroupAnnotationSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists;
 
+DocumentGroupAnnotationSchema.methods.setProjectId = function(done) {
+  var DocumentGroup = require('./document_group');
+  var t = this;
+  DocumentGroup.findById(t.document_group_id, function(err, docgroup) {
+    t.project_id = docgroup.project_id;
+    done(err);
+  });
+}
+
 /* Label pre-save hook */
+
+
 
 // Verifies that the labels in the document group annotation are valid.
 // This is to ensure that even if the user modifies the client-side Javascript, they can't possibly save an
@@ -137,15 +153,21 @@ DocumentGroupAnnotationSchema.pre('save', function(next) {
     var DocumentGroup = require('./document_group');
     t.verifyAssociatedExists(DocumentGroup, t.document_group_id, function(err){
       if(err) { next(err); return; }
-      
-      // 3. Verify labels are valid labels according to this object's project      
-      t.verifyLabelsAreValid(function(err) {
-        if(err) { next(err); return; }
 
-        // 4. Verify user_id of this doc group is in the project's users array
-        t.verifyUserIdListedInProjectUserIds(function(err) {          
+      // 3. Set this DocumentGroupAnnotation's project_id to match that of its corresponding DocumentGroup.
+      t.setProjectId(function(err){
+        if(err) { next(err); return; }
+        
+
+        // 4. Verify labels are valid labels according to this object's project      
+        t.verifyLabelsAreValid(function(err) {
           if(err) { next(err); return; }
-          next();
+
+          // 5. Verify user_id of this doc group is in the project's users array
+          t.verifyUserIdListedInProjectUserIds(function(err) {          
+            if(err) { next(err); return; }
+            next();
+          });
         });
       });
     });
