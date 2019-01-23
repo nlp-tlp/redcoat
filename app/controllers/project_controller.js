@@ -67,7 +67,7 @@ module.exports.getDocumentGroup = function(req, res) {
       } else {     
 
 
-        proj.getDocumentGroupsAnnotatedByUserCount(function(err, annotatedDocGroups) {
+        proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, annotatedDocGroups) {
           res.send({
               documentGroupId: docgroup._id,
               documentGroup: docgroup.documents,

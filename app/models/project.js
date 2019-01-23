@@ -132,7 +132,15 @@ ProjectSchema.statics.getTableData = function(p, user_id) {
   project["completed_annotations"] = p.completed_annotations || 0;
 
   project["percent_complete"] = project["completed_annotations"] / project["annotations_required"] * 100;
-  project["percent_complete_yours"] = project["completed_annotations"] / project["annotations_required"] * 100;
+  
+  // DocumentGroupAnnotation = require('./document_group_annotation');
+  // DocumentGroupAnnotation.count( {project_id: p._id, user_id: user_id }, function(err, count) {
+  //   console.log(err, count)
+
+  //   project["percent_complete_yours"] = count / project["annotations_required"] * 100;
+  // });
+
+  //project["percent_complete_yours"] = p.getDocumentGroupsAnnotatedByUserCount(user_id) / project["annotations_required"] * 100;
 
   return project;
   
@@ -161,9 +169,9 @@ ProjectSchema.methods.getNumDocumentGroups = function(next) {
   return DocumentGroup.count({ project_id: this._id }).exec(next);  
 }
 
-ProjectSchema.methods.getDocumentGroupsAnnotatedByUserCount = function(next) {
+ProjectSchema.methods.getDocumentGroupsAnnotatedByUserCount = function(user, next) {
   DocumentGroupAnnotation = require('./document_group_annotation');
-  return DocumentGroupAnnotation.count( {project_id: this._id, user_id: this.user_id }).exec(next);
+  return DocumentGroupAnnotation.count( {project_id: this._id, user_id: user._id }).exec(next);
 }
 
 

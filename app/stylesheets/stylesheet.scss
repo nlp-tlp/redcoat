@@ -274,6 +274,7 @@ span.progress-bar {
 		z-index: 0;
 		white-space: pre;
 		font-size: 16px;
+		max-width: 100%;
 
 		&:before {
 			content: " ";

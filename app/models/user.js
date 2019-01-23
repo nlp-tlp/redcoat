@@ -113,17 +113,43 @@ UserSchema.methods.getProjects = function(done) {
 UserSchema.methods.getProjectsTableData = function(done) {
   var Project = require('./project');
   var user_id = this._id;
+  var t = this;
   this.getProjects(function(err, projects) {
     if(err) return done(err);
     var tableData = [];
 
 
+    function loadProject(projects, tableData, done) {
+      var p = projects.pop() 
+      var project = Project.getTableData(p, user_id);
+      Project.findById(p._id, function(err, p) {
+        p.getDocumentGroupsAnnotatedByUserCount(t, function(err, count) {  
+          p.getDocumentGroupsPerUser(function(err, required) {
+            project["percent_complete_yours"] = count / required * 100;
+            tableData.push(project);
 
-    for(var i in projects) {
-      var project = Project.getTableData(projects[i], user_id);
-      tableData.push(project);
+            if(projects.length == 0) {
+              done(null, tableData);
+            } else {
+              loadProject(projects, tableData, done);
+            }
+          });        
+        });
+
+      })
+      
     }
-    done(null, tableData);
+   
+    loadProject(projects, tableData, done);
+
+    // for(var i in projects) {
+    //   var project = Project.getTableData(projects[i], user_id);
+
+    //   project["percent_complete_yours"] = 2;//project["completed_annotations"] / project["annotations_required"] * 100;
+
+    //   tableData.push(project);
+    // }
+    // done(null, tableData);
   });
 }
 
