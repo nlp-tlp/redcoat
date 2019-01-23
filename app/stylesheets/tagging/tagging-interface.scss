@@ -788,7 +788,7 @@ a#untag-tokens {
 		position: absolute;
 		top: 0;
 		left: -70px;
-		background: url('/images/corner.png');
+		background: url($base_url + 'images/corner.png');
 		background-size: 100% 100%;
 		width: 70px;//$tagging-progress-bar-height;
 		height: $tagging-progress-bar-height;

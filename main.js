@@ -51,7 +51,22 @@ app.use(
        debug: false,       
    })
 );
-app.use(session({keys: ['redcoatisaprettycoolannotationtool!']}));
+//app.use(session({keys: ['redcoatisaprettycoolannotationtool!']}));
+
+app.enable('trust proxy');
+/*app.use(session({
+   secret: 'redcoatisaprettycoolannotationtool!',
+   proxy: true,
+   key: 'session.sid',
+   cookie: {secure: true},
+	rolling: true,
+
+}));*/
+app.use(session({keys: ['kjhkjhkukg', 'kufk8fyukukfkuyf']}));
+
+
+
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Setup Passport
@@ -92,7 +107,7 @@ app.use(function(req, res, next) {
     if(NON_LOGIN_PATHS.has(req.path)) {
       return next();
     } 
-    res.redirect('/login');
+    res.redirect(BASE_URL + 'login');
 });
 
 
