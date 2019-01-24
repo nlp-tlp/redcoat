@@ -333,7 +333,7 @@ block scripts
 				PE = "</span>"; // Punctuation end
 
 				
-				var documentGroupId = null;			// The id of the current documentGroup being annotated.
+				var documentGroupId = null;			// The id of the current documentGroup being annotated.				
 				var annotatedTags = [];				// An array to contain the annotated tags of each document.
 
 				var numberOfSentences;				// The number of sentences in the document.
@@ -392,7 +392,7 @@ block scripts
 						url: 'tagging/getDocumentGroup',
 						data: {},	
 						success: function(data) {
-							done(data);
+							done(null, data);
 						},
 						error: function(err) {
 							console.log(err);
@@ -412,12 +412,15 @@ block scripts
 
 					
 
-					loadDocumentGroup(function(documentGroupData) {
+					loadDocumentGroup(function(err, documentGroupData) {
+						if(err) { console.log(err); }
 
 						var groupData = documentGroupData.documentGroup;
 						entity_classes = documentGroupData.entityClasses;
 						documentGroupId = documentGroupData.documentGroupId;
 						$navbarPageTitle.html(documentGroupData.pageTitle);
+
+						console.log("id (pre-tag):", documentGroupId);
 
 						$progressTextNumAnnotated.html(documentGroupData.annotatedDocGroups);
 
@@ -449,13 +452,15 @@ block scripts
 						// This function is called only after the sentence tagging ele has faded out.
 						function continueLoading() {
 
+							delete annotatedTags;
 							annotatedTags = [];
 
 							// Clear the sentence tagging div and create a new one.
 							st.remove(); 
 							$("<div id=\"sentence-tagging\"></div>").hide().appendTo("#tagging-container").fadeIn(300);
 							st = $("#sentence-tagging");
-							
+
+
 							// Iterate over the sentences and create the annotatedTagNumbers and annotatedTags arrays.
 							var indSent = 0;
 							$.each(groupData, function(key, value) {
@@ -471,8 +476,13 @@ block scripts
 								}
 								var s = st.append("<div class=\"sentence\" data-ind=\"" + indSent + "\" data-ind1=\"" + (indSent+1) + "\">" + content + "</div>");
 								annotatedTags.push(new Array(value.length).fill("O"));
+
+								console.log(value)
+								console.log(value.length)
+
 								indSent++;
 							});
+							console.log("--")
 
 							numberOfSentences = groupData.length;
 							sentenceIndex = 0;
@@ -531,7 +541,7 @@ block scripts
 				}
 
 
-				function tagSelected(tagClass, colorIndex, nodeId, moveAfterwards=true) {					
+				function tagSelected(tagClass, colorIndex, nodeId, moveAfterwards=true) {			
 					if(!$currentWords) return;
 					var $selectedWords = $("span.word.selected")
 
@@ -559,6 +569,15 @@ block scripts
 					// Delete the tags of any selected elements.
 					function deleteTags() {
 						$selectedWords.each(function(e) {
+
+
+							if($(this).index() > annotatedTags[sentenceIndex].length) {
+								console.log(annotatedTags[sentenceIndex], "<<<<<<<<<<<<<<<<<< bad")
+								console.log($(this))
+								console.log($selectedWords)
+								console.log($(this).index())
+							}
+
 							annotatedTags[sentenceIndex][$(this).index()] = "O";//tagClass - 1;
 							$(this).removeClass(function (index, className) {
 								return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
@@ -577,7 +596,7 @@ block scripts
 					
 
 					// Ensure the tags display correctly when they are split between punctuation.
-					// Iterate over all words in the sentence but only actually start on the word immedidiately before the start of the selection,
+					// Iterate over all words in the sentence but only actually start on the word immediately before the start of the selection,
 					// and end on the word immediately after the selection.
 					var startIndex = b.index();
 					var endIndex = e.index();
@@ -617,10 +636,18 @@ block scripts
 						}
 						//if(tags.includes("tag-begin")) var prefix = "B-";
 						//else var prefix = "I-";
-						var prefix = "";
+						//var prefix = "";
 						var tc =  entity_classes[$(this).attr("data-tag-class")] || "O";
-						if(tc == "O") prefix = "";
-						annotatedTags[sentenceIndex][i] = prefix + tc;//tagClass - 1;
+						//if(tc == "O") prefix = "";
+						//if(tc == null || tc.length == 0) { console.log(tc, entity_classes[$(this).attr("data-tag-class")])}
+
+						if(i > annotatedTags[sentenceIndex].length) {
+							console.log(annotatedTags[sentenceIndex], i, "<<<<<<<<<<<<<<<<<< bad")
+							console.log(entity_classes[$(this).attr("data-tag-class")])
+							console.log(e)
+						}
+
+						annotatedTags[sentenceIndex][i] = tc //prefix + tc;//tagClass - 1;
 					});
 									
 					if(moveAfterwards) {
@@ -916,8 +943,9 @@ block scripts
 								if(aws[i].hasClass("word"))
 									qt.push(aws[i].text());
 							}
-							refreshTree(aws[0].attr("data-node-id"));
 							sentenceIndex = initialSentenceIndex;
+							refreshTree(aws[0].attr("data-node-id"));
+							
 							gotoSentence();
 							refreshTokensInfo(qt.join(" "));
 						}
@@ -1130,6 +1158,12 @@ block scripts
 
 				
 				function submitAnnotations(next) {
+
+					// Unbind all key/mouse events while annotations are being submitted
+					$(".sentence span").unbind("mousedown");
+					$("#tagging-container").unbind("mouseup");
+					$(document).unbind("keydown");
+					$(document).unbind("keyup");
 					console.log("Annotations would be submitted at this point...");
 					console.log("id:", documentGroupId);
 					console.log(annotatedTags)

@@ -77,6 +77,8 @@ DocumentGroupAnnotationSchema.methods.verifyLabelsAreValid = function(done) {
     }
     for(var i = 0; i < doc_group.documents.length; i++) {
       if(doc_group.documents[i].length != t.labels[i].length) {
+        console.log(doc_group.documents[i])
+        console.log(t.labels[i])
         return new Error("Annotated document #" + i + " must be the same length as corresponding document.")
       }
     }

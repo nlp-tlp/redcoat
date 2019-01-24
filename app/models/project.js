@@ -131,6 +131,7 @@ ProjectSchema.statics.getTableData = function(p, user_id) {
 
   project["completed_annotations"] = p.completed_annotations || 0;
 
+  //project["percent_complete"] = project["completed_annotations"] / (Math.ceil(project["annotations_required"]/10) * 10) * 100;
   project["percent_complete"] = project["completed_annotations"] / project["annotations_required"] * 100;
   
   // DocumentGroupAnnotation = require('./document_group_annotation');

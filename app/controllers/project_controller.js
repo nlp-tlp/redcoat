@@ -66,6 +66,7 @@ module.exports.getDocumentGroup = function(req, res) {
         res.send("error");
       } else {     
 
+        logger.debug("Sending doc group id: " + docgroup._id)
 
         proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, annotatedDocGroups) {
           res.send({
@@ -89,38 +90,44 @@ module.exports.submitAnnotations = function(req, res) {
   var projectId = req.params.id;
   var labels = req.body.labels;
 
-
-  var documentGroupAnnotation = new DocumentGroupAnnotation({
-    user_id: userId,
-    document_group_id: documentGroupId,
-    labels: labels,
-  });
-  documentGroupAnnotation.save(function(err, dga) {
-
-    if(err) {
-      logger.error(err.stack);
-      return res.send({error: err})
-    }
-
-    // Add the docgroup to the user's docgroups_annotated array.
-
-    console.log(dga._id)
-    User.findByIdAndUpdate(userId, { $addToSet: { 'docgroups_annotated': documentGroupId }}, function(err) {
-      console.log(req.user);
-
-        if(err) {
-          logger.error(err.stack);
-          res.send({error: err})
-        } else {
-          logger.debug("Saved document group annotation " + dga._id)
-          res.send({success: true});
-        }      
-    })
+ 
 
 
-    
 
-    
+
+    var documentGroupAnnotation = new DocumentGroupAnnotation({
+      user_id: userId,
+      document_group_id: documentGroupId,
+      labels: labels,
+    });
+    documentGroupAnnotation.save(function(err, dga) {
+
+      if(err) {
+        logger.error(err.stack);
+        return res.send({error: err})
+      }
+
+      // Add the docgroup to the user's docgroups_annotated array.
+
+      console.log(dga._id)
+      User.findByIdAndUpdate(userId, { $addToSet: { 'docgroups_annotated': documentGroupId }}, function(err) {
+        console.log(req.user);
+
+          if(err) {
+            logger.error(err.stack);
+            res.send({error: err})
+          } else {
+            console.log("doneeeeewtf")
+            logger.debug("Saved document group annotation " + dga._id)
+            res.send({success: true});
+          }      
+      })
+
+
+
+      
+
+      
 
     
   })
