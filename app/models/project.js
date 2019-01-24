@@ -175,7 +175,116 @@ ProjectSchema.methods.getDocumentGroupsAnnotatedByUserCount = function(user, nex
   return DocumentGroupAnnotation.count( {project_id: this._id, user_id: user._id }).exec(next);
 }
 
+// Retrieve the info of users associated with this project for display in the "Annotations" tab on the Project details page.
+ProjectSchema.methods.getUserInfo = function(next) {
+  var User = require('./user')
+  var t = this;
+  User.find({
+      '_id': { $in: t.user_ids}
+  }).select('username docgroups_annotated').lean().exec(function(err, users){
+      function getUserData(userData, users, next) {
+        var u = users.pop()
 
+        //userData.push(u);
+        //userData['docgroups_annotated_count'] = u['docgroups_annotated'].length;
+
+        User.findById(u._id, function(err, user) {
+          t.getDocumentGroupsAnnotatedByUserCount(user, function(err, count) {
+            console.log(count)
+            u['docgroups_annotated_count'] = u['docgroups_annotated'].length * 10 // TODO: Change this to not be hardcoded to 10;
+            u['docgroups_annotated_this_project_count'] = count * 10;
+            u['project_owner'] = false;
+            if(u['_id'].equals(t.user_id)) {
+              u['project_owner'] = true;
+            }
+            u['download_link'] = {'project_id': t._id, 'user_id': u['_id'], 'enough_annotations': u['docgroups_annotated_this_project_count'] > 0};
+            delete u['docgroups_annotated']
+            userData.push(u);
+            
+
+            if(users.length == 0) {
+               next(err, userData)
+             } else {
+              getUserData(userData, users, next);
+             }
+          });
+
+        });
+      }
+
+      getUserData([], users, function(err, userData) {
+        next(err, userData);
+      });      
+     
+  });
+}
+
+// Retrieve all annotations of a user for this project. The data will be in JSON format:
+// {
+//   id: the id of the document group
+//   documents: the documents of the document group
+//   labels: the labels corresponding to the document group
+//   document_group_display_name: The display name of the document group
+// }
+ProjectSchema.methods.getAnnotationsOfUserForProject = function(user, next) {
+  DocumentGroupAnnotation = require('./document_group_annotation')
+  DocumentGroup = require('./document_group')
+  var t = this;
+
+  DocumentGroupAnnotation.aggregate([
+    {
+      $match: {
+        user_id: user._id,
+        project_id: t._id
+      },
+    },
+    {
+      $lookup: {
+        from: "documentgroups",
+        localField: "document_group_id",
+        foreignField: "_id",
+        as: "document_group"
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        labels: 1,
+        documents: "$document_group.documents",
+        document_group_display_name: "$document_group.display_name"
+      }
+    }
+    ], function(err, docs) {
+      for(var i in docs) {
+        docs[i]["documents"] = docs[i]["documents"][0]; // Required to ensure docs and labels match up correctly
+        docs[i]["document_group_display_name"] = docs[i]["document_group_display_name"][0]; 
+      }
+      next(null, docs);
+    } );
+
+  //next(null, user.username);
+
+
+}
+
+// Converts a json object to conll format.
+// The JSON should be in the format of 'getAnnotationsOfUserForProject' above.
+ProjectSchema.methods.json2conll = function(annotations, next) {
+  conll_arr = [];
+  for(var i in annotations) {
+    for(var j in annotations[i]["documents"]) {
+      for(var k in annotations[i]["documents"][j]) {
+        conll_arr.push("" + annotations[i]["documents"][j][k] + " " + annotations[i]["labels"][j][k])
+      }
+      if(i < annotations.length - 1) {
+        conll_arr.push("");    
+      }
+    }    
+  }
+  conll_str = conll_arr.join("\n")
+  next(null, conll_str)
+
+}
 
 // Update the number of annotations for the project.
 // This seems a lot faster than querying it every single time the project page is loaded.

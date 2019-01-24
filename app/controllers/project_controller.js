@@ -29,6 +29,7 @@ module.exports.getProjects = function(req, res) {
 }
 
 
+
 // The tagging interface.
 module.exports.tagging = function(req, res) {
   var id = req.params.id;
@@ -84,7 +85,7 @@ module.exports.getDocumentGroup = function(req, res) {
 }
 
 module.exports.submitAnnotations = function(req, res) {
-  var User = require('app/models/user')
+  var User = require('app/models/user');
   var documentGroupId = req.body.documentGroupId;
   var userId = req.user._id;
   var projectId = req.params.id;
@@ -139,8 +140,50 @@ module.exports.submitAnnotations = function(req, res) {
 
 }
 
+module.exports.downloadAnnotationsOfUser = function(req, res) {
+  var User = require('app/models/user')
+  var proj_id = req.params.id;
+  var user_id = req.params.user_id;
 
-module.exports.getProject = function(req, res) {
+  
+
+  User.findById(user_id, function(err, user) {
+    console.log(user)
+    Project.findById(proj_id, function(err, proj) {
+      //console.log(err, proj)
+      if(!proj.user_id.equals(req.user._id)) {
+        return res.send("error");
+      }
+      proj.getAnnotationsOfUserForProject(user, function(err, annotations) {
+        proj.json2conll(annotations, function(err, annotations_conll) {          
+          if(err) { res.send("error"); }
+
+          res.type('.txt');
+          res.setHeader('Content-type', "application/octet-stream");
+          res.set({"Content-Disposition":"attachment; filename=\"annotations-" + user.username + "\""});
+          res.send(annotations_conll);
+          //res.send(annotations);
+        });        
+      })
+    });
+  });
+}
+
+
+// AJAX function to retrieve details of a project (annotators, metrics).
+module.exports.getProjectDetails = function(req, res) {
   var id = req.params.id;
-  res.render("error");
+
+
+
+  Project.findOne({ _id: id}, function(err, proj) {
+
+    proj.getUserInfo(function(err, users) {
+      if(err) { res.send("error") }
+        res.send( {
+          annotators: users
+        });    
+    });
+   
+  });
 }

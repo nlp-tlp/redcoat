@@ -95,7 +95,13 @@ DocumentGroupAnnotationSchema.methods.verifyLabelsAreValid = function(done) {
     //valid_abbreviations.add("O"); // Add the outside category
     var merged_labels = Array.from(new Set([].concat.apply([], t.labels)));
     for(var i = 0; i < merged_labels.length; i++) {
-      if (!valid_labels.has(merged_labels[i])) {
+
+      var label = merged_labels[i];
+      // Allow B- and I- labels as well.
+      if(label[0] == "B" && label[1] == "-") label = label.substring(2);
+      if(label[0] == "I" && label[1] == "-") label = label.substring(2);
+
+      if (!valid_labels.has(label)) {
         return new Error("Label \"" + merged_labels[i] + "\" is not a valid label for the project." )
       }
     }

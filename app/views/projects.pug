@@ -26,12 +26,13 @@ block sidenav
 				a(href="#details") <i class="fa fa-info-circle"></i>Details
 			li#li-hierarchy
 				a(href="#hierarchy") <i class="fa fa-tree"></i>Category Hierarchy
-			li#annotators.disabled
-				a() <i class="fa fa-users"></i>Annotators
-			li#metrics.disabled
+			li#li-annotations
+				a(href="#annotations") <i class="fa fa-list-alt"></i>Annotations
+			li#li-metrics.disabled
 				a() <i class="fa fa-bar-chart"></i>Metrics
-			li#settings.disabled
+			li#li-settings.disabled
 				a() <i class="fa fa-wrench"></i>Settings
+
 
 	
 		ul#sidenav-project-list
@@ -90,16 +91,44 @@ block scripts
 	script(src="" + base_url + "javascripts/category-tree-visualisation.js")
 
 	script.
-		$.cookie.json = true;
-
+		$.cookie.json = true;		
 		$(document).ready(function() {
 
-			
+
 
 			var categoryHierarchy = new CategoryHierarchy(); // To display for a particular project
 
 			var $projectListEles = $("#project-list, #sidenav-project-list, #header-project-list");
 			var $projectDetailsEles = $("#project-details, #sidenav-project-details, #header-project-details");
+			var $annotatorsTable = $("#annotators-table");
+			var $annotatorsDataTable = $annotatorsTable.dataTable({
+				data: [],
+				columns: [
+					{data: "username", title: "Username"},
+					{data: "docgroups_annotated_this_project_count", title: "# Annotations"},
+					{data: "download_link", title: ""}
+				],
+				columnDefs: [
+					{"targets": 0, "width": "30%"},
+					{"targets": 1, "width": "60%"},
+					{ "targets": 2,
+					  "width": "10%",
+					  "render": function(data) {
+
+					  	if(!data.enough_annotations) {
+					  		return ''; // href="#{base_url}projects/' + data['project_id'] + '/download_annotations?user=' + data['user_id'] + '
+					  	}
+					  	//return '<span class="right list-show"><a role=\"button\" onclick=\"return downloadAnnotations(\'' + data['project_id'] + '\', \'' + data['user_id'] + '\')\" href=\"javascript:void(0)\" class="button download-annotations-button"><i class="fa fa-lg fa-download"></i>&nbsp;&nbsp;Download</a></span>';
+					  	return '<span class="right list-show"><a href=\"projects/' + data['project_id'] + '/download_annotations/' + data['user_id'] + '\" class="button download-annotations-button"><i class="fa fa-lg fa-download"></i>&nbsp;&nbsp;Download</a></span>';
+					  	}
+					}					
+				],
+				language: {
+			        	"info": "Showing _START_ to _END_ of _TOTAL_ annotators"
+
+			    },
+
+			});
 
 			// Clear the hash in the URL.
 			function clearHash() {
@@ -330,6 +359,41 @@ block scripts
 				// Displays the details page of a particular project.
 				// Hides the projects list and projects lists sidenav.
 				function displayProjectDetails(project) {
+
+
+					function getProjectDetails(next) {
+						$.ajax({
+							url: 'projects/' + project._id,
+							method: 'get',
+							headers: { 'csrf-token': csrfToken },
+							data: {							
+							},	
+							success: function(data) {
+								console.log(data);
+								$annotatorsDataTable.DataTable().clear().columns.adjust().draw();
+								$annotatorsDataTable.DataTable().rows.add(data['annotators']).draw();
+
+								//- $('#annotators-table').DataTable( {
+								//- 	data: data,
+								//- 	columns: [
+								//- 		{title: "Username"},
+								//- 		{title: "docgroups_annotated_count"}
+								//- 	]
+								//- });
+								next();
+							},
+							error: function(err) {
+								next(err);
+							}
+					    });
+					}
+					
+					getProjectDetails(function() {
+						console.log("retrieved project details");
+					})
+					
+
+
 					$projectListEles.removeClass("show");
 					$projectDetailsEles.addClass("show");
 					window.location.hash = project._id;

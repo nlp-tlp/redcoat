@@ -634,11 +634,11 @@ block scripts
 								t.addClass(tags[j]);
 							}
 						}
-						//if(tags.includes("tag-begin")) var prefix = "B-";
-						//else var prefix = "I-";
+						if(tags.includes("tag-begin")) var prefix = "B-";
+						else var prefix = "I-";
 						//var prefix = "";
 						var tc =  entity_classes[$(this).attr("data-tag-class")] || "O";
-						//if(tc == "O") prefix = "";
+						if(tc == "O") prefix = "";
 						//if(tc == null || tc.length == 0) { console.log(tc, entity_classes[$(this).attr("data-tag-class")])}
 
 						if(i > annotatedTags[sentenceIndex].length) {
@@ -647,7 +647,7 @@ block scripts
 							console.log(e)
 						}
 
-						annotatedTags[sentenceIndex][i] = tc //prefix + tc;//tagClass - 1;
+						annotatedTags[sentenceIndex][i] = prefix + tc; //prefix + tc;//tagClass - 1;
 					});
 									
 					if(moveAfterwards) {
