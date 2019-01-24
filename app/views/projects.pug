@@ -176,6 +176,8 @@ block scripts
 				}
 
 				// Create the dataTable.
+
+
 				var $loadingTable = $("#loading-table");
 			    var dataTable = $('#projects-table').DataTable( {
 			        "ajax": {
@@ -344,10 +346,13 @@ block scripts
 
 				function initComplete() {
 					$loadingTable.removeClass("show");
+					$("#projects-table_info").addClass("loaded");
 					$("#projects-table").removeClass("not-loaded");
 					$("#project-details").removeClass("not-loaded");
+
 					next(dataTable);
 				}
+
 			}
 
 			// Initialise the page display (the ability to click on a project and view its details, hierarchy, etc).

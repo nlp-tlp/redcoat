@@ -508,6 +508,12 @@ table.dashboard-project {
 .not-loaded {
 	visibility: hidden;
 }
+#projects-table_info {
+	visibility: hidden;
+}
+#projects-table_info.loaded {
+	visibility: visible;
+}
 
 
 // #projects-table_paginate .paginate_button {

@@ -160,7 +160,7 @@ module.exports.downloadAnnotationsOfUser = function(req, res) {
 
           res.type('.txt');
           res.setHeader('Content-type', "application/octet-stream");
-          res.set({"Content-Disposition":"attachment; filename=\"annotations-" + user.username + "\""});
+          res.set({"Content-Disposition":"attachment; filename=\"annotations-" + user.username + ".txt\""});
           res.send(annotations_conll);
           //res.send(annotations);
         });        
