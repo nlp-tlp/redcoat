@@ -1,6 +1,8 @@
+var BASE_URL = require('config/base_url').base_url;
+
 module.exports.index = function(req, res) {
   if(req.user) {
-    return res.redirect('/projects');
+    return res.redirect(BASE_URL + 'projects');
   }
   res.render('homepage', {title: "Welcome"});
 }
