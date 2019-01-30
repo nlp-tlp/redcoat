@@ -1,0 +1,16 @@
+li
+	span.invite
+		<span class="link">#{invite.inviting_user_username}</span> has invited you to annotate <span class="link">#{invite.project_name}</span>.
+		<form class="invite-form" action="projects/invitations/#{invite._id}" method="post">
+			<button class="accept" formaction="/accept">Accept</button>
+			<button class="decline" formaction="/decline">Decline</button>
+		</form>
+		<span class="invite-form-loading">
+			<span><i class="fa fa-cog fa-spin"></i>&nbsp;Loading...</span>
+		</span>
+		<span class="invite-form-accepted">
+			<span><i class="fa fa-check"></i>&nbsp;Invitation accepted! <a href="#{base_url}projects##{invite.project_id}">(Go to project)</a></span>
+		</span>
+		<span class="invite-form-declined">
+			<span><i class="fa fa-close"></i>&nbsp;Invitation declined.</span>
+		</span>

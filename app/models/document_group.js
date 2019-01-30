@@ -27,6 +27,10 @@ var DocumentGroupSchema = new Schema({
   display_name: {
     type: String,
     default: "UnnamedGroup"
+  },
+  last_recommended: { // Keeps track of the time the document was last recommended, in order to aid sorting
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: { 

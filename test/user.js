@@ -218,10 +218,10 @@ describe('Users', function() {
                   cf.createValidProject(7,  user2._id),
                   cf.createValidProject(18, user2._id),
                   ];
-      projs[0].user_ids.push(user1._id);
-      projs[0].user_ids.push(user2._id);
-      projs[1].user_ids.push(user1._id);
-      projs[1].user_ids.push(user2._id);
+      projs[0].user_ids.active.push(user1._id);
+      projs[0].user_ids.active.push(user2._id);
+      projs[1].user_ids.active.push(user1._id);
+      projs[1].user_ids.active.push(user2._id);
 
       p1_id = projs[0]._id;
       p2_id = projs[1]._id;
@@ -245,7 +245,7 @@ describe('Users', function() {
     afterEach(function(done)  { cf.dropMongooseDb(done); });    
 
 
-    it('should delete user_id from associated projects\' user_ids when deleted', function(done) {
+    it('should delete user_id from associated projects\' user_ids.active when deleted', function(done) {
       User.findById(user2, function(err, user) {
         user.remove(function(err) { 
           Project.findById(p1_id, function(err, proj) {

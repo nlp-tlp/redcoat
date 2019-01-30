@@ -392,13 +392,21 @@ exports.upload_tokenized = function(req, res, next) {
 
 exports.submit_new_project_form = function(req, res, next) {
   wip_project = res.locals.wip_project;
-  wip_project.convertToProject(function(err, project) {
+  wip_project.convertToProject(function(err, failed_invitations, project) {
+
+
+    // TODO: Have a secondary 'err' just related to invitation errors, as they are sent out AFTER the project is created.
+
     //console.log(err);
     if(err) {
       console.log(err);
       res.render("temp-render-form", {err: err });
       return;
-    } else {
+    } else if(failed_invitations.length > 0) { // Invitation err occurs when the invitations weren't sent out.
+      var invitations_err = "The following invitations failed to send: <br/>" + failed_invitations.join("<br/>");
+      res.render("temp-render-form", {err: invitations_err });
+      return;
+    } {
       project.getDocumentGroups(function(err2, document_groups) {
         project.getFrequentTokens(function(err3, frequent_tokens) {
           if(err) {

@@ -85,7 +85,26 @@ app.use(function(req, res, next) {
   res.locals.csrfToken = req.csrfToken();
   res.locals.user = req.user;
   res.locals.path = req.path;
-  next(null, req, res);
+  res.locals.project_invitations = null;
+  if(req.user) {
+
+    req.user.getProjectInvitations(function(err, invitations) {
+      res.locals.project_invitations = invitations;
+      console.log("Invitations:", invitations)
+
+      req.user.getRecentProjects(function(err, recent_projects) {
+
+        res.locals.recent_projects = recent_projects;
+        console.log("Recent projects:", res.locals.recent_projects);
+        next(null, req, res);
+
+      });
+      
+    });
+  } else {
+    next(null, req, res);
+  }
+  
 })
 
 
@@ -122,6 +141,8 @@ var routes = {
 for(var i in routes) {
   app.use(routes[i][0], routes[i][1]);
 }
+
+
 
 
 // catch 404 and forward to error handler

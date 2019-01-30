@@ -3,6 +3,7 @@ var logger = require('config/winston');
 
 var Project = require('app/models/project');
 var DocumentGroupAnnotation = require('app/models/document_group_annotation')
+var ProjectInvitation = require('app/models/project_invitation')
 
 // The project dashboard. Renders the projects page that lists all the projects of a user.
 // Doesn't actually send any projects - that's done by 'getProjects', via AJAX.
@@ -33,21 +34,27 @@ module.exports.getProjects = function(req, res) {
 // The tagging interface.
 module.exports.tagging = function(req, res) {
   var id = req.params.id;
+  var user = req.user;
   Project.findOne({ _id: id }, function(err, proj) {
     if(err) {
       res.send("error");
     }
-    console.log(proj)
-    proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
-      if(err) { res.send("error"); }
-      res.render('tagging', { 
-       projectName: proj.project_name,
-       tagging: true,
-       title: "Annotation Interface",
-       numDocuments: proj.file_metadata['Number of documents'],
+    user.addProjectToRecentProjects(proj, function(err) {
+      proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
+        if(err) { res.send("error"); }
+        res.render('tagging', { 
+         projectName: proj.project_name,
+         tagging: true,
+         title: "Annotation Interface",
+         numDocuments: docGroupsPerUser,
+        });
+
       });
 
-    })
+    });
+
+
+
 
   });
 }
@@ -74,7 +81,7 @@ module.exports.getDocumentGroup = function(req, res) {
               documentGroupId: docgroup._id,
               documentGroup: docgroup.documents,
               entityClasses: proj.category_hierarchy,
-              annotatedDocGroups: annotatedDocGroups * 10,
+              annotatedDocGroups: annotatedDocGroups,
               pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\""          
           });
         });
@@ -186,4 +193,44 @@ module.exports.getProjectDetails = function(req, res) {
     });
    
   });
+}
+
+
+
+module.exports.acceptInvitation = function(req, res) {
+  var invitation_id = req.params.id;
+
+  setTimeout(function() {
+
+  // TODO: Verify user is same as user_email in ProjectInvitation object
+  ProjectInvitation.findById(invitation_id, function(err, invitation) {
+    if(err) { return res.send("error"); }
+    invitation.acceptInvitation(function(err) {
+      if(err) { return res.send("error"); }
+      res.send({success: true});
+    });    
+  });
+
+
+  }, 1)
+  
+  
+}
+
+module.exports.declineInvitation = function(req, res) {
+  var invitation_id = req.params.id;
+
+  setTimeout(function() {
+
+  // TODO: Verify user is same as user_email in ProjectInvitation object
+  ProjectInvitation.findById(invitation_id, function(err, invitation) {
+    if(err) { return res.send("error"); }
+    invitation.declineInvitation(function(err) {
+      if(err) { return res.send("error"); }
+      res.send({success: true});
+    });    
+  });
+
+
+  }, 1)
 }

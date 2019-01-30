@@ -24,7 +24,6 @@ describe('Projects', function() {
   st.runProjectNameTests(Project);
   st.runProjectDescriptionTests(Project);
   st.runProjectUserIdTests(Project);
-  st.runProjectUserIdsTests(Project);
   //st.runProjectValidLabelsTests(Project);
 
 
@@ -32,6 +31,58 @@ describe('Projects', function() {
 
 
 
+  describe("user_ids.active", function() {
+
+    var user1, user2, user3;
+
+    beforeEach(function(done) { 
+      user1 = cf.createValidUser();
+      user2 = cf.createValidUser();
+      user3 = cf.createValidUser();
+      cf.registerUsers([user1, user2, user3], function(err) { }, done);
+    });
+    afterEach(function(done)  { cf.dropMongooseDb(done); });
+
+    it('should fail validation if user_ids.active contains the same user twice', function(done) {
+
+      var proj1 = cf.createValidProjectOrWIPP(Project, 1, user1._id);
+
+
+      proj1.user_ids.active.push(user2._id);
+      proj1.user_ids.active.push(user3._id);
+      proj1.user_ids.active.push(user3._id);
+
+      proj1.validate(function(err) {
+        expect(err.errors["user_ids.active"]).to.exist;
+        done();
+      });  
+
+    });
+
+    it('should place the admin of the project into user_ids.active', function(done) {
+      var proj1 = cf.createValidProjectOrWIPP(Project, 1, user1._id);
+      proj1.validate(function(err) { 
+        expect(err).to.not.exist;
+        proj1.save(function(err, proj) {
+          expect(proj.user_ids.active).to.include(user1._id); 
+          done();
+        });
+      });         
+    }); 
+
+    it('should pass validation if the project creator is already in the users array prior to validation', function(done) {
+
+      var proj1 = cf.createValidProjectOrWIPP(Project, 1, user1._id);
+
+      proj1.user_ids.active.push(user1._id); // Same as creator, but should still validate correctly because it won't be added twice
+      proj1.user_ids.active.push(user2._id);
+      proj1.validate(function(err) {
+        expect(err).to.not.exist;
+        expect(proj1.user_ids.active.length).to.equal(2);
+        done();
+      });
+    });
+  });
 
 
 

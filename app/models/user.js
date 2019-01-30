@@ -32,6 +32,24 @@ passwordValidation = [
   { validator: cf.validateNotBlank, msg: "Password may not be blank." },
 ];
 
+
+var RecentProject = new Schema({
+  project_id: {
+    type: String,
+    ref: 'Project',
+    unique: true,
+  },
+  project_name: String,
+  date: {
+    type: Date,
+    default: Date.now
+  }
+}, {
+  _id: false,
+  id: false
+});
+
+
 // create a schema
 var UserSchema = new Schema({
   
@@ -41,6 +59,7 @@ var UserSchema = new Schema({
     type: String,
     required: true,
     unique: true,
+    index: true,
     minlength: 1,
     maxlength: USERNAME_MAXLENGTH,
     validate: cf.validateNotBlank
@@ -64,7 +83,16 @@ var UserSchema = new Schema({
     type: [mongoose.Schema.Types.ObjectId],
     index: true,
     default: [],
-  }
+  },
+
+  
+  
+  recent_projects: [RecentProject],
+
+
+
+
+  
 }, {
   timestamps: { 
     createdAt: "created_at",
@@ -96,13 +124,118 @@ UserSchema.methods.verifyEmailUnique = function(done) {
   });
 }
 
+
+// Retrieve a sorted list of this user's recent projects.
+UserSchema.methods.getRecentProjects = function(done) {
+  var t = this;
+  console.log(t)
+  User.aggregate([
+    { $match: { _id: t._id }},
+    {
+       $project: {
+         _id: false,
+         recent_projects: 1,
+       }
+    },
+    { $unwind: "$recent_projects" },
+    {
+      $sort: {
+        "recent_projects.date": -1
+      }
+    },
+    {
+      $replaceRoot: { newRoot: "$recent_projects"}
+    },
+    {
+      $limit: 5,
+    }
+
+    ,
+  ], function(err, results) {
+    if(err) return done(err);
+    console.log(err, results);
+    var final_results = [];
+    if(results != null) {
+      final_results = results;
+    }
+    done(err, final_results);
+  })
+
+}
+
+// Add a project to this user's "recent_projects" array.
+// If it is already there, update the date.
+UserSchema.methods.addProjectToRecentProjects = function(proj, done) {
+  t = this;
+  console.log(t, proj);
+
+  User.update(
+    { _id: t._id, "recent_projects.project_id": proj._id },
+    { $set: 
+      { "recent_projects.$.date": Date.now() }
+    }, function(err) {
+      console.log(err);
+    }
+  )
+
+  User.update(
+    { _id: t._id, "recent_projects.project_id": { "$ne": proj._id } },
+    { $push:
+      { recent_projects:
+        { project_id: proj._id, project_name: proj.project_name }
+      }
+    }, function(err) {      
+    console.log(err)
+    done(err);
+  });
+}
+
+
+// Get all project invitations of the user.
+UserSchema.methods.getProjectInvitations = function(done) {
+
+  var ProjectInvitation = require('./project_invitation');
+  var t = this;
+  ProjectInvitation.aggregate([
+    { $match: { user_email: t.email }},
+    { $lookup: {
+        from: "projects",
+        localField: "project_id",
+        foreignField: "_id",
+        as: "project"
+      }
+    },
+    { $lookup: {
+        from: "users",
+        localField: "inviting_user_id",
+        foreignField: "_id",
+        as: "inviting_user"
+      }
+    },
+    { $unwind: "$project"},
+    { $unwind: "$inviting_user"},
+    {
+      $project: {
+        _id: 1,
+        project_id: "$project._id",
+        project_name: "$project.project_name",
+        inviting_user_username: "$inviting_user.username",
+      }
+    }
+  ], function(err, invitations) {
+    //invitations['project_name'] = invitations['project_name'][0]
+    //invitations['inviting_user_username'] = invitations['inviting_user_username'][0];
+    done(err, invitations);
+  });
+}
+
 // Todo: Get all projects this user is the admin of.
 
 // Gets all projects the user is involved in.
 UserSchema.methods.getProjects = function(done) {
   var tid = this._id;
   var Project = require('./project')
-  Project.find( { user_ids: { $elemMatch : { $eq : tid } } } ).sort('-created_at').lean().exec(function(err, projs) {
+  Project.find( { "user_ids.active": { $elemMatch : { $eq : tid } } } ).sort('-created_at').lean().exec(function(err, projs) {
     if(err) { done(new Error("There was an error attempting to run the find projects query.")); return; }
     else { done(null, projs); return; }
   });
@@ -116,6 +249,7 @@ UserSchema.methods.getProjectsTableData = function(done) {
   var t = this;
   this.getProjects(function(err, projects) {
     if(err) return done(err);
+    if(projects.length == 0) return done(null, []);
     var tableData = [];
 
 
@@ -126,6 +260,7 @@ UserSchema.methods.getProjectsTableData = function(done) {
         p.getDocumentGroupsAnnotatedByUserCount(t, function(err, count) {  
           p.getDocumentGroupsPerUser(function(err, required) {
             project["percent_complete_yours"] = count / required * 100;
+            project["user_is_owner"] = t._id.equals(p.user_id);
             tableData.push(project);
 
             if(projects.length == 0) {
@@ -140,6 +275,8 @@ UserSchema.methods.getProjectsTableData = function(done) {
       
     }
    
+
+
     loadProject(projects, tableData, done);
 
     // for(var i in projects) {
@@ -160,7 +297,7 @@ UserSchema.methods.removeSelfFromAllProjects = function(done) {
   function removeFromProjects(projs, t_id, done) {
     var Project = require('./project')
     proj = projs.pop()
-    Project.update( {_id: proj._id}, { $pull: { user_ids : t_id } }, function(err, proj) {
+    Project.update( {_id: proj._id}, { $pull: { "user_ids.active" : t_id } }, function(err, proj) { // TODO: Change this to all user fields, not just active
       if(err) { done(new Error("Error removing user id from projects")); return; }
       if (projs.length > 0) removeFromProjects(projs, t_id, done);
       else done();

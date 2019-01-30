@@ -260,6 +260,16 @@ span.progress-bar {
 	background: #eaeaea;
 	line-height: 130%;
 	position: relative;
+	&.thin {
+		display: block;
+		line-height: 100%;
+		height: 16px;
+		border: none;
+		.inner {
+			display: block;
+			height: 16px;
+		}
+	}
 	&.large {
 		line-height: 260%;
 	}

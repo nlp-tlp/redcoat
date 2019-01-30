@@ -14,4 +14,7 @@ router.get('/:id/tagging/getDocumentGroup', projectController.getDocumentGroup);
 router.post('/:id/tagging/submitAnnotations', projectController.submitAnnotations);
 router.get('/:id/download_annotations/:user_id', projectController.downloadAnnotationsOfUser);
 
+router.post('/invitations/:id/accept', projectController.acceptInvitation);
+router.post('/invitations/:id/decline', projectController.declineInvitation);
+
 module.exports = router;

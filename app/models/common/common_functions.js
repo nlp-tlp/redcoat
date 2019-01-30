@@ -441,21 +441,6 @@ module.exports = {
 	  });
 	},
 
-	// Adds the creator of the project (or WIP Project) to its list of user_ids if it is not there.
-	addCreatorToUsers: function() {
-	  //if(this.user_ids == undefined) {
-	   // this.user_ids = [];
-
-	  //}
-	  // var s = new Set(this.user_ids);
-   //  console.log("SSSS:", s)
-	  // if(s.has(str(this.user_id))) {
-	  //   next();
-	  // } else {
-    if(!this.user_ids) { this.user_ids = []; }
-	  this.user_ids.push(this.user_id);
-	  // }
-	},
 
   // Removes invalid and duplicate emails, and truncates the list of emails to n = USERS_PER_PROJECT_MAXCOUNT
   removeInvalidAndDuplicateEmails: function(user_email, next) {
@@ -510,6 +495,15 @@ module.exports = {
       type: String,
       required: true,
       unique: true,
+      minlength: 1,
+      lowercase: true,
+      maxlength: EMAIL_MAXLENGTH,
+      validate: emailValidation
+    },
+
+    email_nonunique: { 
+      type: String,
+      required: true,
       minlength: 1,
       lowercase: true,
       maxlength: EMAIL_MAXLENGTH,

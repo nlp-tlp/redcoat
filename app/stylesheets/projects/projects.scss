@@ -283,12 +283,10 @@ table.dashboard-project {
 	// 		text-decoration: none;
 	// 	}
 	// }
-	tr:hover span.progress-bar {
-		color: white;
-		.inner {
-			background: linear-gradient(darken($primary-red, 21), darken($primary-red, 28));
-		}	
+	tr:not(:hover) span.progress-bar.coloured .inner {
+		background: linear-gradient(#ddd, #cacaca);
 	}
+
 	
 
 	ul.metadata {
@@ -403,12 +401,18 @@ table.dashboard-project {
 	span.data-unknown {
 		color: #aaa;
 	}
+	li.hide {
+		display: none;
+	}
 
 }
 
 
 
-
+div#dashboard p {
+	line-height: 150%;
+	margin: 10px 0;
+}
 #dashboard {
 	#project-details, #project-list {
 		opacity: 0;
@@ -529,12 +533,12 @@ table.dashboard-project {
 
 
 
-.annotators-table-wrapper {
+.annotations-table-wrapper {
 	width: 80%;
 	margin: 0 auto;
 }
 
-#annotators-table {
+#annotations-table {
 
 	margin: 0 auto;
 	margin-bottom: 40px;

@@ -40,7 +40,14 @@ block content
 			li.done Allow project owners to download annotation results
 			li.done "Overlap" between annotators, so each document may be annotated more than once
 			li.done A progress bar on the annotation interface so users know how many documents remain
-			li.done A list of annotators on the Project summary page	
+			li.done A list of annotators on the Project summary page
+			li.done Better "recommendation" of document groups for annotator, based on group that was recommended last (to minimise the chance of two people getting the same group)
+			li.done Update Project schema to have active, inactive, invited, and declined users
+			li.done Display project details page differently depending on whether user owns project or not
+			li.done Links to most recently-annotated projects under "Projects" in the navigation bar
+			li Display a list of annotators on the project details page (only viewable by project creator)
+			li Present a message when user has finished their annotation task for a project
+			li Safeguarding against user attempting to load project they don't belong to
 			li Distribute annotation projects to annotators via email
 				ul
 					li An "invitation system" whereby Redcoat automatically sends invitations to users upon a project's creation, for them to accept or decline
@@ -60,16 +67,17 @@ block content
 		p The features below will be added after the initial release (listed in descending order of importance).
 		ul
 			li Make it possible for the project creator to not also be an annotator
-			li User profile page			
+			li User profile page		
+			li Ability to "undo" the declining of invitations	
 			li Modify project settings on the Project summary page
 			li Automatic tagging of frequently-tagged words
 			li More concept hierarchies, such as medical
 			li Visualisation of annotation results for project creators
 			li Visualisation of annotator activity on Project page
 			li Modify category hierarchy during annotation
-			li Add "inter-rater reliability" scoring for annotators of a project.
-			li Allow project owners to download all annotation results at once (not just per-user). When more than one user has annotated a document, the annotations of the user with the highest inter-rater reliability score will be chosen.
-			li Links to most recently-annotated projects under "Projects" in the navigation bar
+			li Add "inter-rater reliability" scoring for annotators of a project
+			li Allow project owners to download all annotation results at once (not just per-user). When more than one user has annotated a document, the annotations of the user with the highest inter-rater reliability score will be chosen
+			
 			li Support for the annotation of other NLP tasks, such as Lexical Normalisation
 			li Allow project creators to browse their annotators' annotations in-browser
 			li Better display on mobile devices

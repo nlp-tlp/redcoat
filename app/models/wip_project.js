@@ -8,6 +8,7 @@ var cf = require("./common/common_functions")
 var Project = require("./project")
 var DocumentGroup = require("./document_group")
 var FrequentTokens = require("./frequent_tokens")
+var ProjectInvitation = require("./project_invitation")
 var natural = require('natural');
 var tokenizer = new natural.TreebankWordTokenizer();
 var hp = require('public/javascripts/shared/hierarchy_presets');
@@ -60,7 +61,6 @@ var WipProjectSchema = new Schema({
   // documents: cf.fields.all_documents,
 
   // The users who will be annotating the project.
-  //user_ids: cf.fields.user_ids,
 
   user_emails: cf.fields.emails,
 
@@ -360,13 +360,6 @@ WipProjectSchema.methods.convertToProject = function(done) {
       var k = sharedFields[i];
       p[k] = t[k];
     }
-
-    /* TODO:
-
-       For each email, create a User (if they are not already registered).
-       Email an invitation out to each user (a 'please register' for the non-registered users).
-
-    */
     
     t.getDocumentGroups(function(err, document_groups) {
 
@@ -388,17 +381,17 @@ WipProjectSchema.methods.convertToProject = function(done) {
         return done(new Error("A project may only have up to " + cf.DOCUMENT_GROUP_TOTAL_MAXCOUNT + " document groups."));
       }
 
-      var f = new FrequentTokens();
+      // var f = new FrequentTokens();
 
-      var tokens = document_groups[0].documents[0];
+      // var tokens = document_groups[0].documents[0];
 
-      for(var i = 0; i < document_groups.length; i++) {
-        for(var j = 0; j < document_groups[i].documents.length; j++) {
-          for(var k = 0; k < document_groups[i].documents[j].length; k++) {
-            f.addToken(document_groups[i].documents[j][k].toLowerCase(), ["person", "org", "loc", "misc", null][Math.floor(Math.random() * 5)])
-          }
-        }
-      }
+      // for(var i = 0; i < document_groups.length; i++) {
+      //   for(var j = 0; j < document_groups[i].documents.length; j++) {
+      //     for(var k = 0; k < document_groups[i].documents[j].length; k++) {
+      //       f.addToken(document_groups[i].documents[j][k].toLowerCase(), ["person", "org", "loc", "misc", null][Math.floor(Math.random() * 5)])
+      //     }
+      //   }
+      // }
 
 
 
@@ -416,9 +409,9 @@ WipProjectSchema.methods.convertToProject = function(done) {
       // }
 
       // DocumentGroup.collection.insert(docgroupsToCreate, function(err, docgroups) {
-      f.save(function(err, ft) {
+      // f.save(function(err, ft) {
 
-        console.log(Object.keys(f.tokens).length, "tokens total.")
+        // console.log(Object.keys(f.tokens).length, "tokens total.")
 
         // var ff = FrequentTokens.aggregate( [{
         //   $match: {
@@ -429,25 +422,46 @@ WipProjectSchema.methods.convertToProject = function(done) {
         //   console.log(">>>", ee, eee);
         // })
 
-        p.frequent_tokens = ft._id;
-        // Save the project
-        p.save(function(err, project) {
-          if(err) { return done(err) }
-          try {
-          // Remove this WIP Project after completion. (also removes all associated wip document groups via cascade)
-          t.remove(function(err) {
-            if(err) { done(err); return; }
-            done(null, project);
-          });  
-          } catch(e) { console.log(e) }         
-        });
+      //p.frequent_tokens = ft._id;
+      // Save the project
+      var user_emails = t.user_emails;
+      var inviting_user_id = t.user_id;
+      p.save(function(err, project) {
+        if(err) { return done(err) }
+        // Remove this WIP Project after completion. (also removes all associated wip document groups via cascade)
+        t.remove(function(err) {
+          if(err) { done(err); return; }
+
+          // Now that the project has been created, create and send out the ProjectInvitations.
+          // TODO: Create a separate error object for this part.
+          console.log("Creating invitations");
+          // A recursive function that iterates over the wip_project's user_emails and calls ProjectInvitation's "createInvitation" method for each.
+          // failed_invitations is an array of invitation objects that failed to save.
+          function createInvitations(user_emails, failed_invitations, next) {
+            if(user_emails.length == 0) return next(failed_invitations);
+            var u = user_emails.pop();
+            ProjectInvitation.createInvitation(p._id, u, inviting_user_id, function(invitations_err) {
+              if(invitations_err != null) {
+                failed_invitations.push(u);
+              }
+              //if(invitations_err) return next(invitations_err);
+              createInvitations(user_emails, failed_invitations, next);
+            });
+          }
+
+
+          createInvitations(user_emails, [], function(failed_invitations) {
+            console.log("Failed invites:", failed_invitations)
+            done(null, failed_invitations, project);
+          });        
+
+        });  
       });
     });
   });
+  // });
 }
 
-// Adds the creator of the project to its user_ids (as the creator should always be able to annotate the project).
-WipProjectSchema.methods.addCreatorToUsers = cf.addCreatorToUsers;
 
 WipProjectSchema.methods.removeInvalidAndDuplicateEmails = cf.removeInvalidAndDuplicateEmails;
 
@@ -463,8 +477,6 @@ WipProjectSchema.pre('validate', function(next) {
 
 WipProjectSchema.pre('save', function(next) {
   var t = this;
-
-  if (t.isNew) t.addCreatorToUsers();
 
   // 1. Validate admin exists
   var User = require('./user')
