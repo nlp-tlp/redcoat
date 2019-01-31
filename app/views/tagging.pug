@@ -17,10 +17,11 @@ block header
 				span.progress-text <span id="progress-text-num-annotated">-</span>&nbsp;/&nbsp;<span id="progress-text-num-total">#{numDocuments} complete</span>
 
 block content
-
+	#annotation-complete
+		h2 Annotation complete!
+		p Thanks for annotating this project. There are no more documents left for you to annotate.<br/> Please feel free to begin annotating another project, or <a href="#{base_url}setup_project">create your own</a>.
 	div#tagging-container
 		#sentence-tagging
-
 
 block entity_categories_window
 
@@ -414,6 +415,16 @@ block scripts
 
 					loadDocumentGroup(function(err, documentGroupData) {
 						if(err) { console.log(err); }
+						if(documentGroupData === "tagging complete") {
+							$progressTextNumAnnotated.html('');
+							$("#progress-text-num-total").parent().html("Annotation complete!");
+							$progressBarInner.css('width', '100%');						
+							$("#annotation-complete").addClass("show");
+							$("#tagging-menu .category-hierarchy").remove();
+							st.remove(); 
+							if($tree) $tree.empty();
+							return;
+						}
 
 						var groupData = documentGroupData.documentGroup;
 						entity_classes = documentGroupData.entityClasses;

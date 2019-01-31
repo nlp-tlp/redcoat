@@ -160,6 +160,8 @@ DocumentGroupAnnotationSchema.methods.updateProjectNumAnnotations = function(don
 DocumentGroupAnnotationSchema.pre('save', function(next) {
   var t = this;
 
+  
+
   // 1. Verify associated user exists
   var User = require('./user');
   t.verifyAssociatedExists(User, t.user_id, function(err) {

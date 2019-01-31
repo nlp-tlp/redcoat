@@ -45,9 +45,11 @@ block content
 			li.done Update Project schema to have active, inactive, invited, and declined users
 			li.done Display project details page differently depending on whether user owns project or not
 			li.done Links to most recently-annotated projects under "Projects" in the navigation bar
-			li Display a list of annotators on the project details page (only viewable by project creator)
-			li Present a message when user has finished their annotation task for a project
+			li.done Display a list of annotators on the project details page (only viewable by project creator)
+			li.done Present a message when user has finished their annotation task for a project	
+			li.done Refresh projects table when accepting an invitation		
 			li Safeguarding against user attempting to load project they don't belong to
+			li Nicer error display on setup project page
 			li Distribute annotation projects to annotators via email
 				ul
 					li An "invitation system" whereby Redcoat automatically sends invitations to users upon a project's creation, for them to accept or decline
@@ -66,20 +68,22 @@ block content
 
 		p The features below will be added after the initial release (listed in descending order of importance).
 		ul
-			li Make it possible for the project creator to not also be an annotator
 			li User profile page		
-			li Ability to "undo" the declining of invitations	
+			li Ability to "undo" the declining of invitations
+			li Project creators can specify whether a user should be able to exceed 100% annotation progress (i.e. annotate records meant for other annotators when they've finished theirs)	
 			li Modify project settings on the Project summary page
 			li Automatic tagging of frequently-tagged words
 			li More concept hierarchies, such as medical
 			li Visualisation of annotation results for project creators
 			li Visualisation of annotator activity on Project page
+			li Make it possible for the project creator to not also be an annotator
+			li Notification of when you have annotated 100% of documents but there are still documents left to annotate (i.e. progress over 100%)
 			li Modify category hierarchy during annotation
 			li Add "inter-rater reliability" scoring for annotators of a project
-			li Allow project owners to download all annotation results at once (not just per-user). When more than one user has annotated a document, the annotations of the user with the highest inter-rater reliability score will be chosen
-			
+			li Allow project owners to download all annotation results at once (not just per-user). When more than one user has annotated a document, the annotations of the user with the highest inter-rater reliability score will be chosen			
 			li Support for the annotation of other NLP tasks, such as Lexical Normalisation
 			li Allow project creators to browse their annotators' annotations in-browser
+			li Put a crown symbol or something similar next to the project creator's name in the Invitations and Annotations lists
 			li Better display on mobile devices
 			li Gamification, i.e. the ability to earn "points" during annotation and increase ranking
 			

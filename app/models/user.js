@@ -212,6 +212,7 @@ UserSchema.methods.getProjectInvitations = function(done) {
         as: "inviting_user"
       }
     },
+    { $sort: { "created_at": -1 } },
     { $unwind: "$project"},
     { $unwind: "$inviting_user"},
     {
@@ -221,7 +222,7 @@ UserSchema.methods.getProjectInvitations = function(done) {
         project_name: "$project.project_name",
         inviting_user_username: "$inviting_user.username",
       }
-    }
+    }    
   ], function(err, invitations) {
     //invitations['project_name'] = invitations['project_name'][0]
     //invitations['inviting_user_username'] = invitations['inviting_user_username'][0];

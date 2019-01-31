@@ -121,6 +121,7 @@ table.dashboard-project {
 	}
 	background: none;
 	border-bottom: 1px solid #d7d7d7;
+	margin-bottom: 30px;
 	.detailed-show {
 		display: none;
 	}
@@ -242,7 +243,7 @@ table.dashboard-project {
 		td {
 			padding: 10px 20px;
 			background: none;
-			background: $sidenav-white-color;
+			background: lighten($sidenav-white-color, 5);
 			color: #222;
 			//border: 1px solid darken($sidenav-white-color, 5);
 			border-left: 18px solid darken($primary-red, 16);
@@ -538,13 +539,15 @@ div#dashboard p {
 	margin: 0 auto;
 }
 
-#annotations-table {
+#annotations-table, #invitations-table {
 
 	margin: 0 auto;
-	margin-bottom: 40px;
+	margin-bottom: 30px;
 	margin-top: 60px;
-	border-collapse: collapse;
-	border: 1px solid #ccc;
+	//border-collapse: collapse;
+	border-bottom: 1px solid #ccc;
+	border-spacing: 0px;
+	
 
 	th, td {
 		padding: 5px 15px;
@@ -583,6 +586,22 @@ div#dashboard p {
 			}
 		}
 	}
+	tr.group {
+		background: none;
+		td {
+			margin-top: 20px;
+			padding: 4px 20px;
+			background: none;
+			background: lighten($sidenav-white-color, 5);
+			color: #222;
+			//border: 1px solid darken($sidenav-white-color, 5);
+			border-left: 18px solid darken($primary-red, 16);
+		}
+		span.sort-info {
+			font-weight: normal;
+			float: right;
+		}
+	}
 	td a.button {
 		height: 30px;
 		margin-top: 3px;
@@ -591,4 +610,59 @@ div#dashboard p {
 		line-height: 30px;
 	}
 
+}
+
+#invitations-table {
+
+	tbody tr, thead tr {
+		td:first-child {
+			width: 50%;
+		}
+		td:nth-child(2), th:nth-child(2) {
+			text-align: left;
+			width: 40%;
+		}
+		td:nth-child(3) {
+			width: 10%;
+		}
+	}
+	thead {
+		display: none;
+	}
+}
+
+#project-details, #project-list {
+
+	.dataTables_paginate {
+		.paginate_button {
+			border: none;
+			font-size: 14px;
+			padding: 10px;
+			width: 40px;
+			height: 40px;
+			border-radius: 50%;
+			background: lighten($sidenav-white-color, 2);
+			line-height: 20px;
+			font-weight: bold;
+
+			&:not(.disabled):hover {
+				background: $primary-red;
+				color: white !important;
+			}
+			&:not(.disabled):focus, &:not(.disabled):active {
+				outline: none;
+				border: none;
+				box-shadow: none;
+				background: lighten($primary-red, 7);
+				color: white !important;
+			}
+			&.disabled {
+				opacity: 0.3;
+				color: darken($sidenav-white-color, 7) !important;
+				&:hover {
+					cursor: default;
+				}
+			}
+		}
+	}
 }

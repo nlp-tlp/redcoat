@@ -222,8 +222,108 @@ ProjectSchema.methods.getDocumentsAnnotatedByUserCount = function(user, next) {
 
 }
 
+// Retrieve a list of all annotators of the project: the active, inactive, and declined users, as well as the pending invitations.
+// For the pending invitations, lookup the user account associated with them (if an account exists), otherwise fill the missing fields with empty strings.
+ProjectSchema.methods.getInvitationsTableData = function(next) {
+
+
+  var User = require('./user');
+  var t = this;
+
+  User.aggregate([
+    { 
+      $facet: {
+        "active_users": [
+          { $match: { _id: { $in: t.user_ids.active } } },
+          { $project: {
+            username: 1,
+            email: 1,
+            _id: 1,
+            }
+          },
+          { $addFields: {
+            status: "Active annotators"
+          }}      
+        ], 
+        "inactive_users": [
+          { $match: { _id: { $in: t.user_ids.inactive } } },
+          { $project: {
+            username: 1,
+            email: 1,
+            _id: 1,
+            }
+          },
+          { $addFields: {
+            status: "Inactive annotators"
+          }}      
+        ], 
+        "declined_users": [
+          { $match: { _id: { $in: t.user_ids.inactive } } },
+          { $project: {
+            username: 1,
+            email: 1,
+            _id: 1,
+            }
+          },
+          { $addFields: {
+            status: "Declined invitation"
+            }
+          }      
+        ]
+      }
+    },
+    { $project: { users: { $setUnion: ['$active_users','$inactive_users','$declined_users']}}},
+    { $unwind: '$users'},
+    { $replaceRoot: { newRoot: "$users" } }
+  ], function(err, project_users) {
+    //console.log(err, project_users); // TODO: add 'last_active'?
+    var ProjectInvitation = require('./project_invitation');
+    // Also obtain all pending invitations and map them to the original user accounts, if they exist, otherwise simply return the email addresses.
+    ProjectInvitation.aggregate([
+      { $match: { project_id: t._id } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user_email",
+          foreignField: "email",
+          as: "user"
+        }
+      },
+      {
+        $project: {
+          _id: "$user._id",
+          username: "$user.username",
+          email: "$user_email",
+        }
+      },
+      {
+        $unwind: {
+          path: "$username",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $unwind: {
+          path: "$_id",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      { $addFields: {
+          status: "Pending invitations"
+        }
+      }
+    ], function(err, pending_users) {
+      console.log("project", project_users)
+      console.log("pending", pending_users)
+      var all_users = project_users.concat(pending_users)
+      console.log(",,,,,,,,,,,,,,,,,,,", all_users)
+      next(err, all_users); 
+    });
+  });
+}
+
 // Retrieve the info of users associated with this project for display in the "Annotations" tab on the Project details page.
-ProjectSchema.methods.getUserInfo = function(next) {
+ProjectSchema.methods.getAnnotationsTableData = function(next) {
   var User = require('./user')
   var t = this;
   User.find({
@@ -375,7 +475,9 @@ ProjectSchema.methods.getDocumentGroupsPerUser = function(next) {
   var overlap = this.overlap;
  
   this.getNumDocumentGroups(function(err, numDocGroups) {
-    var docGroupsPerUser = Math.ceil((1 / numAnnotators * overlap) * numDocGroups);
+    var docGroupsPerUser = Math.ceil((1.0 / numAnnotators * overlap) * numDocGroups);
+
+    console.log(docGroupsPerUser, numAnnotators, overlap, numDocGroups, "<<>>")
     next(err, docGroupsPerUser);
   });
   
@@ -416,9 +518,9 @@ ProjectSchema.methods.recommendDocgroupToUser = function(user, next) {
       }
     }
   ], function(err, docgroups) {
-
+    console.log(err, docgroups, "<<>>")
     if(err) return next(err);
-    if(docgroups.length == 0) { return next("No document groups left") } //TODO: fix this
+    if(docgroups.length == 0) { return next(new Error("No document groups left")) } //TODO: fix this
     var docgroup = docgroups[0];
 
     DocumentGroup.update( {_id: docgroup._id }, { last_recommended: Date.now() }, {}, function(err) {

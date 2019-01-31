@@ -67,11 +67,14 @@ module.exports.getDocumentGroup = function(req, res) {
       res.send("error");
     }
     proj.recommendDocgroupToUser(req.user, function(err, docgroup) {
-      if(err == null && docgroup == null) {
-        return "tagging complete";
-      }
+      console.log(err, docgroup)
+
+      
       if(err) {
-        res.send("error");
+        if(err.message == "No document groups left") {
+          return res.send("tagging complete");
+        }
+        return res.send("error");
       } else {     
 
         logger.debug("Sending doc group id: " + docgroup._id)
@@ -98,38 +101,47 @@ module.exports.submitAnnotations = function(req, res) {
   var projectId = req.params.id;
   var labels = req.body.labels;
 
- 
+  
 
 
 
+  var documentGroupAnnotation = new DocumentGroupAnnotation({
+    user_id: userId,
+    document_group_id: documentGroupId,
+    labels: labels,
+  });
+  documentGroupAnnotation.save(function(err, dga) {
 
-    var documentGroupAnnotation = new DocumentGroupAnnotation({
-      user_id: userId,
-      document_group_id: documentGroupId,
-      labels: labels,
-    });
-    documentGroupAnnotation.save(function(err, dga) {
+    if(err) {
+      logger.error(err.stack);
+      return res.send({error: err})
+    }
 
-      if(err) {
-        logger.error(err.stack);
-        return res.send({error: err})
-      }
+    // Add the docgroup to the user's docgroups_annotated array.
 
-      // Add the docgroup to the user's docgroups_annotated array.
+    console.log(dga._id)
+    User.findByIdAndUpdate(userId, { $addToSet: { 'docgroups_annotated': documentGroupId }}, function(err) {
+      console.log(req.user);
 
-      console.log(dga._id)
-      User.findByIdAndUpdate(userId, { $addToSet: { 'docgroups_annotated': documentGroupId }}, function(err) {
-        console.log(req.user);
+        if(err) {
+          logger.error(err.stack);
+          res.send({error: err})
+        } else {
 
-          if(err) {
-            logger.error(err.stack);
-            res.send({error: err})
-          } else {
-            console.log("doneeeeewtf")
+          DocumentGroup = require('app/models/document_group')
+          // Update the document group's times_annotated field
+          DocumentGroup.update({_id: documentGroupId}, { $inc: {times_annotated: 1 } }, function(err) {
+
+            if(err) return res.send("error");
             logger.debug("Saved document group annotation " + dga._id)
             res.send({success: true});
-          }      
-      })
+
+          });
+
+
+         
+        }      
+    });
 
 
 
@@ -181,15 +193,17 @@ module.exports.downloadAnnotationsOfUser = function(req, res) {
 module.exports.getProjectDetails = function(req, res) {
   var id = req.params.id;
 
-
-
   Project.findOne({ _id: id}, function(err, proj) {
 
-    proj.getUserInfo(function(err, users) {
+    proj.getAnnotationsTableData(function(err, annotations) {
       if(err) { res.send("error") }
+      proj.getInvitationsTableData(function(err, invitations) {
+        if(err) { res.send("error") }
         res.send( {
-          annotators: users
-        });    
+          invitations: invitations,
+          annotations: annotations
+        });   
+      }); 
     });
    
   });

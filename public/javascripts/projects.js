@@ -5,9 +5,11 @@ $.cookie.json = true;
 
 			var categoryHierarchy = new CategoryHierarchy(); // To display for a particular project
 
+			// Initialise the annotationsTable (the table of annotators and their annotations)
 			var $projectListEles = $("#project-list, #sidenav-project-list, #header-project-list");
 			var $projectDetailsEles = $("#project-details, #sidenav-project-details, #header-project-details");
 			var $annotationsTable = $("#annotations-table");
+			var $invitationsTable = $("#invitations-table");
 			var $annotationsDataTable = $annotationsTable.dataTable({
 				data: [],
 				columns: [
@@ -31,11 +33,58 @@ $.cookie.json = true;
 					}					
 				],
 				language: {
-			        	"info": "Showing _START_ to _END_ of _TOTAL_ annotators"
-
+			        	"info": "Showing _START_ to _END_ of _TOTAL_ annotators",
+			        	"paginate": {
+			        		"previous": "<i class='fa fa-chevron-left'></i>",
+			        		"next": "<i class='fa fa-chevron-right'></i>"
+			        	}
 			    },
 
 			});
+
+
+			var $invitationsDataTable = $invitationsTable.dataTable({
+				data: [],
+				columns: [
+					{data: "email", title: "Email address"},
+					{data: "_id", title: "", defaultContent: ""},
+					{data: "status", visible: false, searchable: true},
+				],
+				columnDefs: [
+					{"targets": 0, "render": function(data, type, row) {
+
+						var username = row['username'];
+						if(username) {
+							//username = "(<a>" + username + "</a>)"; // TODO: Add link to user profile
+							username = "(" + username + ")";
+						} else {
+							username = "<span class='data-unknown'>(not registered)</span>"
+						}
+						return data + " " + username;
+					}},
+					{"targets": 1, "render": function(data) { return ''; } }		
+
+				],
+				"orderFixed": [2, 'asc'],
+				language: {
+			        	"info": "Showing _START_ to _END_ of _TOTAL_ invitations",
+			        	"paginate": {
+			        		"previous": "<i class='fa fa-chevron-left'></i>",
+			        		"next": "<i class='fa fa-chevron-right'></i>"
+			        	}
+			    },
+			    "rowGroup": {
+		        	dataSrc: "status",
+		        	"startRender": function(rows, group) {
+					  	return group;
+					}
+			    },
+			});
+
+
+
+			// Initialise the annotatorsTable (the table of *all* annotators of the project)
+
 
 			// Clear the hash in the URL.
 			function clearHash() {
@@ -179,7 +228,11 @@ $.cookie.json = true;
 			        },
 			        "language": {
 			        	"info": "Showing _START_ to _END_ of _TOTAL_ projects",
-			        	"infoFiltered": "(filtered from _MAX_ projects)"
+			        	"infoFiltered": "(filtered from _MAX_ projects)",
+			        	"paginate": {
+			        		"previous": "<i class='fa fa-chevron-left'></i>",
+			        		"next": "<i class='fa fa-chevron-right'></i>"
+			        	}
 
 			        },
 			        "initComplete": function() {
@@ -250,6 +303,25 @@ $.cookie.json = true;
 					changeDisplay($(this).val());
 				});
 
+				// Refresh table upon accepting invitation
+				$("#invitations-menu button").click(function(e) {
+					
+					$("#projects-table_info").removeClass("loaded");
+					$loadingTable.addClass("show");
+					$("#projects-table").addClass("not-loaded");
+					$("#project-details").addClass("not-loaded");
+					if($(this).attr('formaction') == "/accept") {
+						$('#projects-table').DataTable().clear()
+						setTimeout(function() {
+
+						$('#projects-table').DataTable().ajax.reload(initComplete).draw() //ajax.reload().draw();
+						
+						}, 500) // TODO: Make this only load when invitation has been processed
+					}
+					
+
+				});
+
 				// Modify table depending on whether filterBy and display exist (from the cookie)
 				if(filterBy) dataTable.column(4).search(filterBy).draw();				
 				if(display) changeDisplay(display);
@@ -263,6 +335,7 @@ $.cookie.json = true;
 					next(dataTable);
 				}
 
+
 			}
 
 			// Initialise the page display (the ability to click on a project and view its details, hierarchy, etc).
@@ -272,7 +345,7 @@ $.cookie.json = true;
 				var $apButton = $("#annotate-project-button");
 
 				// Tabs that are admin-only, i.e. only the admin of a project may access.
-				var $adminOnlyTabs = $("#li-annotations, #li-metrics, #li-settings, #li-annotators");
+				var $adminOnlyTabs = $(".admin-only-tab");
 
 				// Displays the details page of a particular project.
 				// Hides the projects list and projects lists sidenav.
@@ -289,7 +362,10 @@ $.cookie.json = true;
 							success: function(data) {
 								console.log(data);
 								$annotationsDataTable.DataTable().clear().columns.adjust().draw();
-								$annotationsDataTable.DataTable().rows.add(data['annotators']).draw();
+								$annotationsDataTable.DataTable().rows.add(data['annotations']).draw();
+
+								$invitationsDataTable.DataTable().clear().columns.adjust().draw();
+								$invitationsDataTable.DataTable().rows.add(data['invitations']).draw();
 
 								//- $('#annotations-table').DataTable( {
 								//- 	data: data,
@@ -431,6 +507,8 @@ $.cookie.json = true;
 			initProjectsTable(
 			initPageDisplay
 			);
+
+
 
 			// Decorate the header with random text
 		    $("#background").lipsumBG(false, false);

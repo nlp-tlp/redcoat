@@ -10,12 +10,29 @@
 }
 
 
+#annotation-complete {
+	padding-top: 100px;
+	padding-left: 50px;
+	padding-right: 50px;
+	display: none;
+	p {
+		line-height: 200%;
+	}
+	&.show {
+		display: block;
+	}
+	a {
+		color: $primary-blue;
+	}
+}
+
 #tagging-container {
 	width: 1152px;
 	padding-top: 120px;
 	padding-left: 100px;
 	padding-bottom: 300px;
 	max-width: 100%;
+	min-height: 25vh;
 }
 #sentence-tagging, #ending-message {
 	font-size: 32px;
