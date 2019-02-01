@@ -146,10 +146,10 @@ DocumentGroupAnnotationSchema.methods.verifyUserIdListedInProjectUserIds = funct
   });
 }
 
-DocumentGroupAnnotationSchema.methods.updateProjectNumAnnotations = function(done) {
+DocumentGroupAnnotationSchema.methods.updateProjectNumDocumentGroupAnnotations = function(done) {
   var Project = require('./project');
   Project.findById({_id: this.project_id}, function(err, proj) {
-    proj.updateNumAnnotations(function(err) {
+    proj.updateNumDocumentGroupAnnotations(function(err) {
       done(err);
     });
   });
@@ -198,7 +198,7 @@ DocumentGroupAnnotationSchema.post('save', function(obj) {
   var t = this;
 
   // 1. Update the number of annotations of the project.
-  t.updateProjectNumAnnotations(function(err) {
+  t.updateProjectNumDocumentGroupAnnotations(function(err) {
     
   });
 })

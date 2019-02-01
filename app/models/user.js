@@ -260,6 +260,7 @@ UserSchema.methods.getProjectsTableData = function(done) {
       Project.findById(p._id, function(err, p) {
         p.getDocumentGroupsAnnotatedByUserCount(t, function(err, count) {  
           p.getDocumentGroupsPerUser(function(err, required) {
+            console.log(p.project_name, "<<>>", count, required)
             project["percent_complete_yours"] = count / required * 100;
             project["user_is_owner"] = t._id.equals(p.user_id);
             tableData.push(project);

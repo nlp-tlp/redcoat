@@ -32,7 +32,7 @@ block content
 
 		h3 Pre-release
 		
-		p The features below have yet to be added to Redcoat and will be added prior to release. The features are listed in descending order of importance.
+		p The features below have yet to be added to Redcoat and will be added prior to release.
 
 		ul
 			li.done Correct presentation of "Your projects" and "Projects you've joined" on the Projects page (it is currently randomised)
@@ -46,41 +46,44 @@ block content
 			li.done Display project details page differently depending on whether user owns project or not
 			li.done Links to most recently-annotated projects under "Projects" in the navigation bar
 			li.done Display a list of annotators on the project details page (only viewable by project creator)
-			li.done Present a message when user has finished their annotation task for a project	
+			li.done Present a message when annotator has no documents left to annotate
 			li.done Refresh projects table when accepting an invitation		
-			li Safeguarding against user attempting to load project they don't belong to
-			li Nicer error display on setup project page
-			li Distribute annotation projects to annotators via email
+			li.done Allow project owners to download all annotation results at once (not just per-user). The annotations downloaded are the most commonly-given labels across all annotators of the project
+			li.done Safeguarding against user attempting to load project they don't belong to			
+			li.done Distribute annotation projects to annotators via email
 				ul
 					li An "invitation system" whereby Redcoat automatically sends invitations to users upon a project's creation, for them to accept or decline
-					li Integration with Sendgrid or other automated mailing service
+					li Integration with Sendgrid
 					// The invitation system just needs a new Invitation schema with two fields: email and project_id
 					// No need for user_id, as email is unique as well (remember to put index on it)
 					// Can retrieve all a User's invitations with a simple query (find all invitation where email = user.email)
 					// A mailer will send out email invitations to users upon a project's creation. If the email already exists, invitation
 					// may look different (i.e. "You have been invited to annotate project '...', click here to accept or decline the invitation" vs "You have been invited to annotate project '...', click here to sign up to Redcoat to begin annotating").
 					// Upon accepting an Invitation, the user_id of the accepting user is added to the project's user_ids array, and that invitation is destroyed
-					// (declining an invitation simply destroys that invitation).
+					// (declining an invitation simply destroys that invitation).	
+			li Nicer error display on setup project page and redirection to project upon submission	
 			li Password reset link		
+			li A "Project created!" notification banner upon creating a new project
 			li Further testing of all features listed above	
 
 		h3 Post-release
 
-		p The features below will be added after the initial release (listed in descending order of importance).
+		p The features below will be added after the initial release. The features are listed in descending order of importance.
 		ul
-			li User profile page		
+			li User profile page
+			li Further work on Sendgrid email template to make it look nicer
 			li Ability to "undo" the declining of invitations
-			li Project creators can specify whether a user should be able to exceed 100% annotation progress (i.e. annotate records meant for other annotators when they've finished theirs)	
+			li Project creators can specify whether a user should be able to exceed 100% annotation progress (i.e. annotate records meant for other annotators when they've finished theirs)
 			li Modify project settings on the Project summary page
 			li Automatic tagging of frequently-tagged words
 			li More concept hierarchies, such as medical
 			li Visualisation of annotation results for project creators
 			li Visualisation of annotator activity on Project page
-			li Make it possible for the project creator to not also be an annotator
-			li Notification of when you have annotated 100% of documents but there are still documents left to annotate (i.e. progress over 100%)
+			li Make it possible for the project creator to not also be an annotator (?)
+			li Notification of when you have annotated 100% of documents but there are still documents left to annotate (i.e. progress over 100%), rather than simply continuing at 4/3 progress, for example
 			li Modify category hierarchy during annotation
 			li Add "inter-rater reliability" scoring for annotators of a project
-			li Allow project owners to download all annotation results at once (not just per-user). When more than one user has annotated a document, the annotations of the user with the highest inter-rater reliability score will be chosen			
+			li When there is no most-frequent label of a token, the annotation of the user with the highest inter-rater reliability score should be chosen
 			li Support for the annotation of other NLP tasks, such as Lexical Normalisation
 			li Allow project creators to browse their annotators' annotations in-browser
 			li Put a crown symbol or something similar next to the project creator's name in the Invitations and Annotations lists

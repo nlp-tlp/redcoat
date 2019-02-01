@@ -66,10 +66,11 @@ div#project-details.not-loaded
 					p <strong><span id="d-completed_annotations">---</span>/<span id="d-annotations_required">---</span></strong> document groups annotated (each group contains ~10 documents).
 					p Each document will be annotated by <strong id="d-overlap">---</strong> annotator(s).
 
-				h3 Activity <a href="#">View metrics</a>
-				div.details-box
-					div(style="height: 396px")
-						img(src="" + base_url + "images/activity-example.png" style="height: 396px")
+				div.admin-only-tab
+					h3 Activity <a href="#">View metrics</a>
+					div.details-box
+						div(style="height: 396px")
+							img(src="" + base_url + "images/activity-example.png" style="height: 396px")
 
 				h3 Other info
 				div.details-box
@@ -92,6 +93,8 @@ div#project-details.not-loaded
 
 	div.tab#tab-annotations
 		h2.center Annotations
+		div.annotations-download-box#combined-annotations-box
+			p <span id="combined-annotations-num">??</span> annotations are ready for download. <a href="#" id="combined-annotations-download"><i class="fa fa-download"></i>&nbsp;Download all</a>
 		div.annotations-table-wrapper
 			table.annotations-table#annotations-table
 			//- thead

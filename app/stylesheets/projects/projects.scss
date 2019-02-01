@@ -284,10 +284,17 @@ table.dashboard-project {
 	// 		text-decoration: none;
 	// 	}
 	// }
+
 	tr:not(:hover) span.progress-bar.coloured .inner {
 		background: linear-gradient(#ddd, #cacaca);
 	}
 
+	tr span.progress-bar .inner:before {
+		animation: none !important;
+	}
+	tr:hover span.progress-bar .inner:before {
+		animation: animatedBackground 40s linear infinite !important;
+	}
 	
 
 	ul.metadata {
@@ -313,27 +320,28 @@ table.dashboard-project {
 
 }
 
-#dashboard table a.button {
+#dashboard table a.button, #combined-annotations-download {
 	width: auto;
 	margin: 0;
 	height: 40px;
-	border: 1px solid #222;
+	border: 1px solid darken($primary-blue, 6);
+	color: $primary-blue;
 	border-radius: 3px;
 	margin-top: -2px;
 	font-size: 20px;
-	color: #222;
 	transition: none;
 	padding: 0;
 	padding-left: 11px;
 	padding-top: 1px;
 	font-size: 14px;
 	padding-right: 11px;
-	color: #222;
+	text-decoration: none;
 	&:hover {
 		color: white;
-		background: darken($primary-red, 12);
-		border: 1px solid darken($primary-red, 18);
-		text-decoration: none;
+		background: $primary-blue;
+		border: 1px solid darken($primary-blue, 6);
+		text-decoration: none !important;
+
 	}
 	i {
 		margin-right: 0;
@@ -342,6 +350,20 @@ table.dashboard-project {
 		border: none;
 	}
 
+}
+#combined-annotations-download {
+	padding-top: 7px;
+	padding-bottom: 7px;
+	margin-left: 15px;
+	border-width: 2px;
+	font-weight: bold;
+	background: lighten($primary-blue, 60);
+	&:hover {
+		border-width: 2px;
+	}
+	i {
+		margin-right: 4px;
+	}
 }
 
 
@@ -641,9 +663,12 @@ div#dashboard p {
 			width: 40px;
 			height: 40px;
 			border-radius: 50%;
-			background: lighten($sidenav-white-color, 2);
+			background: lighten($sidenav-white-color, 5);
 			line-height: 20px;
 			font-weight: bold;
+			&.current {
+				background: darken($sidenav-white-color, 2);
+			}
 
 			&:not(.disabled):hover {
 				background: $primary-red;
@@ -666,3 +691,18 @@ div#dashboard p {
 		}
 	}
 }
+
+.annotations-download-box {
+	border: 2px solid #ccc;
+	background: white;
+	text-align: center;
+	margin: 0 auto;
+	width: 75%;
+	border-radius: 4px;
+	padding: 10px 0;
+}
+#combined-annotations-num {
+	font-weight: bold;
+	color: black;
+}
+

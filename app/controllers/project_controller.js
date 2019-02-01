@@ -101,10 +101,6 @@ module.exports.submitAnnotations = function(req, res) {
   var projectId = req.params.id;
   var labels = req.body.labels;
 
-  
-
-
-
   var documentGroupAnnotation = new DocumentGroupAnnotation({
     user_id: userId,
     document_group_id: documentGroupId,
@@ -137,26 +133,9 @@ module.exports.submitAnnotations = function(req, res) {
             res.send({success: true});
 
           });
-
-
-         
-        }      
+        } 
     });
-
-
-
-      
-
-      
-
-    
-  })
-
-  // TODO: Save as a documentGroupAnnotation
-
-  
-  
-
+  });
 }
 
 module.exports.downloadAnnotationsOfUser = function(req, res) {
@@ -175,7 +154,7 @@ module.exports.downloadAnnotationsOfUser = function(req, res) {
       }
       proj.getAnnotationsOfUserForProject(user, function(err, annotations) {
         proj.json2conll(annotations, function(err, annotations_conll) {          
-          if(err) { res.send("error"); }
+          if(err) { return res.send("error"); }
 
           res.type('.txt');
           res.setHeader('Content-type', "application/octet-stream");
@@ -188,20 +167,39 @@ module.exports.downloadAnnotationsOfUser = function(req, res) {
   });
 }
 
+module.exports.downloadCombinedAnnotations = function(req, res) {
+  var proj_id = req.params.id;
+  Project.findById(proj_id, function(err, proj) {
+    console.log(err);
+    proj.getCombinedAnnotations(function(err, annotations) {
+      if(err) return res.send(err);
+      proj.json2conll(annotations, function(err, annotations_conll) {   
+        if(err) return res.send(err);
+        res.type('.txt');
+        res.setHeader('Content-type', "application/octet-stream");
+        res.set({"Content-Disposition":"attachment; filename=\"annotations-combined.txt\""});
+        res.send(annotations_conll);
+      });
+    });
+  });
+
+}
+
 
 // AJAX function to retrieve details of a project (annotators, metrics).
 module.exports.getProjectDetails = function(req, res) {
   var id = req.params.id;
 
   Project.findOne({ _id: id}, function(err, proj) {
-
-    proj.getAnnotationsTableData(function(err, annotations) {
-      if(err) { res.send("error") }
+    proj.getAnnotationsTableData(function(err, annotations, annotationsAvailable) {
+      if(err) { return res.send("error") }
       proj.getInvitationsTableData(function(err, invitations) {
-        if(err) { res.send("error") }
+        if(err) { return res.send("error") }
         res.send( {
           invitations: invitations,
-          annotations: annotations
+          annotations: annotations,
+          combined_annotations_available: annotationsAvailable,
+          project_id: proj._id
         });   
       }); 
     });

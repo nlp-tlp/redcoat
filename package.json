@@ -33,6 +33,7 @@
   },
   "homepage": "https://github.com/Michael-Stewart-Webdev/annotation-tool#readme",
   "dependencies": {
+    "@sendgrid/mail": "^6.3.1",
     "autosize": "^4.0.1",
     "bcrypt": "^1.0.3",
     "body-parser": "^1.18.2",
@@ -69,6 +70,7 @@
     "rootpath": "^0.1.2",
     "serve-favicon": "^2.4.5",
     "shortid": "^2.2.13",
+    "sib-api-v3-sdk": "^7.0.5",
     "stopword": "^0.1.10",
     "winston": "^3.1.0"
   },

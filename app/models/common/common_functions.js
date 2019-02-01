@@ -520,6 +520,10 @@ module.exports = {
 	    validate: documentValidation
 		},
 
+    documents_no_validation: {
+      type: [[String]],
+    },
+
 		all_documents: {
 			type: [[String]],
 			validate: allDocumentValidation,

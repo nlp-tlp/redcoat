@@ -4,12 +4,14 @@ var logger = require('config/winston');
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var DocumentGroup = require('./document_group');
+var DocumentGroupAnnotation = './document_group_annotation';
 var cf = require("./common/common_functions");
 var User = require("./user");
 var nanoid = require('nanoid');
 var FrequentTokens = require('./frequent_tokens');
 
 var moment = require('moment');
+
 
 //USERS_PER_PROJECT_MAXCOUNT = cf.USERS_PER_PROJECT_MAXCOUNT;
 
@@ -103,30 +105,6 @@ ProjectSchema.methods.verifyAssociatedObjectsExist = cf.verifyAssociatedObjectsE
 
 /* Instance methods */
 
-// ProjectSchema.methods.getValidLabels = function() {
-//   var r = [];
-//   for(var i = 0; i < this.valid_labels.length; i++) {
-//     r.push(this.valid_labels[i].label);
-//   }
-//   return r;
-// }
-
-// ProjectSchema.methods.getValidLabelColors = function() {
-//   var r = [];
-//   for(var i = 0; i < this.valid_labels.length; i++) {
-//     r.push(this.valid_labels[i].color);
-//   }
-//   return r;
-// }
-
-// ProjectSchema.methods.getValidLabelsAbbr = function() {
-//   var r = [];
-//   for(var i = 0; i < this.valid_labels.length; i++) {
-//     r.push(this.valid_labels[i].abbreviation);
-//   }
-//   return r;
-// }
-
 // Get the data to appear in the Projects table.
 // user_id is the user calling the getTableData method, needed to determine whether the projects belong to the user or not.
 ProjectSchema.statics.getTableData = function(p, user_id) {
@@ -143,7 +121,8 @@ ProjectSchema.statics.getTableData = function(p, user_id) {
                                       "full_permission": "Annotators may add, rename, and delete categories."}[p.category_hierarchy_permissions]
   project["annotations_required"] = Math.ceil(p.file_metadata["Number of documents"] / 10) * p.overlap;
 
-  project["completed_annotations"] = Math.ceil((p.completed_annotations || 0) / 10);
+  //console.log(p.project_title, p.completed_annotations, "<<>>")
+  //project["completed_annotations"] = (p.completed_annotations || 0) / 10);
 
   //project["percent_complete"] = project["completed_annotations"] / (Math.ceil(project["annotations_required"]/10) * 10) * 100;
   project["percent_complete"] = project["completed_annotations"] / project["annotations_required"] * 100;
@@ -188,6 +167,10 @@ ProjectSchema.methods.getDocumentGroups = function(next) {
 
 ProjectSchema.methods.getNumDocumentGroups = function(next) {
   return DocumentGroup.count({ project_id: this._id }).exec(next);  
+}
+
+ProjectSchema.methods.getNumDocumentGroupAnnotations = function(next) {
+  return DocumentGroupAnnotation.count({ project_id: this._id }).exec(next);  
 }
 
 // Return the number of document groups annotated by the user for this project.
@@ -258,7 +241,7 @@ ProjectSchema.methods.getInvitationsTableData = function(next) {
           }}      
         ], 
         "declined_users": [
-          { $match: { _id: { $in: t.user_ids.inactive } } },
+          { $match: { _id: { $in: t.user_ids.declined } } },
           { $project: {
             username: 1,
             email: 1,
@@ -329,9 +312,8 @@ ProjectSchema.methods.getAnnotationsTableData = function(next) {
   User.find({
       '_id': { $in: t.user_ids.active}
   }).select('username docgroups_annotated').lean().exec(function(err, users){
-      function getUserData(userData, users, next) {
+      function getUserData(userData, annotationsAvailable, users, next) {
         var u = users.pop()
-
         //userData.push(u);
         //userData['docgroups_annotated_count'] = u['docgroups_annotated'].length;
 
@@ -339,31 +321,137 @@ ProjectSchema.methods.getAnnotationsTableData = function(next) {
           t.getDocumentsAnnotatedByUserCount(user, function(err, count) {
             u['docgroups_annotated_count'] = u['docgroups_annotated'].length * 10 // TODO: Change this to not be hardcoded to 10;
             u['docgroups_annotated_this_project_count'] = count;
+            if(count > annotationsAvailable) { annotationsAvailable = count };
             u['project_owner'] = false;
             if(u['_id'].equals(t.user_id)) {
               u['project_owner'] = true;
             }
             u['download_link'] = {'project_id': t._id, 'user_id': u['_id'], 'enough_annotations': u['docgroups_annotated_this_project_count'] > 0};
-            delete u['docgroups_annotated']
+            delete u['docgroups_annotated'];
             userData.push(u);
             
 
             if(users.length == 0) {
-               next(err, userData)
+               next(err, userData, annotationsAvailable)
              } else {
-              getUserData(userData, users, next);
+              getUserData(userData, annotationsAvailable, users, next);
              }
           });
 
         });
       }
 
-      getUserData([], users, function(err, userData) {
-        next(err, userData);
+      getUserData([], 0, users, function(err, userData, annotationsAvailable) {
+        next(err, userData, annotationsAvailable);
       });      
      
   });
 }
+
+
+
+// Retrieve all annotations for this project. For each token, the label selected is the most commonly-given label amongst all annotators of the project.
+// The document groups are returned in the following format:
+// {
+//   id: the id of the document group
+//   documents: the documents of the document group
+//   labels: the labels corresponding to the document group
+//   document_group_display_name: The display name of the document group
+// }
+ProjectSchema.methods.getCombinedAnnotations = function(next) {
+
+  // Javascript implementation of the 'zip' function.
+  // https://gist.github.com/jonschlinkert/2c5e5cd8c3a561616e8572dd95ae15e3
+  function* zip(args) {
+    const iterators = args.map(x => x[Symbol.iterator]());
+    while (true) {
+      const current = iterators.map(x => x.next());
+      if (current.some(x => x.done)) {
+        break;
+      }
+      yield current.map(x => x.value);
+    }
+  }
+
+  // Return the most frequent label in an array of labels.
+  // https://codereview.stackexchange.com/questions/177962/find-the-most-common-number-in-an-array-of-numbers
+  function findMode(numbers) {
+      let counted = numbers.reduce((acc, curr) => { 
+          if (curr in acc) {
+              acc[curr]++;
+          } else {
+              acc[curr] = 1;
+          }
+          return acc;
+      }, {});
+      let mode = Object.keys(counted).reduce((a, b) => counted[a] > counted[b] ? a : b);
+      return mode;
+  }
+
+  var t = this;
+  DocumentGroupAnnotation.aggregate([
+    {
+      $match: {
+        project_id: t._id
+      },
+    },
+    {
+      $group: {
+        _id: "$document_group_id", document_group_annotations: { $push: "$$ROOT" }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        document_group_id: { $arrayElemAt: ["$document_group_annotations.document_group_id", 0] },
+        labels: "$document_group_annotations.labels"
+      }
+    },
+    {
+      $lookup: {
+        from: "documentgroups",
+        localField: "document_group_id",
+        foreignField: "_id",
+        as: "document_group"
+      }
+    },
+    {
+       $project: {
+         _id: 1,
+         annotations: "$document_group_annotations",
+         documents: { $arrayElemAt: ["$document_group.documents", 0] },
+         labels: "$labels",
+         document_group_display_name: { $arrayElemAt: ["$document_group.display_name", 0] }
+       }
+     },
+     
+    ]).allowDiskUse(true)
+    .exec(function(err, document_groups) {
+      if(err) return next(err);
+      try {
+        for(var i in document_groups) {
+          var user_labels = document_groups[i].labels;
+          var final_labels = [];
+          var num_users = user_labels.length;
+          for(var j in user_labels[0]) { // j is doc index
+            var labels = user_labels[0][j];
+            var zipped_labels = [...zip( user_labels.map(function(x) { return x[j] })   )]
+            final_labels.push(new Array(zipped_labels.length));
+            for(k in zipped_labels) {
+              final_labels[j][k] = findMode(zipped_labels[k]);
+            }
+          }
+          delete document_groups[i].labels;
+          document_groups[i].labels = final_labels;
+        }
+      } catch(err) {
+        return next(err);
+      }
+      
+      next(null, document_groups);
+    });
+}
+
 
 // Retrieve all annotations of a user for this project. The data will be in JSON format:
 // {
@@ -432,35 +520,20 @@ ProjectSchema.methods.json2conll = function(annotations, next) {
 
 }
 
-// Update the number of annotations for the project.
+// Update the number of document group annotations for the project.
 // This seems a lot faster than querying it every single time the project page is loaded.
 // This method is called whenever a DocumentGroupAnnotation is saved.
-ProjectSchema.methods.updateNumAnnotations = function(next) {
+ProjectSchema.methods.updateNumDocumentGroupAnnotations = function(next) {
   DocumentGroupAnnotation = require('./document_group_annotation');
   var t = this;
 
-  try {
-    var d = DocumentGroupAnnotation.aggregate([
-    { $match: { project_id: t._id} },
-    { $unwind: "$labels"},
-    {
-      $group: {
-        _id: "$project_id",
-        count: {
-          $sum: 1
-        }
-      }
-    }
-    ], function(err, results) {
-      if(err) next(err);
-      t.completed_annotations = results[0].count;
-
-      //console.log(results[0].count, t.completed_annotations)
-      t.save(function(err, proj) {
-        next(err);
-      });
+  t.getNumDocumentGroupAnnotations(function(err, count) {
+    if(err) { next(err); }
+    t.completed_annotations = count;
+    t.save(function(err) {
+      next(err);
     });
-  } catch(err) { next(err); }
+  });
 }
 
 
@@ -475,9 +548,9 @@ ProjectSchema.methods.getDocumentGroupsPerUser = function(next) {
   var overlap = this.overlap;
  
   this.getNumDocumentGroups(function(err, numDocGroups) {
-    var docGroupsPerUser = Math.ceil((1.0 / numAnnotators * overlap) * numDocGroups);
+    var docGroupsPerUser = 1.0 / numAnnotators * overlap * numDocGroups;
 
-    console.log(docGroupsPerUser, numAnnotators, overlap, numDocGroups, "<<>>")
+    console.log("<<<<", docGroupsPerUser, numAnnotators, numDocGroups, "<<>>")
     next(err, docGroupsPerUser);
   });
   
@@ -486,6 +559,11 @@ ProjectSchema.methods.getDocumentGroupsPerUser = function(next) {
 // Sorts the project's document groups in ascending order of the number of times they have been annotated.
 ProjectSchema.methods.sortDocumentGroupsByTimesAnnotated = function(next) {
   return DocumentGroup.find({ project_id: this._id }).sort('times_annotated').exec(next);
+}
+
+// Returns whether a particular user is the creator of a project.
+ProjectSchema.methods.projectCreatedByUser = function(user_id) {
+  return this.user_id.equals(user_id);
 }
 
 // Returns whether a particular user is subscribed to annotate a project.

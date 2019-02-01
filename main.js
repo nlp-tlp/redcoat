@@ -96,6 +96,9 @@ app.use(function(req, res, next) {
 
         res.locals.recent_projects = recent_projects;
         console.log("Recent projects:", res.locals.recent_projects);
+
+
+        
         next(null, req, res);
 
       });

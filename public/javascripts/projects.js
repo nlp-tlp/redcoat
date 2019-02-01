@@ -10,6 +10,9 @@ $.cookie.json = true;
 			var $projectDetailsEles = $("#project-details, #sidenav-project-details, #header-project-details");
 			var $annotationsTable = $("#annotations-table");
 			var $invitationsTable = $("#invitations-table");
+			var $combinedAnnotationsDownload = $("#combined-annotations-download");
+			var $combinedAnnotationsBox = $("#combined-annotations-box");
+			var $combinedAnnotationsNum = $("#combined-annotations-num");
 			var $annotationsDataTable = $annotationsTable.dataTable({
 				data: [],
 				columns: [
@@ -103,13 +106,14 @@ $.cookie.json = true;
 
 				// If the user has visited this page before, load the sort/filtering parameters from a cookie.
 				(function loadParamsFromCookie() {
-					var c = $.cookie('projectsTableParams')
+					var c = $.cookie('projectsTableParams');
 					if(!c) return;
 					display = c.display;
 					sortedBy = c.sortedBy;
 					sortedById = c.sortedById;
 					sortOrder = c.sortOrder;
 					filterBy = c.filterBy;
+					console.log(c)
 					// Modify the relevant elements to display the options stored in the cookie.
 					$("#projects-sort option[value='" + sortedById + "']").attr('selected', 'selected');
 					if(sortOrder == "asc") {
@@ -122,13 +126,16 @@ $.cookie.json = true;
 
 				// Save the sort/filtering parameters to a cookie.
 				function saveParamsToCookie() {
-					$.cookie('projectsTableParams', {
+
+					var c = $.cookie('projectsTableParams', {
 						display: display,
 						sortedBy: sortedBy,
 						sortedById: sortedById,
 						sortOrder: sortOrder,
 						filterBy: filterBy,
 					}, { expires: 365 });
+
+
 				}
 
 				// Create the dataTable.
@@ -243,6 +250,7 @@ $.cookie.json = true;
 			        	$(".goto-tagging-button").on('click', function(e) {
 			        		e.stopPropagation();
 			        	})
+
 			        	saveParamsToCookie(); // Save params to the cookie whenever the table is redrawn.
 			        }
 			    } );
@@ -306,11 +314,12 @@ $.cookie.json = true;
 				// Refresh table upon accepting invitation
 				$("#invitations-menu button").click(function(e) {
 					
-					$("#projects-table_info").removeClass("loaded");
-					$loadingTable.addClass("show");
-					$("#projects-table").addClass("not-loaded");
-					$("#project-details").addClass("not-loaded");
 					if($(this).attr('formaction') == "/accept") {
+						$("#projects-table_info").removeClass("loaded");
+						$loadingTable.addClass("show");
+						$("#projects-table").addClass("not-loaded");
+						$("#project-details").addClass("not-loaded");
+					
 						$('#projects-table').DataTable().clear()
 						setTimeout(function() {
 
@@ -367,6 +376,16 @@ $.cookie.json = true;
 								$invitationsDataTable.DataTable().clear().columns.adjust().draw();
 								$invitationsDataTable.DataTable().rows.add(data['invitations']).draw();
 
+
+								if(data['combined_annotations_available'] > 0) {
+									$combinedAnnotationsBox.show();
+									$combinedAnnotationsDownload.attr('href', "projects/" + data['project_id'] + '/download_combined_annotations');
+									$combinedAnnotationsNum.html(data['combined_annotations_available']);
+								}
+								else {
+									$combinedAnnotationsBox.hide();
+									$combinedAnnotationsNum.html("??");
+								}
 								//- $('#annotations-table').DataTable( {
 								//- 	data: data,
 								//- 	columns: [
@@ -384,14 +403,13 @@ $.cookie.json = true;
 					
 
 					if(project.user_is_owner) {
-						$adminOnlyTabs.removeClass("hide");
-
+						$adminOnlyTabs.show();
 						getProjectDetails(function() {
 							console.log("retrieved project details");
 						});
 
 					} else {
-						$adminOnlyTabs.addClass("hide");
+						$adminOnlyTabs.hide();
 					}
 					
 

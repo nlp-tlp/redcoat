@@ -332,6 +332,8 @@ WipProjectSchema.methods.getDocumentGroups = function(done) {
 WipProjectSchema.methods.convertToProject = function(done) {
   var t = this;
 
+  logger.debug('hello');
+
   // Initialise the new Project
   var p = new Project();
 
@@ -360,6 +362,8 @@ WipProjectSchema.methods.convertToProject = function(done) {
       var k = sharedFields[i];
       p[k] = t[k];
     }
+
+
     
     t.getDocumentGroups(function(err, document_groups) {
 
@@ -424,40 +428,47 @@ WipProjectSchema.methods.convertToProject = function(done) {
 
       //p.frequent_tokens = ft._id;
       // Save the project
+
       var user_emails = t.user_emails;
       var inviting_user_id = t.user_id;
-      p.save(function(err, project) {
-        if(err) { return done(err) }
-        // Remove this WIP Project after completion. (also removes all associated wip document groups via cascade)
-        t.remove(function(err) {
-          if(err) { done(err); return; }
+      var User = require('app/models/user');
+      User.findById(t.user_id, function(err, user) {
+        var inviting_user_name = user.username;
+        console.log(inviting_user_name)
+        p.save(function(err, project) {
+          if(err) { return done(err) }
+          // Remove this WIP Project after completion. (also removes all associated wip document groups via cascade)
+          t.remove(function(err) {
+            if(err) { done(err); return; }
 
-          // Now that the project has been created, create and send out the ProjectInvitations.
-          // TODO: Create a separate error object for this part.
-          console.log("Creating invitations");
-          // A recursive function that iterates over the wip_project's user_emails and calls ProjectInvitation's "createInvitation" method for each.
-          // failed_invitations is an array of invitation objects that failed to save.
-          function createInvitations(user_emails, failed_invitations, next) {
-            if(user_emails.length == 0) return next(failed_invitations);
-            var u = user_emails.pop();
-            ProjectInvitation.createInvitation(p._id, u, inviting_user_id, function(invitations_err) {
-              if(invitations_err != null) {
-                failed_invitations.push(u);
-              }
-              //if(invitations_err) return next(invitations_err);
-              createInvitations(user_emails, failed_invitations, next);
-            });
-          }
+            // Now that the project has been created, create and send out the ProjectInvitations.
+            console.log("Creating invitations");
+            // A recursive function that iterates over the wip_project's user_emails and calls ProjectInvitation's "createInvitation" method for each.
+            // failed_invitations is an array of invitation objects that failed to save.
+            function createInvitations(user_emails, failed_invitations, next) {
+              if(user_emails.length == 0) return next(failed_invitations);
+              var u = user_emails.pop();
+              ProjectInvitation.createInvitation(project._id, u, inviting_user_id, project.project_name, inviting_user_name, function(invitations_err) {
+                if(invitations_err != null) {
+                  failed_invitations.push(u);
+                }
+                //if(invitations_err) return next(invitations_err);
+                createInvitations(user_emails, failed_invitations, next);
+              });
+            }
 
 
-          createInvitations(user_emails, [], function(failed_invitations) {
-            console.log("Failed invites:", failed_invitations)
-            done(null, failed_invitations, project);
-          });        
+            createInvitations(user_emails, [], function(failed_invitations) {
+              console.log("Failed invites:", failed_invitations)
+              done(null, failed_invitations, project);
+            });        
 
-        });  
+          });  
+        });
+
       });
     });
+
   });
   // });
 }
