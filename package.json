@@ -47,6 +47,7 @@
     "debug": "^3.1.0",
     "escape-html": "^1.0.3",
     "express": "^4.16.1",
+    "express-flash": "0.0.2",
     "express-sanitize-escape": "^1.1.0",
     "express-sanitizer": "^1.0.4",
     "font-awesome": "^4.7.0",

@@ -47,17 +47,6 @@ exports.index = function(req, res, next) {
       logger.info(wip_project.category_metadata)
       res.locals.wip_project = wip_project;
 
-      // var valid_labels = [];
-      // if(wip_project.valid_labels) {
-      //   for(var i = 0; i < wip_project.valid_labels.length; i++) {
-      //     valid_labels.push({ label: wip_project.valid_labels[i].label, abbreviation: wip_project.valid_labels[i].abbreviation, color: wip_project.valid_labels[i].color });
-      //   }
-      // } else {
-      //   valid_labels = null;
-      // }
-
-
-
       renderPage(wip_project,
                  wip_project.project_name,
                  wip_project.project_description,
@@ -71,13 +60,6 @@ exports.index = function(req, res, next) {
                  wip_project.automatic_tagging,
                  wip_project.overlap,
                  wip_project.distribute_self)
-
-
-      // if(wip_project.file_metadata["Filename"] != undefined) {
-      //   renderPage(wip_project, wip_project.project_name, wip_project.project_description, JSON.stringify(wip_project.fileMetadataToArray()), wip_project.valid_labels ? wip_project.valid_labels : "null");
-      // } else {
-      //   renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", wip_project.valid_labels ? wip_project.valid_labels : "null");
-      // }        
     } else {
       console.log("No existing WIP Project found - creating a new one.")
       wip_project = new WipProject({ user_id: testuser._id });
@@ -407,6 +389,7 @@ exports.submit_new_project_form = function(req, res, next) {
       return;
     } else if(failed_invitations.length > 0) { // Invitation err occurs when the invitations weren't sent out.
       var invitations_err = "The following invitations failed to send: <br/>" + failed_invitations.join("<br/>");
+      invitations_err += "<br/>This is most likely due to our email service running out of available quota. Please consider contacting these annotators to let them know your project is ready for annotation."
       res.render("temp-render-form", {err: invitations_err });
       return;
     } {

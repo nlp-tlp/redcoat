@@ -706,3 +706,18 @@ div#dashboard p {
 	color: black;
 }
 
+
+#dashboard .message-bar {
+	&.success {
+		background: lighten($primary-green, 4);
+		border: 1px solid lighten($primary-green, 1);
+	}
+	color: white;
+	width: 100%;
+	position: absolute;
+	left: 0;
+	top: -50px;
+	padding: 1px 10px;
+
+	
+}

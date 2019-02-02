@@ -546,7 +546,7 @@ module.exports = {
     overlap: {
       type: Number,
       default: 1,
-      // Need to validate based on users (shouldn't exceed user count)
+      // TODO: Need to validate based on users (shouldn't exceed user count)
     },
 
     automatic_tagging: {

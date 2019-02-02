@@ -5,6 +5,8 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var cf = require("./common/common_functions");
 const passportLocalMongoose = require('passport-local-mongoose');
+var crypto = require('crypto');
+
 
 
 USERNAME_MAXLENGTH = 50;
@@ -90,6 +92,8 @@ var UserSchema = new Schema({
   recent_projects: [RecentProject],
 
 
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
 
 
   
@@ -316,25 +320,25 @@ UserSchema.methods.removeSelfFromAllProjects = function(done) {
 
 
 UserSchema.pre('save', function(next) {
-
+  console.log(this);
   var t = this;
   // 1. Set current date
   t.setCurrentDate();
-
-  // 2. Ensure hash has been set up via Passport
-  // This may be removed later (saving without Passport might be useful for sending registration links).
-  if(this.hash == null) {
-    e = new Error("Cannot save user without Passport registration")
-    e.name = "ImproperRegistration";
-    next(e);
-  }
-  else {
-
-    // 3. Ensure the email address is unique
+ 
+  if(t.isNew) {
+     // Ensure hash has been set up via Passport
+    if(this.hash == null) {
+      e = new Error("Cannot save user without Passport registration")
+      e.name = "ImproperRegistration";
+      return next(e);
+    }
+    // Ensure the email address is unique
     this.verifyEmailUnique(function(err) {
       if(err) { next(err); return; }
       next();
-    })
+    });
+  } else {
+    next();
   }
 })
 

@@ -677,6 +677,10 @@ button.large-button {
 			user-select: none;
 		}
 	}
+	&#final-submission-box:not(.disabled) {
+		border: 1px solid rgba(0, 0, 0, 0);
+	}
+
 }
 
 #setup-questions div.input-range-summary {

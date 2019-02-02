@@ -17,6 +17,10 @@ mongoose.connect('mongodb://localhost/redcoat-db-dev', function(err) {
 var expressSanitizer = require('express-sanitizer');
 
 
+var flash = require('express-flash')
+
+  
+
 var User = require('./app/models/user');
 
 
@@ -51,6 +55,9 @@ app.use(
        debug: false,       
    })
 );
+
+app.use(flash());
+
 //app.use(session({keys: ['redcoatisaprettycoolannotationtool!']}));
 
 app.enable('trust proxy');
@@ -117,7 +124,9 @@ const NON_LOGIN_PATHS = new Set([
   "/",
   "/login",
   "/register",
-  "/features"
+  "/features",
+  "/forgot_password",
+  "/reset_password",
 ]);
 app.use(function(req, res, next) {
     logger.debug(req.path);
@@ -126,9 +135,12 @@ app.use(function(req, res, next) {
       res.locals.user_stars = req.user.docgroups_annotated.length;
       return next();
     }
-    if(NON_LOGIN_PATHS.has(req.path)) {
+    if(NON_LOGIN_PATHS.has(req.path) || req.path.startsWith('/reset_password/')) {      
       return next();
     } 
+
+    console.log('not logged in', req.path)
+
     res.redirect(BASE_URL + 'login');
 });
 

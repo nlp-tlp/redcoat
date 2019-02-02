@@ -61,9 +61,8 @@ block content
 					// may look different (i.e. "You have been invited to annotate project '...', click here to accept or decline the invitation" vs "You have been invited to annotate project '...', click here to sign up to Redcoat to begin annotating").
 					// Upon accepting an Invitation, the user_id of the accepting user is added to the project's user_ids array, and that invitation is destroyed
 					// (declining an invitation simply destroys that invitation).	
-			li Nicer error display on setup project page and redirection to project upon submission	
-			li Password reset link		
-			li A "Project created!" notification banner upon creating a new project
+			li.done Password reset link
+			li.done Nicer error display on setup project page and redirection to project upon submission
 			li Further testing of all features listed above	
 
 		h3 Post-release
@@ -71,8 +70,10 @@ block content
 		p The features below will be added after the initial release. The features are listed in descending order of importance.
 		ul
 			li User profile page
-			li Further work on Sendgrid email template to make it look nicer
+			li Modify category hierarchy during annotation
+			
 			li Ability to "undo" the declining of invitations
+			li Project creators can remove annotators from project (mark them as inactive), resend invitations, and invite new annotators
 			li Project creators can specify whether a user should be able to exceed 100% annotation progress (i.e. annotate records meant for other annotators when they've finished theirs)
 			li Modify project settings on the Project summary page
 			li Automatic tagging of frequently-tagged words
@@ -80,14 +81,15 @@ block content
 			li Visualisation of annotation results for project creators
 			li Visualisation of annotator activity on Project page
 			li Make it possible for the project creator to not also be an annotator (?)
-			li Notification of when you have annotated 100% of documents but there are still documents left to annotate (i.e. progress over 100%), rather than simply continuing at 4/3 progress, for example
-			li Modify category hierarchy during annotation
+			li Notification of when you have annotated 100% of documents but there are still documents left to annotate (i.e. progress over 100%), rather than simply continuing at 4/3 progress, for example			
 			li Add "inter-rater reliability" scoring for annotators of a project
 			li When there is no most-frequent label of a token, the annotation of the user with the highest inter-rater reliability score should be chosen
 			li Support for the annotation of other NLP tasks, such as Lexical Normalisation
 			li Allow project creators to browse their annotators' annotations in-browser
 			li Put a crown symbol or something similar next to the project creator's name in the Invitations and Annotations lists
 			li Better display on mobile devices
+			li Further work on Sendgrid email template to make it look nicer
+			li A "Project created!" notification banner upon creating a new project
 			li Gamification, i.e. the ability to earn "points" during annotation and increase ranking
 			
 		div(style="height: 300px")

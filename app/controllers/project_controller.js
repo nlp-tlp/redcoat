@@ -8,6 +8,7 @@ var ProjectInvitation = require('app/models/project_invitation')
 // The project dashboard. Renders the projects page that lists all the projects of a user.
 // Doesn't actually send any projects - that's done by 'getProjects', via AJAX.
 module.exports.index = function(req, res) {
+  // req.flash('success', "projects are cool");
   req.user.getProjects(function(err, projects) {
     if(err)
       res.send(err);
@@ -22,9 +23,10 @@ module.exports.getProjects = function(req, res) {
   req.user.getProjectsTableData(function(err, projects) {
     if(err) res.send(err);
     else {
-      setTimeout(function() {
+
+      //setTimeout(function() {
       res.send({projects: projects});
-      }, 1);
+      //}, 1);
     }
   });
 }

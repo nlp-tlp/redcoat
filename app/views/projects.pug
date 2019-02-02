@@ -4,7 +4,9 @@ block head
 	<link rel='stylesheet' href="#{base_url}stylesheets/datatables/datatables.css" />
 
 block header
+	
 	header.bg-header
+
 		div#header-project-list.title.can-fade
 			h1 Projects
 			div.right
@@ -74,6 +76,8 @@ block sidenav
 block content
 
 	div#dashboard
+		//- if messages.success
+		//- 	div.message-bar.success #{messages.success}
 
 		div#loading-table.loading-item.show
 			<i class="fa fa-cog fa-spin"></i>Loading...
