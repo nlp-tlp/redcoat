@@ -367,8 +367,10 @@ block scripts
 						//$tree.removeClass("searching");
 						//$ecSearchForm.removeClass("searching");
 					//}
-				})
-				console.log("tree:", $tree)
+				});
+
+
+				
 				return $tree;
 			}
 
@@ -452,20 +454,21 @@ block scripts
 						$tree = initialiseCategoryTree();
 						generateAbbreviatedEntityClassNames();
 
-						// Remove any tags that are no longer within the category hierarchy.
-						(function deleteOldTags() {
-							$(".tag").each(function() {
-								var t = $(this);
-								var tid = $(this).attr('data-node-id');
-								if($("#" + tid).length == 0) {
+						$tree.on('ready.jstree', function() {
 
-									deleteTag($(this), $(this).parent(".sentence").index());
-								}
+							// Remove any tags that are no longer within the category hierarchy.
+							(function deleteOldTags() {
+								$(".tag").each(function() {
+									var t = $(this);
+									var tid = $(this).attr('data-node-id');
+									console.log("#" + tid, $("#" + tid))
+									if($("#" + (tid)).length == 0) {
+										deleteTag($(this), $(this).parent(".sentence").index());
+									}
 
-							});
-
-
-						})();
+								});
+							})();
+						});
 
 						//$tree.jstree(true).redraw(true)
 						//$categoryHierarchyTree.jstree(true).refresh();
