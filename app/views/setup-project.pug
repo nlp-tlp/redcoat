@@ -118,15 +118,15 @@ block content
 				h1 Project options
 				div.form-section
 					form#other-options-form
-						if false
-							div.form-group
-								label(for="input-allow-new-categories") To what extent should annotators be able to modify the category hierarchy?
-								select#input-hierarchy-permissions
-									option(disabled selected value="not-selected") (click to select)
-									option(value="no_modification") No modifications allowed.
-									option(value="create_edit_only") Users can create new categories.
-									option(value="full_permission") Users can create, delete, and rename categories.
-								div.form-help If allowed, users will be able to add categories as they appear, or delete ones that aren't relevant. This option is useful if you aren't sure whether your category hierarchy covers every possible category in your dataset. 
+						
+						div.form-group
+							label(for="input-allow-new-categories") To what extent should annotators be able to modify the category hierarchy?
+							select#input-hierarchy-permissions
+								option(disabled selected value="not-selected") (click to select)
+								option(value="no_modification") No modifications allowed.
+								option(value="create_edit_only") Annotators can create new categories.
+								option(value="full_permission") Annotators can create, delete, and rename categories.
+							div.form-help If allowed, your annotators will be able to add categories as they appear, or delete ones that aren't relevant. This option is useful if you aren't sure whether your category hierarchy covers every possible category in your dataset. 
 						div.form-group
 							label(for="input-overlap") How many times should a document be annotated before annotation is considered complete?
 							div.input-range-group.disabled#input-range-group

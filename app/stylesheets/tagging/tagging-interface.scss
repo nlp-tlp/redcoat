@@ -398,7 +398,106 @@ span.punctuation::-moz-selection {
 	top: 7%;
 	transition: none;
 	z-index: 100001;
+	
+	.full-width {
+		width: 100%;
+		padding-top: 70px;
+	}
+	h3.title-row {
+		box-sizing: border-box;
+		top: 0;
+		padding: 20px;
+		background: #eee;
+		width: 100%;
+	}
+	div.button-row {
+		width: 100%;
+		position: absolute;
+		top: 10px;
+		left: 0;
+		button {
+			width: auto;
+			float: right;
+		}
+	}
+
+	#category-tree-explanation {
+		position: absolute;
+		left: 0;
+		width: 300px;
+		float: left;
+		padding: 40px 20px;
+		box-sizing: border-box;
+		color: #777;
+		padding-top: 15px;
+
+		.inner {
+			display: block;
+
+			h4 {
+				margin: 0;
+				padding: 0;
+				width: 100%;
+				font-size: 16px;
+				color: #666;
+
+			}
+			color: #999;
+			font-size: 14px;
+			padding: 10px 15px;
+		}
+	}
+	.saved-notification {
+		font-size: 14px;
+		position: absolute;
+		top: 70px;
+		right: 20px;
+		text-align: left;
+		.unsaved {
+			display: none;
+			color: #555;
+		}		
+		.saved {
+			display: none;
+			color: darken($primary-green, 5);
+		}
+		.saving {
+			display: none;
+			color: #ddd;
+		}
+	}
 }
+
+button.blue-button {
+	
+	margin: 0 10px;
+	border: 2px solid #ddd;
+	background: #eee;
+	
+	cursor: pointer;
+	transition: none;
+	&:not(.grey-first) {
+		background: $primary-blue;
+		border: 2px solid darken($primary-blue, 5);
+		color: white;
+		&.disabled {
+			opacity: 0.2;
+			background: #eee;
+			border: 2px solid #ddd;
+			color: #666;
+			pointer-events: none;
+		}
+	}
+	&:hover {
+		border: 2px solid lighten($primary-blue, 10);
+		background: lighten($primary-blue, 15);
+		color: white;
+	}
+	&:active {
+		transform: translate(1px, 1px);
+	}
+}
+
 
 #entity-categories-window.tagging ~ * {
 	//transition: all 0.2s ease;
@@ -453,6 +552,16 @@ span.punctuation::-moz-selection {
 	width: 22%;
 	z-index: 990; // Navbar has 1000
 	margin-top: $navbar-height; //+ $tagging-progress-bar-height;
+	height: 100%;
+	#modify-hierarchy-container {
+		padding: 0 20px;
+		padding-bottom: 10px;
+		button {
+			margin: 0;
+			width: 100%;
+			cursor: pointer;
+		}
+	}
 	input {		
 		width: 100%;
 		margin: 0;
@@ -464,15 +573,53 @@ span.punctuation::-moz-selection {
 	}
 	.category-tree {
 		width: 66.66666%;
+		height: 100%;
 	}
 
+	#wikipedia-summary-container {
+		padding-top: 15px;
+	}
 	.tokens-info {
 		padding: 15px;
 		background: white;
 		border-bottom: 1px solid #ddd;
 		font-size: 0.8em;
 		margin-bottom: 20px;
-		background: #f6f6f6;		
+		background: #f6f6f6;	
+		padding-bottom: 0;	
+		padding-top: 0;
+
+		button#wikipedia-hide-show {
+			background: none;
+			color: #aaa;
+			padding: 0;
+			width: 100%;
+			margin: 0;
+			line-height: 12px;
+			padding-bottom: 2px;
+			border: none;
+			height: 20px;
+			cursor: pointer;
+			position: relative;
+			font-size: 0;
+			&:hover {
+				color: #555;
+			}
+			&:before {
+				position: absolute;
+				top: 0px;
+				left: 0;
+				text-align: center;
+				width: 100%;
+				content: "\f077";
+				font-size: 18px;
+				font-family: FontAwesome;
+			}
+			&.down:before {
+				content: "\f078";
+			}
+		}
+
 		p {
 			margin: 0;
 		}
@@ -531,10 +678,13 @@ span.punctuation::-moz-selection {
 
 #category-hierarchy-tree {
 	overflow-y: scroll;
-	height: 60vh;
+	height: 50vh;
 	margin-top: 10px;
 	padding-right: 5px;
 	position: relative;
+	&.tall {
+		height: 80vh;
+	}
 }
 #category-hierarchy-tree-no-results {
 	display: none;
@@ -701,6 +851,7 @@ a#untag-tokens {
 			text-align: center;
 		}
 		a {
+			cursor: pointer;
 			display: inline-block;
 			margin-top: -1px;
 			float: right;
@@ -847,3 +998,6 @@ a#untag-tokens {
 		}	
 	}
 }
+
+
+

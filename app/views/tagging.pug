@@ -25,20 +25,46 @@ block content
 
 block entity_categories_window
 
+	div#entity-categories-window.tagging
+		div.inner
+			div.category-tree.full-width
+				h3.title-row Modify categories
+				div#category-tree-explanation
+					div.inner
+						p <strong>Left-click</strong> on node to open/close category
+						p <strong>Right-click</strong> on node to open menu
+						p <strong>Click and drag</strong> to move around
+
+				svg#svg-entity-categories.large-left-margin
+				div#category-hierarchy-error
+					div.message Generate a category hierarchy using the menu on the left.
+			div.button-row
+				button#category-tree-close.blue-button.grey-first <i class="fa fa-close"></i>&nbsp;&nbsp;<span>Close</span>
+				button#category-tree-save.save.blue-button.disabled <i class="fa fa-save"></i> &nbsp;&nbsp;<span>Save changes</span>
+			div#saved-notification-category-hierarchy.saved-notification
+					p.unsaved <i class="fa fa-warning"></i> You have unsaved changes.
+					p.saving <i class="fa fa-gear fa-spin"></i> Saving categories...
+					p.saved <i class="fa fa-check"></i> Categories saved.
+
 	div#tagging-menu
 		div.category-hierarchy
 			div.tokens-info
-				p.tokens 
-				p.summary 
-				span.more 
-					span.left Results from Wikipedia
-					span.right <a href="#" id="ec-read-more" target="_blank">Read more <i class="fa fa-sm fa-external-link"></i></a>
+				div#wikipedia-summary-container
+					p.tokens 
+					p.summary 
+					span.more 
+						span.left Results from Wikipedia
+						span.right <a href="#" id="ec-read-more" target="_blank">Read more <i class="fa fa-sm fa-external-link"></i></a>
+				button#wikipedia-hide-show.up Show
+			div#modify-hierarchy-container
+				button#open-category-tree.blue-button.grey-first Modify categories
 			form.label-search(data-content = "Q")#ec-search-form
 				div.search-container
 					input(placeholder="Search categories..." id="ec-search")
 					button.go(type="submit") ↵
 				p.initial Showing all <b id="total-categories">-</b> categories.
-				p.filtered <span id="search-results-none">No results found.</span><span id='search-results-info'>Showing <b id="search-results-count">0</b> results.</span><a href="#">Clear <span class="esc">(ESC)</span></a>
+				p.filtered <span id="search-results-none">No results found.</span><span id='search-results-info'>Showing <b id="search-results-count">0</b> results.</span><a role="button" id="clear-search">Clear <span class="esc">(ESC)</span></a>
+
 				//- .button-container
 				//- 	button(type="submit") Cancel
 					
@@ -46,14 +72,7 @@ block entity_categories_window
 			div#category-hierarchy-tree-no-results
 				| No results found.
 
-	div#entity-categories-window.tagging
-		div.inner
-			div.category-tree
-				h3 Category Hierarchy
-				svg#svg-entity-categories
-				div#category-hierarchy-error
-					div.message Loading concept hierarchy...
-			a.close <span>Close (ESC)</span>&nbsp;<i class="fa fa-close"></i>
+
 	div#window-mask
 
 block scripts
@@ -68,14 +87,35 @@ block scripts
 
 		function initTaggingInterface() {
 
+
+
 			
+
+
+			var $wikipediaHideShow = $("#wikipedia-hide-show");
+			var $wikipediaSummaryContainer = $("#wikipedia-summary-container");
+			var $categoryHierarchyTree = $("#category-hierarchy-tree");
+			$wikipediaHideShow.on('click', function() {
+				var t = $(this);
+				if(t.hasClass("up")) {
+					t.removeClass("up");
+					t.addClass("down");
+					$categoryHierarchyTree.addClass("tall");
+					$wikipediaSummaryContainer.hide();
+				} else {
+					t.removeClass("down");
+					t.addClass("up");
+					$categoryHierarchyTree.removeClass("tall");
+					$wikipediaSummaryContainer.show();
+				}
+
+			});
 
 			var hotkeyMap;   // A 'map' that stores the current hotkey bindings mapped to their corresponding nodes in the JSTree.
 			var tagClassMap; // A 'map' of nodes mapped to each of their parents, in order of closeness.
-			var currentlySearching = false;
+			var hotkeysCurrentlyDisabled = 0; // Stored as integers because both the search and category tree disable hotkeys.
 			// Construct the JSTree from the category hierarchy data.
 			function buildJsTree(hierarchy) {
-
 
 				var $tree = $("#category-hierarchy-tree");
 				var $ecSearch = $("#ec-search");
@@ -92,7 +132,40 @@ block scripts
 				const MAX_SEARCH_RESULTS = 2000;
 
 				var jstreeData = slash2jstree(hierarchy);
+
+
+
+				// Update the colours of any tags that the annotator has already annotated.
+				function updateTagColours(node) {
+					annotatedLabels = $('.tag[data-node-id="' + node.li_attr.id + '"]');
+					if(annotatedLabels.length > 0) {						
+						annotatedLabels.removeClass(function(index, className) {
+							return className.match(/tag-\d/ || []).join(' ');
+						});
+						annotatedLabels.addClass("tag-" + node.li_attr["data-color"]);
+						annotatedLabels.attr("tag-class", node.li_attr["data-index"])
+					}
+
+					if(node.children === undefined) return;
+					for(var i in node.children) {
+						updateTagColours(node.children[i])
+					}
+				}
+
+				for(var i in jstreeData["data"]) {
+					updateTagColours(jstreeData["data"][i])
+				}
+
 				tagClassMap = jstreeData["tagClassMap"];
+
+
+
+
+
+				//- $tree.on('create_node.jstree', function (e, obj) {		
+				//- 	alert("haaaaaaaaaaaaaaaaaaaaaaaaaaaaello")		    
+				//-     //$tree.set_id(obj.node, 42);
+				//- });
 
 
 				$tree.jstree(
@@ -112,6 +185,7 @@ block scripts
 					    'dblclick_toggle' : false,
 					    'animation': false,
 					    'multiple': false,
+					    'check_callback': true,
 
 					},
 					//- 'sort' : function(a, b) {
@@ -120,6 +194,7 @@ block scripts
 					//- 	return (a1.text > b1.text) ? 1 : -1;			        
 					//- }
 				});
+				
 				
 				// Display the hotkeys for the top-level categories as soon as the tree has been drawn.
 				$tree.on('ready.jstree', function() {
@@ -190,6 +265,7 @@ block scripts
 
 				// Ensure only one branch can be opened at a time so that the hotkey display works properly.
 				$tree.on('open_node.jstree', function (e, data) {
+					console.log(data);
 					$(".jstree-children").removeClass("jstree-current");
 					$("#" + data.node.id).children('.jstree-children').addClass("jstree-current");
 				    if(!searching) closeSiblingNodes(data);
@@ -221,8 +297,9 @@ block scripts
 						$tree.show();
 						$(".jstree-container-ul").addClass("jstree-current");
 					}
-				});				
+				});
 
+				$ecSearchForm.unbind('submit');
 				$ecSearchForm.on('submit', function (e) {
 					var v = $ecSearch.val();
 					searching = true;
@@ -266,27 +343,32 @@ block scripts
 					$ecSearch.blur();
 					e.preventDefault();
 				});
+
+				$ecSearch.unbind('focus');
 				$ecSearch.on('focus', function() {
 					console.log('focs')
 					$ecSearchForm.addClass("selected");
 					$tree.addClass("searching");
 					$tree.hide();
 					$searchResultsInfo.hide();
-					currentlySearching = true;
+					hotkeysCurrentlyDisabled += 1;
 					$ecSearchForm.addClass("searching");
 				})
+
+				$ecSearch.unbind('blur');
 				$ecSearch.on('blur', function() {
 					console.log('blur')
 					//$ecSearchForm.removeClass("searching");
 					
 					
-					currentlySearching = false;
+					hotkeysCurrentlyDisabled -= 1;
 					//if($ecSearch.val().length == 0) {
 						//$ecSearchForm.removeClass("selected");
 						//$tree.removeClass("searching");
 						//$ecSearchForm.removeClass("searching");
 					//}
 				})
+				console.log("tree:", $tree)
 				return $tree;
 			}
 
@@ -295,13 +377,18 @@ block scripts
 
 
 				// The category hierarchy to be placed on the window.
-				var categoryHierarchy = new CategoryHierarchy();
+				var categoryHierarchy = new CategoryHierarchy(tagging_version = true);
 
 				
 
 				
 				// Set up jQuery handles.
 				var $entityCategoriesWindow = $("#entity-categories-window");
+				var $categoryTreeClose = $("#category-tree-close");
+				var $categoryTreeSave = $("#category-tree-save");
+				var $openCategoryTree = $("#open-category-tree");
+
+
 				var $ecSearch = $("#ec-search");
 				var $ecSearchForm = $("#ec-search-form");
 
@@ -317,13 +404,89 @@ block scripts
 
 
 
+				var $savedNotificationCategoryHierarchy = $("#saved-notification-category-hierarchy");
+				var unsavedTreeModifications = false;
 				// Close the entity categories tree window when the button is clicked, or the area outside the window is clicked.
-				$("#entity-categories-window .close").click(function() {
+				$categoryTreeClose.click(function() {
 					$entityCategoriesWindow.removeClass("show");
+					$("#saved-notification-category-hierarchy .unsaved").hide();
+					$("#saved-notification-category-hierarchy .saved").hide();
+					$("#saved-notification-category-hierarchy .saving").hide();
+					if(unsavedTreeModifications) {
+						categoryHierarchy.clearTree();
+						categoryHierarchy.buildTree(entity_classes);
+					}
+					hotkeysCurrentlyDisabled -= 1;
 				});
 				$windowMask.click(function() {
+					hotkeysCurrentlyDisabled -= 1;
 					$entityCategoriesWindow.removeClass("show");
+				});
+				$openCategoryTree.click(function() {
+					$entityCategoriesWindow.addClass("show");
+					hotkeysCurrentlyDisabled += 1;
 				})
+
+				$categoryTreeSave.click(function() {
+					$(this).addClass("disabled");
+					$("#saved-notification-category-hierarchy .unsaved").hide();
+					$("#saved-notification-category-hierarchy .saving").show();
+
+					var slashData = json2slash(categoryHierarchy.root);
+
+
+					window.setTimeout(function() {						
+						$("#saved-notification-category-hierarchy .saving").hide();
+						$("#saved-notification-category-hierarchy .saved").show();
+						unsavedTreeModifications = false;
+						entity_classes = slashData;
+
+						$categoryHierarchyTree.replaceWith("<div id='category-hierarchy-tree'></div>");
+						$categoryHierarchyTree = $("#category-hierarchy-tree");
+
+
+						// TODO: Look through tree for deleted categories and un-tag them in the tagging interface
+						//untagDeletedCategories();
+						//updateTagColors();
+
+						$tree = initialiseCategoryTree();
+						generateAbbreviatedEntityClassNames();
+
+						// Remove any tags that are no longer within the category hierarchy.
+						(function deleteOldTags() {
+							$(".tag").each(function() {
+								var t = $(this);
+								var tid = $(this).attr('data-node-id');
+								if($("#" + tid).length == 0) {
+
+									deleteTag($(this), $(this).parent(".sentence").index());
+								}
+
+							});
+
+
+						})();
+
+						//$tree.jstree(true).redraw(true)
+						//$categoryHierarchyTree.jstree(true).refresh();
+					}, 1000);
+
+					
+					// TODO: AJAX post to update_tree,
+					// refresh JSTree upon success
+
+					// if (success)
+					//if($tree) $tree.empty();
+				});
+
+
+
+				$(document).on("tree_modified", function() {
+					unsavedTreeModifications = true;
+					$("#saved-notification-category-hierarchy .unsaved").show();
+					$categoryTreeSave.removeClass("disabled");
+				});
+				
 				
 				
 				// Set up constants for span tags to wrap around words and punctuation.
@@ -372,12 +535,16 @@ block scripts
 				// Initialise the category tree. It must be initialised upon the loading of every group in case the tree changes.
 				function initialiseCategoryTree() {
 					$tree = buildJsTree(entity_classes);
+					console.log($tree, entity_classes);
 					function tagByNode(event, data) {
+
 						var node = data.node;
 						var ind = node.li_attr["data-index"];
 						var color = node.li_attr["data-color"];
+						console.log(node, ind, color);
 						tagSelected(ind, color, node.li_attr['id'], false);					
 					}
+
 					$tree.on('select_node.jstree', tagByNode);
 					// Toggle tagging when clicking elements in the jsTree
 					$tree.on('click', '.jstree-anchor', function() {
@@ -385,6 +552,19 @@ block scripts
 					});
 					return $tree;
 				}
+
+				// Build abbreviated entity class names to display on the annotation labels.
+				// This is required because something like "body_part/arm/left_arm/left_hand/fingers" is too long to display on the annotation tags.
+				function generateAbbreviatedEntityClassNames() {
+					entity_classes_abbr = [];
+					for(var i in entity_classes) {
+						var ec = entity_classes[i].toLowerCase();
+						ecs = ec.split('/');
+						ec = ecs[ecs.length-1]; //(ecs.length > 1 ? '/' : '') + ecs[ecs.length-1];
+						var abbr = ec;
+						entity_classes_abbr.push(abbr);
+					}
+				};
 
 
 				// Retrieve a documentGroup via AJAX.
@@ -443,17 +623,9 @@ block scripts
 
 						// Initialise the jsTree (the tagging menu on the left).
 						
-						// Build abbreviated entity class names to display on the annotation labels.
-						// This is required because something like "body_part/arm/left_arm/left_hand/fingers" is too long to display on the annotation tags.
-						(function generateAbbreviatedNames() {
-							for(var i in entity_classes) {
-								var ec = entity_classes[i].toLowerCase();
-								ecs = ec.split('/');
-								ec = ecs[ecs.length-1]; //(ecs.length > 1 ? '/' : '') + ecs[ecs.length-1];
-								var abbr = ec;
-								entity_classes_abbr.push(abbr);
-							}
-						})();
+						
+						
+						generateAbbreviatedEntityClassNames();
 
 						// Initialise the tree again, just in case it has changed.
 						$tree = initialiseCategoryTree();
@@ -552,6 +724,20 @@ block scripts
 				}
 
 
+				function deleteTag(t, si) {
+					
+					annotatedTags[si][t.index()] = "O";//tagClass - 1;
+					t.removeClass(function (index, className) {
+						return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
+					});
+					t.removeAttr("data-tag-class");
+					t.removeAttr("data-node-id");
+					t.removeAttr("data-content");
+					t.removeClass("tag");
+					t.removeClass("tag-begin");
+					t.removeClass("tag-end");
+				}
+
 				function tagSelected(tagClass, colorIndex, nodeId, moveAfterwards=true) {			
 					if(!$currentWords) return;
 					var $selectedWords = $("span.word.selected")
@@ -580,25 +766,16 @@ block scripts
 					// Delete the tags of any selected elements.
 					function deleteTags() {
 						$selectedWords.each(function(e) {
+							deleteTag($(this), sentenceIndex);
 
+							//- if($(this).index() > annotatedTags[sentenceIndex].length) {
+							//- 	console.log(annotatedTags[sentenceIndex], "<<<<<<<<<<<<<<<<<< bad")
+							//- 	console.log($(this))
+							//- 	console.log($selectedWords)
+							//- 	console.log($(this).index())
+							//- }
 
-							if($(this).index() > annotatedTags[sentenceIndex].length) {
-								console.log(annotatedTags[sentenceIndex], "<<<<<<<<<<<<<<<<<< bad")
-								console.log($(this))
-								console.log($selectedWords)
-								console.log($(this).index())
-							}
-
-							annotatedTags[sentenceIndex][$(this).index()] = "O";//tagClass - 1;
-							$(this).removeClass(function (index, className) {
-								return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
-							});
-							$(this).removeAttr("data-tag-class");
-							$(this).removeAttr("data-node-id");
-							$(this).removeAttr("data-content");
-							$(this).removeClass("tag");
-							$(this).removeClass("tag-begin");
-							$(this).removeClass("tag-end");
+							
 						});
 					}	
 
@@ -650,16 +827,12 @@ block scripts
 						//var prefix = "";
 						var tc =  entity_classes[$(this).attr("data-tag-class")] || "O";
 						if(tc == "O") prefix = "";
-						//if(tc == null || tc.length == 0) { console.log(tc, entity_classes[$(this).attr("data-tag-class")])}
 
-						if(i > annotatedTags[sentenceIndex].length) {
-							console.log(annotatedTags[sentenceIndex], i, "<<<<<<<<<<<<<<<<<< bad")
-							console.log(entity_classes[$(this).attr("data-tag-class")])
-							console.log(e)
-						}
 
 						annotatedTags[sentenceIndex][i] = prefix + tc; //prefix + tc;//tagClass - 1;
 					});
+
+					console.log(annotatedTags);
 									
 					if(moveAfterwards) {
 						$(".word").removeClass("selected");
@@ -862,6 +1035,8 @@ block scripts
 					var nodeid = "#" + tagClassElementId;
 					var currentNode = "#" + $tree.jstree('get_selected')[0];
 
+					console.log("MM", nodeid, currentNode, tagClassElementId);
+
 
 					// Clear the search window
 					if($ecSearchForm.hasClass("searching")) {
@@ -875,26 +1050,34 @@ block scripts
 					// Close the tree.
 					$tree.jstree("close_all");
 					$tree.jstree('deselect_node', currentNode)
-					if(!tagClassElementId) return $tree.jstree('select_node', '#remove-label')
-					
-					// Open all parents of the node, based on the tagClassMap
-					var nodeNumber = tagClassElementId.substr(3, tagClassElementId.length);
-					var parents = tagClassMap[nodeNumber];
-					
-					for(var i in parents) {
-						var p = "#j1_" + tagClassMap[nodeNumber][i];
-						$tree.jstree('open_node', p);
+					if(tagClassElementId === undefined) {
+						scrollToNode($("#remove-label"), -100);
+						return $tree.jstree('select_node', '#remove-label')
 					}
+					// Open all parents of the node, based on the tagClassMap
+					var nodeNumber = $(currentNode).attr("data-index")//tagClassElementId.substr(3, tagClassElementId.length);
+
 					$tree.jstree('select_node', nodeid)				
 					$tree.jstree('open_node', nodeid);
-					if(parents.length == 0) { scrollToNode($(nodeid), -100) }
-					else scrollToNode($(nodeid).parents(".jstree-children").first().parent());
+					//if(parents.length == 0) { scrollToNode($(nodeid), -100) }
+					
+					var parents = $(nodeid).parents(".jstree-children:not(.jstree-container-ul)")
+					if(parents.length > 0) scrollToNode($(nodeid).parents(".jstree-children").first().parent());
+					else { scrollToNode($(nodeid), -100); }
+					//console.log(parents, $(nodeid).parents(".jstree-children").first().parent(), "<>")
 
 
 				}
 
 
-
+				// Clear the search window.
+				function clearSearch() {
+					hotkeysCurrentlyDisabled--;
+					$ecSearch.val('');
+					$ecSearchForm.submit();
+					$entityCategoriesWindow.removeClass("show");
+				}
+				$("#clear-search").on('click', clearSearch);
 
 				// Scroll to the position of a node in the tree.
 				function scrollToNode(node, offset=0) {					
@@ -1123,7 +1306,7 @@ block scripts
 								wordIndex = -1;
 								moveForwards()
 							}
-							if(!currentlySearching) {
+							if(hotkeysCurrentlyDisabled == 0) {
 								if(e.keyCode == D) {
 									openTreeNode();
 									event.preventDefault();
@@ -1146,7 +1329,7 @@ block scripts
 									//scrollToNode(node.parents(".jstree-children").first().parent());
 								}
 
-								if(!currentlySearching && (e.keyCode-48) in hotkeyMap) {	// Tag an element based on the hotkey pressed.
+								if(!hotkeysCurrentlyDisabled && (e.keyCode-48) in hotkeyMap) {	// Tag an element based on the hotkey pressed.
 									var node = $("#" + hotkeyMap[e.keyCode-48]).children("a").first();								
 									node.click();
 									if(node.parent().hasClass("jstree-open"))
@@ -1154,9 +1337,7 @@ block scripts
 								}
 							}
 							if(e.keyCode == ESCAPE) {	// TODO: Hide the category hierarchy.
-								$ecSearch.val('');
-								$ecSearchForm.submit();
-								$entityCategoriesWindow.removeClass("show");
+								clearSearch();
 							}
 						}					
 					}).keyup(function(e) {

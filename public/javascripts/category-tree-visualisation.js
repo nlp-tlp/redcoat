@@ -6,20 +6,35 @@ function assignColor(d) {
   currentColorIndex++;
 }
 
+
+function assignColorsToChildren(d, i) {     
+  if (d._children) {
+    for(var i = 0; i < d._children.length; i++) {              
+      d._children[i]._color = d._color;
+    }
+    d._children.forEach(assignColorsToChildren)
+  }
+}
+
 // The category hierarchy.
 class CategoryHierarchy {
 
-  constructor() {
+  // tagging_version specifies whether not to include the 'rename' button, which should only be present when setting up the project initially.
+  constructor(tagging_version = false) {
 
     var t = this;
     // Code for tree found here:  
     // https://bl.ocks.org/mbostock/4339083
     this.margin = {top: 20, right: 120, bottom: 20, left: 120};
+    if($("#svg-entity-categories").hasClass("large-left-margin")) {
+      this.margin.left = 300;
+    }
     this.width = 1520 - this.margin.right - this.margin.left;
     this.height = 700 - this.margin.top - this.margin.bottom;
     this.i = 0;
     this.duration = 750;
     this.root;
+    var rooot = this.root;
     this.container;
     this.circleRadius = 16;
     this.tree = d3.layout.tree()
@@ -40,9 +55,9 @@ class CategoryHierarchy {
 
     // Creates a new node and updates the tree.
     function createNewNode(t, d, name, done) {
-
         validateName(d, parseName(name), function(err) {
           if(!err) {
+            $(document).trigger("tree_modified");
          
             var newNode = {
                 name: parseName(name) || "<New category>"
@@ -83,10 +98,9 @@ class CategoryHierarchy {
     }
 
     // Renames the selected node to the name provided.
-    function renameNode(d, name, done) {
-     
-
+    function renameNode(d, name, done) {     
       validateName(d.parent, parseName(name), function(err) {
+        $(document).trigger("tree_modified");
         if(!err) {
           d.name = parseName(name);
           t.update(d);          
@@ -97,13 +111,20 @@ class CategoryHierarchy {
     }
 
     // Deletes a node.
-    function deleteNode(d) {
+    function deleteNode(d, rootNode) {
       for (var ii = 0; ii < d.parent.children.length; ii++) {
         if (d.parent.children[ii].name === d.name) {
           d.parent.children.splice(ii, 1);
           break;
         }          
       }
+      currentColorIndex = 0;
+      rootNode.children.forEach(assignColor);
+      //rootNode.children.forEach(collapse);
+      rootNode.children.forEach(assignColorsToChildren);
+
+      //rootNode.children.forEach(assignColorsToChildren);
+      $(document).trigger("tree_modified");
       t.update(d);
     }
 
@@ -149,24 +170,26 @@ class CategoryHierarchy {
           });
         }
       }
-      var renameCategory = {
-        title: '<i class="fa fa-edit"></i>&nbsp;&nbsp;Rename category',
-        action: function(d, i, next) {
-          var name = showInput(function(name) {
-            renameNode(d, name, function(err) {
-              if(err) { showError(err, next) }
-              else {
-                updateCategoryHierarchy(t.root);
-                next();
-              }
-            });            
-          });
+      if(!tagging_version) {
+        var renameCategory = {
+          title: '<i class="fa fa-edit"></i>&nbsp;&nbsp;Rename category',
+          action: function(d, i, next) {
+            var name = showInput(function(name) {
+              renameNode(d, name, function(err) {
+                if(err) { showError(err, next) }
+                else {
+                  updateCategoryHierarchy(t.root);
+                  next();
+                }
+              });            
+            });
+          }
         }
       }
       var deleteCategory = {
         title: '<i class="fa fa-trash"></i>&nbsp;&nbsp;Delete category',
         action: function(d, i, next) {
-          deleteNode(d);
+          deleteNode(d, t.root);
           updateCategoryHierarchy(t.root);
           next();
         }
@@ -176,6 +199,9 @@ class CategoryHierarchy {
           title,
           newChildCategory
         ]
+      }
+      if(tagging_version) {
+        return [ title, newChildCategory, deleteCategory];
       }
       return [
         title,
@@ -375,6 +401,8 @@ class CategoryHierarchy {
 
   }
 
+
+
   buildTree(slash) {
     currentColorIndex = 0;
 
@@ -412,14 +440,6 @@ class CategoryHierarchy {
     root.x0 = height / 2;
     root.y0 = 0;
 
-    function assignColorsToChildren(d, i) {     
-      if (d._children) {
-        for(var i = 0; i < d._children.length; i++) {              
-          d._children[i]._color = d._color;
-        }
-        d._children.forEach(assignColorsToChildren)
-      }
-    }
 
     function collapse(d) {
       if (d.children) {
@@ -431,11 +451,10 @@ class CategoryHierarchy {
     root._color = "#eee";   
 
 
-
     root.children.forEach(assignColor);
     root.children.forEach(collapse);
     root.children.forEach(assignColorsToChildren);
-    root.children.forEach(assignColorsToChildren);
+    //root.children.forEach(assignColorsToChildren);
 
     t.root = root;
 
@@ -519,6 +538,19 @@ function txt2json(text) {
 }
 
 function slash2jstree(slash) {
+
+  //https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
+  String.prototype.hashCode = function() {
+    var hash = 0, i, chr;
+    if (this.length === 0) return hash;
+    for (i = 0; i < this.length; i++) {
+      chr   = this.charCodeAt(i);
+      hash  = ((hash << 5) - hash) + chr;
+      hash |= 0; // Convert to 32bit integer
+    }
+    return hash;
+  };
+
   var hotkeys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
   var text = slash2txt(slash);
   var fieldname = "text";
@@ -536,6 +568,7 @@ function slash2jstree(slash) {
   var colorId = -1;
 
   for(var i = 0; i < lines.length; i++) {
+    var originalLineHashed = slash[i].hashCode() // Hash the string so jQuery doesn't complain about the slashes in the ids
     var cleanLine = lines[i].trim()//replace(/\s/g, "");
     var newDepth  = lines[i].search(/\S/) + 1;
 
@@ -558,8 +591,8 @@ function slash2jstree(slash) {
     node = {"children": []};
     node[fieldname] = cleanLine;// + '<span>' + hotkey + '</span>';
     var color = (colorId % colors.length) + 1;
-    node["li_attr"] = { "data-index": i, "class": "color-" + color, "data-color": color, "data-full": slash[i], "id": "j1_" + (i) };
-    node["a_attr"] = { "id": "j1_" + (i) + "_anchor" };
+    node["li_attr"] = { "data-index": i, "class": "color-" + color, "data-color": color, "data-full": slash[i], "id": "j1_" + (originalLineHashed) };
+    node["a_attr"] = { "id": "j1_" + (originalLineHashed) + "_anchor" };
     if(parents.length > 0) {
       parents[parents.length-1]["children"].push(node);
     }

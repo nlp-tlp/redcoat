@@ -1,22 +1,23 @@
 function checkProjectOptionsCompletion() {
-	// if($("#input-automatic-tagging").val() != null && $("#input-hierarchy-permissions").val() != null) {
+	//if($("#input-automatic-tagging").val() != null && $("#input-hierarchy-permissions").val() != null) {
+	if($("#input-hierarchy-permissions").val() != null) {
 		$("#saved-notification-project-options").addClass('show');
 		$("#li-project-options").addClass('completed');
 		$("#error-banner").removeClass("show");	
 		console.log('checking222')
 		checkFormCompletion();				
-	// }
+	}
 }
 
 (function loadExistingDetails() {
-	// (function loadPermissions() {		
-	// 	var o = $("#input-hierarchy-permissions option[value=\"" + permissions + "\"]");
-	// 	if(o) {
-	// 		//console.log(o, permissions)
-	// 		// TODO: check the overlap slider before marking complete				
-	// 		o.attr("selected", "selected");			
-	// 	}
-	// })();
+	(function loadPermissions() {		
+		var o = $("#input-hierarchy-permissions option[value=\"" + permissions + "\"]");
+		if(o) {
+			//console.log(o, permissions)
+			// TODO: check the overlap slider before marking complete				
+			o.attr("selected", "selected");			
+		}
+	})();
 	(function loadOverlap() {	
 		var o = $("#input-overlap");
 		console.log(o, overlap)
@@ -45,24 +46,24 @@ function checkProjectOptionsCompletion() {
 
 // 1. Category hierarchy permissions
 
-// $("#input-hierarchy-permissions").on('change', function(e) {
-// 	$("#saved-notification-project-options").removeClass('show');
-// 	$("#li-project-options").removeClass('completed');
-// 	console.log(this.value);
-// 	$.ajax(
-// 	{
-// 		url: 			'upload-hierarchy-permissions',
-// 		type:			'POST',
-// 		data: 			{ val: this.value },
-// 		dataType: 		"json",
-// 		headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
-// 		success: function( data )
-// 		{
-// 			checkProjectOptionsCompletion();
-// 		},
-// 		error: displayServerErrorBanner
-// 	});						
-// });
+$("#input-hierarchy-permissions").on('change', function(e) {
+	$("#saved-notification-project-options").removeClass('show');
+	$("#li-project-options").removeClass('completed');
+	console.log(this.value);
+	$.ajax(
+	{
+		url: 			'upload-hierarchy-permissions',
+		type:			'POST',
+		data: 			{ val: this.value },
+		dataType: 		"json",
+		headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
+		success: function( data )
+		{
+			checkProjectOptionsCompletion();
+		},
+		error: displayServerErrorBanner
+	});						
+});
 
 
 // 2. Overlap summary
