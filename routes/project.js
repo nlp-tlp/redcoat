@@ -26,6 +26,7 @@ router.get('/',            projectController.index);
 router.get('/:id',         verifyUserOwnsProject, projectController.getProjectDetails);
 router.get('/:id/tagging', verifyUserInProject, projectController.tagging);
 router.get('/:id/tagging/getDocumentGroup', verifyUserInProject, projectController.getDocumentGroup);
+router.post('/:id/tagging/modify_hierarchy', verifyUserInProject, projectController.modifyHierarchy);
 
 router.post('/:id/tagging/submitAnnotations', verifyUserInProject, projectController.submitAnnotations);
 router.get('/:id/download_annotations/:user_id', verifyUserOwnsProject, projectController.downloadAnnotationsOfUser);

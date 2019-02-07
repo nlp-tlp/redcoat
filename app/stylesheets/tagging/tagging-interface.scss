@@ -465,6 +465,10 @@ span.punctuation::-moz-selection {
 			display: none;
 			color: #ddd;
 		}
+		.error {
+			display: none;
+			color: $primary-red;
+		}
 	}
 }
 

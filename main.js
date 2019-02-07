@@ -11,10 +11,29 @@ var LocalStrategy = require('passport-local').Strategy;
 var logger = require("./config/winston.js");
 var mongoose = require('mongoose')
 var BASE_URL = require('./config/base_url.js').base_url;
-mongoose.connect('mongodb://localhost/redcoat-db-dev', function(err) {
+mongoose.connect('mongodb://localhost/redcoat-db-dev', function(err, db) {
   if(err) { console.log("\x1b[31m" + err.message); }
 });
 var expressSanitizer = require('express-sanitizer');
+
+
+mongoose.connection.on('open', function() {
+  var admin = mongoose.connection.db.admin();
+  admin.serverStatus(function(err, info) {
+    if (err) return cb(err);
+    var version = info.version//.split('.').map(function(n) { return parseInt(n, 10); });
+    logger.info("MongoDB version: " + version);
+    checkVersion(version.split('.').map(function(n) { return parseInt(n, 10); }))
+
+  });
+});
+
+function checkVersion(version) {
+  if(version[0] < 3 || (version[0] >= 3 && version[1] < 6)) {
+    logger.error("MongoDB version must be at least 3.6.");
+    process.exit();
+  }
+}
 
 
 var flash = require('express-flash')

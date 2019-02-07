@@ -1,0 +1,2 @@
+MongoDB must be version 3.6
+In the mongo shell, run this: db.adminCommand( { setFeatureCompatibilityVersion: "3.6" } )

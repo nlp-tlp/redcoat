@@ -626,6 +626,106 @@ ProjectSchema.methods.recommendDocgroupToUser = function(user, next) {
 }
 
 
+ProjectSchema.methods.modifyHierarchy = function(new_hierarchy, user, done) {
+  var t = this;
+  // If this project's category_hierarchy_permissions is set to no_modification and the user calling this method is not the creator,
+  // throw an error.
+  if(t.category_hierarchy_permissions === "no_modification" && !user._id.equals(t.user_id)) {
+    return done(new Error("Category hierarchy may only be modified by owner as it is set to no_modification."))
+  }
+
+
+  try {
+    var old_hierarchy = t.category_hierarchy;
+    var new_hierarchy_set = new Set(new_hierarchy);
+
+    // 1. Iterate over the old hierarchy to find all categories from the old hierarchy that are missing in the new hierarchy.
+    var missing_categories = [];
+    for(var i = 0; i < old_hierarchy.length; i++) {
+      var c = old_hierarchy[i];
+      console.log(c, new_hierarchy_set.has(c), "<>");
+      if(!new_hierarchy_set.has(c)) {
+        missing_categories.push(c);
+      }
+    }
+    //console.log("Missing categories:", missing_categories);
+
+    // 2. If any categories are missing, return an error if the update was not made by the creator of the project and category_hierarchy_permissions is not 'full_permission'.
+    if(t.category_hierarchy_permissions != "full_permission" && !user._id.equals(t.user_id) && missing_categories.length > 0) {
+      return done(new Error("New category hierarchy has missing categories but project is set to " + t.category_hierarchy_permissions) + ".");
+    }
+
+    var missing_categories_prefixed = [];
+    for(var i = 0; i < missing_categories.length; i++) {
+      var c = missing_categories[i];
+      //console.log(c, ">");
+      missing_categories_prefixed.push("B-" + c);
+      missing_categories_prefixed.push("I-" + c);
+    }
+    //console.log(missing_categories_prefixed);
+
+    // 3. Update the project's category_hierarchy to the new one and save the project.
+
+    t.category_hierarchy = new_hierarchy;
+    t.save(function(err, t) {
+      if(err) return done(err);
+
+      // 4. Update every document group annotation containing any of the labels that are no longer in the category hierarchy.
+      //var DocumentGroupAnnotation = require('app/models/document_group_annotation');
+
+
+      mongoose.connection.db.command({
+        update: "documentgroupannotations",
+        updates: [
+          {
+          //DocumentGroupAnnotation.update(
+            q: { project_id: t._id, 
+              labels: {
+                $elemMatch: {
+                  $elemMatch: {
+                    $in: missing_categories_prefixed
+                  }
+                }
+              }
+            },
+            u: {
+              $set: {
+                "labels.$[].$[label]": "O"
+              }
+            },
+            arrayFilters: [ 
+              {
+                "label": {
+                  $in: missing_categories_prefixed
+                }
+              }
+            ],
+            multi: true          
+          }
+        ]
+      }
+
+      , function(err, info) {
+        if(err) return done(err)
+        logger.info(JSON.stringify(info));
+
+        done(null);
+      });
+
+    });
+
+
+    //console.log(t.category_hierarchy_permissions);
+
+    //done(null);
+  } catch(err) {
+    done(err);
+  }
+
+}
+
+
+
 /* Middleware */
 
 // ProjectSchema.pre('validate', function(next) {

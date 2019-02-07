@@ -20,7 +20,7 @@ function assignColorsToChildren(d, i) {
 class CategoryHierarchy {
 
   // tagging_version specifies whether not to include the 'rename' button, which should only be present when setting up the project initially.
-  constructor(tagging_version = false) {
+  constructor(canRenameCategories = true, canCreateNewCategories = true, canDeleteCategories = true) {
 
     var t = this;
     // Code for tree found here:  
@@ -156,21 +156,25 @@ class CategoryHierarchy {
       var title = {
           title: function(d) { return d.name.replace(/\|/g, "/"); }//.replace(/\\\//g, '/'); }
       }
-      var newChildCategory = {
-        title: '<i class="fa fa-plus"></i>&nbsp;&nbsp;New child category',
-        action: function(d, i, next) {
-          var name = showInput(function(name) {
-            createNewNode(t, d, name, function(err) {
-              if(err) { showError(err, next) }
-              else {
-                updateCategoryHierarchy(t.root);
-                next();
-              }
-            });            
-          });
+      var menu = [title];
+      if(canCreateNewCategories) {
+        var newChildCategory = {
+          title: '<i class="fa fa-plus"></i>&nbsp;&nbsp;New child category',
+          action: function(d, i, next) {
+            var name = showInput(function(name) {
+              createNewNode(t, d, name, function(err) {
+                if(err) { showError(err, next) }
+                else {
+                  updateCategoryHierarchy(t.root);
+                  next();
+                }
+              });            
+            });
+          }
         }
+        menu.push(newChildCategory);
       }
-      if(!tagging_version) {
+      if(canRenameCategories) {
         var renameCategory = {
           title: '<i class="fa fa-edit"></i>&nbsp;&nbsp;Rename category',
           action: function(d, i, next) {
@@ -185,14 +189,18 @@ class CategoryHierarchy {
             });
           }
         }
+        menu.push(renameCategory);
       }
-      var deleteCategory = {
-        title: '<i class="fa fa-trash"></i>&nbsp;&nbsp;Delete category',
-        action: function(d, i, next) {
-          deleteNode(d, t.root);
-          updateCategoryHierarchy(t.root);
-          next();
+      if(canDeleteCategories) {
+        var deleteCategory = {
+          title: '<i class="fa fa-trash"></i>&nbsp;&nbsp;Delete category',
+          action: function(d, i, next) {
+            deleteNode(d, t.root);
+            updateCategoryHierarchy(t.root);
+            next();
+          }
         }
+        menu.push(deleteCategory);
       }
       if(d == t.root) {
         return [
@@ -200,15 +208,8 @@ class CategoryHierarchy {
           newChildCategory
         ]
       }
-      if(tagging_version) {
-        return [ title, newChildCategory, deleteCategory];
-      }
-      return [
-        title,
-        newChildCategory,
-        renameCategory,
-        deleteCategory
-      ]
+      if(!canCreateNewCategories && !canDeleteCategories) return [];
+      return menu;
     }
   }
 

@@ -42,13 +42,22 @@ module.exports.tagging = function(req, res) {
       res.send("error");
     }
     user.addProjectToRecentProjects(proj, function(err) {
+
+      var canCreateNewCategories = user._id.equals(proj.user_id) || new Set(["full_permission", "create_edit_only"]).has(proj.category_hierarchy_permissions);
+      var canDeleteCategories = user._id.equals(proj.user_id) || proj.category_hierarchy_permissions === "full_permission";
+
+
+
       proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
         if(err) { res.send("error"); }
+        console.log(canCreateNewCategories, canDeleteCategories, ">>>>>>>>>>>>>");
         res.render('tagging', { 
          projectName: proj.project_name,
          tagging: true,
          title: "Annotation Interface",
          numDocuments: docGroupsPerUser,
+         canCreateNewCategories: canCreateNewCategories,
+         canDeleteCategories: canDeleteCategories
         });
 
       });
@@ -248,3 +257,23 @@ module.exports.declineInvitation = function(req, res) {
 
   }, 1)
 }
+
+
+
+
+module.exports.modifyHierarchy = function(req, res) {
+  var project_id = req.params.id;
+  var new_hierarchy = req.body.new_hierarchy;
+
+  // TODO: Verify that the category hierarchy is able to be modified
+  Project.findById(project_id, function(err, proj) {
+    proj.modifyHierarchy(new_hierarchy, req.user, function(err) {
+      if(err) { logger.error(err.stack); return res.status(400).send(); }
+      res.send({"success": true});
+    });
+  });
+
+    //res.status(400).send({});
+  //}, 1000)
+}
+

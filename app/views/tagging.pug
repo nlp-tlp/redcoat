@@ -32,7 +32,7 @@ block entity_categories_window
 				div#category-tree-explanation
 					div.inner
 						p <strong>Left-click</strong> on node to open/close category
-						p <strong>Right-click</strong> on node to open menu
+						p#right-click-opens-menu <strong>Right-click</strong> on node to open menu
 						p <strong>Click and drag</strong> to move around
 
 				svg#svg-entity-categories.large-left-margin
@@ -45,6 +45,7 @@ block entity_categories_window
 					p.unsaved <i class="fa fa-warning"></i> You have unsaved changes.
 					p.saving <i class="fa fa-gear fa-spin"></i> Saving categories...
 					p.saved <i class="fa fa-check"></i> Categories saved.
+					p.error <i class="fa fa-warning"></i> Error saving hierarchy.
 
 	div#tagging-menu
 		div.category-hierarchy
@@ -88,9 +89,11 @@ block scripts
 		function initTaggingInterface() {
 
 
-
-			
-
+			var canCreateNewCategories = #{canCreateNewCategories};
+			var canDeleteCategories = #{canDeleteCategories};
+			if(!canCreateNewCategories && !canDeleteCategories) {
+				$("#right-click-opens-menu").hide();
+			}
 
 			var $wikipediaHideShow = $("#wikipedia-hide-show");
 			var $wikipediaSummaryContainer = $("#wikipedia-summary-container");
@@ -379,7 +382,7 @@ block scripts
 
 
 				// The category hierarchy to be placed on the window.
-				var categoryHierarchy = new CategoryHierarchy(tagging_version = true);
+				var categoryHierarchy = new CategoryHierarchy(false, canCreateNewCategories, canDeleteCategories);
 
 				
 
@@ -414,6 +417,7 @@ block scripts
 					$("#saved-notification-category-hierarchy .unsaved").hide();
 					$("#saved-notification-category-hierarchy .saved").hide();
 					$("#saved-notification-category-hierarchy .saving").hide();
+					$("#saved-notification-category-hierarchy .error").hide();
 					if(unsavedTreeModifications) {
 						categoryHierarchy.clearTree();
 						categoryHierarchy.buildTree(entity_classes);
@@ -432,16 +436,37 @@ block scripts
 				$categoryTreeSave.click(function() {
 					$(this).addClass("disabled");
 					$("#saved-notification-category-hierarchy .unsaved").hide();
+					$("#saved-notification-category-hierarchy .error").hide();
 					$("#saved-notification-category-hierarchy .saving").show();
 
 					var slashData = json2slash(categoryHierarchy.root);
 
-
-					window.setTimeout(function() {						
+					$.ajax({
+						method: 'post',
+						url: 'tagging/modify_hierarchy',
+						headers: { 'csrf-token': csrfToken },
+						data: {new_hierarchy: slashData},	
+						success: function(data) {
+							reloadTree();
+						},
+						error: function(err) {
+							showErrorMessage();
+						}
+			    	});		
+			    	function showErrorMessage() {
 						$("#saved-notification-category-hierarchy .saving").hide();
+						$("#saved-notification-category-hierarchy .saved").hide();			    		
+						$("#saved-notification-category-hierarchy .error").show();			    		
+			    	}
+
+			    	function reloadTree() {
+
+			    		$("#saved-notification-category-hierarchy .saving").hide();
+			    		$("#saved-notification-category-hierarchy .error").hide();
 						$("#saved-notification-category-hierarchy .saved").show();
 						unsavedTreeModifications = false;
-						entity_classes = slashData;
+
+			    		entity_classes = slashData;
 
 						$categoryHierarchyTree.replaceWith("<div id='category-hierarchy-tree'></div>");
 						$categoryHierarchyTree = $("#category-hierarchy-tree");
@@ -465,14 +490,12 @@ block scripts
 									if($("#" + (tid)).length == 0) {
 										deleteTag($(this), $(this).parent(".sentence").index());
 									}
-
 								});
 							})();
 						});
+					}
 
-						//$tree.jstree(true).redraw(true)
-						//$categoryHierarchyTree.jstree(true).refresh();
-					}, 1000);
+					
 
 					
 					// TODO: AJAX post to update_tree,
@@ -486,7 +509,10 @@ block scripts
 
 				$(document).on("tree_modified", function() {
 					unsavedTreeModifications = true;
+					$("#saved-notification-category-hierarchy .saved").hide();		
 					$("#saved-notification-category-hierarchy .unsaved").show();
+					$("#saved-notification-category-hierarchy .error").hide();
+
 					$categoryTreeSave.removeClass("disabled");
 				});
 				
