@@ -1,4 +1,4 @@
-# annotation-tool
+# Redcoat - Collaborative Annotation Tool for Hierarchical Entity Typing
 
 Redcoat is a lightweight web-based annotation tool for labelling entity recognition data.
 
