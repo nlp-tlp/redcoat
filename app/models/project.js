@@ -296,10 +296,10 @@ ProjectSchema.methods.getInvitationsTableData = function(next) {
         }
       }
     ], function(err, pending_users) {
-      console.log("project", project_users)
-      console.log("pending", pending_users)
+      //console.log("project", project_users)
+      //console.log("pending", pending_users)
       var all_users = project_users.concat(pending_users)
-      console.log(",,,,,,,,,,,,,,,,,,,", all_users)
+      //console.log(",,,,,,,,,,,,,,,,,,,", all_users)
       next(err, all_users); 
     });
   });
@@ -438,7 +438,7 @@ ProjectSchema.methods.getCombinedAnnotations = function(next) {
             var zipped_labels = [...zip( user_labels.map(function(x) { return x[j] })   )]
             final_labels.push(new Array(zipped_labels.length));
             for(k in zipped_labels) {
-              final_labels[j][k] = findMode(zipped_labels[k]);
+              final_labels[j][k] = findMode(zipped_labels[k]);  // TODO: Adapt to multi-label
             }
           }
           delete document_groups[i].labels;
@@ -550,7 +550,7 @@ ProjectSchema.methods.getDocumentGroupsPerUser = function(next) {
   this.getNumDocumentGroups(function(err, numDocGroups) {
     var docGroupsPerUser = 1.0 / numAnnotators * overlap * numDocGroups;
 
-    console.log("<<<<", docGroupsPerUser, numAnnotators, numDocGroups, "<<>>")
+    //console.log("<<<<", docGroupsPerUser, numAnnotators, numDocGroups, "<<>>")
     next(err, docGroupsPerUser);
   });
   
@@ -596,7 +596,7 @@ ProjectSchema.methods.recommendDocgroupToUser = function(user, next) {
       }
     }
   ], function(err, docgroups) {
-    console.log(err, docgroups, "<<>>")
+    //console.log(err, docgroups, "<<>>")
     if(err) return next(err);
     if(docgroups.length == 0) { return next(new Error("No document groups left")) } //TODO: fix this
     var docgroup = docgroups[0];
@@ -643,7 +643,7 @@ ProjectSchema.methods.modifyHierarchy = function(new_hierarchy, user, done) {
     var missing_categories = [];
     for(var i = 0; i < old_hierarchy.length; i++) {
       var c = old_hierarchy[i];
-      console.log(c, new_hierarchy_set.has(c), "<>");
+      //console.log(c, new_hierarchy_set.has(c), "<>");
       if(!new_hierarchy_set.has(c)) {
         missing_categories.push(c);
       }

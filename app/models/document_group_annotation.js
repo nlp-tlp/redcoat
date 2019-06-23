@@ -20,6 +20,7 @@ var labelsValidation =
 
 /* Schema */
 
+
 var DocumentGroupAnnotationSchema = new Schema({
   user_id: {
     type: Schema.Types.ObjectId,
@@ -36,7 +37,7 @@ var DocumentGroupAnnotationSchema = new Schema({
     ref: 'Project',
   },
   labels: { 
-    type: [[String]],
+    type: [[ ]],
     validate: labelsValidation
   },
 
@@ -85,22 +86,49 @@ DocumentGroupAnnotationSchema.methods.verifyLabelsAreValid = function(done) {
     return null; // no error
   }
 
+  // Ensure the label markers are valid, i.e. are strictly either "B-", "I-", or "".
+  function verifyLabelMarkersValid(t) {
+    valid_set = new Set(["B-", "I-", ""])
+    for(var i = 0; i < t.labels.length; i++) {
+      for(var j = 0; j < t.labels[i].length; j++) {
+        if(!valid_set.has(t.labels[i][j][0])) {
+          return new Error("Label marker \"" + t.labels[i][j][0] + "\" is not a valid label marker." )
+        }
+      }
+    }
+    return null;
+  }
+
   // Verifies that all labels are present in the project's valid_labels.abbreviations.
   function verifyLabelsAreInProjectValidLabels(t, proj) {
 
     var valid_labels = new Set(proj.category_hierarchy);
-    valid_labels.add("O");
+    //valid_labels.add("O");
 
     //var valid_abbreviations = new Set(proj.valid_labels.map(value => value.abbreviation));
     //valid_abbreviations.add("O"); // Add the outside category
-    var merged_labels = Array.from(new Set([].concat.apply([], t.labels)));
+
+
+
+
+    // var merged_labels = Array.from(new Set([].concat.apply(Array.from(new Set([].concat.apply([], t.labels))))));
+
+    var merged_labels = new Set();
+
+    for(var i = 0; i < t.labels.length; i++) {
+      for(var j = 0; j < t.labels[i].length; j++) {
+        if(t.labels[i][j][1] !== undefined) {
+          for(var k = 0; k < t.labels[i][j][1].length; k++) {
+            merged_labels.add(t.labels[i][j][1][k])
+          }          
+        }
+      }
+    }
+   
+    merged_labels = Array.from(merged_labels);
     for(var i = 0; i < merged_labels.length; i++) {
-
       var label = merged_labels[i];
-      // Allow B- and I- labels as well.
-      if(label[0] == "B" && label[1] == "-") label = label.substring(2);
-      if(label[0] == "I" && label[1] == "-") label = label.substring(2);
-
+      console.log(i, label);
       if (!valid_labels.has(label)) {
         return new Error("Label \"" + merged_labels[i] + "\" is not a valid label for the project." )
       }
@@ -118,8 +146,10 @@ DocumentGroupAnnotationSchema.methods.verifyLabelsAreValid = function(done) {
       if(err) { done(err); return; }
       var v1 = verifyLabelTokenCountsSame(t, doc_group);
       if(v1) { done(v1); return; }
-      var v2 = verifyLabelsAreInProjectValidLabels(t, proj);
+      var v2 = verifyLabelMarkersValid(t);
       if(v2) { done(v2); return; }
+      var v3 = verifyLabelsAreInProjectValidLabels(t, proj);
+      if(v3) { done(v3); return; }
       done();
     });
   });

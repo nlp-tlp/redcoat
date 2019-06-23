@@ -132,7 +132,7 @@ UserSchema.methods.verifyEmailUnique = function(done) {
 // Retrieve a sorted list of this user's recent projects.
 UserSchema.methods.getRecentProjects = function(done) {
   var t = this;
-  console.log(t)
+  //console.log(t)
   User.aggregate([
     { $match: { _id: t._id }},
     {
@@ -157,7 +157,7 @@ UserSchema.methods.getRecentProjects = function(done) {
     ,
   ], function(err, results) {
     if(err) return done(err);
-    console.log(err, results);
+    //console.log(err, results);
     var final_results = [];
     if(results != null) {
       final_results = results;
@@ -171,7 +171,7 @@ UserSchema.methods.getRecentProjects = function(done) {
 // If it is already there, update the date.
 UserSchema.methods.addProjectToRecentProjects = function(proj, done) {
   t = this;
-  console.log(t, proj);
+  //console.log(t, proj);
 
   User.update(
     { _id: t._id, "recent_projects.project_id": proj._id },
@@ -189,7 +189,7 @@ UserSchema.methods.addProjectToRecentProjects = function(proj, done) {
         { project_id: proj._id, project_name: proj.project_name }
       }
     }, function(err) {      
-    console.log(err)
+    //console.log(err)
     done(err);
   });
 }
@@ -264,7 +264,7 @@ UserSchema.methods.getProjectsTableData = function(done) {
       Project.findById(p._id, function(err, p) {
         p.getDocumentGroupsAnnotatedByUserCount(t, function(err, count) {  
           p.getDocumentGroupsPerUser(function(err, required) {
-            console.log(p.project_name, "<<>>", count, required)
+            //console.log(p.project_name, "<<>>", count, required)
             project["percent_complete_yours"] = count / required * 100;
             project["user_is_owner"] = t._id.equals(p.user_id);
             tableData.push(project);
@@ -320,7 +320,7 @@ UserSchema.methods.removeSelfFromAllProjects = function(done) {
 
 
 UserSchema.pre('save', function(next) {
-  console.log(this);
+  //console.log(this);
   var t = this;
   // 1. Set current date
   t.setCurrentDate();

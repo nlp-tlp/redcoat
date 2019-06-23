@@ -116,12 +116,12 @@ app.use(function(req, res, next) {
 
     req.user.getProjectInvitations(function(err, invitations) {
       res.locals.project_invitations = invitations;
-      console.log("Invitations:", invitations)
+      //console.log("Invitations:", invitations)
 
       req.user.getRecentProjects(function(err, recent_projects) {
 
         res.locals.recent_projects = recent_projects;
-        console.log("Recent projects:", res.locals.recent_projects);
+        //console.log("Recent projects:", res.locals.recent_projects);
 
 
         

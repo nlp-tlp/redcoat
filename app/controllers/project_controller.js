@@ -50,7 +50,7 @@ module.exports.tagging = function(req, res) {
 
       proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
         if(err) { res.send("error"); }
-        console.log(canCreateNewCategories, canDeleteCategories, ">>>>>>>>>>>>>");
+        //console.log(canCreateNewCategories, canDeleteCategories, ">>>>>>>>>>>>>");
         res.render('tagging', { 
          projectName: proj.project_name,
          tagging: true,
@@ -77,8 +77,9 @@ module.exports.getDocumentGroup = function(req, res) {
     if(err) {
       res.send("error");
     }
+
     proj.recommendDocgroupToUser(req.user, function(err, docgroup) {
-      console.log(err, docgroup)
+      //console.log(err, docgroup)
 
       
       if(err) {
@@ -112,6 +113,8 @@ module.exports.submitAnnotations = function(req, res) {
   var projectId = req.params.id;
   var labels = req.body.labels;
 
+  console.log("Labels", labels)
+
   var documentGroupAnnotation = new DocumentGroupAnnotation({
     user_id: userId,
     document_group_id: documentGroupId,
@@ -119,16 +122,17 @@ module.exports.submitAnnotations = function(req, res) {
   });
   documentGroupAnnotation.save(function(err, dga) {
 
+    
     if(err) {
       logger.error(err.stack);
       return res.send({error: err})
     }
-
+    
     // Add the docgroup to the user's docgroups_annotated array.
 
-    console.log(dga._id)
+    //console.log(dga._id)
     User.findByIdAndUpdate(userId, { $addToSet: { 'docgroups_annotated': documentGroupId }}, function(err) {
-      console.log(req.user);
+      //console.log(req.user);
 
         if(err) {
           logger.error(err.stack);
