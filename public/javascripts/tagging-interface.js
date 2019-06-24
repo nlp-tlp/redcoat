@@ -26,6 +26,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 	var hotkeyMap;   // A 'map' that stores the current hotkey bindings mapped to their corresponding nodes in the JSTree.
 	var tagClassMap; // A 'map' of nodes mapped to each of their parents, in order of closeness.
 	var hotkeysCurrentlyDisabled = 0; // Stored as integers because both the search and category tree disable hotkeys.
+	var colorMap = {}; // A map of nodeids mapped to their colours.
 	// Construct the JSTree from the category hierarchy data.
 	function buildJsTree(hierarchy) {
 
@@ -54,6 +55,8 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 				annotatedLabels.removeClass(function(index, className) {
 					return className.match(/tag-\d/ || []).join(' ');
 				});
+
+				
 				annotatedLabels.addClass("tag-" + node.li_attr["data-color"]);
 				annotatedLabels.attr("tag-class", node.li_attr["data-index"])
 			}
@@ -457,6 +460,8 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 		var $progressBarInner = $("#tagging-progress-bar .inner");
 		var $progressTextNumAnnotated = $("#progress-text-num-annotated");
+
+		var automaticAnnotations = []; // An array of automatic annotations for the current doc group.
 		//var numDocuments = #{numDocuments};
 
 		// A function to call when scrolling has finished.
@@ -466,7 +471,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 
 		var entity_classes = [];				
-		var entity_classes_abbr = [];		
+		var entity_classes = [];		
 		var $tree = null;		
 
 		
@@ -498,9 +503,8 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 			entity_classes_abbr = [];
 			for(var i in entity_classes) {
 				var ec = entity_classes[i];//.toLowerCase();
-				//ecs = ec.split('/');
-				//ec = ecs[ecs.length-1]; //(ecs.length > 1 ? '/' : '') + ecs[ecs.length-1];
-				//var abbr = ec;
+				ecs = ec.split('/');
+				ec = ecs[ecs.length-1]; //(ecs.length > 1 ? '/' : '') + ecs[ecs.length-1];
 				entity_classes_abbr.push(ec);
 			}
 		};
@@ -519,6 +523,31 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 				}
 		    });			
 			
+		}
+
+		// Automatically tag all tokens on the screen that appear in the hierarchy.
+		function runDictionaryTagging() {
+			for(var i = 0; i < automaticAnnotations.length; i++ ) {
+				sentenceIndex = i;
+
+				$currentSentence = st.children().eq(sentenceIndex);
+				$currentWords = $currentSentence.children();				
+				sentenceLength = calculateSentenceLength();
+				for(var j in automaticAnnotations[i]) {
+					console.log(j, automaticAnnotations[i][j])
+					
+
+
+					tagSelected(automaticAnnotations[i][j], null, null, false, j);
+
+				}
+
+			}
+
+
+			sentenceIndex = 0;
+
+
 		}
 
 		// Load a random document group from the project. Initialise the interface.
@@ -551,6 +580,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 				$navbarPageTitle.html(documentGroupData.pageTitle);
 
 				console.log("id (pre-tag):", documentGroupId);
+				
 
 				$progressTextNumAnnotated.html(documentGroupData.annotatedDocGroups);
 
@@ -560,7 +590,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 				// Build the category hierarchy from the entity classes.
 				categoryHierarchy.buildTree(entity_classes);
 
-				// Initialise the jsTree (the tagging menu on the left).
+				
 				
 				
 				
@@ -569,6 +599,24 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 				// Initialise the tree again, just in case it has changed.
 				$tree = initialiseCategoryTree();
 				
+
+
+
+				// Build the automatic annotations based on the groupData.
+				automaticAnnotations = [];
+				var entityClassesAbbrSet = new Set(entity_classes_abbr);
+				for(var doc_id in groupData) {
+					var doc = groupData[doc_id];
+					var anns = {};
+					for(var word_id in doc) {
+						if(entityClassesAbbrSet.has(doc[word_id].toLowerCase())) {
+							anns[word_id] = entity_classes_abbr.indexOf(doc[word_id].toLowerCase());
+						}
+					}
+					automaticAnnotations.push(anns);
+				}
+				console.log("Auto anns:", automaticAnnotations)
+
 				
 				// Continue the loading process.
 				// This function is called only after the sentence tagging ele has faded out.
@@ -610,6 +658,12 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 					console.log("--")
 
 					numberOfSentences = groupData.length;
+
+					// TODO: Automatically tag entities in hierarchy
+					runDictionaryTagging();
+
+
+
 					sentenceIndex = 0;
 					wordIndex = -1;
 					gotoSentence();
@@ -624,10 +678,18 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 							//scrollTop: st.children().eq(sentenceIndex).offset().top - 150
 						}, 200, finishedScrolling);										
 					}
+
+					
+
+
 					loading = false;
 					selectedWord = getSelectedWord();
 					selectedWord.addClass("selected");
 					$sentences = $("#sentence-tagging").children();
+
+					
+
+
 					initMouseEvents();
 					initKeyboardEvents();
 				}
@@ -688,12 +750,17 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 		}
 
-		function tagSelected(tagClass, colorIndex, nodeId, moveAfterwards=true) {			
+		function tagSelected(tagClass, colorIndex, nodeId, moveAfterwards=true, word_index=null) {			
 
 			console.log("TAGGING")
 
 			if(!$currentWords) return;
-			var $selectedWords = $("span.word.selected")
+			if(word_index === null) {
+				var $selectedWords = $("span.word.selected")
+			} else {
+				var $selectedWords = $($currentSentence.children(".word").get(word_index));
+			}
+			
 
 			$selectedWords.removeClass(function (index, className) {
 				return (className.match (/(^|\s)tag-\S+/g) || []).join(' ');
@@ -721,28 +788,36 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 						return getParents(p, arr );
 					}
 				}
-				tagList = getParents(tagClass, [tagClass]);
+				//tagList = getParents(tagClass, [tagClass]);
+				tagList = tagClassMap[tagClass].concat([tagClass]);
 
-				console.log("\n", tagClass, tagClassMap[tagClass][0])
+				console.log("\nTAG CLASS MAP", tagClass, tagClassMap, tagList)
 
 				for(var i = 0; i < tagList.length; i++) {					
 					var tc = tagList[i];
-					if(colorIndex == null) colorIndex = tc;
+					//console.log(tagList[0], "<<>>")
+
+					if(colorIndex === null) {
+						colorIndex = $(".jstree-children li[data-index='" + tagList[0] + "']").attr('data-color');
+					}
+					
+					//console.log(colorIndex, ">>___")
+
 					b.addClass("tag-begin");
 					e.addClass("tag-end");
 					$selectedWords.addClass("tag");
-					$selectedWords.attr("data-node-id", nodeId);
+					//$selectedWords.attr("data-node-id", nodeId);
 					//$selectedWords.addClass("tag-" + colorIndex);
 					//$selectedWords.attr("data-tag-class", tagClass);					
-					//$selectedWords.attr("data-content", entity_classes_abbr[tagClass]);	
+					//$selectedWords.attr("data-content", entity_classes[tagClass]);	
 
 					// Check if already there
 					currentLabels = new Set();
 					$selectedWords.children(".label").each(function(e) {
 						currentLabels.add($(this).text());
 					});
-					if(!currentLabels.has(entity_classes_abbr[tc])) {
-						$selectedWords.append("<span class=\"label tag-" + colorIndex + "\">" + entity_classes_abbr[tc] + "</span>");			
+					if(!currentLabels.has(entity_classes[tc])) {
+						$selectedWords.append("<span class=\"label tag-" + colorIndex + "\">" + entity_classes[tc] + "</span>");			
 					}
 
 				}
@@ -873,7 +948,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 				if(tagClass >= 0) {
 					annotatedTags[sentenceIndex][i][0] = prefix; //prefix + tc;//tagClass - 1;
-					annotatedTags[sentenceIndex][i][1].add(entity_classes_abbr[tagClass]); //prefix + tc;//tagClass - 1;
+					annotatedTags[sentenceIndex][i][1].add(entity_classes[tagClass]); //prefix + tc;//tagClass - 1;
 					addTags();
 				} else {
 					annotatedTags[sentenceIndex][i] = [null, new Set()];
