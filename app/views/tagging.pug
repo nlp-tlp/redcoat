@@ -681,6 +681,8 @@ block scripts
 								for(var i in value) {
 									var allPunctuation = ((value[i].match(/[.,\/#!$%\^&\*;:{}=\-_`~()"']/g) || []).length == value[i].length)
 									// If all punctuation, use the punctuation class instead.
+									// edit: removed
+									var allPunctuation = false;
 									var ts = allPunctuation ? PS : WS;
 									var te = allPunctuation ? PE : WE;
 									content += ts.replace(/\$\$\$/g, ind) + value[i] + te;								

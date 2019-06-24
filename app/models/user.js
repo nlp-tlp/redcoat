@@ -83,13 +83,16 @@ var UserSchema = new Schema({
   // A list of all document groups the user has annotated.
   docgroups_annotated: {
     type: [mongoose.Schema.Types.ObjectId],
-    index: true,
+    index: false,
     default: [],
   },
 
   
   
-  recent_projects: [RecentProject],
+  recent_projects: {
+	type: [RecentProject],
+	index: false
+  },
 
 
   resetPasswordToken: String,

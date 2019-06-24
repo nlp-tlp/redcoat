@@ -12,7 +12,7 @@ var Project = require("./project");
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-
+console.log(process.env.SENDGRID_API_KEY);
 
 
 
@@ -60,7 +60,7 @@ ProjectInvitationSchema.statics.createInvitation = function(project_id, user_ema
   //   attributes: { "project_name": project_name, "sender": inviting_user_name }
   // });
   const msg = {
-    to: 'michael.stewart.webdev@gmail.com',
+    to: user_email,
     from: 'Redcoat@nlp-tools.org',
     fromname: "Redcoat - Collaborative Annotation Tool",
     subject: 'Hello world',
@@ -76,6 +76,7 @@ ProjectInvitationSchema.statics.createInvitation = function(project_id, user_ema
     if(err) return next(err);
     console.log("saved invite:", err, invitation)
     sgMail.send(msg, function(err, result) {
+	console.log(err)
       if(err) return next(err);
       next(err, invitation);
       // apiInstance.sendTemplate(templateId, sendEmail).then(function(data) {
@@ -102,7 +103,7 @@ ProjectInvitationSchema.methods.acceptInvitation = function(next) {
       function(err) {
         console.log("<<", err)
         if(err) return next(err);
-        return next(err); //TODO: remove this so it works normally (after testing it)
+        //return next(err); //TODO: remove this so it works normally (after testing it)
 
         t.remove(function(err) {
           if(err) return next(err);
@@ -126,7 +127,7 @@ ProjectInvitationSchema.methods.declineInvitation = function(next) {
       function(err) {
         console.log("<<", err)
         if(err) return next(err);
-        return next(err); //TODO: remove this so it works normally (after testing it)
+        //return next(err); //TODO: remove this so it works normally (after testing it)
 
         t.remove(function(err) {
           if(err) return next(err);
