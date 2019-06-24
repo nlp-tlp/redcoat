@@ -139,7 +139,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 			var bksp = $(".backspace-hotkey").parent().first().attr('id');
 			if(bksp) hotkeyMap["BACKSPACE"] = bksp;
-			console.log(hotkeyMap);
+			// console.log(hotkeyMap);
 		}
 
 		// Hide the hotkeys when a node is closed.
@@ -180,7 +180,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 		// Ensure only one branch can be opened at a time so that the hotkey display works properly.
 		$tree.on('open_node.jstree', function (e, data) {
-			console.log(data);
+			// console.log(data);
 			$(".jstree-children").removeClass("jstree-current");
 			$("#" + data.node.id).children('.jstree-children').addClass("jstree-current");
 		    if(!searching) closeSiblingNodes(data);
@@ -261,7 +261,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 		$ecSearch.unbind('focus');
 		$ecSearch.on('focus', function() {
-			console.log('focs')
+			// console.log('focs')
 			$ecSearchForm.addClass("selected");
 			$tree.addClass("searching");
 			$tree.hide();
@@ -272,7 +272,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 		$ecSearch.unbind('blur');
 		$ecSearch.on('blur', function() {
-			console.log('blur')
+			// console.log('blur')
 			//$ecSearchForm.removeClass("searching");
 			
 			
@@ -398,7 +398,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 						$(".tag").each(function() {
 							var t = $(this);
 							var tid = $(this).attr('data-node-id');
-							console.log("#" + tid, $("#" + tid))
+							// console.log("#" + tid, $("#" + tid))
 							if($("#" + (tid)).length == 0) {
 								deleteTag($(this), $(this).parent(".sentence").index());
 							}
@@ -461,7 +461,6 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 		var $progressBarInner = $("#tagging-progress-bar .inner");
 		var $progressTextNumAnnotated = $("#progress-text-num-annotated");
 
-		var automaticAnnotations = []; // An array of automatic annotations for the current doc group.
 		//var numDocuments = #{numDocuments};
 
 		// A function to call when scrolling has finished.
@@ -471,21 +470,21 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 
 		var entity_classes = [];				
-		var entity_classes = [];		
+		var entity_classes = [];	
 		var $tree = null;		
 
 		
 		// Initialise the category tree. It must be initialised upon the loading of every group in case the tree changes.
 		function initialiseCategoryTree() {
 			$tree = buildJsTree(entity_classes);
-			console.log($tree, entity_classes);
+			// console.log($tree, entity_classes);
 			function tagByNode(event, data) {
 
 				var node = data.node;
 				var ind = node.li_attr["data-index"];
 				var color = node.li_attr["data-color"];
-				console.log(node, ind, color);
-				console.log("INIT TREE")
+				// console.log(node, ind, color);
+				// console.log("INIT TREE")
 				tagSelected(ind, color, node.li_attr['id'], false);					
 			}
 
@@ -526,7 +525,69 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 		}
 
 		// Automatically tag all tokens on the screen that appear in the hierarchy.
-		function runDictionaryTagging() {
+		function runDictionaryTagging(groupData) {
+			console.log("Automatic tagging...");
+
+			function automaticAnnotations() {
+
+				
+
+				// Build the automatic annotations based on the groupData.
+				automaticAnnotations = [];
+				var entityClassesAbbrSet = new Set(entity_classes_abbr);
+
+				var entity_classes_joined = [];
+				for(var ec in entity_classes_abbr) {
+					// if(entity_classes_abbr[ec].indexOf("_") !== -1) {
+						entity_classes_joined.push(entity_classes_abbr[ec].replace("_", "ɮ"));
+					// }
+				}
+				
+				entity_classes_joined.sort(function(a, b){
+				  // ASC  -> a.length - b.length
+				  // DESC -> b.length - a.length
+				  return b.length - a.length;
+				});
+			
+				for(var doc_id in groupData) {
+					var anns = [];
+					var doc = groupData[doc_id];
+					var doc_joined = doc.join("ɮ").toLowerCase();
+					var alreadyFound = new Set();
+					//console.log(doc_id)
+					//console.log("---")
+					for(var ec = 0; ec < entity_classes_joined.length; ec++) {
+						
+						var regexp = new RegExp(entity_classes_joined[ec], "g")
+						//var regexp = new RegExp('the', "g")
+						
+						var match, m= [];
+						while (match= regexp.exec(doc_joined))
+						    m.push([match.index, match.index+match[0].length]);						
+					
+						if(m.length > 0) {
+							for(var mi = 0; mi < m.length; mi++) {							
+
+								var numBefore = (doc_joined.slice(0, m[mi][0]).match(/ɮ/g) || []).length;
+								var entitySize = (entity_classes_joined[ec].match(/ɮ/g) || []).length;
+								var end = numBefore + entitySize + 1
+
+								if(!alreadyFound.has(end)) {
+									anns.push({ start: numBefore, end: end, label: entity_classes_abbr.indexOf(entity_classes_joined[ec].replace("ɮ", "_")) });	
+									alreadyFound.add(end);
+								}
+							}
+
+								
+						}
+					}
+					automaticAnnotations.push(anns);
+				}
+				return automaticAnnotations;
+			}
+
+			var automaticAnnotations = automaticAnnotations();
+
 			for(var i = 0; i < automaticAnnotations.length; i++ ) {
 				sentenceIndex = i;
 
@@ -534,20 +595,11 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 				$currentWords = $currentSentence.children();				
 				sentenceLength = calculateSentenceLength();
 				for(var j in automaticAnnotations[i]) {
-					console.log(j, automaticAnnotations[i][j])
-					
-
-
-					tagSelected(automaticAnnotations[i][j], null, null, false, j);
-
+					//console.log("<<", j, automaticAnnotations[i][j])
+					tagSelected(automaticAnnotations[i][j]['label'], null, null, false, [automaticAnnotations[i][j]['start'], automaticAnnotations[i][j]['end']]);
 				}
-
 			}
-
-
-			sentenceIndex = 0;
-
-
+			console.log("Done.");
 		}
 
 		// Load a random document group from the project. Initialise the interface.
@@ -600,22 +652,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 				$tree = initialiseCategoryTree();
 				
 
-
-
-				// Build the automatic annotations based on the groupData.
-				automaticAnnotations = [];
-				var entityClassesAbbrSet = new Set(entity_classes_abbr);
-				for(var doc_id in groupData) {
-					var doc = groupData[doc_id];
-					var anns = {};
-					for(var word_id in doc) {
-						if(entityClassesAbbrSet.has(doc[word_id].toLowerCase())) {
-							anns[word_id] = entity_classes_abbr.indexOf(doc[word_id].toLowerCase());
-						}
-					}
-					automaticAnnotations.push(anns);
-				}
-				console.log("Auto anns:", automaticAnnotations)
+				
 
 				
 				// Continue the loading process.
@@ -648,19 +685,18 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 						
 						annotatedTags.push(new Array(value.length).fill([null, new Set()]));
-						console.log(annotatedTags);
-						console.log('--====--')
-						console.log(value)
-						console.log(value.length)
+						// console.log(annotatedTags);
+						// console.log('--====--')
+						// console.log(value)
+						// console.log(value.length)
 
 						indSent++;
 					});
-					console.log("--")
+					// console.log("--")
 
 					numberOfSentences = groupData.length;
 
-					// TODO: Automatically tag entities in hierarchy
-					runDictionaryTagging();
+					runDictionaryTagging(groupData);
 
 
 
@@ -750,15 +786,17 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 		}
 
-		function tagSelected(tagClass, colorIndex, nodeId, moveAfterwards=true, word_index=null) {			
+		function tagSelected(tagClass, colorIndex, nodeId, moveAfterwards=true, word_indexes=null) {			
 
-			console.log("TAGGING")
+			// console.log("TAGGING")
 
 			if(!$currentWords) return;
-			if(word_index === null) {
-				var $selectedWords = $("span.word.selected")
+			if(word_indexes === null) {
+				var $selectedWords = $("span.word.selected");
+				
 			} else {
-				var $selectedWords = $($currentSentence.children(".word").get(word_index));
+				var suggestion = true;
+				var $selectedWords = $($currentSentence.children(".word").slice(word_indexes[0], word_indexes[1]));
 			}
 			
 
@@ -781,7 +819,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 				function getParents(tc, arr) {
 					var p = tagClassMap[tc][0];
 					if(p === undefined) {
-						console.log(arr)
+						// console.log(arr)
 						return arr;
 					} else {
 						arr.push(p)
@@ -791,7 +829,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 				//tagList = getParents(tagClass, [tagClass]);
 				tagList = tagClassMap[tagClass].concat([tagClass]);
 
-				console.log("\nTAG CLASS MAP", tagClass, tagClassMap, tagList)
+				//console.log("\nTAG CLASS MAP", tagClass, tagClassMap, tagList)
 
 				for(var i = 0; i < tagList.length; i++) {					
 					var tc = tagList[i];
@@ -817,7 +855,8 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 						currentLabels.add($(this).text());
 					});
 					if(!currentLabels.has(entity_classes[tc])) {
-						$selectedWords.append("<span class=\"label tag-" + colorIndex + "\">" + entity_classes[tc] + "</span>");			
+						var suggestion_str = suggestion ? " suggestion" : "";
+						$selectedWords.append("<span class=\"label tag-" + colorIndex + suggestion_str + "\">" + entity_classes[tc] + "</span>");			
 					}
 
 				}
@@ -871,7 +910,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 					currentTagSet = thisWordsTags;					
 				} else {
 					for(var tag of thisWordsTags) {
-						console.log(tag)
+						// console.log(tag)
 						if(!currentTagSet.has(tag)) {
 							deleteTags();
 							return;
@@ -933,7 +972,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 				if(i < startIndex) return;
 				if(i > endIndex) return;
 
-				console.log(i, "mmm");
+				// console.log(i, "mmm");
 				
 
 
@@ -963,7 +1002,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 			
 			});
 
-			console.log(annotatedTags);
+			// console.log(annotatedTags);
 			
 			
 
@@ -1131,7 +1170,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 						var wurl = "https://en.wikipedia.org/wiki/" + data.query.search[0].title.replace(/ /g, '_');
 						return next(title, snippet, wurl);
 					} catch(err) {
-						console.log("No article found.");
+						// console.log("No article found.");
 						next();
 					}
 				}
@@ -1231,7 +1270,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 				var startIndex = start.data('ind');
 				var endIndex = end.data('ind');
 
-				console.log(start, end, startIndex, endIndex)
+				// console.log(start, end, startIndex, endIndex)
 
 				// Get the starting and ending index of the sentences containing the start and end of the selection.
 				var startSentenceIndex = start.parent().data('ind');	// The starting sentence 
@@ -1497,9 +1536,9 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 			$("#tagging-container").unbind("mouseup");
 			$(document).unbind("keydown");
 			$(document).unbind("keyup");
-			console.log("id:", documentGroupId);
-			console.log(annotatedTags)
-			console.log(csrfToken);
+			// console.log("id:", documentGroupId);
+			// console.log(annotatedTags)
+			// console.log(csrfToken);
 			for(var i = 0; i < annotatedTags.length; i++) {
 				for(var j = 0; j < annotatedTags[i].length; j++) {
 					// if(annotatedTags[i][j][0] == null) {
@@ -1509,6 +1548,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 					// }
 				}
 			}
+			
 			console.log(annotatedTags)
 			$.ajax({
 				url: 'tagging/submitAnnotations',
