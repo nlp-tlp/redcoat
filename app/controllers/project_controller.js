@@ -168,13 +168,17 @@ module.exports.downloadAnnotationsOfUser = function(req, res) {
         return res.send("error");
       }
       proj.getAnnotationsOfUserForProject(user, function(err, annotations) {
-        proj.json2conll(annotations, function(err, annotations_conll) {          
+        proj.getEntityTypingAnnotations(annotations, function(err, et_annotations) {          
           if(err) { return res.send("error"); }
 
-          res.type('.txt');
+          res.type('.json');
           res.setHeader('Content-type', "application/octet-stream");
-          res.set({"Content-Disposition":"attachment; filename=\"annotations-" + user.username + ".txt\""});
-          res.send(annotations_conll);
+          res.set({"Content-Disposition":"attachment; filename=\"annotations-" + user.username + ".json\""});
+          var out = [];
+          for(var line in et_annotations) {
+            out.push(JSON.stringify(et_annotations[line]));
+          }
+          res.send(out.join('\n'));
           //res.send(annotations);
         });        
       })
@@ -188,12 +192,16 @@ module.exports.downloadCombinedAnnotations = function(req, res) {
     console.log(err);
     proj.getCombinedAnnotations(function(err, annotations) {
       if(err) return res.send(err);
-      proj.json2conll(annotations, function(err, annotations_conll) {   
+      proj.getEntityTypingAnnotations(annotations, function(err, et_annotations) {   
         if(err) return res.send(err);
         res.type('.txt');
         res.setHeader('Content-type', "application/octet-stream");
-        res.set({"Content-Disposition":"attachment; filename=\"annotations-combined.txt\""});
-        res.send(annotations_conll);
+        res.set({"Content-Disposition":"attachment; filename=\"annotations-combined.json\""});
+        var out = [];
+        for(var line in et_annotations) {
+          out.push(JSON.stringify(et_annotations[line]));
+        }
+        res.send(out.join('\n'));
       });
     });
   });

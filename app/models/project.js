@@ -183,6 +183,7 @@ ProjectSchema.methods.getDocumentGroupsAnnotatedByUserCount = function(user, nex
 ProjectSchema.methods.getDocumentsAnnotatedByUserCount = function(user, next) {
   var t = this;
   var DocumentGroupAnnotation = require('./document_group_annotation');
+  var DocumentGroup = require('./document_group');
   var d = DocumentGroupAnnotation.aggregate([
     { $match: { project_id: t._id, user_id: user._id} },
     { $unwind: "$labels"},
@@ -350,6 +351,7 @@ ProjectSchema.methods.getAnnotationsTableData = function(next) {
 
 
 
+
 // Retrieve all annotations for this project. For each token, the label selected is the most commonly-given label amongst all annotators of the project.
 // The document groups are returned in the following format:
 // {
@@ -389,6 +391,7 @@ ProjectSchema.methods.getCombinedAnnotations = function(next) {
   }
 
   var t = this;
+  var DocumentGroup = require('./document_group');
   DocumentGroupAnnotation.aggregate([
     {
       $match: {
@@ -420,35 +423,39 @@ ProjectSchema.methods.getCombinedAnnotations = function(next) {
          _id: 1,
          annotations: "$document_group_annotations",
          documents: { $arrayElemAt: ["$document_group.documents", 0] },
-         labels: "$labels",
+         all_labels: "$labels",
          document_group_display_name: { $arrayElemAt: ["$document_group.display_name", 0] }
        }
      },
      
     ]).allowDiskUse(true)
     .exec(function(err, document_groups) {
+      console.log(document_groups)
       if(err) return next(err);
-      try {
-        for(var i in document_groups) {
-          var user_labels = document_groups[i].labels;
-          var final_labels = [];
-          var num_users = user_labels.length;
-          for(var j in user_labels[0]) { // j is doc index
-            var labels = user_labels[0][j];
-            var zipped_labels = [...zip( user_labels.map(function(x) { return x[j] })   )]
-            final_labels.push(new Array(zipped_labels.length));
-            for(k in zipped_labels) {
-              final_labels[j][k] = findMode(zipped_labels[k]);  // TODO: Adapt to multi-label
-            }
-          }
-          delete document_groups[i].labels;
-          document_groups[i].labels = final_labels;
-        }
-      } catch(err) {
-        return next(err);
-      }
-      
       next(null, document_groups);
+
+      
+      // try {
+      //   for(var i in document_groups) {
+      //     var user_labels = document_groups[i].labels;
+      //     var final_labels = [];
+      //     var num_users = user_labels.length;
+      //     for(var j in user_labels[0]) { // j is doc index
+      //       var labels = user_labels[0][j];
+      //       var zipped_labels = [...zip( user_labels.map(function(x) { return x[j] })   )]
+      //       final_labels.push(new Array(zipped_labels.length));
+      //       for(k in zipped_labels) {
+      //         final_labels[j][k] = findMode(zipped_labels[k]);  // TODO: Adapt to multi-label
+      //       }
+      //     }
+      //     delete document_groups[i].labels;
+      //     document_groups[i].labels = final_labels;
+      //   }
+      // } catch(err) {
+      //   return next(err);
+      // }
+      // // console.log(document_groups)
+      // next(null, document_groups);
     });
 }
 
@@ -501,23 +508,156 @@ ProjectSchema.methods.getAnnotationsOfUserForProject = function(user, next) {
 
 }
 
-// Converts a json object to conll format.
-// The JSON should be in the format of 'getAnnotationsOfUserForProject' above.
-ProjectSchema.methods.json2conll = function(annotations, next) {
-  conll_arr = [];
-  for(var i in annotations) {
-    for(var j in annotations[i]["documents"]) {
-      for(var k in annotations[i]["documents"][j]) {
-        conll_arr.push("" + annotations[i]["documents"][j][k] + " " + annotations[i]["labels"][j][k])
-      }
-      if(i < annotations.length - 1) {
-        conll_arr.push("");    
-      }
-    }    
-  }
-  conll_str = conll_arr.join("\n")
-  next(null, conll_str)
+// // Converts a json object to conll format.
+// // The JSON should be in the format of 'getAnnotationsOfUserForProject' above.
+// ProjectSchema.methods.json2conll = function(annotations, next) {
+//   conll_arr = [];
+//   for(var i in annotations) {
+//     for(var j in annotations[i]["documents"]) {
+//       for(var k in annotations[i]["documents"][j]) {
+//         conll_arr.push("" + annotations[i]["documents"][j][k] + " " + annotations[i]["labels"][j][k])
+//       }
+//       if(i < annotations.length - 1) {
+//         conll_arr.push("");    
+//       }
+//     }    
+//   }
+//   conll_str = conll_arr.join("\n")
+//   next(null, conll_str)
+// }
 
+// Return a JSON array of entity typing-formatted annotations.
+// The annotations JSON should be in the format of 'getAnnotationsOfUserForProject' above.
+ProjectSchema.methods.getEntityTypingAnnotations = function(annotations,  next) {
+
+  // https://stackoverflow.com/questions/31128855/comparing-ecma6-sets-for-equality
+  isSetsEqual = (a, b) => a.size === b.size && [...a].every(value => b.has(value));
+
+  function* zip(args) {
+    const iterators = args.map(x => x[Symbol.iterator]());
+    while (true) {
+      const current = iterators.map(x => x.next());
+      if (current.some(x => x.done)) {
+        break;
+      }
+      yield current.map(x => x.value);
+    }
+  }
+
+
+  var mentions = [];
+  for(var i in annotations) {
+    for(var d in annotations[i]['documents']) {
+
+      var mention = {};
+      mention['tokens'] = annotations[i]['documents'][d];
+      mention['mentions'] = [];
+
+      var labels = [];
+      if(annotations[i].hasOwnProperty('labels')) {
+        labels = [annotations[i]['labels']]
+      } else if (annotations[i].hasOwnProperty('all_labels')) {
+        labels = annotations[i]['all_labels'];
+      }
+      var numUsers = labels.length;
+      if(numUsers % 2 == 0) {
+        var m = Math.ceil((numUsers / 2) + 0.0001);
+      } else {
+        var m = Math.ceil((numUsers / 2));
+      }
+       // Labels required for majority (more than 50%)
+
+
+      var zipped_labels = [...zip( labels.map(function(x) { return x[d] })   )]
+
+      var mentionStart = -1;
+      var mentionEnd = -1;
+      var mentionLabels = new Set();
+
+      for(var l = 0; l < zipped_labels.length; l++) {
+        var currentMention = {};
+
+        var zl = zipped_labels[l];
+
+        // 1. Count number of markers
+        var marker_counts = {"B-": 0, "I-": 0, "": 0}
+        var label_counts  = {}
+        var majority_markers = new Set();
+        var majority_labels = new Set();
+        for(var idx in zl) {
+          var marker_name = zl[idx][0]
+          marker_counts[marker_name] += 1
+          if(marker_counts[marker_name] >= m) {
+            majority_markers.add(marker_name);
+          }
+          if(zl[idx][1] !== undefined) {
+            for(var label_idx in zl[idx][1]) {
+              var label_name = zl[idx][1][label_idx]
+              if(!label_counts.hasOwnProperty(label_name)) {
+                label_counts[label_name] = 0
+              }
+              label_counts[label_name] += 1
+              if(label_counts[label_name] >= m) {
+                majority_labels.add(label_name);
+              }
+            }
+          }          
+        }
+                
+
+        // 2.a If we are not in a mention, count B tags
+        if(mentionStart === -1) {
+
+          // 3.a If there are any majority labels (regardless of B- or I-), start a new mention
+          if(majority_labels.size > 0) {
+            mentionStart  = l;
+            mentionEnd    = l + 1;
+            mentionLabels = majority_labels;
+          }
+
+        } else {
+
+          // 2.b If we *are* in a mention, ensure that majority labels == the current mentionLabels.
+
+          if(isSetsEqual(majority_labels, mentionLabels)) {
+
+            mentionEnd += 1
+          } else {
+
+            // 2.c If the sets are not equal, the current mention ends.
+            mention['mentions'].push({ "start": mentionStart, "end": mentionEnd, "labels": Array.from(mentionLabels) });
+            mentionStart = -1;
+            mentionEnd   = -1;
+            mentionLabels = new Set();
+
+            // Then, check for B- tags.
+            if(majority_markers.has("B-")) {
+              if(majority_labels.size > 0) {
+                mentionStart  = l;
+                mentionEnd    = l + 1;
+                mentionLabels = majority_labels;
+              }              
+            }
+          }
+        }
+        
+        // console.log(zl)
+        // console.log("Label counts:    ", label_counts)
+        // console.log("Marker counts:   ", marker_counts)
+        // console.log("Majority labels: ", majority_labels)
+        // console.log("Majority markers:", majority_markers)
+        // console.log('----')
+
+      }
+      // If at the end of the sentence and still in-mention, push that mention.
+      if(mentionStart > -1) {
+        mention['mentions'].push({ "start": mentionStart, "end": mentionEnd, "labels": Array.from(mentionLabels) });
+      }
+
+      mentions.push(mention);
+    }
+  }
+  next(null, mentions);
 }
 
 // Update the number of document group annotations for the project.

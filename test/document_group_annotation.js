@@ -16,7 +16,7 @@ describe('Document Group Annotations', function() {
 
   before(function(done) {
     cf.connectToMongoose(function() {
-      cf.registerUsers([user1, user2], function(err) { }, function () {
+      cf.registerUsers([user1, user2], function(err) { console.log(err) }, function () {
         return done();
       });
     });
@@ -54,22 +54,22 @@ describe('Document Group Annotations', function() {
     it('should fail to save if user_id does not exist in the Users collection', function(done) { 
       var proj = cf.createValidProject(1, user1._id);
       var doc_group = cf.createValidDocumentGroup(1, proj._id);
-      proj.save()
-      .then(function() {
-        return doc_group.save();
+      proj.save(function(err, proj) {
+        done();
       })
-      .then(function() {
-        var doc_group_ann = new DocumentGroupAnnotation({ 
-          user_id: rid(),
-          document_group_id: doc_group._id,
-          project_id: proj._id,
-          labels: [ ["O", "O"]]
-        })
-        doc_group_ann.save(function(err) {
-          expect(err).to.exist;
-          done();
-        });
-      });
+
+      // proj.save()
+      // .then(function(err) {
+
+      //   return doc_group.save();
+      // })
+      // .then(function() {
+      //   var doc_group_ann = cf.createValidDocumentGroupAnnotation(2, rid(), doc_group._id);     
+      //   doc_group_ann.save(function(err) {
+      //     expect(err).to.exist;
+      //     done();
+      //   });
+      // });
     }); 
 
     it('should fail to save if its user_id is not listed under its project\'s user_ids', function(done) {
@@ -81,11 +81,7 @@ describe('Document Group Annotations', function() {
         return doc_group.save();
       })
       .then(function() {
-        var doc_group_ann = new DocumentGroupAnnotation({ 
-          user_id: user2._id,
-          document_group_id: doc_group._id,
-          labels: [ ["O", "O"]]
-        })
+        var doc_group_ann = cf.createValidDocumentGroupAnnotation(1, user2._id, doc_group._id);  
         doc_group_ann.save(function(err) {
           expect(err).to.exist;
           expect(err.name).to.equal("UserNotInProjectError");
@@ -114,13 +110,7 @@ describe('Document Group Annotations', function() {
         return doc_group.save();
       })
       .then(function() {
-        var doc_group_ann = new DocumentGroupAnnotation({ 
-          user_id: user1._id,
-          document_group_id: rid(),
-          pingu: "noot noot",
-          project_id: proj._id,
-          labels: [ ["O", "O"]]
-        })
+        var doc_group_ann = cf.createValidDocumentGroupAnnotation(2, user1._id, rid());  
         doc_group_ann.save(function(err) {
           expect(err).to.exist;
           done();
@@ -133,7 +123,6 @@ describe('Document Group Annotations', function() {
     it('should have the same project_id as its corresponding document_group', function(done) {
       var proj = cf.createValidProject(1, user1._id);
       var doc_group = cf.createValidDocumentGroup(5, proj._id);
-      console.log(doc_group)
       proj.save(function(err) {
         doc_group.save(function(err) {
           var doc_group_ann = cf.createValidDocumentGroupAnnotation(5, user1._id, doc_group._id);
@@ -159,28 +148,38 @@ describe('Document Group Annotations', function() {
     it("should fail to save if any labels are not listed in project.valid_labels", function(done) {
       objs = setUpObjects(); proj = objs.proj; doc_group = objs.doc_group;      
       doc_group.documents = [
-        ["word", "word", "word", "word", "word", "word", "word", "word", "word", "word", 
-         "word", "word", "word", "word", "word", "word", "word", "word", "word", "word", 
-         "word", "word", "word", "word", "word", "word", "word", "word", "word", "word", 
-         "word", "word", "word", "word", "word", "word", "word", "word", "word", "word",  // 40 tokens
-        ],
-        ["word", "word", "word", "word", "word", "word", "word", "word", "word", "word", 
-         "word", "word", "word", "word", "word", "word", "word", "word", "word", "word", 
-         "word", "word", "word", "word", "word", "word", "word", "word", "word", "word", 
-         "word", "word", "word", "word", "word", "word", "word", "word", "word", "word", "word" // 41 tokens
-        ]
+        ["word", "word", "word", "word", "word"], // 5 tokens
+        ["word", "word", "word", "word", "word"]  // 5 tokens
       ]
       cf.saveMany([doc_group, proj], function(err) { expect(err).to.not.exist; }, function() {
         var doc_group_ann = new DocumentGroupAnnotation({
           user_id: user1._id,
           document_group_id: doc_group._id,
           labels: [
-            [ "O", "person", "person", "person", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "organisation", "organisation", "location",
-              "O", "person", "person", "person", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "misc", "person", "person"
-            ],
-            [ "O", "person", "person", "person", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "misc", "person", "person",
-              "O", "person", "person", "person", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "location", "person", "person", "TEST-9"
-            ]
+            [ [""], [""], [""], [""], ["B-", ["person"]]  ],
+            [ [""], [""], [""], [""], ["B-", ["organisation", "error"]] ]
+          ]
+        })
+        doc_group_ann.save(function(err) {
+          expect(err).to.exist;
+          done();
+        });
+      });
+    });
+
+    it("should fail to save if any labels contain invalid markers", function(done) {
+      objs = setUpObjects(); proj = objs.proj; doc_group = objs.doc_group;      
+      doc_group.documents = [
+        ["word", "word", "word", "word", "word"], // 5 tokens
+        ["word", "word", "word", "word", "word"]  // 5 tokens
+      ]
+      cf.saveMany([doc_group, proj], function(err) { expect(err).to.not.exist; }, function() {
+        var doc_group_ann = new DocumentGroupAnnotation({
+          user_id: user1._id,
+          document_group_id: doc_group._id,
+          labels: [
+            [ [""], [""], [""], [""], ["B-", ["person"]]  ],
+            [ [""], [""], [""], [""], ["O-", ["organisation"]] ]
           ]
         })
         doc_group_ann.save(function(err) {
@@ -195,19 +194,17 @@ describe('Document Group Annotations', function() {
       objs = setUpObjects(); proj = objs.proj; doc_group = objs.doc_group;   
 
       doc_group.documents = [
-        ["word", "word", "word", "word", "word"],
-        ["word", "word", "word"],
-        ["word", "word", "word", "word"]
+        ["word", "word", "word", "word", "word"], // 5 tokens
+        ["word", "word", "word", "word", "word"]  // 5 tokens
       ];
       cf.saveMany([doc_group, proj], function(err) { expect(err).to.not.exist; }, function() {
         var doc_group_ann = new DocumentGroupAnnotation({
           user_id: user1._id,
           document_group_id: doc_group._id,
           labels: [
-            ["O", "O", "O", "O", "O"],
-            ["O", "O", "O"],
-            ["O", "O", "person", "O"],
-            ["O"]
+            [ [""], [""], [""], [""], ["B-", ["person"]]  ],
+            [ [""], [""], [""], [""], ["B-", ["person"]]  ],
+            [ [""], [""], [""], [""], ["B-", ["person"]]  ]
           ]
         });     
         doc_group_ann.save(function(err) {
@@ -221,18 +218,16 @@ describe('Document Group Annotations', function() {
     it("should fail to save if the number of tokens in each label array does not match the number of tokens in corresponding documents", function(done) {
       objs = setUpObjects(); proj = objs.proj; doc_group = objs.doc_group;   
       doc_group.documents = [
-        ["word", "word", "word", "word", "word"],
-        ["word", "word", "word"],
-        ["word", "word", "word", "word"]
+        ["word", "word", "word", "word", "word"], // 5 tokens
+        ["word", "word", "word", "word", "word"]  // 5 tokens
       ];
       cf.saveMany([doc_group, proj], function(err) { expect(err).to.not.exist; }, function() {
         var doc_group_ann = new DocumentGroupAnnotation({
           user_id: user1._id,
           document_group_id: doc_group._id,
           labels: [
-            ["O", "O", "O", "O", "O"],
-            ["O", "O"],
-            ["O", "O", "O", "O"]
+            [ [""], [""], [""], [""], ["B-", ["person"]]  ],
+            [ [""], [""], [""], ["B-", ["organisation"]] ]
           ]
         });     
         doc_group_ann.save(function(err) {
@@ -261,9 +256,9 @@ describe('Document Group Annotations', function() {
           user_id: user1._id,
           document_group_id: doc_group._id,
           labels: [
-            ["O", "O", "person", "O", "O"],
-            ["O", "O", "O"],
-            ["O", "location", "O", "O"]
+            [[""], [""], ["B-", ["person"]], [""], [""]],
+            [[""], [""], [""]],
+            [[""], ["B-", ["location"]], ["I-", ["location"]], [""]]
           ]
         });     
         doc_group_ann.save(function(err) {

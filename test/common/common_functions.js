@@ -12,7 +12,7 @@ var options = {
 };
 
 //mongoose.set('debug', true);
-var DB_TEST_URI = 'mongodb://localhost/redcoat-db-test'
+var DB_TEST_URI = 'mongodb://localhost/redcoat-db-test2'
 
 
 // Connects to the Mongo database.
@@ -178,7 +178,7 @@ function createValidDocuments(n_docs) {
 function createValidLabels(n_labels) {
   docs = []
   for(var i = 0; i < n_labels; i++) {
-    docs.push(["O", "O"])
+    docs.push([[""], [""]])
   }
   return docs;
 }

@@ -128,7 +128,6 @@ DocumentGroupAnnotationSchema.methods.verifyLabelsAreValid = function(done) {
     merged_labels = Array.from(merged_labels);
     for(var i = 0; i < merged_labels.length; i++) {
       var label = merged_labels[i];
-      console.log(i, label);
       if (!valid_labels.has(label)) {
         return new Error("Label \"" + merged_labels[i] + "\" is not a valid label for the project." )
       }

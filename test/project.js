@@ -192,6 +192,93 @@ describe('Projects', function() {
         });
       });
     });
+
+
+
+    it('should obtain the correct entity typing annotations', function(done) {
+      var user1 = cf.createValidUser();
+      var user2 = cf.createValidUser();
+      var user3 = cf.createValidUser();
+      cf.registerUsers([user1, user2, user3], function(err) { expect(err).to.not.exist; }, function() {
+
+        var proj = cf.createValidProject(1, user1._id);
+        proj.category_hierarchy = ["person", "organisation", "location", "misc", "hero"]
+        var doc_group =  new DocumentGroup({ 
+          project_id: proj._id,
+          documents: [
+            ["Well", "Mr", "Burns", "Tony", "Stark", "dog"],
+            ["Another", "sentence"]
+          ]
+        });
+        proj.user_ids.active.push(user1._id);
+        proj.user_ids.active.push(user2._id);
+        proj.user_ids.active.push(user3._id);
+
+        proj.save()
+        .then(function() {
+          return doc_group.save();
+        })
+        .then(function() {
+          var doc_group_ann_1 = new DocumentGroupAnnotation({
+            user_id: user1._id,
+              document_group_id: doc_group._id,
+              labels: [
+                [[""], [""], ["B-", ["person"]], ["B-", ["person", "hero"]], ["I-", ["person", "hero"]], [""]],
+                [[""], [""]]
+              ]
+          });
+         
+          var doc_group_ann_2 = new DocumentGroupAnnotation({
+            user_id: user2._id,
+              document_group_id: doc_group._id,
+              labels: [
+                [[""], ["B-", ["person"]], ["I-", ["person"]], ["B-", ["person", "hero"]], ["I-", ["person", "hero"]], [""]],
+                [[""], [""]]
+              ]
+          });
+        
+          var doc_group_ann_3 = new DocumentGroupAnnotation({
+            user_id: user3._id,
+              document_group_id: doc_group._id,
+              labels: [
+                [[""], [""], ["B-", ["person"]], ["B-", ["person"]], ["I-", ["person"]], [""]],
+                [["B-", ["hero"]], [""]]
+              ]
+          });
+        
+          cf.saveMany([doc_group_ann_1, doc_group_ann_2, doc_group_ann_3], function(err) { expect(err).to.not.exist; }, function() {
+            
+            proj.getCombinedAnnotations(function(err, annotations) {
+              if(err) { console.log(err); }
+              proj.getEntityTypingAnnotations(annotations, function(err, et_annotations) {   
+                expect(err).to.not.exist;
+                expect(et_annotations).to.deep.equal([
+                  {
+                    "tokens": ["Well", "Mr", "Burns", "Tony", "Stark", "dog"],
+                    "mentions": [
+                      {
+                        "start": 2,
+                        "end": 3,
+                        "labels": ["person"]
+                      },
+                      {
+                        "start": 3,
+                        "end": 5,
+                        "labels": ["person", "hero"]
+                      }
+                    ]
+                  },
+                  {
+                    "tokens": ["Another", "sentence"], "mentions": []
+                  }
+                ]);
+                done();
+              });
+            });            
+          });
+        });
+      });
+    });
   });
 })
 

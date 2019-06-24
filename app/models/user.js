@@ -40,6 +40,7 @@ var RecentProject = new Schema({
     type: String,
     ref: 'Project',
     unique: true,
+    sparse: true
   },
   project_name: String,
   date: {
@@ -83,13 +84,16 @@ var UserSchema = new Schema({
   // A list of all document groups the user has annotated.
   docgroups_annotated: {
     type: [mongoose.Schema.Types.ObjectId],
-    index: true,
+    index: false,
     default: [],
   },
 
   
   
-  recent_projects: [RecentProject],
+  recent_projects: {
+    type: [RecentProject],
+    index: false
+  },
 
 
   resetPasswordToken: String,
@@ -189,7 +193,7 @@ UserSchema.methods.addProjectToRecentProjects = function(proj, done) {
         { project_id: proj._id, project_name: proj.project_name }
       }
     }, function(err) {      
-    //console.log(err)
+    console.log(err)
     done(err);
   });
 }
