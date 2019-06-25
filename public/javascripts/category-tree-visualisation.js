@@ -556,6 +556,9 @@ function slash2jstree(slash) {
   var text = slash2txt(slash);
   var fieldname = "text";
   var tagClassMap = {};
+  var treeMap = {};
+  var nodeIds = new Set();
+  var reverseTreeMap = {};
 
   var lines = text.split('\n');  
   var depth = 0; // Current indentation
@@ -592,8 +595,11 @@ function slash2jstree(slash) {
     node = {"children": []};
     node[fieldname] = cleanLine;// + '<span>' + hotkey + '</span>';
     var color = (colorId % colors.length) + 1;
-    node["li_attr"] = { "data-index": i, "class": "color-" + color, "data-color": color, "data-full": slash[i], "id": "j1_" + (originalLineHashed) };
+    var hashed_id = "j1_" + (originalLineHashed)
+    node["li_attr"] = { "data-index": i, "class": "color-" + color, "data-color": color, "data-full": slash[i], "id": hashed_id  };
     node["a_attr"] = { "id": "j1_" + (originalLineHashed) + "_anchor" };
+    treeMap[i] = hashed_id;
+    nodeIds.add(hashed_id);
     if(parents.length > 0) {
       parents[parents.length-1]["children"].push(node);
     }
@@ -636,7 +642,8 @@ function slash2jstree(slash) {
     shortenName(data[i], 0);
     addHotkey(data[i], i-1);    
   }
-  return { "data": data, "tagClassMap": tagClassMap };
+  
+  return { "data": data, "tagClassMap": tagClassMap, "treeMap": treeMap, "nodeIds": nodeIds };
 }
 
 // Converts 'space' notation to 'slash' notation, e.g.
