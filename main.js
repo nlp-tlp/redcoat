@@ -29,7 +29,7 @@ mongoose.connection.on('open', function() {
 });
 
 function checkVersion(version) {
-  if(version[0] < 3 || (version[0] >= 3 && version[1] < 6)) {
+  if(version[0] < 3) { // || (version[0] >= 3 && version[1] < 6)) {
     logger.error("MongoDB version must be at least 3.6.");
     process.exit();
   }

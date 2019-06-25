@@ -288,8 +288,25 @@
 // 	width: calc(100% - 8px);
 // }
 
+#sentence-tagging .sentence {
+	position: relative;
+}
 #sentence-tagging .sentence.selected {
 	opacity: 1;
+}
+
+#sentence-tagging .sentence:last-child.selected {
+	
+	&:after {
+		position: absolute;
+		top: 140%;
+		content: "Press (down) to load the next document group.";
+		text-align: center;
+		opacity: 0.5;
+		font-size: 0.8em;
+		left: 0;
+		width: 100%;
+	}
 }
 
 #sentence-tagging .sentence .word.selected.chain:before {
