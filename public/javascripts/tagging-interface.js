@@ -407,7 +407,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 							if(!nodeIds.has(tid)) {
 								var p = $(this).parent();								
 
-								annotatedTags[sentenceIndex][$(this).parent().index()][1].delete(t.text());
+								annotatedTags[$(this).parent().parent().index()][$(this).parent().index()][1].delete(t.text());
 								$(this).remove();
 
 								if(p.children().length == 1) {										
