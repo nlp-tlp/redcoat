@@ -459,7 +459,7 @@ describe('WIP Projects', function() {
       });
 
       it("should correctly create DocumentGroups from a string when that string contains nearly 100,000 documents", function(done) {
-        this.timeout(4000);
+        this.timeout(40000);
         var sents = "";
         for(var i = 0; i < 99951; i++) {
           sents += "hello there\n";

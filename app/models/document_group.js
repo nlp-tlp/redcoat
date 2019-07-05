@@ -31,6 +31,10 @@ var DocumentGroupSchema = new Schema({
   last_recommended: { // Keeps track of the time the document was last recommended, in order to aid sorting
     type: Date,
     default: Date.now
+  },
+  document_indexes: {
+  	type: [Number],
+  	maxlength: 10
   }
 }, {
   timestamps: { 

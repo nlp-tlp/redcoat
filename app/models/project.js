@@ -423,6 +423,7 @@ ProjectSchema.methods.getCombinedAnnotations = function(next) {
          _id: 1,
          annotations: "$document_group_annotations",
          documents: { $arrayElemAt: ["$document_group.documents", 0] },
+         document_indexes: { $arrayElemAt: ["$document_group.document_indexes", 0] },
          all_labels: "$labels",
          document_group_display_name: { $arrayElemAt: ["$document_group.display_name", 0] }
        }
@@ -492,11 +493,13 @@ ProjectSchema.methods.getAnnotationsOfUserForProject = function(user, next) {
         _id: 1,
         labels: 1,
         documents: "$document_group.documents",
+        document_indexes: "$document_group.document_indexes",
         document_group_display_name: "$document_group.display_name"
       }
     }
     ], function(err, docs) {
       for(var i in docs) {
+        docs[i]["document_indexes"] = docs[i]["document_indexes"][0]
         docs[i]["documents"] = docs[i]["documents"][0]; // Required to ensure docs and labels match up correctly
         docs[i]["document_group_display_name"] = docs[i]["document_group_display_name"][0]; 
       }
@@ -550,6 +553,10 @@ ProjectSchema.methods.getEntityTypingAnnotations = function(annotations,  next) 
     for(var d in annotations[i]['documents']) {
 
       var mention = {};
+
+      if(annotations[i]['document_indexes'] !== undefined) {
+        mention['doc_idx'] = annotations[i]['document_indexes'][d];
+      }
       mention['tokens'] = annotations[i]['documents'][d];
       mention['mentions'] = [];
 

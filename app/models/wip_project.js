@@ -273,17 +273,26 @@ WipProjectSchema.methods.createDocumentGroupsFromString = function(str, done) {
       docgroups = doc_chunks(tokenized_sentences, chunk_size);
 
       docgroupsToCreate = [];
-      for (i in docgroups) {
-        var d = new DocumentGroup( { project_id : t._id, documents: docgroups[i] } )
+      for (var i = 0; i < docgroups.length; i++) {
+        document_indexes = []
+        for(var j = 0; j < docgroups[i].length; j++) {
+          document_indexes.push((i*10) + j)
+        }
+        var d = new DocumentGroup( { project_id : t._id, documents: docgroups[i], document_indexes: document_indexes } )
         d.generateDisplayName(function(err) {
           docgroupsToCreate.push(d);      
         });
          
       }
 
+      //console.log(docgroupsToCreate[0])
+      //console.log(docgroupsToCreate[1])
+      //console.log(docgroupsToCreate[2])
 
       // Bypassses validation as it was already done before.
       DocumentGroup.collection.insert(docgroupsToCreate, function(err, docgroups) {
+
+
 
         if(err) { done(err); return; }
         done(null, number_of_lines, number_of_tokens);
