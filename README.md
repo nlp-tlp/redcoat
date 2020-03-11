@@ -10,7 +10,7 @@ Redcoat is a lightweight web-based annotation tool for labelling entity recognit
 
 ## How to install
 
-Setting up Redcoat is simple. First, clone the repository into a folder by running the command:
+First, clone the repository into a folder and navigate there by running the commands:
 
     $ git clone https://github.com/Michael-Stewart-Webdev/redcoat.git
     $ cd redcoat
@@ -19,7 +19,7 @@ If you are using Windows, install the build tools by running the command in an *
 
     $ npm install --global --production windows-build-tools@4.0.0
 
-Then install Redcoat's dependencies using `npm` (in a non-administrative power shell terminal):
+Then install Redcoat's dependencies using `npm` (in a non-administrative terminal):
 
     $ npm install
 
@@ -31,7 +31,7 @@ Redcoat may be run using the command:
 
     $ npm run production
 
-You may then visit the server in your browser by either visiting `localhost:3000` (if you are running Redcoat on your own computer) or `<your server's ip address>:3000` (if you are running Redcoat on a remote server).
+You may then visit the server in your browser by visiting `localhost:3000`.
 
 ### (Optional) using Sendgrid to manage emails
 
