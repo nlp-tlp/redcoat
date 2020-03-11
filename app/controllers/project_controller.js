@@ -58,7 +58,7 @@ module.exports.tagging = function(req, res) {
          numDocuments: docGroupsPerUser,
          canCreateNewCategories: canCreateNewCategories,
          canDeleteCategories: canDeleteCategories,
-	 projectOwnerIsMichael: proj.user_id.equals(mongoose.Types.ObjectId("5ddcec0744a8f102041b524d"))
+	       runDictionaryTagging: false// proj.user_id.equals(mongoose.Types.ObjectId("5ddcec0744a8f102041b524d"))
         });
 
       });

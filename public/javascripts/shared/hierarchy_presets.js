@@ -8,6 +8,13 @@
       "Location",
       "Miscellaneous"
     ],
+    "Maintenance": [
+      "Item",
+      "State",
+      "Activity",
+      "Location",
+      "Time"
+    ],
     "FIGER": [
       "person",
       "person/actor",

@@ -1,4 +1,4 @@
-function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDocuments, project_owner_is_michael) {
+function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDocuments, run_dictionary_tagging) {
 	
 	if(!canCreateNewCategories && !canDeleteCategories) {
 		$("#right-click-opens-menu").hide();
@@ -688,7 +688,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 					numberOfSentences = groupData.length;
 
-					if(!project_owner_is_michael) {					
+					if(run_dictionary_tagging) {					
 						runDictionaryTagging(groupData);
 					}
 
