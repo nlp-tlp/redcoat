@@ -104,7 +104,7 @@ exports.forgot_password_submit = function(req, res, next) {
       });
     }
 
-
+    console.log(process.env.SENDGRID_API_KEY)
     crypto.randomBytes(20, function(err, buf) {
       var token = buf.toString('hex');
       const msg = {

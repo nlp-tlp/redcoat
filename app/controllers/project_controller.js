@@ -5,6 +5,8 @@ var Project = require('app/models/project');
 var DocumentGroupAnnotation = require('app/models/document_group_annotation')
 var ProjectInvitation = require('app/models/project_invitation')
 
+var mongoose = require('mongoose');
+
 // The project dashboard. Renders the projects page that lists all the projects of a user.
 // Doesn't actually send any projects - that's done by 'getProjects', via AJAX.
 module.exports.index = function(req, res) {
@@ -46,8 +48,6 @@ module.exports.tagging = function(req, res) {
       var canCreateNewCategories = user._id.equals(proj.user_id) || new Set(["full_permission", "create_edit_only"]).has(proj.category_hierarchy_permissions);
       var canDeleteCategories = user._id.equals(proj.user_id) || proj.category_hierarchy_permissions === "full_permission";
 
-
-
       proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
         if(err) { res.send("error"); }
         //console.log(canCreateNewCategories, canDeleteCategories, ">>>>>>>>>>>>>");
@@ -57,7 +57,8 @@ module.exports.tagging = function(req, res) {
          title: "Annotation Interface",
          numDocuments: docGroupsPerUser,
          canCreateNewCategories: canCreateNewCategories,
-         canDeleteCategories: canDeleteCategories
+         canDeleteCategories: canDeleteCategories,
+	 projectOwnerIsMichael: proj.user_id.equals(mongoose.Types.ObjectId("5ddcec0744a8f102041b524d"))
         });
 
       });

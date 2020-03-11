@@ -1,4 +1,4 @@
-function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDocuments) {
+function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDocuments, project_owner_is_michael) {
 	
 	if(!canCreateNewCategories && !canDeleteCategories) {
 		$("#right-click-opens-menu").hide();
@@ -688,7 +688,9 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 					numberOfSentences = groupData.length;
 
-					runDictionaryTagging(groupData);
+					if(!project_owner_is_michael) {					
+						runDictionaryTagging(groupData);
+					}
 
 
 
@@ -703,7 +705,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 					} else {
 						currentlyScrolling = true
 						$("html, body").animate({
-							//scrollTop: st.children().eq(sentenceIndex).offset().top - 150
+							scrollTop: st.children().eq(sentenceIndex).offset().top - 150
 						}, 200, finishedScrolling);										
 					}
 
@@ -1067,7 +1069,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 			selectedWord.addClass("selected");
 			var oft = selectedWord.offset().top;
 			// If the currently selected word is not in view, scroll to it.
-			if($(window).height() - (oft - $("body").scrollTop()) < 150 || $("body").scrollTop() - oft > -150) {
+			/*if($(window).height() - (oft - $("body").scrollTop()) < 150 || $("body").scrollTop() - oft > -150) {
 				if(currentlyScrolling) {
 					$("html, body").scrollTop(oft - 150);
 				} else {
@@ -1076,7 +1078,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 						scrollTop: oft - 150
 					}, 200, finishedScrolling);
 				}
-			}
+			}*/
 			
 			// Refresh the tagging menu 
 			var arr = $('span.word.selected');
@@ -1093,14 +1095,14 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 		}
 
 		function scrollToSentence() {
-			if(currentlyScrolling) {
+			/*if(currentlyScrolling) {
 				$("html, body").scrollTop($currentSentence.offset().top - 150)
 			} else {
 				currentlyScrolling = true
 				$("html, body").animate({
 					scrollTop: $currentSentence.offset().top - 150
 				}, 200, finishedScrolling);
-			}
+			}*/
 		}
 
 		// Jumps to the sentence with the index of sentenceIndex.
@@ -1116,6 +1118,16 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 			
 		}
 
+		$("#submit-annotations").on('click', function() {
+			submitAnnotations(function(err) {
+				if(err) { alert(err) } // TODO: Handle this appropriately
+				else {
+					loadGroup();
+				}
+			});
+			$(this).blur();
+		});
+
 		// Move to the next sentence.
 		function nextSentence() {
 			if(sentenceIndex < numberOfSentences - 1) {
@@ -1123,15 +1135,15 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 				gotoSentence();
 				wordIndex = -1;
 				moveForwards();
-			} else {
-				// TODO: Modify this to load the next group (and submit the results rather than save to a file).
-				submitAnnotations(function(err) {
-					if(err) { alert(err) } // TODO: Handle this appropriately
-					else {
-						loadGroup();
-					}
-				});						
-			}
+			} //else {
+//
+//				submitAnnotations(function(err) {
+//					if(err) { alert(err) } // TODO: Handle this appropriately
+//					else {
+//						loadGroup();
+//					}
+//				});						
+//			}
 		}
 
 		// Move to the previous sentence.

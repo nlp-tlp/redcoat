@@ -75,17 +75,21 @@ ProjectInvitationSchema.statics.createInvitation = function(project_id, user_ema
   invitation.save(function(err, invitation) { 
     if(err) return next(err);
     console.log("saved invite:", err, invitation)
-    sgMail.send(msg, function(err, result) {
-	console.log(err)
-      if(err) return next(err);
-      next(err, invitation);
+    next(err, invitation);
+
+    //sgMail.send(msg, function(err, result) {
+//	console.log(err)
+  //    if(err) return next(err);
+   //   next(err, invitation);
+
       // apiInstance.sendTemplate(templateId, sendEmail).then(function(data) {
       //   console.log('API called successfully. Returned data: ' + data);
       // }, function(err) {
       //   console.error(err);
       //   next(err);
+
       // });
-    });
+   // });
   }); 
 }
 

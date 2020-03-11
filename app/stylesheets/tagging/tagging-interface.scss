@@ -27,6 +27,14 @@
 	}
 }
 
+#submit-annotations {
+	cursor: pointer;
+}
+
+#submit-annotations:hover {
+	border: 2px solid $primary-orange;
+}
+
 #tagging-container {
 	width: 1152px;
 	padding-top: 120px;
@@ -36,7 +44,7 @@
 	min-height: 25vh;
 }
 #sentence-tagging, #ending-message {
-	font-size: 32px;
+	font-size: 24px;
 	color: #333;
 	line-height: 220%;
 }
@@ -91,7 +99,7 @@
 	border-bottom: 0;
 
 	.word-inner {
-		padding: 25px 10px;
+		padding: 15px 10px;
 		display: block;
 	}
 	.label {
@@ -297,16 +305,16 @@
 
 #sentence-tagging .sentence:last-child.selected {
 	
-	&:after {
-		position: absolute;
-		top: 140%;
-		content: "Press (down) to load the next document group.";
-		text-align: center;
-		opacity: 0.5;
-		font-size: 0.8em;
-		left: 0;
-		width: 100%;
-	}
+//	&:after {
+//		position: absolute;
+//		top: 140%;
+//		content: "Press (down) to load the next document group.";
+//		text-align: center;
+//		opacity: 0.5;
+//		font-size: 0.8em;
+//		left: 0;
+//		width: 100%;
+	//}
 }
 
 #sentence-tagging .sentence .word.selected.chain:before {

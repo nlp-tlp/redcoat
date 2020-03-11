@@ -61,8 +61,8 @@ app.locals.pretty = true;
 // uncomment after placing your favicon in /public
 app.use(favicon(path.join(__dirname, 'public', 'images/favicon.png')));
 app.use(morgan("short", { stream: logger.stream }));
-app.use(bodyParser.json({limit: '1mb'})); // use bodyParser to parse form data
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({limit: '50mb'})); // use bodyParser to parse form data
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb', parameterLimit: 50000 }));
 app.use(cookieParser());
 app.use(expressSanitizer());
 app.use(

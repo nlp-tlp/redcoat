@@ -22,6 +22,7 @@ block content
 		p Thanks for annotating this project. There are no more documents left for you to annotate.<br/> Please feel free to begin annotating another project, or <a href="#{base_url}setup_project">create your own</a>.
 	div#tagging-container
 		#sentence-tagging
+	button#submit-annotations(style="margin-top:-300px; margin-bottom: 100px") Submit annotations
 
 block entity_categories_window
 
@@ -85,4 +86,4 @@ block scripts
 	script(src="" + base_url + "javascripts/tagging-interface.js")
 
 	script.
-		$(document).ready(initTaggingInterface(#{canCreateNewCategories}, #{canDeleteCategories}, #{numDocuments}));
+		$(document).ready(initTaggingInterface(#{canCreateNewCategories}, #{canDeleteCategories}, #{numDocuments}, #{projectOwnerIsMichael}));

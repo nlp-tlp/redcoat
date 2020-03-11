@@ -119,7 +119,7 @@ ProjectSchema.statics.getTableData = function(p, user_id) {
   project["hierarchy_permissions"] = {"no_modification": "Annotators may not modify the category hierarchy.",
                                       "create_edit_only": "Annotators may add new categories to the hierarchy but may not delete or rename existing categories.",
                                       "full_permission": "Annotators may add, rename, and delete categories."}[p.category_hierarchy_permissions]
-  project["annotations_required"] = Math.ceil(p.file_metadata["Number of documents"] / 10) * p.overlap;
+  project["annotations_required"] = Math.ceil(p.file_metadata["Number of documents"] / 1) * p.overlap;
 
   //console.log(p.project_title, p.completed_annotations, "<<>>")
   //project["completed_annotations"] = (p.completed_annotations || 0) / 10);
