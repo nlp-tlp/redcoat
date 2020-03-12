@@ -11,7 +11,7 @@ Redcoat is a lightweight web-based annotation tool for labelling entity recognit
 ## How to install
 
 
-First, ensure [Mongodb](https://www.mongodb.com/download-center) is installed. Open a new terminal window, and run Mongodb:
+First, ensure [Mongodb](https://www.mongodb.com/download-center/community) is installed. On the Community Server page, download version 4.2.4 for your operating system (Windows x64, MSI for most users). Once it has been installed, open a new terminal window, and run Mongodb:
 
     $ mongod
 
@@ -36,7 +36,7 @@ If you are using Windows and encounter many errors when attempting `npm install`
 
     $ npm install --global --production windows-build-tools@4.0.0
 
-After installing the build tools, run `npm install` again followed by `npm start`. 
+After installing the build tools, run `npm install` again followed by `npm start`. If an error appears again during `npm install`, I found that `npm start` still works. (will need to look into this, but it is specific to Windows at least)
 
 ### (Optional) using Sendgrid to manage emails
 
