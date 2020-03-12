@@ -20,7 +20,7 @@ Then, clone this repository into a folder and navigate there by running the comm
     $ git clone https://github.com/Michael-Stewart-Webdev/redcoat.git
     $ cd redcoat
 
-Next, install Redcoat's dependencies using `npm` (in a non-administrative terminal)\*:
+Next, install Redcoat's dependencies using `npm`\*:
 
     $ npm install
 
