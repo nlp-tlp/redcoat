@@ -11,7 +11,7 @@ Redcoat is a lightweight web-based annotation tool for labelling entity recognit
 ## How to install
 
 
-First, ensure MongoDB is installed [Mongodb](https://www.mongodb.com/download-center). Open a new terminal window, and run Mongodb:
+First, ensure [Mongodb](https://www.mongodb.com/download-center) is installed. Open a new terminal window, and run Mongodb:
 
     $ mongod
 
