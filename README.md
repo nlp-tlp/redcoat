@@ -11,7 +11,7 @@ Redcoat is a lightweight web-based annotation tool for labelling entity recognit
 ## How to install
 
 
-First, ensure [Mongodb](https://www.mongodb.com/download-center/community) is installed. On the Community Server page, download version 4.2.4 for your operating system (Windows x64, MSI for most users). Once it has been installed, open a new terminal window, and run Mongodb:
+First, ensure [Mongodb](https://www.mongodb.com/download-center/community) is installed. On the Community Server page, download the latest stable version (4.2.3 as of the time of writing) for your operating system (Windows x64, MSI for most users). Once it has been installed, open a new terminal window, and run Mongodb:
 
     $ mongod
 
