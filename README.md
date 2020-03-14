@@ -15,8 +15,6 @@ First, ensure [Mongodb](https://www.mongodb.com/download-center/community) is in
 
     $ mongod
 
-If you receive an error message along the lines of "NonExistentPath: Data directory C:\data\db not found", you'll need to create an empty folder in your C drive called "data" and a folder called "db" inside that folder.
-
 Then, clone this repository into a folder and navigate there by running the commands:
 
     $ git clone https://github.com/Michael-Stewart-Webdev/redcoat.git
@@ -32,7 +30,11 @@ Redcoat may be run using the command:
 
 You may then visit the server in your browser by visiting `localhost:3000`.
 
-#### Note for Windows users
+#### Note for Windows users - possible problems
+
+If you attempt to run 'mongod' in your terminal and Windows does not recognise the command, navigate to the location in which mongod.exe is installed (for me it was C:\Program Files\MongoDB\Server\4.2\bin), open a power shell window, and run 'mongod'.
+
+When attempting to run 'mongod' in your terminal, you may receive an error message along the lines of "NonExistentPath: Data directory C:\data\db not found". If this happens, you'll need to create an empty folder in your C drive called "data" and a folder called "db" inside that folder.
 
 If you are using Windows and encounter many errors when attempting `npm install`, it may be necessary to install the Windows Build Tools by running the command in an *administrative* power shell terminal:
 
