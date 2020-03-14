@@ -15,6 +15,8 @@ First, ensure [Mongodb](https://www.mongodb.com/download-center/community) is in
 
     $ mongod
 
+If you receive an error message along the lines of "NonExistentPath: Data directory C:\data\db not found", you'll need to create an empty folder in your C drive called "data" and a folder called "db" inside that folder.
+
 Then, clone this repository into a folder and navigate there by running the commands:
 
     $ git clone https://github.com/Michael-Stewart-Webdev/redcoat.git
