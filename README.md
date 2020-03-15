@@ -15,7 +15,9 @@ First, ensure [Mongodb](https://www.mongodb.com/download-center/community) is in
 
     $ mongod
 
-Then, clone this repository into a folder and navigate there by running the commands:
+You'll need to keep this terminal window open while running Redcoat.
+
+Then, in a new terminal window, clone this repository into a folder and navigate there by running the commands:
 
     $ git clone https://github.com/Michael-Stewart-Webdev/redcoat.git
     $ cd redcoat
