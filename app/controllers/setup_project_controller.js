@@ -257,7 +257,6 @@ exports.upload_dictionary_reset = function(req, res, next) {
 
 
 exports.upload_dictionary = function(req, res, next) {
-  console.log('hello there')
   wip_project = res.locals.wip_project;
   responded = false;
 
@@ -266,7 +265,6 @@ exports.upload_dictionary = function(req, res, next) {
   form.uploadDir = path.join(__dirname, '../../db/tmp');
 
   form.on('file', function(field, file) {
-      console.log('hello')
       filename = file.name;
       var f = this;  
 
@@ -281,7 +279,7 @@ exports.upload_dictionary = function(req, res, next) {
 
       // Tokenize the file with the WipProject.
       var str = fs.readFileSync(file.path, 'utf-8');
-      console.log(str);
+      //console.log(str);
 
       wip_project.createAutomaticTaggingDictionaryFromString(str, function(err, automaticTaggingDictionary) {
         if(err) {

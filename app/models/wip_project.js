@@ -295,7 +295,7 @@ WipProjectSchema.methods.buildAndValidateAutomaticTaggingDictionary = function(a
         var term = split_line[0];
         var labels = split_line[1].trim().split(" ");
 
-        console.log(labels)
+        //console.log(labels)
 
         for(var j = 0; j < labels.length; j++) {
           label = labels[j];
@@ -311,7 +311,7 @@ WipProjectSchema.methods.buildAndValidateAutomaticTaggingDictionary = function(a
           done(msg);
           return;    
         }
-        console.log(i, term, labels)
+       // console.log(i, term, labels)
         automaticTaggingDictionary[term] = labels;        
     }
     done(null, automaticTaggingDictionary);
@@ -320,7 +320,7 @@ WipProjectSchema.methods.buildAndValidateAutomaticTaggingDictionary = function(a
 
 // Build the automatic tagging dictionary from a string, which is a csv file.
 WipProjectSchema.methods.createAutomaticTaggingDictionaryFromString = function(str, done) {
-  console.log(str);
+  //console.log(str);
   var t = this;
 
   var d = str.split("\n");
