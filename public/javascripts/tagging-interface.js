@@ -557,8 +557,11 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 				var groupData = documentGroupData.documentGroup;
 				entity_classes = documentGroupData.entityClasses;
 				automaticAnnotations = documentGroupData.automaticAnnotations;
+				automaticTaggingDictionary = documentGroupData.automaticTaggingDictionary;
 				documentGroupId = documentGroupData.documentGroupId;
 				$navbarPageTitle.html(documentGroupData.pageTitle);
+
+				console.log(automaticTaggingDictionary)
 
 				console.log("id (pre-tag):", documentGroupId);
 				
@@ -621,7 +624,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 					//	runDictionaryTagging(groupData);
 					//}
 
-					console.log("AA:", automaticAnnotations)
+					//console.log("AA:", automaticAnnotations)
 					// Tag using automatic annotations
 					for(var i = 0; i < automaticAnnotations.length; i++ ) {
 					    sentenceIndex = i;

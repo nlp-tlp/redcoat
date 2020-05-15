@@ -166,6 +166,7 @@ module.exports.getDocumentGroup = function(req, res) {
               documentGroupId: docgroup._id,
               documentGroup: docgroup.documents,
               automaticAnnotations: runDictionaryTagging(docgroup.documents, proj.automatic_tagging_dictionary),
+              automaticTaggingDictionary: proj.automatic_tagging_dictionary,
               entityClasses: proj.category_hierarchy,
               annotatedDocGroups: annotatedDocGroups,
               pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\""          
