@@ -84,9 +84,13 @@ function runDictionaryTagging(documentGroup, dictionary) {
 
   for(var doc_id = 0; doc_id < documentGroup.length; doc_id++) {
     var doc = documentGroup[doc_id];
-    var alreadyFound = new Set();
     var anns = [];
       //console.log(doc)
+
+    labeledTokens = new Array(doc.length);
+    for(var x = i; x < labeledTokens.length; x++) {
+      labeledTokens[x] = 0;              
+    }
 
 
     for(var ngram_size = 3; ngram_size >= 1; ngram_size--) {
@@ -99,9 +103,18 @@ function runDictionaryTagging(documentGroup, dictionary) {
           
           var start = i;
           var end = i + ngram_size;
-          if(!alreadyFound.has(end)) {
+          alreadyLabeled = false;
+          for(var x = i; x < end; x++) {
+            if(labeledTokens[x] > 0) {
+              alreadyLabeled = true;
+            }
+          }
+
+          if(!alreadyLabeled) {
             anns.push({start: start, end: end, labels: dictionary[ngram]});
-            alreadyFound.add(end);
+            for(var x = i; x < end; x++) {
+              labeledTokens[x] = 1;              
+            }
           }
         }
 
