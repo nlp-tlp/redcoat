@@ -1,4 +1,4 @@
-function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDocuments, run_dictionary_tagging) {
+function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDocuments) {
 	
 	if(!canCreateNewCategories && !canDeleteCategories) {
 		$("#right-click-opens-menu").hide();
@@ -528,79 +528,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 			
 		}
 
-		// Automatically tag all tokens on the screen that appear in the hierarchy.
-		function runDictionaryTagging(groupData) {
-			console.log("Automatic tagging...");
 
-			function automaticAnnotations() {
-
-				// Build the automatic annotations based on the groupData.
-				automaticAnnotations = [];
-				var entityClassesAbbrSet = new Set(entity_classes_abbr);
-
-				var entity_classes_joined = [];
-				for(var ec in entity_classes_abbr) {
-					// if(entity_classes_abbr[ec].indexOf("_") !== -1) {
-						entity_classes_joined.push(entity_classes_abbr[ec].replace("_", "ɮ"));
-					// }
-				}
-				
-				entity_classes_joined.sort(function(a, b){
-				  // ASC  -> a.length - b.length
-				  // DESC -> b.length - a.length
-				  return b.length - a.length;
-				});
-			
-				for(var doc_id in groupData) {
-					var anns = [];
-					var doc = groupData[doc_id];
-					var doc_joined = doc.join("ɮ").toLowerCase();
-					var alreadyFound = new Set();
-					//console.log(doc_id)
-					//console.log("---")
-					for(var ec = 0; ec < entity_classes_joined.length; ec++) {
-						
-						var regexp = new RegExp(entity_classes_joined[ec], "g")
-						//var regexp = new RegExp('the', "g")
-						
-						var match, m= [];
-						while (match= regexp.exec(doc_joined))
-						    m.push([match.index, match.index+match[0].length]);						
-					
-						if(m.length > 0) {
-							for(var mi = 0; mi < m.length; mi++) {							
-
-								var numBefore = (doc_joined.slice(0, m[mi][0]).match(/ɮ/g) || []).length;
-								var entitySize = (entity_classes_joined[ec].match(/ɮ/g) || []).length;
-								var end = numBefore + entitySize + 1
-
-								if(!alreadyFound.has(end)) {
-									anns.push({ start: numBefore, end: end, label: entity_classes_abbr.indexOf(entity_classes_joined[ec].replace("ɮ", "_")) });	
-									alreadyFound.add(end);
-								}
-							}								
-						}
-					}
-					automaticAnnotations.push(anns);
-				}
-				return automaticAnnotations;
-			}
-
-			var automaticAnnotations = automaticAnnotations();
-
-			for(var i = 0; i < automaticAnnotations.length; i++ ) {
-				sentenceIndex = i;
-
-				$currentSentence = st.children().eq(sentenceIndex);
-				$currentWords = $currentSentence.children();				
-				sentenceLength = calculateSentenceLength();
-				for(var j in automaticAnnotations[i]) {
-					//console.log("<<", j, automaticAnnotations[i][j])
-					tagSelected(automaticAnnotations[i][j]['label'], null, null, false, [automaticAnnotations[i][j]['start'], automaticAnnotations[i][j]['end']]);
-				}
-			}
-			console.log("Done.");
-		}
 
 		// Load a random document group from the project. Initialise the interface.
 		function loadGroup() {
@@ -628,6 +556,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 				var groupData = documentGroupData.documentGroup;
 				entity_classes = documentGroupData.entityClasses;
+				automaticAnnotations = documentGroupData.automaticAnnotations;
 				documentGroupId = documentGroupData.documentGroupId;
 				$navbarPageTitle.html(documentGroupData.pageTitle);
 
@@ -688,10 +617,31 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 					numberOfSentences = groupData.length;
 
-					if(run_dictionary_tagging) {					
-						runDictionaryTagging(groupData);
-					}
+					//if(run_dictionary_tagging) {					
+					//	runDictionaryTagging(groupData);
+					//}
 
+					console.log("AA:", automaticAnnotations)
+					// Tag using automatic annotations
+					for(var i = 0; i < automaticAnnotations.length; i++ ) {
+					    sentenceIndex = i;
+
+
+					    $currentSentence = st.children().eq(sentenceIndex);
+					    $currentWords = $currentSentence.children();        
+					    sentenceLength = calculateSentenceLength();
+					    for(var j in automaticAnnotations[i]) {
+					      //console.log("<<", j, automaticAnnotations[i][j])
+					      for(label_idx in automaticAnnotations[i][j]['labels']) {
+					      	var label = automaticAnnotations[i][j]['labels'][label_idx];
+					      	var label_id = entity_classes.indexOf(label);
+					      	console.log(label)
+					      	console.log(entity_classes)
+					      	tagSelected(label_id, null, null, false, [automaticAnnotations[i][j]['start'], automaticAnnotations[i][j]['end']]);
+
+					      }
+					    }
+					}
 
 
 					sentenceIndex = 0;
@@ -781,7 +731,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 		}
 
 		function tagSelected(tagClass, colorIndex, nodeId, moveAfterwards=true, word_indexes=null) {			
-
+			console.log(tagClass)
 			// console.log("TAGGING")
 
 			if(!$currentWords) return;

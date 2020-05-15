@@ -7,3 +7,4 @@ annotated_data/old_versions/*.txt
 node_modules/
 app_env
 sendgrid.env
+db/tmp

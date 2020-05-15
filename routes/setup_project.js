@@ -34,6 +34,8 @@ router.post('/upload-overlap',                verifyWippid, setupProjectControll
 router.post('/upload-emails',                 verifyWippid, setupProjectController.upload_emails);
 router.post('/upload-tokenized-reset',        verifyWippid, setupProjectController.upload_tokenized_reset);
 router.post('/upload-tokenized',              verifyWippid, setupProjectController.upload_tokenized);
+router.post('/upload-dictionary',             verifyWippid, setupProjectController.upload_dictionary);
+router.post('/upload-dictionary-reset',       verifyWippid, setupProjectController.upload_dictionary_reset);
 router.post('/setup-project/submission',      verifyWippid, setupProjectController.submit_new_project_form);
 
 module.exports = router;

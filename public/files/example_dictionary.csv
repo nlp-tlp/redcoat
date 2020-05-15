@@ -1,0 +1,9 @@
+body inspection,Activity
+brake test,Activity
+air cond,Item
+battery box,Item
+hole in,Observation Observation/Observed_state
+hyd leak,Observation Observation/Observed_state
+to front of,Location
+to rear,Location
+to top of,Location

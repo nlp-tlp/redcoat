@@ -35,8 +35,8 @@ exports.index = function(req, res, next) {
 
   // If they don't, create a new one
 
-  function renderPage(wip_project, project_name, project_desc, file_metadata, category_hierarchy, category_metadata, user_emails, category_hierarchy_permissions, user_email, automatic_tagging, overlap, distribute_self) {
-     res.render('setup-project', { wip_project_id: wip_project._id, project_name: project_name, project_desc: project_desc, file_metadata: file_metadata, category_hierarchy: category_hierarchy, category_metadata: category_metadata, user_emails: user_emails, csrfToken: req.csrfToken(), path: req.path, title: "Setup project", max_filesize_mb: MAX_FILESIZE_MB, max_emails: USERS_PER_PROJECT_MAXCOUNT, category_hierarchy_permissions: category_hierarchy_permissions, user_email: user_email, automatic_tagging: automatic_tagging, overlap: overlap, distribute_self: distribute_self });
+  function renderPage(wip_project, project_name, project_desc, file_metadata, category_hierarchy, category_metadata, user_emails, category_hierarchy_permissions, user_email, automatic_tagging, automatic_tagging_dictionary_metadata, overlap, distribute_self) {
+     res.render('setup-project', { wip_project_id: wip_project._id, project_name: project_name, project_desc: project_desc, file_metadata: file_metadata, category_hierarchy: category_hierarchy, category_metadata: category_metadata, user_emails: user_emails, csrfToken: req.csrfToken(), path: req.path, title: "Setup project", max_filesize_mb: MAX_FILESIZE_MB, max_emails: USERS_PER_PROJECT_MAXCOUNT, category_hierarchy_permissions: category_hierarchy_permissions, user_email: user_email, automatic_tagging: automatic_tagging, automatic_tagging_dictionary_metadata: automatic_tagging_dictionary_metadata, overlap: overlap, distribute_self: distribute_self });
   }
 
   WipProject.findWipByUserId(testuser._id, function(err, wip_project) {
@@ -58,6 +58,7 @@ exports.index = function(req, res, next) {
                  wip_project.category_hierarchy_permissions ? wip_project.category_hierarchy_permissions : "null",
                  testuser.email,
                  wip_project.automatic_tagging,
+                 wip_project.automatic_tagging_dictionary_metadata ? JSON.stringify(wip_project.automaticTaggingDictionaryMetadataToArray()) : "null",
                  wip_project.overlap,
                  wip_project.distribute_self)
     } else {
@@ -66,7 +67,7 @@ exports.index = function(req, res, next) {
       logger.info(wip_project);
       wip_project.save(function(err, wip_project) {
         logger.info(wip_project)
-        renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", "null", "null", "null", "null", testuser.email, "", "1", "undecided"); 
+        renderPage(wip_project, wip_project.project_name, wip_project.project_description, "null", "null", "null", "null", "null", testuser.email, "", "null", "1", "undecided"); 
       });   
     } 
   });
@@ -211,9 +212,10 @@ exports.upload_hierarchy_permissions = function(req, res, next) {
 
 exports.upload_automatic_tagging = function(req, res, next) {
   wip_project = res.locals.wip_project;
-  var d = req.body.val;
+  var d = req.body.use_automatic_tagging;
+  console.log(d)
   wip_project.automatic_tagging = d;
-  wip_project.save(function(err) {
+  wip_project.deleteDictionaryAndMetadataAndSave(function(err) {
     if(err) res.send( {"success": false, err: err});
     res.send({ "success": true })
   });
@@ -241,6 +243,94 @@ exports.upload_tokenized_reset = function(req, res, next) {
   });
 }
 
+exports.upload_dictionary_reset = function(req, res, next) {
+  wip_project = res.locals.wip_project;
+  // TODO: Clear the dictionary
+  wip_project.deleteDictionaryAndMetadataAndSave(function(err, wip_project) {
+    console.log(err)
+    console.log(wip_project.automatic_tagging_dictionary_metadata)
+    res.send({ "success": true });
+  });
+}
+
+
+
+
+exports.upload_dictionary = function(req, res, next) {
+  console.log('hello there')
+  wip_project = res.locals.wip_project;
+  responded = false;
+
+  var form = new formidable.IncomingForm({"maxFileSize": MAX_FILESIZE_MB * 1024 * 1024}); // 25mb
+  form.parse(req);
+  form.uploadDir = path.join(__dirname, '../../db/tmp');
+
+  form.on('file', function(field, file) {
+      console.log('hello')
+      filename = file.name;
+      var f = this;  
+
+      // Ensure filetype is correct
+      var fileType = file.type;        
+      if (!file.name.endsWith('.csv')) {
+        this.emit('error', new Error("File must be a CSV file."));
+        return;
+      }
+      
+
+
+      // Tokenize the file with the WipProject.
+      var str = fs.readFileSync(file.path, 'utf-8');
+      console.log(str);
+
+      wip_project.createAutomaticTaggingDictionaryFromString(str, function(err, automaticTaggingDictionary) {
+        if(err) {
+          f.emit('error', new Error(err));
+          return;
+        }
+
+        wip_project.automatic_tagging_dictionary = automaticTaggingDictionary;
+
+        wip_project.setAutomaticTaggingDictionaryMetadata({
+              "Filename": filename ,
+              "Number of rows":  Object.keys(automaticTaggingDictionary).length,
+        });
+
+        wip_project.automatic_tagging = true;
+        wip_project.save(function(err, wip_project) {
+
+          f.emit('end_uploading');
+        });
+      });
+    });
+
+    // log any errors that occur
+    form.on('error', function(err) {
+
+        if(!responded) {
+
+          // If err.message is the one about filesize being too large, change it to a nicer message.
+          if(err.message.substr(0, 20) == 'maxFileSize exceeded') {
+            err.message = "The file was too large. Please ensure it is less than 1mb.";
+          }
+
+
+          res.send({ "success": false, "error": err.message });
+          res.end();
+          responded = true;
+          
+          
+        }   
+    });
+
+    // once all the files have been uploaded, send a response to the client
+    form.on('end_uploading', function() {
+      if(!responded){
+        res.send({'success': true, details: wip_project.automaticTaggingDictionaryMetadataToArray() });
+      }
+    });
+
+}
 
 // Upload a dataset.
 exports.upload_tokenized = function(req, res, next) {

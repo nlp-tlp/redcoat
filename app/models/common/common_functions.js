@@ -144,6 +144,7 @@ var validateDocumentTokenCountMax = function(arr, done) {
 
 
 
+
 // // Validate that no label abbreviations in the labels are of length 0.
 // var validateLabelAbbreviationLengthMin = function(arr) {
 //   for(var i = 0; i < arr.length; i++) {
@@ -398,6 +399,7 @@ module.exports = {
 	validateArrayHasUniqueValues : validateArrayHasUniqueValues,
   emailValidation: emailValidation,
 
+  
 	// Set the updated_at and created_at fields.
 	setCurrentDate: function() {
 	  var currentDate = new Date();
@@ -551,8 +553,22 @@ module.exports = {
 
     automatic_tagging: {
       type: Boolean,
-      required: true,
-      default: false,
+      required: false,
+    },
+
+    automatic_tagging_dictionary: {
+      type: Object,
+      required: false
+    },
+
+    automatic_tagging_dictionary_metadata: {
+      'Filename': {
+        type: String,
+        minlength: 0,
+        maxlength: 255,
+      },
+    
+      'Number of rows': Number,
     },
 
     // The author of the project.

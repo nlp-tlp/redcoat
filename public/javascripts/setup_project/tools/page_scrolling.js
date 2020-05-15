@@ -67,6 +67,25 @@ $("#actually-untokenized-data-button").on("click", function() {
 	$("#untokenized-data-button").click()			
 });*/
 
+$("#use-dictionary-button").on("click", function() {
+	$("#use-dictionary").slideDown(500)
+	$("#dont-use-dictionary").slideUp(500)
+
+	$("#dont-use-dictionary-button").addClass("fade-out");			
+	$("#use-dictionary-button").removeClass("fade-out");
+});
+
+$("#dont-use-dictionary-button").on("click", function() {
+	$("#dont-use-dictionary").slideDown(500)
+	$("#use-dictionary").slideUp(500)
+
+	$("#use-dictionary-button").addClass("fade-out");			
+	$("#dont-use-dictionary-button").removeClass("fade-out");
+});
+
+
+
+
 $("#distribute-self-button").on("click", function() {
 	$("#distribute-self").slideDown(500)
 	$("#distribute-to-emails").slideUp(500)

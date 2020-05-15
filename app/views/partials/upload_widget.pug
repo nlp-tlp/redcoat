@@ -1,5 +1,5 @@
 div.upload-widget
-	form.box(id="form-" + action, class="js" method='post', action=action, novalidate='')
+	form.box(id="form-" + action, class="js" method='post', action=action, novalidate='', data-file-type=formFileType, data-file-type-str=formFileTypeStr, data-file-type-extension=formFileTypeExtension)
 		.box__input
 			i.fa.fa-upload.upload-icon
 			input(type="hidden", name="_id", value="" + wip_project_id)

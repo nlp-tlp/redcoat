@@ -35,6 +35,7 @@ module.exports.getProjects = function(req, res) {
 
 
 
+
 // The tagging interface.
 module.exports.tagging = function(req, res) {
   var id = req.params.id;
@@ -71,6 +72,61 @@ module.exports.tagging = function(req, res) {
   });
 }
 
+
+
+
+
+// Automatically tag all tokens on the screen that appear in the dictionary.
+function runDictionaryTagging(documentGroup, dictionary) {
+  // Build the automatic annotations based on the groupData.
+  var automaticAnnotations = [];
+  console.log(documentGroup)
+
+  for(var doc_id = 0; doc_id < documentGroup.length; doc_id++) {
+    var doc = documentGroup[doc_id];
+    var alreadyFound = new Set();
+    var anns = [];
+      //console.log(doc)
+
+
+    for(var ngram_size = 3; ngram_size >= 1; ngram_size--) {
+      //console.log("NGRAM SIZE:", ngram_size)
+      for(var i = 0; i < doc.length - ngram_size + 1; i++) {
+        var ngram = doc.slice(i, i + ngram_size).join(" ")
+
+        if(dictionary.hasOwnProperty(ngram)) {
+          console.log(ngram, "is in the dictionary! Class:", dictionary[ngram])
+          
+          var start = i;
+          var end = i + ngram_size;
+          if(!alreadyFound.has(end)) {
+            anns.push({start: start, end: end, labels: dictionary[ngram]});
+            alreadyFound.add(end);
+          }
+        }
+
+
+        //console.log('ngram:', ngram)
+      }
+
+    }
+    automaticAnnotations.push(anns);
+
+    
+  }
+
+  console.log("Automatic annotations:", automaticAnnotations)
+
+  return automaticAnnotations;
+}
+
+
+
+
+
+
+
+
 // Retrieve a single document group for the tagging interface.
 module.exports.getDocumentGroup = function(req, res) {
   var id = req.params.id;
@@ -96,6 +152,7 @@ module.exports.getDocumentGroup = function(req, res) {
           res.send({
               documentGroupId: docgroup._id,
               documentGroup: docgroup.documents,
+              automaticAnnotations: runDictionaryTagging(docgroup.documents, proj.automatic_tagging_dictionary),
               entityClasses: proj.category_hierarchy,
               annotatedDocGroups: annotatedDocGroups,
               pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\""          

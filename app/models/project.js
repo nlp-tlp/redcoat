@@ -48,6 +48,9 @@ var ProjectSchema = new Schema({
 
   // Whether to perform automatic tagging on commonly-tagged tokens
   automatic_tagging: cf.fields.automatic_tagging,
+  
+  automatic_tagging_dictionary: cf.fields.automatic_tagging_dictionary,
+  automatic_tagging_dictionary_metadata: cf.fields.automatic_tagging_dictionary_metadata,
 
   // The users who are annotating the project.
   //user_ids.active: cf.fields.user_ids.active, // TODO: Change to user_emails : { active, inactive, invited, rejected }

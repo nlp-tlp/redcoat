@@ -10,10 +10,19 @@
     ],
     "Maintenance": [
       "Item",
-      "State",
       "Activity",
       "Location",
-      "Time"
+      "Time",
+      "Attribute",
+      "Cardinality",
+      "Agent",
+      "Consumable",
+      "Observation",
+      "Observation/Observed_state",
+      "Observation/Quantitative",
+      "Observation/Qualitative",
+      "Event",
+      "Unsure",
     ],
     "FIGER": [
       "person",

@@ -67,6 +67,10 @@ var WipProjectSchema = new Schema({
   // Whether to perform automatic tagging on commonly-tagged tokens
   automatic_tagging: cf.fields.automatic_tagging,
 
+  // The automatic tagging dictionary, which maps terms to their corresponding entity class(es)
+  automatic_tagging_dictionary: cf.fields.automatic_tagging_dictionary,
+  automatic_tagging_dictionary_metadata: cf.fields.automatic_tagging_dictionary_metadata,
+
   // Some metadata about the WIP Project.
   file_metadata: cf.fields.file_metadata,
 
@@ -144,6 +148,17 @@ WipProjectSchema.methods.deleteDocumentsAndMetadataAndSave = function(next) {
   });
 }
 
+WipProjectSchema.methods.deleteDictionaryAndMetadataAndSave = function(next) {
+  var t = this;
+  delete t.automatic_tagging_dictionary;
+  delete t.automatic_tagging_dictionary_metadata;
+  t.automatic_tagging_dictionary = {};
+  t.automatic_tagging_dictionary_metadata = {};
+  t.save(function(err, wipp) {
+    next(err, wipp);
+  })
+}
+
 
 
 
@@ -165,6 +180,16 @@ WipProjectSchema.methods.setFileMetadata = function(md) {
   }
 }
 
+// Sets the metadata of this wip_project based on a nested js object.
+WipProjectSchema.methods.setAutomaticTaggingDictionaryMetadata = function(md) {
+  this.automatic_tagging_dictionary_metadata = {};
+  for(var k in md) {
+    var v = md[k];
+    this.automatic_tagging_dictionary_metadata[k] = v;    
+  }
+}
+
+
 // Converts this wip_project's metadata to an array that can be displayed on a form in order.
 WipProjectSchema.methods.fileMetadataToArray = function() {
   arr = [];
@@ -176,6 +201,15 @@ WipProjectSchema.methods.fileMetadataToArray = function() {
 }
 
 
+// Converts this wip_project's automatic tagging dictionary metadata to an array that can be displayed on a form in order.
+WipProjectSchema.methods.automaticTaggingDictionaryMetadataToArray = function() {
+  arr = [];
+  var stringy = JSON.parse(JSON.stringify(this.automatic_tagging_dictionary_metadata));
+  for(var k in stringy) {  
+    arr.push({ [k]: stringy[k] });
+  }
+  return arr;
+}
 
 
 
@@ -246,6 +280,66 @@ var DocumentArraySchema = new Schema({
 });
 var DocumentArray = mongoose.model('DocumentArray', DocumentArraySchema);
 
+
+WipProjectSchema.methods.buildAndValidateAutomaticTaggingDictionary = function(arr, category_hierarchy, done) {
+    var hierarchySet = new Set(category_hierarchy)
+    var automaticTaggingDictionary = {};
+    for(var i = 0; i < arr.length; i++) {
+        var split_line = arr[i].split(',');
+        if(split_line.length !== 2) {
+          console.log(arr[i])
+          msg = "Error on line " + (i + 1) + ": line must contain exactly two columns separated by a comma.";
+          done(msg);
+          return;  
+        }
+        var term = split_line[0];
+        var labels = split_line[1].trim().split(" ");
+
+        console.log(labels)
+
+        for(var j = 0; j < labels.length; j++) {
+          label = labels[j];
+          if(!hierarchySet.has(label)) {
+
+            msg = "Error on line " + (i + 1) + ": Category hierarchy does not contain the entity class \"" + label + "\"";
+            done(msg);
+            return;         
+          }
+        }
+        if(term.indexOf(".") > -1) {
+          msg = "Error on line " + (i + 1) + ": term \"" + term + "\" cannot contain a full stop (.)";
+          done(msg);
+          return;    
+        }
+        console.log(i, term, labels)
+        automaticTaggingDictionary[term] = labels;        
+    }
+    done(null, automaticTaggingDictionary);
+    return;
+  }
+
+// Build the automatic tagging dictionary from a string, which is a csv file.
+WipProjectSchema.methods.createAutomaticTaggingDictionaryFromString = function(str, done) {
+  console.log(str);
+  var t = this;
+
+  var d = str.split("\n");
+
+  t.buildAndValidateAutomaticTaggingDictionary(d, t.category_hierarchy, function(err, automaticTaggingDictionary) {
+    console.log(err, "eee")
+    if(err != null) {
+      t.deleteDictionaryAndMetadataAndSave(function() {
+        return done(err);
+      })
+      
+    } else {
+        return done(null, automaticTaggingDictionary);
+    }
+  })
+
+  
+
+}
 
 // Creates an array of documents from a given string, assigns them to this wip_project's documents array, and validates the documents field.
 WipProjectSchema.methods.createDocumentGroupsFromString = function(str, done) {
