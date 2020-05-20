@@ -21,6 +21,7 @@
       "Observation/Observed_state",
       "Observation/Quantitative",
       "Observation/Qualitative",
+      "Specifier",
       "Event",
       "Unsure",
     ],

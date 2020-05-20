@@ -31,6 +31,8 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 	// Construct the JSTree from the category hierarchy data.
 	function buildJsTree(hierarchy) {
 
+		console.log("building js tree")
+
 		var $tree = $("#category-hierarchy-tree");
 		var $ecSearch = $("#ec-search");
 		var $ecSearchForm = $("#ec-search-form");
@@ -113,9 +115,10 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 			//- }
 		});
 		
-		
+		$tree.unbind('ready.jstree')
 		// Display the hotkeys for the top-level categories as soon as the tree has been drawn.
 		$tree.on('ready.jstree', function() {
+
 			$($(".jstree-children")[0]).addClass("jstree-current");
 			//$("#remove-label_anchor").addClass('jstree-clicked');
 			$tree.jstree("select_node", '#remove-label');
@@ -123,6 +126,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 			updateHotkeyMap();
 		});
 
+		$tree.unbind('click')
 		// Open a node upon a single click (instead of a double click).
 		$tree.on('click', '.jstree-anchor', function (e) {	
 			$tree.jstree(true).toggle_node(e.target);
@@ -145,6 +149,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 			// console.log(hotkeyMap);
 		}
 
+		$tree.unbind('close_node.jstree')
 		// Hide the hotkeys when a node is closed.
 		$tree.on('close_node.jstree', function(e, data) {
 			$(".jstree-children").removeClass("jstree-current");
@@ -181,18 +186,22 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 	        });
 		}
 
+
+		$tree.unbind('open_node.jstree')
 		// Ensure only one branch can be opened at a time so that the hotkey display works properly.
 		$tree.on('open_node.jstree', function (e, data) {
-			// console.log(data);
+			console.log('node is opened');
 			$(".jstree-children").removeClass("jstree-current");
 			$("#" + data.node.id).children('.jstree-children').addClass("jstree-current");
 		    if(!searching) closeSiblingNodes(data);
 		    // Add the backspace hotkey 
 		    $(".jstree-anchor").removeClass('backspace-hotkey');
-		    $("#" + data.node.id).children(".jstree-anchor").first().addClass('backspace-hotkey');				    
+		    $("#" + data.node.id).children(".jstree-anchor").first().addClass('backspace-hotkey');				  
+		    console.log('why is it like this pls')  
 		    updateHotkeyMap();
 		});
 
+		$tree.unbind('activate_node.jstree')
 		$tree.on('activate_node.jstree', function (e, data) {
 			if(data.node.children.length == 0) {
 				if(!searching) closeSiblingNodes(data);
@@ -202,6 +211,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 			}
 		});			
 
+		$tree.unbind('search.jstree')
 		$tree.on('search.jstree', function(e, data) {
 			if(data.res.length == 0 && $ecSearch.val().length > 0) {
 				$noSearchResults.show();
@@ -1341,6 +1351,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 				var currentNode = "#" + $tree.jstree('get_selected')[0];
 				//var hasChildren = $(currentNode).hasClass("jstree-closed");
 				$tree.jstree('open_node', currentNode)
+
 				//- if(hasChildren) {
 				//- 	var firstChild = $(currentNode).children(".jstree-children").children().first().attr('id');
 				//- 	$tree.jstree('deselect_node', currentNode);
