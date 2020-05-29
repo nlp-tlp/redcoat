@@ -122,15 +122,14 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 			$($(".jstree-children")[0]).addClass("jstree-current");
 			//$("#remove-label_anchor").addClass('jstree-clicked');
 			$tree.jstree("select_node", '#remove-label');
+			//$tree.jstree("deselect_node", '#remove-label');
 			$("#total-categories").html(Object.keys(tagClassMap).length);
 			updateHotkeyMap();
 		});
 
-		$tree.unbind('click')
+		//$tree.unbind('click')
 		// Open a node upon a single click (instead of a double click).
-		$tree.on('click', '.jstree-anchor', function (e) {	
-			$tree.jstree(true).toggle_node(e.target);
-		});
+
 
 		// Updates the hotkey map.
 		function updateHotkeyMap() {
@@ -197,7 +196,6 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 		    // Add the backspace hotkey 
 		    $(".jstree-anchor").removeClass('backspace-hotkey');
 		    $("#" + data.node.id).children(".jstree-anchor").first().addClass('backspace-hotkey');				  
-		    console.log('why is it like this pls')  
 		    updateHotkeyMap();
 		});
 
@@ -487,6 +485,8 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 		var entity_classes = [];	
 		var $tree = null;		
 
+		//window.clickOK = true;
+
 		
 		// Initialise the category tree. It must be initialised upon the loading of every group in case the tree changes.
 		function initialiseCategoryTree() {
@@ -499,14 +499,41 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 				var color = node.li_attr["data-color"];
 				// console.log(node, ind, color);
 				// console.log("INIT TREE")
+				console.log("hello")
 				tagSelected(ind, color, node.li_attr['id'], false);					
 			}
 
+			// Open the selected node in the tree and select its first child.
+			function toggleTreeNode() {
+				var currentNode = "#" + $tree.jstree('get_selected')[0];
+				//var hasChildren = $(currentNode).hasClass("jstree-closed");
+				$tree.jstree('toggle_node', currentNode)
+
+				//- if(hasChildren) {
+				//- 	var firstChild = $(currentNode).children(".jstree-children").children().first().attr('id');
+				//- 	$tree.jstree('deselect_node', currentNode);
+				//- 	$tree.jstree('select_node', firstChild);
+				//- }
+			}
+
+			console.log('initi tree')
+			
+			$tree.off('select_node.jstree');
 			$tree.on('select_node.jstree', tagByNode);
+			$tree.on('select_node.jstree', toggleTreeNode);
 			// Toggle tagging when clicking elements in the jsTree
-			$tree.on('click', '.jstree-anchor', function() {
-				$tree.jstree('select_node', "#" + $(this).parent().attr('id'))
-			});
+			//$tree.unbind('click');
+	
+
+			/*$tree.on('click', '.jstree-anchor', function(e) {
+				console.log(window.clickOK)
+				if(window.clickOK === true) {
+					$tree.jstree(true).toggle_node(e.target);
+					$tree.jstree('select_node', "#" + $(this).parent().attr('id'))
+					window.clickOK = false;
+					window.setTimeout(function() { window.clickOK = true; }, 1000);
+				}
+			});*/
 			return $tree;
 		}
 
@@ -1164,7 +1191,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 					}
 				}
 				$.ajax({
-					url: 'http://en.wikipedia.org/w/api.php',
+					url: 'https://en.wikipedia.org/w/api.php',
 					data: { action: 'query', list: 'search', srsearch: tokens, format: 'json' },
 					dataType: 'jsonp',
 					success: function(data) {
@@ -1191,44 +1218,44 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 		}
 
 		// Refresh the tree and click on the tagClass corresponding to the first highlighted element's class.
-		function refreshTree(tagClassElementId) {	
+		// function refreshTree(tagClassElementId) {	
 
-			var nodeid = "#" + tagClassElementId;
-			var currentNode = "#" + $tree.jstree('get_selected')[0];
+		// 	var nodeid = "#" + tagClassElementId;
+		// 	var currentNode = "#" + $tree.jstree('get_selected')[0];
 
 			
 
 
-			// Clear the search window
-			if($ecSearchForm.hasClass("searching")) {
-				$ecSearch.val('');
-				$ecSearch.submit();
-			}
+		// 	// Clear the search window
+		// 	if($ecSearchForm.hasClass("searching")) {
+		// 		$ecSearch.val('');
+		// 		$ecSearch.submit();
+		// 	}
 
-			// If the current node is the same as the new one, there's no need to refresh the tree.
-			if(currentNode == nodeid) return;
+		// 	// If the current node is the same as the new one, there's no need to refresh the tree.
+		// 	if(currentNode == nodeid) return;
 
-			// Close the tree.
-			$tree.jstree("close_all");
-			$tree.jstree('deselect_node', currentNode)
-			if(tagClassElementId === undefined) {
-				scrollToNode($("#remove-label"), -100);
-				return $tree.jstree('select_node', '#remove-label')
-			}
-			// Open all parents of the node, based on the tagClassMap
-			var nodeNumber = $(currentNode).attr("data-index")//tagClassElementId.substr(3, tagClassElementId.length);
+		// 	// Close the tree.
+		// 	$tree.jstree("close_all");
+		// 	$tree.jstree('deselect_node', currentNode)
+		// 	if(tagClassElementId === undefined) {
+		// 		scrollToNode($("#remove-label"), -100);
+		// 		return $tree.jstree('select_node', '#remove-label')
+		// 	}
+		// 	// Open all parents of the node, based on the tagClassMap
+		// 	var nodeNumber = $(currentNode).attr("data-index")//tagClassElementId.substr(3, tagClassElementId.length);
 
-			$tree.jstree('select_node', nodeid)				
-			$tree.jstree('open_node', nodeid);
-			//if(parents.length == 0) { scrollToNode($(nodeid), -100) }
+		// 	$tree.jstree('select_node', nodeid)				
+		// 	$tree.jstree('open_node', nodeid);
+		// 	//if(parents.length == 0) { scrollToNode($(nodeid), -100) }
 			
-			var parents = $(nodeid).parents(".jstree-children:not(.jstree-container-ul)")
-			if(parents.length > 0) scrollToNode($(nodeid).parents(".jstree-children").first().parent());
-			else { scrollToNode($(nodeid), -100); }
-			//console.log(parents, $(nodeid).parents(".jstree-children").first().parent(), "<>")
+		// 	var parents = $(nodeid).parents(".jstree-children:not(.jstree-container-ul)")
+		// 	if(parents.length > 0) scrollToNode($(nodeid).parents(".jstree-children").first().parent());
+		// 	else { scrollToNode($(nodeid), -100); }
+		// 	//console.log(parents, $(nodeid).parents(".jstree-children").first().parent(), "<>")
 
 
-		}
+		// }
 
 
 		// Clear the search window.
