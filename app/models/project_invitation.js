@@ -64,7 +64,7 @@ ProjectInvitationSchema.statics.createInvitation = function(project_id, user_ema
     from: 'Redcoat@nlp-tools.org',
     fromname: "Redcoat - Collaborative Annotation Tool",
     subject: 'Hello world',
-    templateId: 'd-9fd3104382ad430087e8dd997c434ba6',
+    templateId: 'd-8445a3c952df480da91d41631fc16565',
     dynamic_template_data: {
       sender: inviting_user_name, // TODO: Fix this
       project_name: project_name,
@@ -77,19 +77,19 @@ ProjectInvitationSchema.statics.createInvitation = function(project_id, user_ema
     console.log("saved invite:", err, invitation)
     next(err, invitation);
 
-    //sgMail.send(msg, function(err, result) {
-//	console.log(err)
-  //    if(err) return next(err);
-   //   next(err, invitation);
+    sgMail.send(msg, function(err, result) {
+	console.log(err)
+     if(err) return next(err);
+     next(err, invitation);
 
-      // apiInstance.sendTemplate(templateId, sendEmail).then(function(data) {
-      //   console.log('API called successfully. Returned data: ' + data);
-      // }, function(err) {
-      //   console.error(err);
-      //   next(err);
+      apiInstance.sendTemplate(templateId, sendEmail).then(function(data) {
+        console.log('API called successfully. Returned data: ' + data);
+      }, function(err) {
+        console.error(err);
+        next(err);
 
-      // });
-   // });
+      });
+   });
   }); 
 }
 
