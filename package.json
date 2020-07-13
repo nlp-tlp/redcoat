@@ -53,7 +53,7 @@
     "format": "^0.2.2",
     "formidable": "^1.2.2",
     "fs": "0.0.1-security",
-    "jquery": "^3.4.1",
+    "jquery": "^3.5.0",
     "mocha": "^5.2.0",
     "moment": "^2.24.0",
     "mongodb": "^3.5.5",
