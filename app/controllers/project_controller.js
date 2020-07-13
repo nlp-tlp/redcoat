@@ -78,6 +78,9 @@ module.exports.tagging = function(req, res) {
 
 // Automatically tag all tokens on the screen that appear in the dictionary.
 function runDictionaryTagging(documentGroup, dictionary) {
+  if(!dictionary) {
+    return [];
+  }
   // Build the automatic annotations based on the groupData.
   var automaticAnnotations = [];
   console.log(documentGroup)

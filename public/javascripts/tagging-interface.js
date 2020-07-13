@@ -1110,7 +1110,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 		$("#submit-annotations").on('click', function() {
 			submitAnnotations(function(err) {
-				if(err) { alert(err) } // TODO: Handle this appropriately
+				if(err) { alert("An error occurred. Please send Michael a screenshot of this message: " + JSON.stringify(err)) } // TODO: Handle this appropriately
 				else {
 					loadGroup();
 				}
