@@ -8,14 +8,16 @@
     "@testing-library/user-event": "^7.2.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.3"
+    "react-scripts": "3.4.3",
+    "watch": "^1.0.2"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build && cd .. && cp -r tagging_interface/build/. public/ && mv public/index.html public/app.html",
     "dev": "concurrently \"NODE_ENV=development PORT=3000 nodemon\" \" cd tagging_interface && PORT=3001 yarn start\"",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "watch": "watch \"npm run build\" src"
   },
   "eslintConfig": {
     "extends": "react-app"

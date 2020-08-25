@@ -36,6 +36,8 @@ function checkVersion(version) {
 }
 
 
+
+
 var flash = require('express-flash')
 
   
@@ -50,6 +52,8 @@ var path = require('path');
 
 var app = express();
 
+var cors = require('cors');
+app.use(cors());
 
 
 // view engine setup
@@ -105,6 +109,8 @@ passport.deserializeUser(User.deserializeUser());
 
 app.use(csrf({ cookie: true }));
 
+
+
 // Setup local variables that are used in almost every view.
 app.use(function(req, res, next) {
   res.locals.base_url = BASE_URL;
@@ -112,24 +118,52 @@ app.use(function(req, res, next) {
   res.locals.user = req.user;
   res.locals.path = req.path;
   res.locals.project_invitations = null;
-  if(req.user) {
-
-    req.user.getProjectInvitations(function(err, invitations) {
-      res.locals.project_invitations = invitations;
-      //console.log("Invitations:", invitations)
-
-      req.user.getRecentProjects(function(err, recent_projects) {
-
-        res.locals.recent_projects = recent_projects;
-        //console.log("Recent projects:", res.locals.recent_projects);
+  console.log(req.user, "==")
 
 
-        
-        next(null, req, res);
+  // If using the development server, log in as 'test'.
+  // This is seemingly the only way to make sure the tagging interface app works by itself (i.e. localhost:4000).
+  // Can comment this out if you aren't developing the react app via localhost:4000.
+  var debug = true;
+  if (app.get('env') === 'development' && debug) {
 
+    User.findOne({username: "test"}, function(err, user) {      
+      req.login(user, function(err) {
+        return proceed(req, res, next);
       });
-      
     });
+    return;
+  }
+
+  // if (app.get('env') === 'development' && req.user === undefined) {
+  //   User.findOne({username: "test"}, function(err, user) {      
+  //     //req.user = user;
+  //     proceed(req, res, next);
+  //     return;
+  //   })
+  // }
+
+  function proceed(req, res, next) {
+    req.user.getProjectInvitations(function(err, invitations) {
+        res.locals.project_invitations = invitations;
+        //console.log("Invitations:", invitations)
+
+        req.user.getRecentProjects(function(err, recent_projects) {
+
+          res.locals.recent_projects = recent_projects;
+          //console.log("Recent projects:", res.locals.recent_projects);
+
+
+          
+          next(null, req, res);
+
+        });
+        
+      });
+  }
+
+  if(req.user) {
+    proceed(req, res, next);    
   } else {
     next(null, req, res);
   }

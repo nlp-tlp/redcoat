@@ -9,6 +9,7 @@ var Project = require('app/models/project');
 
 verifyUserOwnsProject = function(req, res, next) {
 	Project.findById(req.params.id, function(err, proj) {
+		if(err || proj === null) { return res.send("Error: Project does not exist")}
 		if(!proj.projectCreatedByUser(req.user._id)) return res.send("Error: user does not own project");
 		next();		
 	});
@@ -16,6 +17,8 @@ verifyUserOwnsProject = function(req, res, next) {
 
 verifyUserInProject = function(req, res, next) {
 	Project.findById(req.params.id, function(err, proj) {
+		console.log(err, proj);
+		if(err || proj === null) { return res.send("Error: Project does not exist")}
 		if(!proj.projectHasUser(req.user._id)) return res.send("Error: user does not belong to project");
 		next();
 	});

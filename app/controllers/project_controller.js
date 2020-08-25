@@ -39,45 +39,48 @@ module.exports.getProjects = function(req, res) {
 
 
 // The tagging interface.
-module.exports.tagging = function(req, res) {
-  var id = req.params.id;
-  var user = req.user;
-  Project.findOne({ _id: id }, function(err, proj) {
-    if(err) {
-      res.send("error");
-    }
-    user.addProjectToRecentProjects(proj, function(err) {
+// module.exports.tagging = function(req, res) {
+//   var id = req.params.id;
+//   var user = req.user;
+//   console.log("bing")
+//   Project.findOne({ _id: id }, function(err, proj) {
+//     if(err) {
+//       res.send("error");
+//     }
+//     user.addProjectToRecentProjects(proj, function(err) {
 
-      var canCreateNewCategories = user._id.equals(proj.user_id) || new Set(["full_permission", "create_edit_only"]).has(proj.category_hierarchy_permissions);
-      var canDeleteCategories = user._id.equals(proj.user_id) || proj.category_hierarchy_permissions === "full_permission";
+//       var canCreateNewCategories = user._id.equals(proj.user_id) || new Set(["full_permission", "create_edit_only"]).has(proj.category_hierarchy_permissions);
+//       var canDeleteCategories = user._id.equals(proj.user_id) || proj.category_hierarchy_permissions === "full_permission";
 
-      proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
-        if(err) { res.send("error"); }
-        // res.render('tagging', { 
-        //  projectName: proj.project_name,
-        //  tagging: true,
-        //  title: "Annotation Interface",
-        //  numDocuments: docGroupsPerUser,
-        //  canCreateNewCategories: canCreateNewCategories,
-        //  canDeleteCategories: canDeleteCategories,
-	       // runDictionaryTagging: false// proj.user_id.equals(mongoose.Types.ObjectId("5ddcec0744a8f102041b524d"))
-        // });
+//       proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
+//         if(err) { res.send("error"); }
+//         res.render('tagging', { 
+//          projectName: proj.project_name,
+//          tagging: true,
+//          title: "Annotation Interface",
+//          numDocuments: docGroupsPerUser,
+//          canCreateNewCategories: canCreateNewCategories,
+//          canDeleteCategories: canDeleteCategories,
+// 	       runDictionaryTagging: false// proj.user_id.equals(mongoose.Types.ObjectId("5ddcec0744a8f102041b524d"))
+//         });
 
         
 
-      });
+//       });
 
-    });
-
-
+//     });
 
 
-  });
-}
+
+
+//   });
+// }
 
 
 
 module.exports.tagging = function(req, res) {
+
+
   res.sendFile(path.join(appRoot+'/../tagging_interface/build/index.html'));
 }
 
@@ -155,11 +158,13 @@ module.exports.getDocumentGroup = function(req, res) {
     if(err) {
       res.send("error");
     }
+    console.log("PROJECT", proj)
+    console.log("USER", req.user)
 
     proj.recommendDocgroupToUser(req.user, function(err, docgroup) {
       //console.log(err, docgroup)
 
-      
+      console.log(err);
       if(err) {
         if(err.message == "No document groups left") {
           return res.send("tagging complete");
@@ -174,7 +179,7 @@ module.exports.getDocumentGroup = function(req, res) {
               documentGroupId: docgroup._id,
               documentGroup: docgroup.documents,
               automaticAnnotations: runDictionaryTagging(docgroup.documents, proj.automatic_tagging_dictionary),
-              automaticTaggingDictionary: proj.automatic_tagging_dictionary,
+              //automaticTaggingDictionary: proj.automatic_tagging_dictionary,
               entityClasses: proj.category_hierarchy,
               annotatedDocGroups: annotatedDocGroups,
               pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\""          
