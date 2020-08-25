@@ -1,0 +1,90 @@
+#welcome {
+	.title-container {
+		display: flex;
+		justify-items: center;
+		img {
+			margin-left: 30px;
+		}
+		.title-words {
+			width: 70%;
+			margin-left: -70px;
+		}
+	}
+	h1, h2#h2-byline  {
+		text-align: center;
+		//text-transform: uppercase;
+		font-size: 140px;
+		position: relative;
+		margin-bottom:  0px;
+		color: white;
+		letter-spacing: 2px;
+		margin-top: 60px;
+
+		&:before {
+			content: attr(data-content);
+			top: 2px;
+			left: 2px;
+			position: absolute;
+			opacity: 0.7;
+			text-align: center;
+			width: 100%;
+			color: darken(rgb(185, 12, 5),30);
+			z-index: -100;
+
+
+		}
+	}
+	h2#h2-byline {
+		font-size: 27px;
+		margin-top: 10px;
+		margin-bottom: 40px;
+		text-transform: uppercase;
+	}
+	p {
+		color: #444;
+		font-size: 28px;
+	}
+	div.buttons {
+
+		width: 90%;
+		margin: 0 5%;
+		box-sizing: border-box;
+		text-align: center;
+		margin-top: 27vh;
+	}
+}
+
+canvas#background {
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	z-index: -10000;
+	background: none;
+	opacity: 0.2;
+	font-family: "Droid Sans Mono", monospace;
+	
+	&.fade-in {
+		opacity: 0.2;
+		
+	}
+	&.faded-out {
+		opacity: 0;		
+	}
+	&.faded-out-trans {
+		transition: opacity 2s ease;	
+	}
+}
+
+body.homepage main {
+	width: 1152px;
+	margin: 0 auto;
+}
+
+article.features-list {
+	line-height: 200%;
+	li.done {
+		text-decoration: line-through;
+	}
+}

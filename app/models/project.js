@@ -560,6 +560,7 @@ ProjectSchema.methods.getEntityTypingAnnotations = function(annotations,  next) 
       if(annotations[i]['document_indexes'] !== undefined) {
         mention['doc_idx'] = annotations[i]['document_indexes'][d];
       }
+
       mention['tokens'] = annotations[i]['documents'][d];
       mention['mentions'] = [];
 
@@ -569,6 +570,8 @@ ProjectSchema.methods.getEntityTypingAnnotations = function(annotations,  next) 
       } else if (annotations[i].hasOwnProperty('all_labels')) {
         labels = annotations[i]['all_labels'];
       }
+      console.log("labels:", annotations[i]['labels'])
+      console.log("all:", annotations[i]['all_labels'])
       var numUsers = labels.length;
       if(numUsers % 2 == 0) {
         var m = Math.ceil((numUsers / 2) + 0.0001);
@@ -594,6 +597,9 @@ ProjectSchema.methods.getEntityTypingAnnotations = function(annotations,  next) 
         var label_counts  = {}
         var majority_markers = new Set();
         var majority_labels = new Set();
+        console.log(zipped_labels[l])
+
+
         for(var idx in zl) {
           var marker_name = zl[idx][0]
           marker_counts[marker_name] += 1
@@ -615,6 +621,7 @@ ProjectSchema.methods.getEntityTypingAnnotations = function(annotations,  next) 
         }
                 
 
+        console.log(mentionLabels)
         // 2.a If we are not in a mention, count B tags
         if(mentionStart === -1) {
 
@@ -629,7 +636,7 @@ ProjectSchema.methods.getEntityTypingAnnotations = function(annotations,  next) 
 
           // 2.b If we *are* in a mention, ensure that majority labels == the current mentionLabels.
 
-          if(isSetsEqual(majority_labels, mentionLabels)) {
+          if(isSetsEqual(majority_labels, mentionLabels) && !majority_markers.has("B-")) {
 
             mentionEnd += 1
           } else {

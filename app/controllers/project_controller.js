@@ -1,5 +1,7 @@
 require('rootpath')();
 var logger = require('config/winston');
+const path = require('path');
+var appRoot = require('app-root-path');
 
 var Project = require('app/models/project');
 var DocumentGroupAnnotation = require('app/models/document_group_annotation')
@@ -51,16 +53,17 @@ module.exports.tagging = function(req, res) {
 
       proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
         if(err) { res.send("error"); }
-        //console.log(canCreateNewCategories, canDeleteCategories, ">>>>>>>>>>>>>");
-        res.render('tagging', { 
-         projectName: proj.project_name,
-         tagging: true,
-         title: "Annotation Interface",
-         numDocuments: docGroupsPerUser,
-         canCreateNewCategories: canCreateNewCategories,
-         canDeleteCategories: canDeleteCategories,
-	       runDictionaryTagging: false// proj.user_id.equals(mongoose.Types.ObjectId("5ddcec0744a8f102041b524d"))
-        });
+        // res.render('tagging', { 
+        //  projectName: proj.project_name,
+        //  tagging: true,
+        //  title: "Annotation Interface",
+        //  numDocuments: docGroupsPerUser,
+        //  canCreateNewCategories: canCreateNewCategories,
+        //  canDeleteCategories: canDeleteCategories,
+	       // runDictionaryTagging: false// proj.user_id.equals(mongoose.Types.ObjectId("5ddcec0744a8f102041b524d"))
+        // });
+
+        
 
       });
 
@@ -72,6 +75,11 @@ module.exports.tagging = function(req, res) {
   });
 }
 
+
+
+module.exports.tagging = function(req, res) {
+  res.sendFile(path.join(appRoot+'/../tagging_interface/build/index.html'));
+}
 
 
 

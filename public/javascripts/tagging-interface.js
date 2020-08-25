@@ -418,7 +418,8 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 								annotatedTags[$(this).parent().parent().index()][$(this).parent().index()][1].delete(t.text());
 								$(this).remove();
 
-								if(p.children().length == 1) {										
+								if(p.children().length == 1) {	
+
 									deleteTag(p, sentenceIndex)
 								}
 							}
@@ -749,6 +750,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 
 		function deleteTag(t, si) {
+			console.log('hello i am deleting the tag', t, si)	
 			
 			annotatedTags[si][t.index()] = [null, new Set()];//tagClass - 1;
 
@@ -833,6 +835,10 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 						currentLabels.add($(this).text());
 					});
 					if(!currentLabels.has(entity_classes[tc])) {
+
+						console.log('hello i am deleting the tag')
+
+
 						var suggestion_str = suggestion ? " suggestion" : "";
 						var tag = $("<span class=\"label tag-" + colorIndex + suggestion_str + "\">" + entity_classes[tc] + "</span>")
 						//if(nodeId === null) {
@@ -846,6 +852,8 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 							var pn = p.next();
 							var at = annotatedTags[sentenceIndex][wordIndex];
 
+							console.log('deleting next', p, sentenceIndex, wordIndex, tag_name)
+
 							if(at && !pn.hasClass("tag-begin") && at[1].has(tag_name)) {
 
 								if(pn.length > 0 && pn.hasClass('tag')) {
@@ -854,14 +862,16 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 									pn.children().each(function(e) {
 										if($(this).text() === tag_name) {											
 											$(this).remove();
-											if(pn.children().length == 1) {										
+											if(pn.children().length == 1) {
 												deleteTag(pn, sentenceIndex)
 											}
 										}										
 									});
 								}
 								at[1].delete(tag_name)
-								deleteNextTag(p.next(), sentenceIndex, wordIndex + 1, tag_name);
+								return deleteNextTag(p.next(), sentenceIndex, wordIndex + 1, tag_name);
+							} else {
+								return wordIndex
 							}
 
 							
@@ -869,13 +879,19 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 						(function() {
 							var currentTag = entity_classes[tc];
+
 							tag.on('click', function() {
 								var p = $(this).parent();
 								if(p.hasClass('tag-begin')) {
 									annotatedTags[sentenceIndex][wordIndex][1].delete(currentTag);
-									deleteNextTag(p, sentenceIndex, wordIndex + 1, currentTag);
+									var lastIndex = deleteNextTag(p, sentenceIndex, wordIndex + 1, currentTag);
+
+									console.log("DELETING TAGS FROM WORD INDEX", wordIndex, "TO", lastIndex);
+									console.log("Start word:", st.children().eq(sentenceIndex).children('span').eq(wordIndex).children('.word-inner').text())
+									console.log("End word:", st.children().eq(sentenceIndex).children('span').eq(lastIndex - 1).children('.word-inner').text())
 									$(this).remove();
-									if(p.children().length == 1) {										
+									if(p.children().length == 1) {
+										console.log('B1')
 										deleteTag(p, sentenceIndex)
 									}
 								}								
@@ -895,6 +911,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 
 			// Delete the tags of any selected elements.
 			function deleteTags() {
+
 				$selectedWords.each(function(e) {
 					deleteTag($(this), sentenceIndex);
 
@@ -902,6 +919,7 @@ function initTaggingInterface(canCreateNewCategories, canDeleteCategories, numDo
 			}	
 		
 			if(tagClass < 0) {
+
 				deleteTags();				
 			}
 

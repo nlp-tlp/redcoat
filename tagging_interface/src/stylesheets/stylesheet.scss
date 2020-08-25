@@ -1,0 +1,335 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
+@import url('https://fonts.googleapis.com/css?family=Droid+Sans+Mono:400,700');
+
+@import "mixins";
+@import "navbar";
+@import "sidenav";
+
+// The homepage
+@import "homepage";
+
+// The form for logging in/registering
+@import "users/user-form";
+
+// The setup project page
+@import "setup_project/setup-project";
+@import "setup_project/upload-widget";
+@import "setup_project/jquery-linedtextarea";
+
+// The category tree
+@import "category_tree/category-tree";
+@import "category_tree/d3-context-menu";
+
+// The project dashboard
+@import "projects/projects";
+
+// The tagging interface
+@import "tagging/tagging-interface";
+
+html {
+	height: 100%;
+}
+body {
+	font-family: $primary-font;
+	padding: 0;
+	margin: 0;
+	background: #f2f2f2;
+	color: #222;
+	font-size: 20px;
+	//background-image: url("/images/pattern.svg")
+	//background: gradient()
+	//background-image: url("/images/squairy_light_@2X.png");
+	//background-size: cover;
+	&.homepage {
+		background: linear-gradient(rgb(250, 139, 91), rgb(185, 12, 5)) no-repeat;
+		background-size: cover;
+		height: 100%;
+		transition: background 0.5s ease;
+	}
+	
+	background-repeat: repeat;
+
+	&.setup-menu {
+		background: #f4f4f4;
+	}
+}
+
+
+pre.error-stack {
+	font-size: 14px;
+}
+
+.button {
+	vertical-align: top;
+	background: rgba(255, 255, 255, 0.05);
+	//color: white;
+	width: 40%;
+	display: inline-block;
+	border: 0;
+	padding: 10px 0;
+	box-sizing: border-box;
+	margin: 0 30%;
+	margin-bottom: 30px;
+	border: 2px solid white;
+	//transition: background 0.2s ease;
+	font-size: 18px;
+	cursor: pointer;
+	position: relative;
+	color: white;
+	i {
+		margin-right: 10px;
+	}
+
+	h2 {
+
+	}
+	&:hover {
+		
+		background: white;
+		color: black;
+		color: rgb(185, 12, 5);
+		//transform: translate(0, 2px);
+	}
+	&:after {
+		border-right: 2px solid darken(rgb(185, 12, 5), 30);
+		border-bottom: 2px solid darken(rgb(185, 12, 5), 30);
+		position: absolute;
+		top: 2px;
+		left: 2px;
+		z-index: -100;
+		content: " ";
+		width: 100%;
+		height: 100%;
+		opacity: 0.5;
+	}
+}
+
+
+.column-50 {
+	width: 50%;
+	float: left;
+	box-sizing: border-box;
+	&:first-child {
+		padding-right: 20px;
+	}
+	&:last-child {
+		padding-left: 20px;
+	}
+}
+
+code {
+	font-family: "Courier New", serif;
+}
+
+header canvas#background {
+	position: absolute;
+}
+
+input, button {
+	font-family: $primary-font;
+}
+
+
+hr {
+	border: 0;
+	border-top: 1px solid #ccc;
+	margin: 40px 0;
+}
+
+.center {
+	text-align: center;
+}
+#main-container {
+	width: 1600px;
+	position: relative;
+	margin: 0 auto;
+	min-height: 90vh;
+}
+
+main {
+	//width: 1152px;
+	max-width: 100%;
+	margin: 0 auto;
+	position: relative;
+	//padding-top: 150px;
+	//padding-left: 200px;
+	padding-top: 80px;
+	width: 85%;
+	margin-left: 15%; 
+	@media(max-width: 1700px) {
+		width: 80%;
+		margin-left: 20%; 
+	}
+}
+
+i.fa-xxs {
+	font-size: 0.8em;
+	transform: translate(0, -1px);
+}
+
+
+
+
+header.bg-header {
+	margin-top: $navbar-height;
+	height: $navbar-height*2;
+	background: linear-gradient(135deg, rgb(200, 89, 41), rgb(185, 12, 5)) no-repeat;
+	background-size: cover;
+	width: 100%;
+	z-index: 100;
+	position: relative;
+	overflow: hidden;
+	position: relative;
+	box-shadow: inset 0px -2px 6px -3px rgba(0, 0, 0, 0.5);
+	.message-bar {
+
+	}
+	.title {
+		position: absolute;
+		width: 83.5%;
+		padding-left: 17.5%;
+		padding-right: 190px;
+		color: white;
+		&.can-fade {
+			opacity: 0;
+			pointer-events: none;
+			&.show {
+				opacity: 1;
+				pointer-events: auto;
+			}
+		}
+		&.quick {
+			transition: none;
+		}
+
+		h1 {
+			text-shadow: 1px 1px #111;
+			margin: 0;
+			padding: 16px 0;
+			margin-left: 90px;
+			font-size: 50px;
+			float: left;
+		}
+		.left {
+			position: absolute;
+			left: 4%;
+		}
+		.right {
+			position: absolute;
+			right: 390px;
+		}
+		a.button {
+			border-radius: 3px;
+			text-decoration: none;
+			width: auto;
+			margin: 0;
+			padding: 10px 20px;
+			margin-top: 25px;
+			font-weight: bold;
+			i {
+				margin-right: 12px;
+			}
+		}
+	}
+}
+
+
+
+footer {
+	display: none;
+	background: #222;
+	color: white;
+	width: 100%;
+	z-index: 30000;
+	padding: 20px 0;
+	position: relative;
+	font-size: 16px;
+	color: #aaa;
+	.container {
+		padding-left: 17.5%;
+		padding-right: 20px;
+		.right {
+			float: right;
+		}
+	}
+}
+
+span.progress-bar {
+	color: #222;
+	display: inline-block;
+	width: 100%;
+	padding: 0;
+	text-align: left;
+	background: #eaeaea;
+	line-height: 130%;
+	position: relative;
+	&.thin {
+		display: block;
+		line-height: 100%;
+		height: 16px;
+		border: none;
+		.inner {
+			display: block;
+			height: 16px;
+		}
+	}
+	&.large {
+		line-height: 260%;
+	}
+	.inner {
+		transition: width 0.5s ease;
+		background: linear-gradient(#ddd, #cacaca);
+		width: 0%;
+		padding: 0;
+		display: inline-block;
+		text-align: center;
+		position: relative;
+		z-index: 0;
+		white-space: pre;
+		font-size: 16px;
+		max-width: 100%;
+
+		&:before {
+			content: " ";
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			z-index: -1;
+			background-image: url($base_url + 'images/bars.png');
+			background-blend-mode: lighten;
+			opacity: 0.2;			
+
+		}
+		&:not(.no-animation):before {
+			animation: animatedBackground 40s linear infinite;
+		}
+	}
+	.progress-text {
+		color: white;
+		text-shadow: 1px 1px #222;
+		position: absolute;
+		top: 0;
+		left: 0;
+		text-align: center;
+		margin: 0 auto;
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.inner {
+		color: white;
+		text-shadow: 1px 1px #222;
+	}
+
+	&.coloured .inner {
+		background: linear-gradient(darken($primary-red, 21), darken($primary-red, 28));
+		color: white;
+	}	
+	&.coloured.green .inner {
+		background: linear-gradient(darken($primary-green, 1), darken($primary-green, 7));
+	}
+
+}

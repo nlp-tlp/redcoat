@@ -23,8 +23,17 @@ verifyUserInProject = function(req, res, next) {
 
 router.get('/getprojects', projectController.getProjects);
 router.get('/',            projectController.index);
+
+
+
 router.get('/:id',         verifyUserOwnsProject, projectController.getProjectDetails);
+//router.get('/:id/tagging', verifyUserInProject, projectController.tagging);
 router.get('/:id/tagging', verifyUserInProject, projectController.tagging);
+
+
+
+
+
 router.get('/:id/tagging/getDocumentGroup', verifyUserInProject, projectController.getDocumentGroup);
 router.post('/:id/tagging/modify_hierarchy', verifyUserInProject, projectController.modifyHierarchy);
 
