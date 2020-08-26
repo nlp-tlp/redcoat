@@ -98,10 +98,54 @@
 	margin-top: 4px;
 	border-bottom: 0;
 
-	.word-inner {
+	
+
+	.word-inner {		
 		padding: 15px 10px;
 		display: block;
+		box-sizing: border-box;
+		min-width: 25px;
+		text-align: center;
+		// &::selection {
+		// 	background: #eee;
+		// 	outline: green solid 3px;
+		// }
+		&::selection {
+			background: rgba(0, 0, 0, 0);
+		}
+
+		&:hover {
+			//background: #efefef;
+			cursor: url($base_url + 'images/pencil.png'), pointer; 
+		}
+		&.highlighted {
+			background: #efefef;
+			cursor: url($base_url + 'images/pencil.png'), pointer; 
+			// <div>Icons made by <a href="https://www.flaticon.com/authors/icongeek26" title="Icongeek26">Icongeek26</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+			
+
+
+		}
+		&.highlighted, &:hover {			
+			&:after {
+				display: block;
+			}
+		}
+		&:after {
+			pointer-events: none;
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			border-bottom: 3px solid #777;
+			content: " ";
+			display: none;
+		}
 	}
+	
+
+	
 	.label {
 		display: block;
 		font-size: 12px;
@@ -222,15 +266,29 @@
 	opacity: 1;
 	border-top: 2px solid rgba(0, 0, 0, 0.1);
 	//border-bottom: 2px solid rgba(0, 0, 0, 0.3);
-	content: " ";
+	
 
 	
 	//border-right: 2px solid rgba(0, 0, 0, 0);
 }
-#sentence-tagging .sentence .word.selected::before {
-	background: #fff;
-	background-image: url($base_url + 'images/stripes-darker-trans.png');
+#sentence-tagging .sentence .word.selected .word-inner:after {
+	display: block;
+	border-bottom: 3px solid #222;
+}
+
+
+#sentence-tagging .sentence .word::before {
+	background: #f8f8f8;
+	background-image: url($base_url + 'images/stripes-darker-trans-50.png');
 	animation: animatedBackground 20s linear infinite;
+	content: " ";
+
+}
+
+
+
+#sentence-tagging .sentence .word.selected::before {
+	visibility: initial;
 }
 #sentence-tagging .sentence .word.selected.tag.tag-begin::before {
 	border-left: 2px solid rgba(0, 0, 0, 0.1);
@@ -244,7 +302,7 @@
 
 @keyframes animatedBackground {
 	from { background-position: 0 0; }
-	to { background-position: 100% 0; }
+	to { background-position: 200px 0; }
 }
 
 #sentence-tagging .sentence .word::after {
@@ -270,7 +328,7 @@
 	//background: #eaeaea;
 }
 #sentence-tagging .sentence .word.selected::after {
-	border: 2px solid rgba(0, 0, 0, 0.15);	
+	//border: 2px solid rgba(0, 0, 0, 0.15);	
 	//height: calc(100% - 2px);
 }
 #sentence-tagging .sentence .word.selected.tag::after {
@@ -278,6 +336,7 @@
 	//height: calc(100% - 2px);
 	line-height: 120px;
 	border: none;	
+	//border-bottom: 2px solid #222;
 }
 // #sentence-tagging .sentence .word.selected:not(.tag)::after {
 // 	animation: animatedBackground 20s linear infinite;

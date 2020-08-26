@@ -2,6 +2,8 @@ import React from 'react';
 import logo from './favicon.png'
 import './stylesheets/stylesheet.scss';
 import {Component} from 'react';
+import $ from 'jquery';
+import awesomeCursor from 'jquery-awesome-cursor';
 
 var data = {
   hello: 5,
@@ -157,6 +159,50 @@ class Sentence extends Component {
 }
 
 
+function nextNode(node) {
+    if (node.hasChildNodes()) {
+        return node.firstChild;
+    } else {
+        while (node && !node.nextSibling) {
+            node = node.parentNode;
+        }
+        if (!node) {
+            return null;
+        }
+        return node.nextSibling;
+    }
+}
+
+function getRangeSelectedNodes(range) {
+    var node = range.startContainer;
+    var endNode = range.endContainer;
+
+    // Special case for a range that is contained within a single node
+    if (node == endNode) {
+        return [node.parentNode];
+    }
+
+
+    // Iterate nodes until we hit the end container
+    var rangeNodes = [];
+    while (node && node != endNode) {
+        rangeNodes.push( node = nextNode(node) );
+    }
+
+    // Add partially selected nodes at the start of the range
+    node = range.startContainer;
+    while (node && node != range.commonAncestorContainer) {
+        rangeNodes.unshift(node);
+        node = node.parentNode;
+    }
+
+    return rangeNodes;
+}
+
+
+
+
+
 class MainWindow extends Component {
   constructor(props) {
     super(props);
@@ -167,30 +213,117 @@ class MainWindow extends Component {
       data: {documentGroup: []},
 
       holdingCtrl: false, // Whether the user is currently holding the ctrl key
+      holdingShift: false, // Whether the user is currently holding the shift key
 
-    }
-    this.setupKeybinds();
+    }    
   }
 
 
+  // Sets up an event listener for mouseup so that if a user starts selecting a word, and then releases the mouse
+  // when *not* hovered over another word, the selections can be updated properly.
+  // The event listener will call the updateSelections method as if the last word in the sentence has been selected.
+  //
+  // Note that the majority of the mouse events are passed down to the Word elements via updateSelections.
+  setupMouseEvents() {
+
+    var words = $('.word-inner')
+
+    
+
+    document.addEventListener("selectionchange",event=>{
+      if(this.state.currentSelection.wordStartIndex < 0) return;
+
+      //var selection = document.getSelection ? document.getSelection().toString() :  document.selection.createRange().toString() ;
+      var sel = window.getSelection && window.getSelection();
+
+      if (sel && sel.rangeCount > 0) {
+
+        
+
+        //$('.word-inner').addClass('highlighted');
+
+        var r =  getRangeSelectedNodes(sel.getRangeAt(0));
+
+
+        
+        words.removeClass('highlighted');
+        $(r).addClass('highlighted');
+
+        
+
+      
+      }
+      //console.log(selection);
+    })
+
+    window.addEventListener('mouseup', (e) => {
+      words.removeClass('highlighted');
+      if(this.state.currentSelection.wordStartIndex < 0) return;
+      if(!e.target.classList.contains('word-inner')) { // Ensure that the user is not hovering over a word            
+        var sentenceIndex = this.state.currentSelection.sentenceIndex;
+        this.updateSelections(sentenceIndex, this.state.data.documentGroup[sentenceIndex].length - 1, 'up');
+      }        
+    });
+  }
+
+  // Set up the key binds (ctrl, shift, left right up down etc).
   setupKeybinds() {
-    document.addEventListener('keydown', (e) => {
-      if(e.keyCode === 17 && !this.state.holdingCtrl) {
-        this.setState({
-          holdingCtrl: true
-        });
-      }
 
-    });
-    document.addEventListener('keyup', (e) => {
-      if(e.keyCode === 17 && this.state.holdingCtrl) {
-        this.setState({
-          holdingCtrl: false
-        });
+    document.addEventListener('keydown', (e) => {
+      switch(e.keyCode) {
+        case 16: if(!this.state.holdingShift) this.setState({ holdingShift: true }); break;
+        case 17: if(!this.state.holdingCtrl) this.setState({ holdingCtrl: true }); break;
+        case 37: e.preventDefault(); this.moveSelectionHorizontally('left'); break; // Call e.preventDefault() to prevent the window from scrolling
+        case 38: e.preventDefault(); this.moveSelectionVertically('up'); break;
+        case 39: e.preventDefault(); this.moveSelectionHorizontally('right'); break;
+        case 40: e.preventDefault(); this.moveSelectionVertically('down'); break;
       }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      switch(e.keyCode) {
+        case 16: if(this.state.holdingShift) this.setState({ holdingShift: false }); break;
+        case 17: if(this.state.holdingCtrl) this.setState({ holdingCtrl: false }); break;
+      }      
     });
   }
 
+
+  // Justify the words to the nearest 25px (i.e. round their width up to the nearest 25px).
+  // Not really necessary but makes the diagonal stripey lines line up properly when multiple tokens are selected.
+  // I spent about 2 hours trying to figure out how to get the stripey lines to line up properly, this is the result :D
+  justifyWords() {
+    $('.word-inner').each((i, ele) => {
+      var width = ele.offsetWidth;
+      var newWidth = Math.ceil(width / 25) * 25;
+      $(ele).css('min-width', newWidth + 'px');
+    });
+  }
+
+
+  // When this component is mounted, call the API.
+  // Set up the keybinds and mouseup event when done.
+  componentWillMount() {
+
+    const fetchConfig = {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      };
+
+    fetch('http://localhost:3000/projects/zvJohtRLH/tagging/getDocumentGroup', fetchConfig) // TODO: move localhost out
+      .then(response => response.text())
+      .then((data) => {         
+        var d = JSON.parse(data);
+        this.setState(
+          {
+            data: d,
+            selections: this.getEmptySelectionsArray(d.documentGroup.length)
+          }, () => { console.log("Data:", this.state.data); this.setupKeybinds(); this.setupMouseEvents(); this.justifyWords(); })
+      });
+  }
 
   // Get an empty current selection.
   getEmptyCurrentSelection() {
@@ -201,6 +334,54 @@ class MainWindow extends Component {
     }
   }
 
+  // Move the selection up or down.
+  // This function should be called when one of those keys is pressed.
+  moveSelectionVertically(direction) {
+    console.log("Moving", direction)
+
+  }
+
+  // Move the selection in the specified direction ('left', 'right').
+  // This function should be called when one of those keys is pressed.
+  moveSelectionHorizontally(direction) {
+    console.log("Moving", direction)
+
+    var shift = direction === "left" ? -1 : 1;
+    var selections = this.state.selections;
+
+
+    // Move left or right
+    for(var i = 0; i < selections.length; i++) {
+      for(var j = 0; j < selections[i].length; j++) {
+        var selection = selections[i][j];
+
+        if(direction === "left") {
+          if(!this.state.holdingShift) {
+            selection.wordStartIndex = Math.max(selection.wordStartIndex - 1, 0);
+            selection.wordEndIndex = selection.wordStartIndex;
+          } else {
+            if(selection.wordEndIndex > selection.wordStartIndex) {
+              selection.wordEndIndex--;
+            } else {
+              selection.wordStartIndex = Math.max(selection.wordStartIndex - 1, 0);
+            }
+          }
+        } else if (direction === "right") {
+          if(!this.state.holdingShift) {
+            selection.wordStartIndex = Math.min(this.state.data.documentGroup[i].length - 1, selection.wordEndIndex + 1);
+          }
+          selection.wordEndIndex   = Math.min(this.state.data.documentGroup[i].length - 1, selection.wordEndIndex + 1);
+        }
+      }
+    }
+
+    console.log(selections);
+    this.setState({
+      selections: selections
+    });
+
+
+  }
 
   // Get an empty selections array whose length is the number of docs in this documentGroup.
   getEmptySelectionsArray(numDocs) {
@@ -214,25 +395,7 @@ class MainWindow extends Component {
     return selections;
   }
 
-  componentWillMount() {
-
-    const fetchConfig = {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      };
-
-    fetch('http://localhost:3000/projects/zvJohtRLH/tagging/getDocumentGroup', fetchConfig) // TODO: move localhost out
-      .then(response =>
-        response.text())
-      .then((data) => {         
-        var d = JSON.parse(data);
-        this.setState(
-          {data: d, selections: this.getEmptySelectionsArray(d.documentGroup.length)}, () => { console.log(this.state.data) })
-      });
-  }
+  
 
   // Clear all active selections by resetting the selections array.
   clearSelections() {
@@ -242,12 +405,14 @@ class MainWindow extends Component {
     });
   }
 
+
+
+  // Update this component's selections state.
+  // sentenceIndex: The index of the sentence in which the selection was made.
+  // wordIndex: the index of the word that was clicked on, or hovered over and the mouse released.
+  // action: Whether the mouse was pressed down ('down') or released ('up').
   updateSelections(sentenceIndex, wordIndex, action) {
     var wordStartIndex, wordEndIndex;
-
-    //var selection = this.state.selections[sentenceIndex]
-
-    //var selections = this.getEmptySelectionsArray();
 
     var selections = this.state.selections;
     var currentSelection = this.state.currentSelection;
@@ -270,12 +435,14 @@ class MainWindow extends Component {
         sentenceIndex: sentenceIndex,
         wordStartIndex: wordStartIndex,
         wordEndIndex: wordEndIndex
-      }
+      }      
 
-      console.log("Current selection:", currentSelection)
+      //console.log("Current selection:", currentSelection)
 
 
     } else if(action === "up") { // Mouse up, i.e. mouse was released when hovering over a word.
+
+      console.log(currentSelection, sentenceIndex, wordIndex);
 
       // Only allow selections where the user has clicked on a starting word.
       if(currentSelection.wordStartIndex === -1) {
@@ -317,8 +484,6 @@ class MainWindow extends Component {
   }
 
   render() {
-
-    console.log(this.state.selections, "||")
 
     return (
       <div id="tagging-container">
