@@ -8,8 +8,12 @@
     "@testing-library/user-event": "^7.2.1",
     "jquery-awesome-cursor": "^0.3.1",
     "react": "^16.13.1",
+    "react-beautiful-dnd": "^13.0.0",
     "react-dom": "^16.13.1",
+    "react-drag-listview": "^0.1.7",
     "react-scripts": "3.4.3",
+    "styled-components": "^5.1.1",
+    "underscore": "^1.10.2",
     "watch": "^1.0.2"
   },
   "scripts": {

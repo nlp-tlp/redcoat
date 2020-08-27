@@ -3,7 +3,10 @@ import logo from './favicon.png'
 import './stylesheets/stylesheet.scss';
 import {Component} from 'react';
 import $ from 'jquery';
-import awesomeCursor from 'jquery-awesome-cursor';
+//const ReactDragListView = require('react-drag-listview');
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import styled from 'styled-components';
+import _ from 'underscore';
 
 var data = {
   hello: 5,
@@ -59,6 +62,237 @@ class Navbar extends Component {
 }
 
 
+
+
+
+
+
+
+
+
+class SubCategory extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+
+  render() {
+    var children = this.props.item.children;
+    if(children) {
+      var childItems = (
+        <ul className={this.props.open ? "" : "hidden"}>
+          { children.map((item, index) => (
+            <SubCategory  item={item}
+                          open={this.props.openedItems.has(item.full_name)}
+                          openedItems={this.props.openedItems}
+                          onClick={this.props.onClick}
+            />)) }
+        </ul>
+      );
+    } else {
+      childItems = '';
+    }
+
+    return (
+      <li>
+        <span class="category-name" onClick={() => this.props.onClick(this.props.item.full_name)}>
+          {children && <i className={"fa fa-chevron-" + (this.props.open ? "up" : "down")}></i>}
+          {this.props.item.name}
+        </span>
+        {childItems}
+      </li>
+    )
+
+  }
+}
+
+class Category extends Component {
+
+
+  constructor(props) {
+    super(props);
+  }
+
+
+
+
+  render() {
+    var item = this.props.item;
+    var index = this.props.index;
+    var children = this.props.item.children;
+    if(children) {
+      var childItems = (
+        <ul className={this.props.open ? "" : "hidden"}>
+          { children.map((item, index) => (
+            <SubCategory  item={item}
+                          open={this.props.openedItems.has(item.full_name)}
+                          openedItems={this.props.openedItems}
+                          onClick={this.props.onClick}
+            />)) }
+        </ul>
+      );
+    } else {
+      childItems = '';
+    }
+    return (
+      <Draggable key={item.id.toString()} draggableId={item.id.toString()} index={index}>
+        {(provided, snapshot) => (
+          <li
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+
+            className={"draggable " + (snapshot.isDragging ? "dragging": "not-dragging") + " color-" + (item.colorId + 1)}
+          
+          >
+            <div class="top-level-item">
+              <div {...provided.dragHandleProps}><span class="drag-handle"></span></div>
+              <span class="category-name" onClick={() => this.props.onClick(item.full_name)} >
+                {children && <i className={"fa fa-chevron-" + (this.props.open ? "up" : "down")}></i>}
+                {item.name}
+              </span>
+            </div>
+            {childItems}
+            
+          </li>
+        )}
+      </Draggable>
+
+
+    )
+
+
+  }
+
+
+}
+
+
+
+// https://codesandbox.io/s/k260nyxq9v?file=/index.js:154-2795
+// a little function to help us with reordering the result
+const reorder = (list, startIndex, endIndex) => {
+  const result = Array.from(list);
+  const [removed] = result.splice(startIndex, 1);
+  result.splice(endIndex, 0, removed);
+
+  return result;
+};
+
+
+
+function getOrderedItems(items, order) {
+  var orderedItems = new Array(items.length);
+  for(var i = 0; i < order.length; i++) {
+    orderedItems[i] = items[order[i]];
+  }
+  return orderedItems;
+}
+
+class CategoryHierarchy extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      itemOrder: [],      // An array that maintains the ordering of the top-level categories.
+                          // e.g. [0, 1, 3, 2]
+      openedItems: new Set(),    // An set keep track of the items that have been open (indexed by name).
+    }
+    this.onDragEnd = this.onDragEnd.bind(this);
+  }
+
+  // When this component's items changes, setup a new itemOrder state.
+  componentDidUpdate(prevProps, prevState) {
+    var t = this;
+    function setupItemOrder() {
+      var itemOrder = new Array(t.props.items.length);
+      for(var i = 0; i < itemOrder.length; i++) {
+        itemOrder[i] = i;
+      }
+      return itemOrder;
+    }
+
+    
+
+    if(!_.isEqual(prevProps.items, this.props.items)) {
+      this.setState({
+        openedItems: new Set(),
+        itemOrder: setupItemOrder(),
+      }, () => { console.log(this.state.itemOrder) })
+    }
+  }
+
+  // Open or close a category.
+  // It's pretty awkward that this function is necessary. It would be ideal to store 'open' as a state variable inside the Category and Subcategory
+  // components, but that results in the wrong categories being open when the top-level categories are moved around.
+  // Storing them in the openedItems array allows for the opened categories to be maintained when the user
+  // drags a category from one place to another.
+  // full_name should be the full name of the category, e.g. item/pump/centrifugal_pump, which are unique.
+  toggleCategory(full_name) {
+    var openedItems = this.state.openedItems;    
+
+    if(openedItems.has(full_name)) {
+      openedItems.delete(full_name);
+    } else {
+      openedItems.add(full_name);
+    }
+
+    this.setState({
+      openedItems: openedItems
+    })
+  }
+
+
+  // When the user has finished dragging a category, determine the new item order and save this order to the state.
+  onDragEnd(result) {
+    // dropped outside the list
+    if (!result.destination) {
+      return;
+    }
+
+
+    const itemOrder = reorder(
+      this.state.itemOrder,
+      result.source.index,
+      result.destination.index
+    );
+
+    this.setState({
+      itemOrder: itemOrder
+    });
+  }
+
+  
+  render() {
+
+
+    var items       = getOrderedItems(this.props.items, this.state.itemOrder)
+    var openedItems = this.state.openedItems;
+
+    return (
+      <DragDropContext onDragEnd={this.onDragEnd}>
+        <Droppable droppableId="droppable">
+          {(provided, snapshot) => (
+            <ul
+              {...provided.droppableProps}
+              className={"draggable-list" + (snapshot.isDraggingOver ? " dragging" : "")}
+              ref={provided.innerRef}
+
+            >
+              {items.map((item, index) => (
+                <Category item={item}
+                          index={index}
+                          onClick={this.toggleCategory.bind(this)}
+                          open={openedItems.has(item.name)} 
+                          openedItems={this.state.openedItems} 
+                />
+              ))}
+              {provided.placeholder}
+            </ul>
+          )}
+        </Droppable>
+      </DragDropContext>
+    );
+  }
+}
 
 class Word extends Component {
   constructor(props) {
@@ -152,6 +386,7 @@ class Sentence extends Component {
                 //wordMouseUp={this.props.updateSelection.bind(this)}
           />)
         }
+        
       </div>
     );
   }
@@ -173,6 +408,9 @@ function nextNode(node) {
     }
 }
 
+
+// I found most of the code for getRangeSelectedNodes on Stackoverflow:
+// https://stackoverflow.com/questions/7781963/js-get-array-of-all-selected-nodes-in-contenteditable-div
 function getRangeSelectedNodes(range) {
     var node = range.startContainer;
     var endNode = range.endContainer;
@@ -203,14 +441,19 @@ function getRangeSelectedNodes(range) {
 
 
 
-class MainWindow extends Component {
+class TaggingInterface extends Component {
   constructor(props) {
     super(props);
     this.state = {
       project_id: '-PE1dNzht', // debug
+
       selections: this.getEmptySelectionsArray(10),
       currentSelection: this.getEmptyCurrentSelection(),
-      data: {documentGroup: []},
+
+      data: {
+        documentGroup: [],
+        categoryHierarchy: {'children': []}
+      },
 
       holdingCtrl: false, // Whether the user is currently holding the ctrl key
       holdingShift: false, // Whether the user is currently holding the shift key
@@ -231,7 +474,9 @@ class MainWindow extends Component {
     
 
     document.addEventListener("selectionchange",event=>{
-      if(this.state.currentSelection.wordStartIndex < 0) return;
+      if(this.state.currentSelection.wordStartIndex < 0) {
+        return;
+      }
 
       //var selection = document.getSelection ? document.getSelection().toString() :  document.selection.createRange().toString() ;
       var sel = window.getSelection && window.getSelection();
@@ -258,7 +503,10 @@ class MainWindow extends Component {
 
     window.addEventListener('mouseup', (e) => {
       words.removeClass('highlighted');
-      if(this.state.currentSelection.wordStartIndex < 0) return;
+      if(this.state.currentSelection.wordStartIndex < 0) {
+        clearWindowSelection();
+        return;
+      }
       if(!e.target.classList.contains('word-inner')) { // Ensure that the user is not hovering over a word            
         var sentenceIndex = this.state.currentSelection.sentenceIndex;
         this.updateSelections(sentenceIndex, this.state.data.documentGroup[sentenceIndex].length - 1, 'up');
@@ -313,7 +561,9 @@ class MainWindow extends Component {
         }
       };
 
-    fetch('http://localhost:3000/projects/zvJohtRLH/tagging/getDocumentGroup', fetchConfig) // TODO: move localhost out
+    var pid = 'oekGXtMzK';
+
+    fetch('http://localhost:3000/projects/' + pid + '/tagging/getDocumentGroup', fetchConfig) // TODO: move localhost out
       .then(response => response.text())
       .then((data) => {         
         var d = JSON.parse(data);
@@ -484,28 +734,43 @@ class MainWindow extends Component {
   }
 
   render() {
-
+    console.log(this.state.data.categoryHierarchy.children, '>>>')
     return (
-      <div id="tagging-container">
-        <div id="sentence-tagging">
-          { this.state.data.documentGroup.map((doc, i) => 
-            <Sentence 
-              key={i}
-              index={i}
-              words={doc}
-              // selection={ { wordStartIndex: i === this.state.selection.sentenceIndex ? this.state.selection.wordStartIndex : -1,
-              //               wordEndIndex:   i === this.state.selection.sentenceIndex ? this.state.selection.wordEndIndex : -1 }
-              // }
-              selections={this.state.selections[i]}
-              // selected={i === this.state.selection.sentenceIndex}
-              updateSelections={this.updateSelections.bind(this)}
-              //updateSelectedSentence={this.updateSelectedSentence.bind(this)}
-          />)}
+      <div id="tagging-interface">
+        <div id="tagging-container">
+          <div id="sentence-tagging">
+            { this.state.data.documentGroup.map((doc, i) => 
+              <Sentence 
+                key={i}
+                index={i}
+                words={doc}
+                // selection={ { wordStartIndex: i === this.state.selection.sentenceIndex ? this.state.selection.wordStartIndex : -1,
+                //               wordEndIndex:   i === this.state.selection.sentenceIndex ? this.state.selection.wordEndIndex : -1 }
+                // }
+                selections={this.state.selections[i]}
+                // selected={i === this.state.selection.sentenceIndex}
+                updateSelections={this.updateSelections.bind(this)}
+                //updateSelectedSentence={this.updateSelectedSentence.bind(this)}
+            />)}
+          </div>
+
+
+
         </div>
+        <div id="tagging-menu">
+          <div className="category-hierarchy">
+            <div className="tokens-info">Hello I am wikipedia</div>
+            <div id="modify-hierarchy-container">Modify hierarchy container</div>
+            <div id="category-hierarchy-tree">
+              <CategoryHierarchy items={this.state.data.categoryHierarchy.children}/>
+
+            </div>
 
 
-
+          </div>
+        </div>
       </div>
+
 
     )
 
@@ -516,22 +781,17 @@ function App() {
   return (
     <div id="app">
       <Navbar/>  
-      <div className="tagging"></div>
-      <div id="main-container">      
+      
+
+
+
+
+      <TaggingInterface/>
         
-        <main id="main">  
-          <MainWindow data={data}/> 
-        </main>        
-      </div>
-      <div id="tagging-menu">
-          <div className="category-hierarchy">
-            <div className="tokens-info">Hello I am wikipedia</div>
-            <div id="modify-hierarchy-container">Modify hierarchy container</div>
-            <div id="category-hierarchy-tree">Tree</div>
-
-
-          </div>
-        </div>
+    
+                
+      
+      
     </div>
   );
 }

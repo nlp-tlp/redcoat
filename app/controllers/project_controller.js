@@ -147,6 +147,62 @@ function runDictionaryTagging(documentGroup, dictionary) {
 
 
 
+// Remove empty children from the JSON data.
+function removeEmptyChildren(obj) {
+  if(obj["children"].length == 0) {
+    delete obj["children"];
+  } else {
+    for(var k in obj["children"]) {
+      removeEmptyChildren(obj["children"][k]);
+    }
+  }
+}
+
+function slash2txt(slash) {
+  var txt = [];
+  for(var i = 0; i < slash.length; i++) {
+    txt.push(slash[i].replace(/[^\/]*\//g, ' ')); // Replace any forwardslashes+text with a space.
+  }
+  return txt.join("\n");
+}
+
+function txt2json(text, slash) {
+  var fieldname = "name";
+
+  var lines = text.split('\n');  
+  var depth = 0; // Current indentation
+  var root = {
+    "children": []
+  };
+  root["" + fieldname] = "entity";
+  var parents = [];
+  var node = root;
+  var colorId = -1;
+  for(var i = 0; i < lines.length; i++) {
+    var cleanLine = lines[i].trim()//replace(/\s/g, "");
+    var newDepth  = lines[i].search(/\S/) + 1;
+    if(newDepth == 1) colorId++;
+    if(newDepth < depth) {
+      parents = parents.slice(0, newDepth);      
+    } else if (newDepth == depth + 1) {      
+      parents.push(node);
+    } else if(newDepth > depth + 1){
+      return new Error("Unparsable tree.");
+    }
+    depth = newDepth;
+    node = {"id": i, "children": [], "colorId": colorId};
+    node[fieldname] = cleanLine;
+    node['full_name'] = slash[i];
+    if(parents.length > 0) {
+      parents[parents.length-1]["children"].push(node);
+    }
+  }
+  removeEmptyChildren(root); // Remove 'children' properties of all nodes without children
+  return root;
+}
+
+
+
 
 
 
@@ -174,13 +230,23 @@ module.exports.getDocumentGroup = function(req, res) {
 
         logger.debug("Sending doc group id: " + docgroup._id)
 
+        var tree = txt2json(slash2txt(proj.category_hierarchy), proj.category_hierarchy)
+        console.log("tree:", tree);
+
+        if(proj.automatic_tagging_dictionary) {
+          var automaticAnnotations = runDictionaryTagging(docgroup.documents, proj.automatic_tagging_dictionary)
+        } else {
+          var automaticAnnotations = null;
+        }
+
         proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, annotatedDocGroups) {
           res.send({
               documentGroupId: docgroup._id,
               documentGroup: docgroup.documents,
-              automaticAnnotations: runDictionaryTagging(docgroup.documents, proj.automatic_tagging_dictionary),
+              automaticAnnotations: automaticAnnotations,
               //automaticTaggingDictionary: proj.automatic_tagging_dictionary,
               entityClasses: proj.category_hierarchy,
+              categoryHierarchy: tree,
               annotatedDocGroups: annotatedDocGroups,
               pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\""          
           });
