@@ -95,11 +95,12 @@ class SubCategory extends Component {
 
     return (
       <li>
-        <span class="category-name" onClick={() => this.props.onClick(this.props.item.full_name)}>
-          {children && <i className={"fa fa-chevron-" + (this.props.open ? "up" : "down")}></i>}
-          {this.props.item.name}
+        <span class="inner-container">
+          {children && <span class="open-button" onClick={() => this.props.onClick(this.props.item.full_name)}><i className={"fa fa-chevron-" + (this.props.open ? "up" : "down")}></i></span>}
+          <span class="category-name" >{this.props.item.name}</span>
         </span>
         {childItems}
+
       </li>
     )
 
@@ -144,13 +145,15 @@ class Category extends Component {
             className={"draggable " + (snapshot.isDragging ? "dragging": "not-dragging") + " color-" + (item.colorId + 1)}
           
           >
-            <div class="top-level-item">
-              <div {...provided.dragHandleProps}><span class="drag-handle"></span></div>
-              <span class="category-name" onClick={() => this.props.onClick(item.full_name)} >
-                {children && <i className={"fa fa-chevron-" + (this.props.open ? "up" : "down")}></i>}
+            <span class="inner-container">
+              <div {...provided.dragHandleProps} className="drag-handle-container"><span class="drag-handle"></span></div>
+               {children && <span class="open-button" onClick={() => this.props.onClick(item.full_name)}><i className={"fa fa-chevron-" + (this.props.open ? "up" : "down")}></i></span>}
+             
+              <span class="category-name">             
+
                 {item.name}
               </span>
-            </div>
+            </span>
             {childItems}
             
           </li>

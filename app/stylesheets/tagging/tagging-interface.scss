@@ -9,7 +9,7 @@
 	.jstree li.color-#{$i} a:hover  { background: nth($colors, $i); }
 	.jstree li.color-#{$i} a.jstree-clicked  { background: nth($colors, $i); }
 	#category-hierarchy-tree > ul > li.color-#{$i} { border-left: 3px solid nth($colors, $i); }
-	#category-hierarchy-tree > ul:not(.dragging) > li.color-#{$i} .top-level-item:hover { background: nth($colors, $i); }
+	#category-hierarchy-tree > ul:not(.dragging) > li.color-#{$i} .inner-container:hover { background: nth($colors, $i); }
 	#category-hierarchy-tree > ul:not(.dragging) > li.color-#{$i} span.category-name:hover { background: nth($colors, $i); }
 }
 
@@ -858,7 +858,6 @@ button.blue-button {
 	margin-top: 10px;
 	padding-right: 5px;
 	position: relative;
-	font-size: 0.6em; // TODO: remove this
 	&.tall {
 		height: 80vh;
 	}
@@ -1199,21 +1198,44 @@ a#untag-tokens {
 			width: 100%;
 			display: block;
 			user-select: none;
-			div.top-level-item {
+			color: #666;
+			&:hover span.inner-container {
+				color: #111;
+			}
+			span.inner-container {
 				display: flex;
 				span.category-name {
 					width: 100%;
 				}
 			}
+			span.open-button {
+				margin-right: 0px;
+				cursor: pointer;
+				border-radius: 2px;
+				padding: 1px 4px;
+				margin-left: 8px;
+
+				height: 1.5em;
+				margin-top: 5px;
+				font-size: 0.8em;
+				&:hover {
+					background: white;
+				}
+				&:active {
+					transform: translate(0px, 2px);
+				}
+			}
+
 			span.category-name {
+
 				cursor: pointer;
 				width: auto;
 				padding: 4px 6px;
+				padding-left: 12px;
 				display: block;
-				i {
-					margin-right: 6px;
-				}
+				
 			}
+			
 			span.drag-handle {
 				width: 3px;
 				display: inline-block;
@@ -1221,7 +1243,7 @@ a#untag-tokens {
 				border-right: 2px dotted #bbb;
 				height: calc(100% - 12px);
 				margin-top: 6px;
-				margin-right: 8px;
+				margin-right: 2px;
 				margin-left: 8px;
 
 			}
@@ -1229,7 +1251,7 @@ a#untag-tokens {
 				&.hidden {
 					display: none;
 				}
-				padding-left: 20px;
+				padding-left: 40px;
 				li {
 					display: block;
 				}
@@ -1239,7 +1261,7 @@ a#untag-tokens {
 
 	}
 	> ul > li > ul {
-		padding-left: 40px;
+		padding-left: 60px;
 	}
 
 }
