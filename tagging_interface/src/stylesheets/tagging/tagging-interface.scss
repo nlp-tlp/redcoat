@@ -11,6 +11,14 @@
 	#category-hierarchy-tree > ul > li.color-#{$i} { border-left: 3px solid nth($colors, $i); }
 	#category-hierarchy-tree > ul:not(.dragging) > li.color-#{$i} .inner-container:hover { background: nth($colors, $i); }
 	#category-hierarchy-tree > ul:not(.dragging) > li.color-#{$i} span.category-name:hover { background: nth($colors, $i); }
+	#category-hierarchy-tree > ul:not(.dragging) > li.color-#{$i} span.category-name.hotkey-active:after { 
+		//transition: background-position 0.25s;
+		border-color: darken(nth($colors, $i), 26); 
+		background: nth($colors, $i);
+	}
+	// #category-hierarchy-tree > ul:not(.dragging) > li.color-#{$i} span.category-name:after { 
+	// 	background-image: linear-gradient(to bottom, #eee 50%, nth($colors, $i) 50%);
+	// }
 }
 
 
@@ -753,6 +761,20 @@ button.blue-button {
 	#wikipedia-summary-container {
 		padding-top: 15px;
 	}
+	.hotkey-info {
+		//min-height: 1.5em;
+		font-size: 0.8em;
+		padding: 0 10px;
+		padding-left: 20px;
+		color: #555;
+		span.chain {
+			display: inline-block;
+			min-width: 30px;
+		}
+		&.hidden {
+			color: rgba(0, 0, 0, 0);
+		}
+	}
 	.tokens-info {
 		padding: 15px;
 		background: white;
@@ -1204,11 +1226,13 @@ a#untag-tokens {
 			display: block;
 			user-select: none;
 			color: #666;
+			position: relative;
 			&:hover span.inner-container {
 				color: #111;
 			}
 			span.inner-container {
 				display: flex;
+
 				span.category-name {
 					width: 100%;
 				}
@@ -1244,11 +1268,18 @@ a#untag-tokens {
 					font-size: 0.6em;
 					padding: 2px 4px;
 					background: white;
-					border: 1px solid #eee;
+					border: 2px solid #eee;
 					border-radius: 4px;
 					min-width: 16px;
 					text-align: center;
+					//transition: background-position 0s;
+					//background-size: 100% 200%;
+					
+
 				}
+				
+
+
 				
 			}
 			
@@ -1260,9 +1291,9 @@ a#untag-tokens {
 				margin-top: 6px;
 				margin-right: 2px;
 				margin-left: 8px;
-				position: relative;
+				position: absolute;
 				&:after {
-					border-left: 2px dotted #aaa; // This is the only way to get the borders to line up on firefox -_-
+					border-left: 2px dotted #aaa; // Using a pseudo element is the only way to get the dots to line up on Firefox -_-
 					content: " ";
 					margin-left: 6px;
 					height: 100%;
@@ -1288,6 +1319,9 @@ a#untag-tokens {
 	}
 	> ul > li > ul {
 		padding-left: 60px;
+	}
+	> ul > li > span.inner-container {
+		padding-left: 15px;
 	}
 
 }

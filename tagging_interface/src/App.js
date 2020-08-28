@@ -8,19 +8,6 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import styled from 'styled-components';
 import _ from 'underscore';
 
-var data = {
-  hello: 5,
-  hi: 7
-}
-/* a(href="" + base_url + "")
-        span.inner
-          span.img
-            img(src="" + base_url + "images/favicon.png")
-          span Redcoat
-          */
-
-
-
 // https://stackoverflow.com/questions/3169786/clear-text-selection-with-javascript
 function clearWindowSelection() {
   if (window.getSelection) {
@@ -34,6 +21,8 @@ function clearWindowSelection() {
   }
 }
 
+
+// The navbar, which appears at the top of the page.
 class Navbar extends Component {
   render() {
     return (
@@ -61,130 +50,83 @@ class Navbar extends Component {
   }
 }
 
-
-
-
-
-
-
-
-
-
-class SubCategory extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-
-  render() {
-    var children = this.props.item.children;
-    if(children) {
-      var childItems = (
-        <ul className={this.props.open ? "" : "hidden"}>
-          { children.map((item, index) => (
-            <SubCategory  item={item}
-                          open={this.props.openedItems.has(item.full_name)}
-                          openedItems={this.props.openedItems}
-                          onClick={this.props.onClick}
-                          hotkeyArray={index < 9 ? Array.prototype.concat(this.props.hotkeyArray, [index + 1]) : null}
-                          hotkeyMap={this.props.hotkeyMap}
-            />)) }
-        </ul>
-      );
-    } else {
-      childItems = '';
-    }
-
-    var hasHotkey = this.props.hotkeyMap.hasOwnProperty(this.props.item.full_name)
-    var hotkeyStr = hasHotkey ? this.props.hotkeyMap[this.props.item.full_name].join('') : '';
-
-
-    return (
-      <li>
-        <span className="inner-container">
-          {children && <span className="open-button" onClick={() => this.props.onClick(this.props.item.full_name)}><i className={"fa fa-chevron-" + (this.props.open ? "up" : "down")}></i></span>}
-          <span className={"category-name" + (hasHotkey ? " has-hotkey" :"")}
-                    data-hotkey-id={hotkeyStr}>
-            {this.props.item.name}
-          </span>
-        </span>
-        {childItems}
-
-      </li>
-    )
-
-  }
-}
-
+// A single category in the category hierarchy tree.
 class Category extends Component {
 
-
   constructor(props) {
     super(props);
   }
-
 
   render() {
     var item = this.props.item;
     var index = this.props.index;
     var children = this.props.item.children;
 
-
-
+    // If this component has any children, render each of them.
     if(children) {
       var childItems = (
         <ul className={this.props.open ? "" : "hidden"}>
           { children.map((item, index) => (
-            <SubCategory  item={item}
-                          open={this.props.openedItems.has(item.full_name)}
-                          openedItems={this.props.openedItems}
-                          onClick={this.props.onClick}
-                          hotkeyArray={index < 9 ? Array.prototype.concat(this.props.hotkeyArray, [index + 1]) : null}
-                          hotkeyMap={this.props.hotkeyMap}
+            <Category key={index}
+                      item={item}
+                      open={this.props.openedItems.has(item.full_name)}
+                      openedItems={this.props.openedItems}
+                      onClick={this.props.onClick}
+                      hotkeyMap={this.props.hotkeyMap}
+                      hotkeyChain={this.props.hotkeyChain}
+                      isTopLevelCategory={false}
+                      applyTag={this.props.applyTag}
             />)) }
         </ul>
       );
     } else {
-      childItems = '';
+      var childItems = '';
     }
 
+    // Determine whether this category has a hotkey (by checking hotkeyMap).
+    // Also determine hotkeyStr (for example '12' for 'item/pump').
     var hasHotkey = this.props.hotkeyMap.hasOwnProperty(this.props.item.full_name)
     var hotkeyStr = hasHotkey ? this.props.hotkeyMap[this.props.item.full_name].join('') : '';
 
+    var content = (
+      <span className="inner-container">
+        
+         {children && <span className="open-button" onClick={() => this.props.onClick(item.full_name)}><i className={"fa fa-chevron-" + (this.props.open ? "up" : "down")}></i></span>}
+       
+        <span className={"category-name" + (hasHotkey ? " has-hotkey" :"") + (this.props.hotkeyChain === hotkeyStr ? " hotkey-active" : "")}
+              data-hotkey-id={hotkeyStr} onClick={() => this.props.applyTag(this.props.item.full_name)}>             
 
-    return (
-      <Draggable key={item.id.toString()} draggableId={item.id.toString()} index={index}>
-        {(provided, snapshot) => (
-          <li
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-
-            className={"draggable " + (snapshot.isDragging ? "dragging": "not-dragging") + " color-" + (item.colorId + 1)}
-          
-          >
-            <span className="inner-container">
-              <div {...provided.dragHandleProps} className="drag-handle-container"><span className="drag-handle"></span></div>
-               {children && <span className="open-button" onClick={() => this.props.onClick(item.full_name)}><i className={"fa fa-chevron-" + (this.props.open ? "up" : "down")}></i></span>}
-             
-              <span className={"category-name" + (hasHotkey ? " has-hotkey" :"")}
-                    data-hotkey-id={hotkeyStr}>             
-
-                {item.name}
-              </span>
-            </span>
-            {childItems}
-            
-          </li>
-        )}
-      </Draggable>
-
-
+          {item.name}
+        </span>
+      </span>      
     )
 
 
+    // This component will render differently depending on whether it is a top-level category or not.
+    // Top level categories have the drag handle, which requires a different configuration on the wrapper and li.
+    if(this.props.isTopLevelCategory) {
+      return (
+        <Draggable key={item.id.toString()} draggableId={item.id.toString()} index={index}>
+          {(provided, snapshot) => (
+            <li ref={provided.innerRef} {...provided.draggableProps} className={"draggable " + (snapshot.isDragging ? "dragging": "not-dragging") + " color-" + (item.colorId + 1)}>
+              <div {...provided.dragHandleProps} className="drag-handle-container"><span className="drag-handle"></span></div>
+              
+              { content }
+              { childItems }
+              
+            </li>
+          )}
+        </Draggable>
+      )
+    } else {
+      return (
+        <li>
+          { content }
+          { childItems }
+        </li>
+      )
+    }
   }
-
-
 }
 
 
@@ -200,7 +142,7 @@ const reorder = (list, startIndex, endIndex) => {
 };
 
 
-
+// Retrieve a list of ordered items based on an order array.
 function getOrderedItems(items, order) {
   var orderedItems = new Array(items.length);
   for(var i = 0; i < order.length; i++) {
@@ -209,6 +151,7 @@ function getOrderedItems(items, order) {
   return orderedItems;
 }
 
+// The category hierarchy (on the left).
 class CategoryHierarchy extends Component {
   constructor(props) {
     super(props);
@@ -221,7 +164,8 @@ class CategoryHierarchy extends Component {
     this.onDragEnd = this.onDragEnd.bind(this);
   }
 
-  // When this component's items changes, setup a new itemOrder state.
+  // When this component's items changes (should be when a new docGroup has been requested), setup a new itemOrder state.
+  // (which defaults to ascending order e.g. 0, 1, 2, 3, 4 ...)
   componentDidUpdate(prevProps, prevState) {
     var t = this;
     function setupItemOrder() {
@@ -231,7 +175,6 @@ class CategoryHierarchy extends Component {
       }
       return itemOrder;
     }
-
     
     var itemOrder = setupItemOrder();
     if(!_.isEqual(prevProps.items, this.props.items)) {
@@ -246,7 +189,7 @@ class CategoryHierarchy extends Component {
   // Open or close a category.
   // It's pretty awkward that this function is necessary. It would be ideal to store 'open' as a state variable inside the Category and Subcategory
   // components, but that results in the wrong categories being open when the top-level categories are moved around.
-  // Storing them in the openedItems array allows for the opened categories to be maintained when the user
+  // Storing them in the openedItems array in this component's state allows for the opened categories to be maintained when the user
   // drags a category from one place to another.
   // full_name should be the full name of the category, e.g. item/pump/centrifugal_pump, which are unique.
   toggleCategory(full_name) {
@@ -263,9 +206,6 @@ class CategoryHierarchy extends Component {
     })
   }
 
-
-
-
   // When the user has finished dragging a category, determine the new item order and save this order to the state.
   onDragEnd(result) {
     // dropped outside the list
@@ -281,7 +221,7 @@ class CategoryHierarchy extends Component {
 
     var orderedItems = getOrderedItems(this.props.items, itemOrder)
 
-    this.props.setupHotkeyMap(orderedItems, () =>
+    this.props.initHotkeyMap(orderedItems, () =>
       this.setState({
         itemOrder: itemOrder,
         orderedItems: orderedItems,
@@ -292,11 +232,8 @@ class CategoryHierarchy extends Component {
   
   render() {
 
-
     var items       = this.state.orderedItems;
     var openedItems = this.state.openedItems;
-
-    //this.props.setupHotkeyMap();
 
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
@@ -309,13 +246,17 @@ class CategoryHierarchy extends Component {
 
             >
               {items.map((item, index) => (
-                <Category item={item}
+                <Category 
+                          key={index}
+                          item={item}
                           index={index}
                           onClick={this.toggleCategory.bind(this)}
                           open={openedItems.has(item.name)} 
                           openedItems={this.state.openedItems} 
                           hotkeyMap={this.props.hotkeyMap}
-                          hotkeyArray={index < 9 ? new Array([index + 1]) : null}
+                          hotkeyChain={this.props.hotkeyChain}
+                          isTopLevelCategory={true}
+                          applyTag={this.props.applyTag}
                 />
               ))}
               {provided.placeholder}
@@ -327,6 +268,8 @@ class CategoryHierarchy extends Component {
   }
 }
 
+
+// A single word (or token) in the tagging interface.
 class Word extends Component {
   constructor(props) {
     super(props);
@@ -334,9 +277,6 @@ class Word extends Component {
       selected: false,
     }
   }
-
-
-
 
   render() {
     return (
@@ -352,6 +292,7 @@ class Word extends Component {
 }
 
 
+// A sentence in the tagging interface.
 class Sentence extends Component {
   constructor(props) {
     super(props);
@@ -385,6 +326,9 @@ class Sentence extends Component {
 
   // }
 
+
+
+  // Call the updateSelections function of the parent of this component (i.e. TaggingInterface), with this sentence's index included.
   updateSelections(wordIndex, action) {
     this.props.updateSelections(this.props.index, wordIndex, action)
   }
@@ -427,6 +371,8 @@ class Sentence extends Component {
 }
 
 
+// A simple function for traversing a list of nodes. Goes with the function below.
+// Both functions found on StackOverflow: https://stackoverflow.com/questions/7781963/js-get-array-of-all-selected-nodes-in-contenteditable-div
 function nextNode(node) {
     if (node.hasChildNodes()) {
         return node.firstChild;
@@ -441,9 +387,9 @@ function nextNode(node) {
     }
 }
 
-
-// I found most of the code for getRangeSelectedNodes on Stackoverflow:
-// https://stackoverflow.com/questions/7781963/js-get-array-of-all-selected-nodes-in-contenteditable-div
+// A function for traversing the nodes present in the range object, which allows us to determine all html nodes
+// corresponding to selected items (items in which part of them are highlighted).
+// Note that you can't see the highlighted text on the screen because it has been hidden by css.
 function getRangeSelectedNodes(range) {
     var node = range.startContainer;
     var endNode = range.endContainer;
@@ -472,22 +418,50 @@ function getRangeSelectedNodes(range) {
 
 
 
+// A simple class for displaying information related to the hotkeys the user is currently pressing.
+class HotkeyInfo extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+
+    var ec = this.props.entityClass;
+    if(ec === undefined) {
+      ec = '(not a valid class)';
+    }
+
+    return (
+      <div className={"hotkey-info" + (this.props.chain.length === 0 ? " hidden": "")}>
+        <span className="chain">{this.props.chain}</span>: <span>{ec}</span>
+      </div>
+    )
+
+  }
+}
 
 
+// The TaggingInterface class. Contains the vast majority of the logic for the interface.
 class TaggingInterface extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      project_id: '-PE1dNzht', // debug
+      project_id: 'RtJp98vxk', // debug
 
-      selections: this.getEmptySelectionsArray(10),
-      currentSelection: this.getEmptyCurrentSelection(),
-
+      // Data (from the server)
       data: {
         documentGroup: [],
         categoryHierarchy: {'children': []}
       },
 
+      // Annotations array
+      annotations: [],  // Stores the user's annotations.
+
+      // Selections
+      selections: this.getEmptySelectionsArray(10),
+      currentSelection: this.getEmptyCurrentSelection(),
+
+      // Hotkeys
       hotkeyMap: {},
       reverseHotkeyMap: {},
       hotkeyChain: [], // Stores the current hotkey chain, e.g. [1, 2, 3] = the user has pressed 1, then 2, then 3 in quick succession
@@ -495,6 +469,8 @@ class TaggingInterface extends Component {
                               // variable so that it can be detached when the hotkeys change.
       hotkeyTimeoutFn: null,   // Stores the current hotkey timeout function
 
+
+      // Key events
       holdingCtrl: false, // Whether the user is currently holding the ctrl key
       holdingShift: false, // Whether the user is currently holding the shift key
 
@@ -509,7 +485,7 @@ class TaggingInterface extends Component {
   // The event listener will call the updateSelections method as if the last word in the sentence has been selected.
   //
   // Note that the majority of the mouse events are passed down to the Word elements via updateSelections.
-  setupMouseEvents() {
+  initMouseEvents() {
 
     var words = $('.word-inner')
     document.addEventListener("selectionchange",event=>{
@@ -540,7 +516,7 @@ class TaggingInterface extends Component {
 
   // Set up the key binds (ctrl, shift, left right up down etc).
   // This function does not set up the hotkeys (that is done via setupHotkeyKeybinds)
-  setupKeybinds() {
+  initKeybinds() {
 
     document.addEventListener('keydown', (e) => {
       switch(e.key) {
@@ -582,8 +558,8 @@ class TaggingInterface extends Component {
   }
 
   // This function is called when a hotkey is pressed.
-  // If a hotkey was pressed previously within 250ms, the chain will grow until the point the user no longer presses a hotkey
-  // for 250ms.
+  // If a hotkey was pressed previously within 333ms, the chain will grow until the point the user no longer presses a hotkey
+  // for 333ms.
   bindHotkeys(e, hotkeyMap) {
     if(e.keyCode < 49 || e.keyCode > 57) return; // Hotkeys are in the range 1-9, which are keyCode 49-57.
     var key = e.keyCode - 48;
@@ -595,7 +571,7 @@ class TaggingInterface extends Component {
     }, () => {
       // Remove the previous timeout and set up a new one
       window.clearTimeout(this.state.hotkeyTimeoutFn);      
-      var hotkeyTimeoutFn = window.setTimeout(() => this.hotkeyTimeout(), 250);
+      var hotkeyTimeoutFn = window.setTimeout(() => this.hotkeyTimeout(), 333);
 
       this.setState({
         hotkeyTimeoutFn: hotkeyTimeoutFn
@@ -622,10 +598,10 @@ class TaggingInterface extends Component {
 
   // Builds the hotkey map according to the ordered category hierarchy, and saves it to this component's state.
   // The hotkey map will change whenever the user changes the order of them items via drag and drop.
-  setupHotkeyMap(orderedItems, next) {
+  initHotkeyMap(orderedItems, next) {
 
     console.log("Setting up hotkey map...")
-    // Annoying that is a recursive function but I think it's the only way to do it.
+    // Annoying that the following is a recursive function but I think it's the only way to do it.
     // The result is a hotkeyMap as follows:
     /*  {
           'item': [1],
@@ -664,6 +640,7 @@ class TaggingInterface extends Component {
     var hotkeyMap = traverseChild({children: orderedItems}, 1, [], [], true);
     var reverseHotkeyMap = buildReverseHotkeyMap(hotkeyMap);
 
+    // Once the hotkeyMap (and reverseHotkeyMap) has been created, set up the hotkey keybinds and call the callback fn.
     this.setState({
       hotkeyMap: hotkeyMap,
       reverseHotkeyMap: reverseHotkeyMap
@@ -684,6 +661,16 @@ class TaggingInterface extends Component {
     });
   }
 
+  // Sets up an array to store the annotations with the same length as docGroup.
+  // Prepopulate the annotations array with the automaticAnnotations if available (after converting them to BIO).
+  initAnnotationsArray(documents, automaticAnnotations) {
+    var annotations = new Array(documents.length);
+    for(var i = 0; i < annotations.length; i++) {
+      annotations[i] = new Array(documents[i].length);
+    }
+    return annotations;
+  }
+
   /* Mounting function */
 
   // When this component is mounted, call the API.
@@ -698,7 +685,7 @@ class TaggingInterface extends Component {
         }
       };
 
-    var pid = 'oekGXtMzK';
+    var pid = 'RtJp98vxk'; // TODO: Determine pid via URL
 
     fetch('http://localhost:3000/projects/' + pid + '/tagging/getDocumentGroup', fetchConfig) // TODO: move localhost out
       .then(response => response.text())
@@ -707,12 +694,14 @@ class TaggingInterface extends Component {
         this.setState(
           {
             data: d,
+            annotations: this.initAnnotationsArray(d.documentGroup, d.automaticAnnotations),
             selections: this.getEmptySelectionsArray(d.documentGroup.length)
           }, () => { 
             console.log("Data:", this.state.data);
-            this.setupKeybinds();
-            this.setupMouseEvents();
-            this.setupHotkeyMap(this.state.data.categoryHierarchy.children);
+            console.log("Annotations:", this.state.annotations);
+            this.initKeybinds();
+            this.initMouseEvents();
+            this.initHotkeyMap(this.state.data.categoryHierarchy.children);
             this.justifyWords(); })
       });
   }  
@@ -823,8 +812,6 @@ class TaggingInterface extends Component {
 
     } else if(action === "up") { // Mouse up, i.e. mouse was released when hovering over a word.
 
-      console.log(currentSelection, sentenceIndex, wordIndex);
-
       // Only allow selections where the user has clicked on a starting word.
       if(currentSelection.wordStartIndex === -1) {
         this.clearSelections();
@@ -834,7 +821,7 @@ class TaggingInterface extends Component {
       wordStartIndex = currentSelection.wordStartIndex;
 
       // If the first word selected was in a different sentence, the wordStartIndex becomes the start of the sentence where the mouse was released.
-      if(currentSelection.sentenceIndex !== sentenceIndex) { 
+      if(currentSelection.sentenceIndex !== sentenceIndex) {  // TODO: Make this consider mouseX relative to the X of the initial token?
         wordStartIndex = 0;
       };
 
@@ -875,6 +862,7 @@ class TaggingInterface extends Component {
   /* Rendering function */
 
   render() {
+
     return (
       <div id="tagging-interface">
         <div id="tagging-container">
@@ -899,13 +887,19 @@ class TaggingInterface extends Component {
         </div>
         <div id="tagging-menu">
           <div className="category-hierarchy">
-            <div className="tokens-info">Hello I am wikipedia</div>
-            <div id="modify-hierarchy-container">Modify hierarchy container</div>
+            <div className="tokens-info">Wikipedia placeholder</div>
+            <HotkeyInfo 
+              chain={this.state.hotkeyChain}
+              entityclassName={this.state.reverseHotkeyMap[this.state.hotkeyChain.join('')]}
+            />
+            
             <div id="category-hierarchy-tree">
               <CategoryHierarchy
                 items={this.state.data.categoryHierarchy.children}
                 hotkeyMap={this.state.hotkeyMap}
-                setupHotkeyMap={this.setupHotkeyMap.bind(this)}
+                hotkeyChain={this.state.hotkeyChain.join('')}
+                initHotkeyMap={this.initHotkeyMap.bind(this)}
+                applyTag={this.applyTag.bind(this)}
               />
 
             </div>
@@ -918,24 +912,15 @@ class TaggingInterface extends Component {
   }
 }
 
+
+// The app, which renders the navbar and the tagging interface inside a container.
 function App() {
   return (
     <div id="app">
       <Navbar/>  
-      
-
-
-
-
       <TaggingInterface/>
-        
-    
-                
-      
-      
     </div>
   );
 }
-
 
 export default App;
