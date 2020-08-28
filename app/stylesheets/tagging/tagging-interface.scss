@@ -1184,6 +1184,10 @@ a#untag-tokens {
 #category-hierarchy-tree {
 	width: 100%;
 	box-sizing: border-box;
+	> ul:not(.dragging) span.open-button:hover {
+		background: white;
+		border: 2px solid #222;
+	}
 	ul {
 		box-sizing: border-box;
 		padding: 0;
@@ -1191,6 +1195,7 @@ a#untag-tokens {
 		width: 100%;
 		padding: 0;
 		padding-left: 10px;
+		
 		li {
 			padding: 0;
 			box-sizing: border-box;
@@ -1211,16 +1216,13 @@ a#untag-tokens {
 			span.open-button {
 				margin-right: 0px;
 				cursor: pointer;
-				border-radius: 2px;
+				border-radius: 4px;
 				padding: 1px 4px;
 				margin-left: 8px;
-
+				border: 2px solid rgba(0, 0, 0, 0);
 				height: 1.5em;
-				margin-top: 5px;
-				font-size: 0.8em;
-				&:hover {
-					background: white;
-				}
+				margin-top: 3px;
+				font-size: 0.8em;				
 				&:active {
 					transform: translate(0px, 2px);
 				}
@@ -1233,18 +1235,42 @@ a#untag-tokens {
 				padding: 4px 6px;
 				padding-left: 12px;
 				display: block;
+				position: relative;
+				&.has-hotkey:after{
+					content: attr(data-hotkey-id);
+					position: absolute;
+					right: 6px;
+					top: 6px;
+					font-size: 0.6em;
+					padding: 2px 4px;
+					background: white;
+					border: 1px solid #eee;
+					border-radius: 4px;
+					min-width: 16px;
+					text-align: center;
+				}
 				
 			}
 			
 			span.drag-handle {
 				width: 3px;
 				display: inline-block;
-				border-left: 2px dotted #bbb;
-				border-right: 2px dotted #bbb;
+				border-left: 2px dotted #aaa;
 				height: calc(100% - 12px);
 				margin-top: 6px;
 				margin-right: 2px;
 				margin-left: 8px;
+				position: relative;
+				&:after {
+					border-left: 2px dotted #aaa; // This is the only way to get the borders to line up on firefox -_-
+					content: " ";
+					margin-left: 6px;
+					height: 100%;
+					width: 3px;
+					position: absolute;
+					top: 0;
+					right: -5px;
+				}
 
 			}
 			ul {
