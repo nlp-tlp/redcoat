@@ -236,34 +236,36 @@ class CategoryHierarchy extends Component {
     var openedItems = this.state.openedItems;
 
     return (
-      <DragDropContext onDragEnd={this.onDragEnd}>
-        <Droppable droppableId="droppable">
-          {(provided, snapshot) => (
-            <ul
-              {...provided.droppableProps}
-              className={"draggable-list" + (snapshot.isDraggingOver ? " dragging" : "")}
-              ref={provided.innerRef}
+      <div id="category-hierarchy-tree">
+        <DragDropContext onDragEnd={this.onDragEnd}>
+          <Droppable droppableId="droppable">
+            {(provided, snapshot) => (
+              <ul
+                {...provided.droppableProps}
+                className={"draggable-list" + (snapshot.isDraggingOver ? " dragging" : "")}
+                ref={provided.innerRef}
 
-            >
-              {items.map((item, index) => (
-                <Category 
-                          key={index}
-                          item={item}
-                          index={index}
-                          onClick={this.toggleCategory.bind(this)}
-                          open={openedItems.has(item.name)} 
-                          openedItems={this.state.openedItems} 
-                          hotkeyMap={this.props.hotkeyMap}
-                          hotkeyChain={this.props.hotkeyChain}
-                          isTopLevelCategory={true}
-                          applyTag={this.props.applyTag}
-                />
-              ))}
-              {provided.placeholder}
-            </ul>
-          )}
-        </Droppable>
-      </DragDropContext>
+              >
+                {items.map((item, index) => (
+                  <Category 
+                            key={index}
+                            item={item}
+                            index={index}
+                            onClick={this.toggleCategory.bind(this)}
+                            open={openedItems.has(item.name)} 
+                            openedItems={this.state.openedItems} 
+                            hotkeyMap={this.props.hotkeyMap}
+                            hotkeyChain={this.props.hotkeyChain}
+                            isTopLevelCategory={true}
+                            applyTag={this.props.applyTag}
+                  />
+                ))}
+                {provided.placeholder}
+              </ul>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </div>
     );
   }
 }
@@ -441,6 +443,107 @@ class HotkeyInfo extends Component {
 }
 
 
+// A super simple class to store an annotation for a single token.
+// Properties:
+/* bioTag ('B', 'I' or 'O')
+   entityClasses (e.g. ['Item', 'Item/Pump'])
+   token: the token e.g. 'centrifugal'
+   spanText: the text of the span that this annotation is within (e.g. 'centrifugal pump')
+   spanStartIdx: the start index of the span this annotation is in, i.e. 0 for the first word in the sentence
+   spanEndIdx: the end index as above
+*/
+class Annotation {
+  constructor(token) {
+    this.token = token;
+    this.bioTag = "O";    
+  }
+
+  // Adds the specified label to this annotation.
+  // bioTag: The bioTag, e.g. "B" or "I",
+  // entityClass: The entity class, e.g. "Item/Pump"
+  // text: The text of the span that this annotation is inside, e.g. "centrifugal pump".
+  // spanStartIdx, spanEndIdx: self explanatory (as above)
+  // nextAnnotation: The Annotation object for the next token in the sentence.
+  addLabel(bioTag, entityClass, spanText, spanStartIdx, spanEndIdx, nextAnnotation = null) {
+    this.bioTag = bioTag;
+    if(this.entityClasses === undefined) this.entityClasses = new Array();
+
+    // If the label was already on this token, don't do anything.
+    if(this.entityClasses.indexOf(entityClass) > -1) {
+      return;
+    }
+
+    // Add the entityClass to the entityClass array for object.
+    this.entityClasses.push(entityClass);
+    
+    // If the nextAnnotation is from the same mention (AKA span) as this one, and does not have exactly the same labels,
+    // change its BIO tag to B.
+    if(nextAnnotation) {
+      if(this.sameMention(nextAnnotation) && !this.sameEntityClasses(nextAnnotation)) {
+        console.log("Changing bio tag of next annotation to B")
+        nextAnnotation.changeBioTag("B");
+      }
+    }
+
+    // Adjust the span.      
+    this.spanText = spanText;
+    this.spanStartIdx = spanStartIdx;
+    this.spanEndIdx = spanEndIdx;
+  }
+
+  // Simple function to determine whether this annotation is in the same mention as another annotation.
+  sameMention(otherAnnotation) {
+    return otherAnnotation.spanStartIdx === this.spanStartIdx && otherAnnotation.spanEndIdx === this.spanEndIdx && otherAnnotation.spanText === this.spanText;
+  }
+
+  sameEntityClasses(otherAnnotation) {
+
+    return _.isEqual(this.entityClasses, otherAnnotation.entityClasses);
+  }
+
+  // Removes a label from this annotation.
+  // If it was the last label, reset this annotation's bioTag to "O" and delete the entityClasses and text properties.
+  removeLabel(entityClass) {
+    var index = this.entityClasses.indexOf(entityClass);
+    if(index === -1) {
+      console.log("Warning: tried to remove an entity class from an annotation that did not exist.")
+      return;
+    }
+    this.entityClasses.splice(index, 1);
+    if(this.entityClasses.length === 0) {
+      this.bioTag = "O";
+      delete this.entityClasses;
+      delete this.spanText;
+    }
+  }
+
+  // Change the bio tag of this annotation to another bio tag.
+  changeBioTag(bioTag) {
+    this.bioTag = bioTag;
+  }
+
+  // Prints this annotation nicely to the console (for debugging).
+  prettyPrint() {
+    console.log("Token:    ", this.token);
+    console.log("BIO Tag:  ", this.bioTag)
+    console.log("Span:     ", this.spanText)
+    console.log("StartIdx: ", this.spanStartIdx)
+    console.log("EndIdx: ", this.spanEndIdx)
+    console.log("Classes:  \n", this.entityClasses);
+    console.log('\n');
+  }
+}
+
+// A debug printing function for printing out a list of annotations for a document.
+function prettyPrintAnnotations(documentAnnotations) {
+  console.log("Annotations:\n")
+  console.log("=====================")  
+  for(var token_idx in documentAnnotations) {
+    documentAnnotations[token_idx].prettyPrint();
+  }
+}
+
+
 // The TaggingInterface class. Contains the vast majority of the logic for the interface.
 class TaggingInterface extends Component {
   constructor(props) {
@@ -458,21 +561,22 @@ class TaggingInterface extends Component {
       annotations: [],  // Stores the user's annotations.
 
       // Selections
-      selections: this.getEmptySelectionsArray(10),
-      currentSelection: this.getEmptyCurrentSelection(),
-
+      selections: this.getEmptySelectionsArray(10),       // The selections is an array containing a sub-array for each document,
+                                                          // which in turn hold all of the current selections made by the user for that
+                                                          // document.
+      currentSelection: this.getEmptyCurrentSelection(),  // The current selection is for when the user clicks a word and is in the process
+                                                          // of selecting an end word. 
       // Hotkeys
-      hotkeyMap: {},
-      reverseHotkeyMap: {},
+      hotkeyMap: {},  // Stores a mapping of hotkey to number, e.g. 'item/pump': '11'.
+      reverseHotkeyMap: {}, // Stores the reverse of the above (number to hotkey), e.g. '11': 'item/pump'.
       hotkeyChain: [], // Stores the current hotkey chain, e.g. [1, 2, 3] = the user has pressed 1, then 2, then 3 in quick succession
       hotkeyBindingFn: null,  // Stores the function that gets called via an eventlistener when a hotkey is pressed. Must be stored as a state
                               // variable so that it can be detached when the hotkeys change.
-      hotkeyTimeoutFn: null,   // Stores the current hotkey timeout function
-
+      hotkeyTimeoutFn: null,   // Stores the current hotkey timeout function.
 
       // Key events
-      holdingCtrl: false, // Whether the user is currently holding the ctrl key
-      holdingShift: false, // Whether the user is currently holding the shift key
+      holdingCtrl: false, // Whether the user is currently holding the ctrl key.
+      holdingShift: false, // Whether the user is currently holding the shift key.
 
 
     }    
@@ -480,15 +584,19 @@ class TaggingInterface extends Component {
 
   /* Mouse and keyboard events */
 
-  // Sets up an event listener for mouseup so that if a user starts selecting a word, and then releases the mouse
-  // when *not* hovered over another word, the selections can be updated properly.
-  // The event listener will call the updateSelections method as if the last word in the sentence has been selected.
-  //
-  // Note that the majority of the mouse events are passed down to the Word elements via updateSelections.
+  // Set up some mouse events - one for when text is selected (highlighted) in the browser.
+  // Note that in order to see the default browser highlighting the CSS file needs to be modified (it makes it invisible).
+  // Another for when the user releases the mouse anywhere on the page.
+  // Note that the majority of the mouse events are not in this function but are passed down to the Word elements via updateSelections.
   initMouseEvents() {
 
     var words = $('.word-inner')
-    document.addEventListener("selectionchange",event=>{
+
+    // When the user highlights text anywhere on the page, this function captures the event.
+    // If the user never selected a word to begin with, nothing happens.
+    // All it does is apply the 'highlighted' class onto any words that were caught in the highlighting.
+    // This function is purely stylistic, i.e. it doesn't affect any other components etc.
+    document.addEventListener("selectionchange", event =>{
       if(this.state.currentSelection.wordStartIndex < 0) {
         return;
       }
@@ -501,6 +609,8 @@ class TaggingInterface extends Component {
       }
     })
 
+    // When the user releases the mouse, remove all highlighting from words (i.e. the words in the selection).
+    // If the user never selected a word to begin with (i.e. wordStartIndex < 0), clear all selections.
     window.addEventListener('mouseup', (e) => {
       words.removeClass('highlighted');
       if(this.state.currentSelection.wordStartIndex < 0) {
@@ -547,7 +657,8 @@ class TaggingInterface extends Component {
   // Apply the corresponding entity class and reset the hotkey chain.
   hotkeyTimeout() {
     var hotkeyChainStr = this.state.hotkeyChain.join('');
-    this.applyTag(this.state.reverseHotkeyMap[hotkeyChainStr]);
+    var entityClass = this.state.reverseHotkeyMap[hotkeyChainStr];
+    if(entityClass !== undefined) this.applyTag(entityClass);
 
     // Clear the existing hotkey timeout fn.
     window.clearTimeout(this.state.hotkeyTimeoutFn);
@@ -622,8 +733,7 @@ class TaggingInterface extends Component {
         }
       }
       return hotkeyMap;          
-    }
-    
+    }    
 
     // Build the reverse of the hotkeyMap, i.e. swap the keys with the values.
     // This assists with the hotkey bindings function.
@@ -648,6 +758,40 @@ class TaggingInterface extends Component {
   }
 
 
+  // Sets up an array to store the annotations with the same length as docGroup.
+  // Prepopulate the annotations array with the automaticAnnotations if available (after converting them to BIO).
+  initAnnotationsArray(documents, automaticAnnotations) {
+    var annotations = new Array(documents.length);
+    for(var doc_idx in documents) {
+      annotations[doc_idx] = new Array(documents[doc_idx].length);
+      for(var token_idx in documents[doc_idx]) {
+        annotations[doc_idx][token_idx] = new Annotation(documents[doc_idx][token_idx]);
+      }
+    }
+
+    if(!automaticAnnotations) return annotations;
+
+    // Load annotations from the automaticAnnotations array if present.
+    for(var doc_idx in automaticAnnotations) {
+      for(var mention_idx in automaticAnnotations[doc_idx]) {
+
+        var mention = automaticAnnotations[doc_idx][mention_idx];
+        var start = mention['start'];
+        var end = mention['end'];
+
+        for(var label_idx in mention['labels']) {
+          var label = mention['labels'][label_idx];
+
+          for(var k = start; k < end; k++) {
+            var bioTag = k === start ? 'B' : "I";
+            annotations[doc_idx][k].addLabel(bioTag, label, documents[doc_idx].slice(start, end).join(' '), start, end)
+          }          
+        }
+      }        
+    }
+    return annotations;
+  }
+
   /* Miscellaneous */
 
   // Justify the words to the nearest 25px (i.e. round their width up to the nearest 25px).
@@ -659,16 +803,6 @@ class TaggingInterface extends Component {
       var newWidth = Math.ceil(width / 25) * 25;
       $(ele).css('min-width', newWidth + 'px');
     });
-  }
-
-  // Sets up an array to store the annotations with the same length as docGroup.
-  // Prepopulate the annotations array with the automaticAnnotations if available (after converting them to BIO).
-  initAnnotationsArray(documents, automaticAnnotations) {
-    var annotations = new Array(documents.length);
-    for(var i = 0; i < annotations.length; i++) {
-      annotations[i] = new Array(documents[i].length);
-    }
-    return annotations;
   }
 
   /* Mounting function */
@@ -698,17 +832,18 @@ class TaggingInterface extends Component {
             selections: this.getEmptySelectionsArray(d.documentGroup.length)
           }, () => { 
             console.log("Data:", this.state.data);
-            console.log("Annotations:", this.state.annotations);
             this.initKeybinds();
             this.initMouseEvents();
             this.initHotkeyMap(this.state.data.categoryHierarchy.children);
-            this.justifyWords(); })
+            this.justifyWords();
+          })
       });
   }  
 
   /* Selection functions */
 
   // Get an empty current selection.
+  // Called when we need to clear the current selection.
   getEmptyCurrentSelection() {
     return {
       wordStartIndex: -1,
@@ -728,20 +863,19 @@ class TaggingInterface extends Component {
   moveSelectionHorizontally(direction) {
     console.log("Moving", direction)
 
-    var shift = direction === "left" ? -1 : 1;
     var selections = this.state.selections;
-
 
     // Move left or right
     for(var i = 0; i < selections.length; i++) {
       for(var j = 0; j < selections[i].length; j++) {
         var selection = selections[i][j];
 
+        // Behaviour depends on whether shift is currently being held down.
         if(direction === "left") {
           if(!this.state.holdingShift) {
             selection.wordStartIndex = Math.max(selection.wordStartIndex - 1, 0);
             selection.wordEndIndex = selection.wordStartIndex;
-          } else {
+          } else { // If shift is being held down, move the wordEndIndex backwards or move the wordStartIndex backwards depending on the current selection.
             if(selection.wordEndIndex > selection.wordStartIndex) {
               selection.wordEndIndex--;
             } else {
@@ -749,15 +883,13 @@ class TaggingInterface extends Component {
             }
           }
         } else if (direction === "right") {
-          if(!this.state.holdingShift) {
+          if(!this.state.holdingShift) { // If shift *is* being held down, this won't happen (the wordStartIndex won't change).
             selection.wordStartIndex = Math.min(this.state.data.documentGroup[i].length - 1, selection.wordEndIndex + 1);
           }
           selection.wordEndIndex   = Math.min(this.state.data.documentGroup[i].length - 1, selection.wordEndIndex + 1);
         }
       }
     }
-
-    console.log(selections);
     this.setState({
       selections: selections
     });
@@ -786,6 +918,7 @@ class TaggingInterface extends Component {
   }
 
   // Update this component's selections state.
+  // This function is called via the mouse, and has no relation to the keyboard (keyboard selections are handled above).
   // sentenceIndex: The index of the sentence in which the selection was made.
   // wordIndex: the index of the word that was clicked on, or hovered over and the mouse released.
   // action: Whether the mouse was pressed down ('down') or released ('up').
@@ -794,7 +927,6 @@ class TaggingInterface extends Component {
 
     var selections = this.state.selections;
     var currentSelection = this.state.currentSelection;
-
 
     if (action === "down") { // Mouse down, i.e. a word was clicked.
 
@@ -850,13 +982,40 @@ class TaggingInterface extends Component {
   }
 
 
+
+
   /* Tag application function */
 
   // Apply a specific tag to all current selections.
   // entityClass: The full name of the entity class, e.g. 'item/pump/centrifugal_pump'.
   // This function can be either called via clicking on an entity class in the tree, or by using hotkeys.
-  applyTag(entityClass) {
+  applyTag(entityClass) {    
     console.log("Applying tag:", entityClass);
+    var selections = this.state.selections;
+    var documents = this.state.data.documentGroup;
+    var annotations = this.state.annotations;
+
+    for(var doc_idx in selections) {
+      for(var sel_idx in selections[doc_idx]) {
+        var sel = selections[doc_idx][sel_idx];
+        var start = sel.wordStartIndex;
+        var end = sel.wordEndIndex;
+
+        for(var k = end; k >= start; k--) { // Going backwards is the only way to get the annotations to apply correctly, due to the nature of BIO
+          var bioTag = k === start ? "B" : "I";
+          var spanText = documents[doc_idx].slice(start, end + 1).join(' ');
+          var nextAnnotation = k < (documents[doc_idx].length - 1) ? annotations[doc_idx][k + 1] : null;
+          annotations[doc_idx][k].addLabel(bioTag, entityClass, spanText, start, end, nextAnnotation);
+        }
+      }
+    }
+    this.setState({
+      annotations: annotations,
+    }, () => {
+      prettyPrintAnnotations(this.state.annotations[0]);
+      //console.log("Updated annotations[0]:", this.state.annotations[0]);
+    })
+
   }
 
   /* Rendering function */
@@ -871,19 +1030,11 @@ class TaggingInterface extends Component {
               <Sentence 
                 key={i}
                 index={i}
-                words={doc}
-                // selection={ { wordStartIndex: i === this.state.selection.sentenceIndex ? this.state.selection.wordStartIndex : -1,
-                //               wordEndIndex:   i === this.state.selection.sentenceIndex ? this.state.selection.wordEndIndex : -1 }
-                // }
+                words={doc}                
                 selections={this.state.selections[i]}
-                // selected={i === this.state.selection.sentenceIndex}
                 updateSelections={this.updateSelections.bind(this)}
-                //updateSelectedSentence={this.updateSelectedSentence.bind(this)}
             />)}
           </div>
-
-
-
         </div>
         <div id="tagging-menu">
           <div className="category-hierarchy">
@@ -891,21 +1042,17 @@ class TaggingInterface extends Component {
             <HotkeyInfo 
               chain={this.state.hotkeyChain}
               entityclassName={this.state.reverseHotkeyMap[this.state.hotkeyChain.join('')]}
-            />
+            />            
             
-            <div id="category-hierarchy-tree">
-              <CategoryHierarchy
-                items={this.state.data.categoryHierarchy.children}
-                hotkeyMap={this.state.hotkeyMap}
-                hotkeyChain={this.state.hotkeyChain.join('')}
-                initHotkeyMap={this.initHotkeyMap.bind(this)}
-                applyTag={this.applyTag.bind(this)}
-              />
-
-            </div>
-
-
+            <CategoryHierarchy
+              items={this.state.data.categoryHierarchy.children}
+              hotkeyMap={this.state.hotkeyMap}
+              hotkeyChain={this.state.hotkeyChain.join('')}
+              initHotkeyMap={this.initHotkeyMap.bind(this)}
+              applyTag={this.applyTag.bind(this)}
+            />
           </div>
+          
         </div>
       </div>
     )
