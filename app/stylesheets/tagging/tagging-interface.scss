@@ -1354,13 +1354,13 @@ a#untag-tokens {
 					pointer-events: none;
 				}
 				&:after {
-					border-right: 2px dotted #aaa;
+					border-left: 2px dotted #aaa;
 					content: " ";
 					height: 100%;
 					width: 4px;
 					position: absolute;
 					top: 0;
-					left: 10px;
+					left: 14px;
 					pointer-events: none;
 				}
 

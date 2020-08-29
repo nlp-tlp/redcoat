@@ -286,10 +286,9 @@ class Label extends Component {
 
   render() {
     return (
-      <span className={"label tag-" + this.props.colourIdx}>{this.props.entityClass}</span>
+      <span className={"label tag-" + this.props.colourIdx} onClick={(e) => {this.props.deleteTag(this.props.entityClass);  }}>{this.props.entityClass}</span>
     )
   }
-
 }
 
 // A single word (or token) in the tagging interface.
@@ -301,6 +300,11 @@ class Word extends Component {
     }
   }
 
+  // Calls this.props.deleteTag with the index of this word as a parameter.
+  deleteTag(entityClass) {
+    this.props.deleteTag(this.props.index, entityClass);
+  }
+
   render() {
 
     var hasLabel = this.props.annotation.hasLabel();
@@ -309,21 +313,20 @@ class Word extends Component {
 
     if(hasLabel) {
       var labels = this.props.annotation.entityClasses.map((entityClass, i) => 
-                  <Label key={i} bioTag={this.props.annotation.bioTag} entityClass={entityClass} colourIdx={getColourIdx(entityClass, this.props.entityColourMap)} />
+                  <Label deleteTag={this.deleteTag.bind(this)} key={i} bioTag={this.props.annotation.bioTag} entityClass={entityClass} colourIdx={getColourIdx(entityClass, this.props.entityColourMap)} />
                   )
       
     } else {
       var labels = '';
     }
 
-
-    // TODO: Figure out how to get the end one as well
-
     return (
       <span className={"word" + (this.props.selected ? " selected" : "") + tagClass}
-        onMouseDown={() => this.props.updateSelections(this.props.index, 'down')}
-        onMouseUp=  {() => this.props.updateSelections(this.props.index, 'up')}>
-        <span className="word-inner">
+        
+        >
+        <span className="word-inner"
+              onMouseUp=  {() => this.props.updateSelections(this.props.index, 'up')}
+              onMouseDown={() => this.props.updateSelections(this.props.index, 'down')}>
           {this.props.text}
         </span>
         { labels }
@@ -342,6 +345,10 @@ class Sentence extends Component {
   // Call the updateSelections function of the parent of this component (i.e. TaggingInterface), with this sentence's index included.
   updateSelections(wordIndex, action) {
     this.props.updateSelections(this.props.index, wordIndex, action)
+  }
+
+  deleteTag(wordIndex, entityClass) {
+    this.props.deleteTag(this.props.index, wordIndex, entityClass);
   }
 
   render() {
@@ -372,6 +379,7 @@ class Sentence extends Component {
                 annotation={this.props.annotations[i]}
                 updateSelections={this.updateSelections.bind(this)}
                 entityColourMap={this.props.entityColourMap}
+                deleteTag={this.deleteTag.bind(this)}
           />)
         }
         
@@ -479,7 +487,7 @@ class Annotation {
   // spanStartIdx, spanEndIdx: self explanatory (as above)
   // nextAnnotation: The Annotation object for the next token in the sentence.
   //                 When called during the dictionary annotation tagging, nextAnnotation is not necessary.
-  addLabel(bioTag, entityClass, spanText, spanStartIdx, spanEndIdx, nextAnnotation = null) {
+  addLabel(bioTag, entityClass, spanText, spanStartIdx, spanEndIdx, prevAnnotation=null, nextAnnotation = null) {
     this.bioTag = bioTag;
     if(this.entityClasses === undefined) this.entityClasses = new Array();
 
@@ -495,9 +503,20 @@ class Annotation {
     // the new class has been appended to this annotation's entityClasses, change its BIO tag to B.
     // This is the part that ensures mentions are split up when the user changes the label of token(s) inside that mention.
     if(nextAnnotation) {
-      if(this.sameMention(nextAnnotation) && !this.sameEntityClasses(nextAnnotation) && nextAnnotation.hasLabel()) {        
-        console.log("Changing bio tag of next annotation to B")
+      if(this.sameMention(nextAnnotation) && !this.sameEntityClasses(nextAnnotation) && nextAnnotation.hasLabel()) {
+        console.log("Changing bio tag to B")
         nextAnnotation.changeBioTag("B");        
+      }
+    }
+
+    // If the previous annotation is from the same mention as this one, and now no longer has the same labels,
+    // adjust the spanEndIdx to be the start of this new span -1.
+    // This ensures the tags are rendered correctly in the browser.
+    // Note that this seems to get called multiple times when applying tags because they are applied in reverse order,
+    // but the spanEndIdx will be set as below for the next annotation anyway so that shouldn't be an issue.
+    if(prevAnnotation) {
+      if(this.sameMention(prevAnnotation) && !this.sameEntityClasses(prevAnnotation) && prevAnnotation.hasLabel()) {  
+        prevAnnotation.setSpanEndIdx(spanStartIdx - 1);
       }
     }
 
@@ -510,12 +529,14 @@ class Annotation {
   removeAllLabels() {
     delete this.entityClasses;
     delete this.spanText;
+    delete this.spanStartIdx;
+    delete this.spanEndIdx;
     this.bioTag = "O";
   }
 
   // Simple function to determine whether this annotation is in the same mention as another annotation.
   sameMention(otherAnnotation) {
-    return otherAnnotation.spanStartIdx === this.spanStartIdx && otherAnnotation.spanEndIdx === this.spanEndIdx && otherAnnotation.spanText === this.spanText;
+    return otherAnnotation.spanStartIdx === this.spanStartIdx && otherAnnotation.spanEndIdx === this.spanEndIdx;
   }
 
   // Determine whether this annotation has the same labels as another annotation.
@@ -536,7 +557,10 @@ class Annotation {
       this.bioTag = "O";
       delete this.entityClasses;
       delete this.spanText;
+      delete this.spanStartIdx;
+      delete this.spanEndIdx;
     }
+    console.log("bio")
   }
 
   // Change the bio tag of this annotation to another bio tag.
@@ -552,6 +576,10 @@ class Annotation {
   // Determines whether this annotation is the last of its type in the given span.
   isLastInSpan() {
     return this.spanEndIdx === this.tokenIndex;
+  }
+
+  setSpanStartIdx(spanStartIdx) {
+    this.spanStartIdx = spanStartIdx;
   }
 
   setSpanEndIdx(spanEndIdx) {
@@ -641,10 +669,7 @@ class TaggingInterface extends Component {
       var sel = window.getSelection && window.getSelection();
 
       if (sel && sel.rangeCount > 0) {
-        console.log(sel.getRangeAt(0));
-        console.log('--')
         var r =  getRangeSelectedNodes(sel.getRangeAt(0));  
-        console.log(r);      
         words.removeClass('highlighted');
         $(r).find('.word-inner').addClass('highlighted');          
       }
@@ -1045,7 +1070,7 @@ class TaggingInterface extends Component {
   // entityClass: The full name of the entity class, e.g. 'item/pump/centrifugal_pump'.
   // This function will either be called via clicking on an entity class in the tree, or by using hotkeys.
   applyTag(entityClass) {    
-    console.log("Applying tag:", entityClass);
+    //console.log("Applying tag:", entityClass);
     var selections = this.state.selections;
     var documents = this.state.data.documentGroup;
     var annotations = this.state.annotations;
@@ -1083,9 +1108,25 @@ class TaggingInterface extends Component {
           // but it probably barely impacts performance even on large docs (I think)
           for(var x in annotations[doc_idx]) {
             var annotation = annotations[doc_idx][x];
-            if(annotation.spanEndIdx >= start) {
+
+            // If this new span overlaps the *end* of an existing span, change that span's end index to the start of this new
+            // span, -1
+
+            if(annotation.spanEndIdx >= start && annotation.spanStartIdx <= start) {              
               annotation.setSpanEndIdx(start - 1);
+
             }
+
+            // If this new span overlaps the *start* of an existing span, change that span's start index to be the end of this new span -1
+            // and change the BIO tag to "B".
+            if(annotation.spanStartIdx <= end) {
+              annotation.setSpanStartIdx(end + 1);
+              if(annotation.tokenIndex === (end + 1)) {
+                annotation.changeBioTag("B") // I am realising now that this BIO tag is unnecessary - it could be inferred
+              }
+            }
+
+            console.log(annotation, start, end);
           }
         }
 
@@ -1095,8 +1136,11 @@ class TaggingInterface extends Component {
         for(var k = end; k >= start; k--) {
           var bioTag = k === start ? "B" : "I";
           var spanText = documents[doc_idx].slice(start, end + 1).join(' ');
-          var nextAnnotation = k < (documents[doc_idx].length - 1) ? annotations[doc_idx][k + 1] : null;
-          annotations[doc_idx][k].addLabel(bioTag, entityClass, spanText, start, end, nextAnnotation, (k + 1) > end ? true : false);
+
+          var prevAnnotation = k > 0 ? annotations[doc_idx][k - 1] : null;
+          var nextAnnotation = k < (documents[doc_idx].length - 1) ? annotations[doc_idx][k + 1] : null;          
+
+          annotations[doc_idx][k].addLabel(bioTag, entityClass, spanText, start, end, prevAnnotation, nextAnnotation, (k + 1) > end ? true : false);
         }
 
         // TODO: Capture event here
@@ -1105,8 +1149,36 @@ class TaggingInterface extends Component {
     this.setState({
       annotations: annotations,
     }, () => {
+      this.justifyWords(); // Justify the words again to ensure the stripey lines line up correctly
+
+      // Debug:
       //prettyPrintAnnotations(this.state.annotations[0]);
       //console.log("Updated annotations[0]:", this.state.annotations[0]);
+    })
+
+  }
+
+  // Deletes the specified tag.
+  deleteTag(sentenceIndex, wordIndex, entityClass) {
+    console.log("Deleting" , sentenceIndex, wordIndex, entityClass);
+    var annotations = this.state.annotations;
+    var annotation = annotations[sentenceIndex][wordIndex];
+
+    // Retrieve the span start idx and span end idx of the annotation corresponding to (sentence_index, word_index)
+    var spanStart = annotation.spanStartIdx;
+    var spanEnd = annotation.spanEndIdx;
+
+    // Find all annotations in this document in the same mention span and remove the label from all of them.
+    // (this will also remove the label from the annotation object at (sentence_index, word_index)).
+    for(var ann_idx in annotations[sentenceIndex]) {
+      var otherAnnotation = annotations[sentenceIndex][ann_idx];       
+      if(otherAnnotation.spanStartIdx === spanStart && otherAnnotation.spanEndIdx === spanEnd) {
+        otherAnnotation.removeLabel(entityClass);
+      }
+    }
+
+    this.setState({
+      annotations: annotations
     })
 
   }
@@ -1128,6 +1200,7 @@ class TaggingInterface extends Component {
                 selections={this.state.selections[i]}
                 updateSelections={this.updateSelections.bind(this)}
                 entityColourMap={this.state.entityColourMap}
+                deleteTag={this.deleteTag.bind(this)}
             />)}
           </div>
         </div>
