@@ -589,7 +589,7 @@ body.taking-screenshot .save-to-png {
 
 #sentence-tagging .sentence .word.selected .word-inner:after {
 	display: block;
-	border-bottom: 3px solid #222;
+	border-bottom: 3px solid #555;
 }
 
 
@@ -1009,14 +1009,16 @@ button.blue-button {
 
 #tagging-menu {
 	position: fixed;
-	top: 0;
+	top: $navbar-height;
 	left: 0;
 	width: 22%;
 	z-index: 990; // Navbar has 1000
-	margin-top: $navbar-height; //+ $tagging-progress-bar-height;
-	height: 100%;
+	height: calc(100% - 50px);
 	background: url($base_url + 'images/stripes-light.png');
 	box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
+	display: flex;
+
+	flex-direction: column;
 	#modify-hierarchy-container {
 		padding: 0 20px;
 		padding-bottom: 10px;
@@ -1042,6 +1044,9 @@ button.blue-button {
 
 	#wikipedia-summary-container {
 		padding-top: 15px;
+		&.hidden {
+			display: none;
+		}
 	}
 	.hotkey-info {
 		//min-height: 1.5em;
@@ -1158,7 +1163,7 @@ button.blue-button {
 
 #category-hierarchy-tree {
 	overflow-y: scroll;
-	height: calc(100% - 200px);
+	height: 100%;
 	margin-top: 10px;
 	padding-right: 5px;
 	position: relative;

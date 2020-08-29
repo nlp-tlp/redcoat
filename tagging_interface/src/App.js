@@ -431,7 +431,7 @@ class Sentence extends Component {
       return node;
     }
 
-    domtoimage.toBlob(node, {filter: filter})
+    domtoimage.toBlob(node, {filter: filter, bgcolor: '#fefefe'})
     .then(function(blob) {
       saveAs(blob, "document-" + t.props.index + ".png"); 
     });
@@ -700,6 +700,128 @@ function prettyPrintAnnotations(documentAnnotations) {
   }
 }
 
+class WikipediaSummary extends Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      visible: true,
+      querying: false, // Currently in the middle of a query
+      wikipediaSummary: null,
+      wikipediaReadMoreUrl: null,
+    }
+  }
+
+  queryWikipedia() {
+
+    var tokens = this.props.tokens;
+
+    // Query Wikipedia for the currently selected tokens.
+    function runQuery(next) {
+
+      // Processes the result of a Wikipedia query.
+      function getResult(data, next) {
+        function stripTags(str) {
+          return str.replace(/<\/?[^>]+(>|$)/g, "");
+        }
+        try {
+          var title = data.query.search[0].title;
+          var snippet = stripTags(data.query.search[0].snippet);
+          var wurl = "https://en.wikipedia.org/wiki/" + data.query.search[0].title.replace(/ /g, '_');
+          return next(title, snippet, wurl);
+        } catch(err) {
+          // console.log("No article found.");
+          next();
+        }
+      }
+      $.ajax({
+        url: 'https://en.wikipedia.org/w/api.php',
+        data: { action: 'query', list: 'search', srsearch: tokens, format: 'json' },
+        dataType: 'jsonp',
+        success: function(data) {
+          getResult(data, next);
+        }
+      });
+    } 
+
+    this.setState({
+      querying: true
+    }, () => {
+      var wikipediaSummary, wikipediaReadMoreUrl;
+      var t = this;
+
+      runQuery(function(title, snippet, wurl) {
+        var wikipediaTitle = tokens;
+        if(snippet) {        
+          if(title.toLowerCase() !== tokens.toLowerCase()) {
+            wikipediaTitle = title;
+          }
+          wikipediaSummary = snippet + "...";
+          wikipediaReadMoreUrl = wurl;
+        } else {
+          wikipediaReadMoreUrl = null;
+          wikipediaSummary = null;  
+        }      
+
+        t.setState({
+          wikipediaTitle: wikipediaTitle,
+          wikipediaSummary: wikipediaSummary,
+          wikipediaReadMoreUrl: wikipediaReadMoreUrl,
+          querying: false,
+        })  
+      });
+
+    });
+  }
+
+  toggleVisibility() {
+    this.setState({
+      visible: !this.state.visible
+    })
+  }
+
+
+  componentDidUpdate(prevProps, prevState) {
+    if(prevProps.tokens !== this.props.tokens) {
+      this.queryWikipedia();
+    }
+  }
+
+  render() {    
+
+    if(!this.state.querying && this.state.wikipediaTitle && this.state.wikipediaTitle !== this.props.tokens) {
+      var title = <span className="different">[{this.state.wikipediaTitle}] </span>
+    } else {
+      title = '';
+    }
+
+    var summary = this.state.wikipediaSummary ? this.state.wikipediaSummary : "(no Wikipedia entry)";
+    if(!this.props.tokens) {
+      summary = "Select one or more words to automatically look them up on Wikipedia.";
+    }
+    if(this.state.querying) {
+      summary = <span><i className="fa fa-spin fa-cog"></i>&nbsp;&nbsp;Loading...</span>
+    }
+
+    // Rendering is a bit awkward, this could be tidied up
+    return (
+      <div className="tokens-info">
+        <div id="wikipedia-summary-container" className={this.state.visible ? "show" : "hidden"}>
+          <p className="tokens">{this.props.tokens || 'Wikipedia lookup'}</p>
+          <p className="summary">{ title }{ summary }</p>
+          <span className="more show">
+            {(this.state.querying || !this.props.tokens) && <span className="left" style={{"color": "rgba(0, 0, 0, 0)"}}>.</span>}
+            {!this.state.querying && this.props.tokens && <span className="left">Results from Wikipedia</span>}
+            <span className="right">
+              { !this.state.querying && this.props.tokens && <a id="ec-read-more" href={this.state.wikipediaReadMoreUrl} target="_blank">Read more <i className="fa fa-sm fa-external-link"></i></a> } 
+            </span>
+          </span>
+        </div>
+        <button id="wikipedia-hide-show" className={this.state.visible ? "up" : "down"} onClick={this.toggleVisibility.bind(this)}>Show</button>
+      </div>
+    )
+  }
+}
 
 // The TaggingInterface class. Contains the vast majority of the logic for the interface.
 class TaggingInterface extends Component {
@@ -724,6 +846,7 @@ class TaggingInterface extends Component {
                                                           // document.
       currentSelection: this.getEmptyCurrentSelection(),  // The current selection is for when the user clicks a word and is in the process
                                                           // of selecting an end word. 
+      mostRecentSelectionText: null, // Keeps track of the tokens that the user most recently selected (for Wikipedia querying)
       // Hotkeys
       hotkeyMap: {},  // Stores a mapping of hotkey to number, e.g. 'item/pump': '11'.
       reverseHotkeyMap: {}, // Stores the reverse of the above (number to hotkey), e.g. '11': 'item/pump'.
@@ -1045,6 +1168,7 @@ class TaggingInterface extends Component {
     console.log("Moving", direction)
 
     var selections = this.state.selections;
+    var mostRecentSelectionText;
 
     // Move all selections left or right
     for(var i = 0; i < selections.length; i++) {
@@ -1069,10 +1193,13 @@ class TaggingInterface extends Component {
           }
           selection.wordEndIndex   = Math.min(this.state.data.documentGroup[i].length - 1, selection.wordEndIndex + 1);
         }
+
+        mostRecentSelectionText = this.state.data.documentGroup[i].slice(selection.wordStartIndex, selection.wordEndIndex + 1).join(' ');
       }
     }
     this.setState({
-      selections: selections
+      selections: selections,
+      mostRecentSelectionText: mostRecentSelectionText
     });
   }
 
@@ -1151,13 +1278,15 @@ class TaggingInterface extends Component {
         wordStartIndex: wordStartIndex,
         wordEndIndex: wordEndIndex
       });
+      var mostRecentSelectionText = this.state.data.documentGroup[sentenceIndex].slice(wordStartIndex, wordEndIndex + 1).join(' ');
 
       clearWindowSelection(); // Remove the default browser selection highlighty thing.
     }    
 
     this.setState({
       currentSelection: currentSelection,
-      selections: selections
+      selections: selections,
+      mostRecentSelectionText: mostRecentSelectionText ? mostRecentSelectionText : this.state.mostRecentSelectionText
     });
   }
 
@@ -1325,9 +1454,7 @@ class TaggingInterface extends Component {
     }
     this.setState({
       confidences: confidences
-    }, () => {
-      console.log(this.state.confidences)
-    })
+    });
   }
 
   /* Events */
@@ -1390,23 +1517,20 @@ class TaggingInterface extends Component {
           </div>
         </div>
         <div id="tagging-menu">
-          <div className="category-hierarchy">
-            <div className="tokens-info">Wikipedia placeholder</div>
-            <HotkeyInfo 
-              chain={this.state.hotkeyChain}
-              entityClass={this.state.reverseHotkeyMap[this.state.hotkeyChain.join('')]}
-            />            
-            
-            <CategoryHierarchy
-              items={this.state.data.categoryHierarchy.children}
-              hotkeyMap={this.state.hotkeyMap}
-              hotkeyChain={this.state.hotkeyChain.join('')}
-              initHotkeyMap={this.initHotkeyMap.bind(this)}
-              applyTag={this.applyTag.bind(this)}              
-            />
-          </div>
+          <WikipediaSummary tokens={this.state.mostRecentSelectionText}/>
+          <HotkeyInfo 
+            chain={this.state.hotkeyChain}
+            entityClass={this.state.reverseHotkeyMap[this.state.hotkeyChain.join('')]}
+          />            
           
-        </div>
+          <CategoryHierarchy
+            items={this.state.data.categoryHierarchy.children}
+            hotkeyMap={this.state.hotkeyMap}
+            hotkeyChain={this.state.hotkeyChain.join('')}
+            initHotkeyMap={this.initHotkeyMap.bind(this)}
+            applyTag={this.applyTag.bind(this)}              
+          />
+        </div>      
       </div>
     )
   }
