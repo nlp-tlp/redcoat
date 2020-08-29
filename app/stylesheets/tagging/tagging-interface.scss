@@ -72,18 +72,30 @@
 }
 
 
-
+body.taking-screenshot .save-to-png {
+	display: none !important;
+	.word.highlighted, .word.selected {
+		background: none !important;
+	}
+}
 
 .document-container {
 	
 	padding-right: 0px;
 	align-items: stretch;
 	&:not(.header) {		
-		padding: 10px;
+		padding: 10px 50px;
 		background: #eee;
 	}
 	&.header .sentence {
 		padding-top: 90px;
+	}
+	&.header {
+		padding: 0 50px;
+		background: #eee;
+		.document {
+			box-shadow: none;
+		}
 	}
 
 	$conf_low: #FFCCCC;
@@ -100,7 +112,7 @@
 	}
 
 	&.conf-medium {
-		background: rgba(darken($conf_med, 11), 0.2);		
+		background: rgba(darken($conf_med, 17), 0.2);		
 	}
 	&.conf-high {
 		background: rgba(darken($conf_high, 11), 0.2);		
@@ -114,17 +126,12 @@
 
 
 		&.header { // Emulates an extra bit of padding at the top
-			background: #e2e2e2;
+			background: #eee;
 			font-weight: bold;
 			font-size: 0.9em;
 			text-align: center;
-			.sentence-index {
-				border: none;
-				padding: 0;
-				text-align: center;
-				padding-left: 120px;
-				margin-right: 80px;
-			}
+
+			
 			.sentence {
 				padding: 0;
 			}
@@ -171,9 +178,33 @@
 			padding-top: 30px;
 			padding-bottom: 30px;
 			padding-left: 30px;
-			padding-right: 80px;		
+			padding-right: 80px;	
+
+			position: relative;
+
+			&:hover {
+				.save-to-png {
+					opacity: 1;
+				}
+			}
+			.save-to-png {
+				position: absolute;
+				top: -5px;
+				right: 9px;
+				font-size: 0.8em;
+				color: rgba(0, 0, 0, 0.3);
+				opacity: 0;
+				cursor: pointer;
+				padding: 5px;
+				&:hover {
+					color: rgba(0, 0, 0, 0.6);
+				}
+				&:active {
+					transform: translate(0, 1px);
+				}
+			}	
 		}
-		&:not(.header) .sentence-index {
+		.sentence-index {
 			color: #bbb;
 			pointer-events: none;
 			
@@ -336,7 +367,9 @@
 
 
 
-	
+	&.tag {
+		background: #fefefe;
+	}
 
 	.word-inner {		
 		padding: 15px 10px;
@@ -346,6 +379,7 @@
 		text-align: center;
 		position: relative;
 		z-index: 10;
+
 		// &::selection {
 		// 	background: #eee;
 		// 	outline: green solid 3px;
@@ -360,7 +394,7 @@
 			cursor: url($base_url + 'images/pencil.png'), pointer; 
 		}
 		&.highlighted {
-			background: rgba(240, 240, 240, 0.75);
+			background: rgba(230, 230, 230, 0.75);
 			background-blend-mode: screen;
 			cursor: url($base_url + 'images/pencil.png'), pointer; 
 			// <div>Icons made by <a href="https://www.flaticon.com/authors/icongeek26" title="Icongeek26">Icongeek26</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
@@ -399,14 +433,14 @@
 
 
 	&.tag:before {
-		border-top: 2px solid #ccc;	
-		border-bottom: 2px solid #ccc;	
+		border-top: 2px solid rgba(215, 215, 215, 0.75);	
+		border-bottom: 2px solid rgba(215, 215, 215, 0.75);	
 	}
 	&.tag.tag-begin:before {
-		border-left: 2px solid #ccc;
+		border-left: 2px solid rgba(215, 215, 215, 0.75);
 	}
 	&.tag.tag-end:before {
-		border-right: 2px solid #ccc;
+		border-right: 2px solid rgba(215, 215, 215, 0.75);
 	}
 	
 
@@ -982,6 +1016,7 @@ button.blue-button {
 	margin-top: $navbar-height; //+ $tagging-progress-bar-height;
 	height: 100%;
 	background: url($base_url + 'images/stripes-light.png');
+	box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
 	#modify-hierarchy-container {
 		padding: 0 20px;
 		padding-bottom: 10px;

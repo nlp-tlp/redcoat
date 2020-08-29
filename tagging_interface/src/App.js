@@ -8,6 +8,11 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import styled from 'styled-components';
 import _ from 'underscore';
 
+import html2canvas from 'html2canvas';
+import { saveAs } from 'file-saver';
+import domtoimage from 'dom-to-image';
+
+
 // https://stackoverflow.com/questions/3169786/clear-text-selection-with-javascript
 function clearWindowSelection() {
   if (window.getSelection) {
@@ -346,7 +351,7 @@ class ConfidenceButton extends Component {
     var value = this.props.value;
     return (
       <span className={"confidence-button conf-" + value + (this.props.checked ? " checked" : "")}
-            onClick={() => this.props.updateConfidence(docIdx, value)}></span>
+            onClick={() => this.props.updateConfidence(docIdx, value)} title={"Assign a " + value + " confidence to this document."} ></span>
     )
   }
 }
@@ -414,6 +419,25 @@ class Sentence extends Component {
     this.props.deleteTag(this.props.index, wordIndex, entityClass);
   }
 
+  // Saves this sentence to a PNG file. wow!
+  saveToPng() {
+    var t = this;
+    var node = $("#sentence-tagging .sentence")[this.props.index + 1];
+
+    function filter(node) {
+      if(node.classList) {
+        return !node.classList.contains('save-to-png');
+      }
+      return node;
+    }
+
+    domtoimage.toBlob(node, {filter: filter})
+    .then(function(blob) {
+      saveAs(blob, "document-" + t.props.index + ".png"); 
+    });
+
+  }
+
   render() {
 
     var selections = this.props.selections;
@@ -444,7 +468,8 @@ class Sentence extends Component {
                 entityColourMap={this.props.entityColourMap}
                 deleteTag={this.deleteTag.bind(this)}
           />)
-        }        
+        }   
+        <div className="save-to-png" onClick={this.saveToPng.bind(this)} title="Click to download a .png file of this document"><i className="fa fa-download"></i></div>     
       </div>
     );
   }
@@ -991,7 +1016,7 @@ class TaggingInterface extends Component {
             this.initMouseEvents();
             this.initHotkeyMap(this.state.data.categoryHierarchy.children);
             
-            this.justifyWords();
+            this.justifyWords();            
           })
       });
   }  
