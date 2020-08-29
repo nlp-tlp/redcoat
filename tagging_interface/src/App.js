@@ -335,6 +335,54 @@ class Word extends Component {
   }
 }
 
+class ConfidenceButtons extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <div className="confidence-buttons">
+        <span className="confidence-button conf-low"></span>
+        <span className="confidence-button conf-medium"></span>
+        <span className="confidence-button conf-high"></span>
+
+
+      </div>
+
+
+    )
+  }
+}
+
+// A document container, which contains the sentence index (on the left), the sentence, and the confidence buttons.
+class DocumentContainer extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+
+    return (
+      <div className="document-container">
+        <div className="sentence-index">{this.props.index + 1}</div>
+        <Sentence 
+          index={this.props.index}
+          words={this.props.words}              
+          annotations={this.props.annotations}  
+          selections={this.props.selections}
+          updateSelections={this.props.updateSelections}
+          entityColourMap={this.props.entityColourMap}
+          deleteTag={this.props.deleteTag}
+        />
+        <ConfidenceButtons/>
+      </div>
+    )
+  }
+
+}
+
+
 
 // A sentence in the tagging interface.
 class Sentence extends Component {
@@ -370,7 +418,7 @@ class Sentence extends Component {
     }
 
     return (
-      <div className="sentence" data-ind={this.props.index} data-ind1={this.props.index + 1}>
+      <div className="sentence">
         { this.props.words.map((word, i) => 
           <Word key={i}
                 index={i}
@@ -381,8 +429,7 @@ class Sentence extends Component {
                 entityColourMap={this.props.entityColourMap}
                 deleteTag={this.deleteTag.bind(this)}
           />)
-        }
-        
+        }        
       </div>
     );
   }
@@ -487,20 +534,28 @@ class Annotation {
   // spanStartIdx, spanEndIdx: self explanatory (as above)
   // nextAnnotation: The Annotation object for the next token in the sentence.
   //                 When called during the dictionary annotation tagging, nextAnnotation is not necessary.
+  // Returns whether the label of this annotation was modified at all.
   addLabel(bioTag, entityClass, spanText, spanStartIdx, spanEndIdx) {
-    this.bioTag = bioTag;
+    
     if(this.entityClasses === undefined) this.entityClasses = new Array();
 
+    var alreadyHasLabel = this.entityClasses.indexOf(entityClass) !== -1;
+    if(this.bioTag === bioTag && this.spanText === spanText && this.spanStartIdx === spanStartIdx && this.spanEndIdx === spanEndIdx && alreadyHasLabel) {
+      return false;
+    }
+
     // Adjust the span.
+    this.bioTag = bioTag;
     this.spanText = spanText;
     this.spanStartIdx = spanStartIdx;
     this.spanEndIdx = spanEndIdx;
 
     // Add the entityClass to the entityClasses array for this Annotation.
     // If it is already there, don't add it again.
-    if(this.entityClasses.indexOf(entityClass) === -1) {
+    if(!alreadyHasLabel) {
       this.entityClasses.push(entityClass);
     }
+    return true;
   
     // If the nextAnnotation is from the same mention (AKA span) as this one, and does not have exactly the same labels after
     // the new class has been appended to this annotation's entityClasses, change its BIO tag to B.
@@ -1156,6 +1211,7 @@ class TaggingInterface extends Component {
 
         /* 3. Applying the labels */
         // Now, apply the tags to every token in the selected span.
+        var labelWasModified = false;
         for(var k = start; k <= end; k++) {
           var bioTag = k === start ? "B" : "I";
           var spanText = documents[doc_idx].slice(start, end + 1).join(' ');
@@ -1163,11 +1219,11 @@ class TaggingInterface extends Component {
           //var prevAnnotation = k > 0 ? annotations[doc_idx][k - 1] : null;
           //var nextAnnotation = k < (documents[doc_idx].length - 1) ? annotations[doc_idx][k + 1] : null;          
 
-          annotations[doc_idx][k].addLabel(bioTag, entityClass, spanText, start, end);
+          labelWasModified = annotations[doc_idx][k].addLabel(bioTag, entityClass, spanText, start, end);
 
         }
 
-        // TODO: Capture event here
+        if(labelWasModified) this.captureEvent('Applied label', parseInt(doc_idx), start, end, entityClass);
       }
     }
     this.setState({
@@ -1192,7 +1248,7 @@ class TaggingInterface extends Component {
     var spanStart = annotation.spanStartIdx;
     var spanEnd = annotation.spanEndIdx;
 
-    console.log("Deleting" , sentenceIndex, wordIndex, entityClass, this.state.data.documentGroup[sentenceIndex].slice(spanStart, spanEnd + 1).join(' '));
+    this.captureEvent('Deleted label', sentenceIndex, spanStart, spanEnd, entityClass);
 
     // Find all annotations in this document in the same mention span and remove the label from all of them.
     // (this will also remove the label from the annotation object at (sentence_index, word_index)).
@@ -1209,6 +1265,29 @@ class TaggingInterface extends Component {
 
   }
 
+  /* Events */
+
+  // Capture an event
+  // TODO: Make it do something
+  captureEvent(eventAction, sentenceIndex, spanStart, spanEnd, entityClass) {
+
+    var tokenString = this.state.data.documentGroup[sentenceIndex].slice(spanStart, spanEnd + 1).join(' ')
+
+    var event = {
+      "action": eventAction,
+      "sentenceIndex": sentenceIndex,
+      "wordIndex": {
+        "start": spanStart,
+        "end": spanEnd,
+      },
+      "entityClass": entityClass,
+      "tokenString": tokenString
+    }
+
+    console.log(event);
+
+  }
+
   /* Rendering function */
 
 
@@ -1218,17 +1297,27 @@ class TaggingInterface extends Component {
       <div id="tagging-interface">
         <div id="tagging-container">
           <div id="sentence-tagging">
-            { this.state.data.documentGroup.map((doc, i) => 
-              <Sentence 
-                key={i}
-                index={i}
-                words={doc}              
-                annotations={this.state.annotations[i]}  
-                selections={this.state.selections[i]}
-                updateSelections={this.updateSelections.bind(this)}
-                entityColourMap={this.state.entityColourMap}
-                deleteTag={this.deleteTag.bind(this)}
-            />)}
+              <div className="document-container header">
+                <div className="sentence-index"></div>
+                <div className="sentence">Document</div>
+                <div className="confidence-buttons">Confidence</div>
+
+              </div>
+            
+              { this.state.data.documentGroup.map((doc, i) => 
+
+                <DocumentContainer
+                  key={i}
+                  index={i}
+                  words={doc}              
+                  annotations={this.state.annotations[i]}  
+                  selections={this.state.selections[i]}
+                  updateSelections={this.updateSelections.bind(this)}
+                  entityColourMap={this.state.entityColourMap}
+                  deleteTag={this.deleteTag.bind(this)}
+                />
+                )}
+
           </div>
         </div>
         <div id="tagging-menu">
