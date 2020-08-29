@@ -487,7 +487,7 @@ class Annotation {
   // spanStartIdx, spanEndIdx: self explanatory (as above)
   // nextAnnotation: The Annotation object for the next token in the sentence.
   //                 When called during the dictionary annotation tagging, nextAnnotation is not necessary.
-  addLabel(bioTag, entityClass, spanText, spanStartIdx, spanEndIdx, prevAnnotation=null, nextAnnotation = null) {
+  addLabel(bioTag, entityClass, spanText, spanStartIdx, spanEndIdx) {
     this.bioTag = bioTag;
     if(this.entityClasses === undefined) this.entityClasses = new Array();
 
@@ -502,23 +502,24 @@ class Annotation {
     // If the nextAnnotation is from the same mention (AKA span) as this one, and does not have exactly the same labels after
     // the new class has been appended to this annotation's entityClasses, change its BIO tag to B.
     // This is the part that ensures mentions are split up when the user changes the label of token(s) inside that mention.
-    if(nextAnnotation) {
-      if(this.sameMention(nextAnnotation) && !this.sameEntityClasses(nextAnnotation) && nextAnnotation.hasLabel()) {
-        console.log("Changing bio tag to B")
-        nextAnnotation.changeBioTag("B");        
-      }
-    }
+    // if(nextAnnotation) {
+    //   if(this.sameMention(nextAnnotation) && !this.sameEntityClasses(nextAnnotation) && nextAnnotation.hasLabel()) {
+    //     console.log("Changing bio tag to B")
+    //     nextAnnotation.changeBioTag("B");
+    //     nextAnnotation.setSpanStartIdx(spanEndIdx + 1)          
+    //   }
+    // }
 
     // If the previous annotation is from the same mention as this one, and now no longer has the same labels,
     // adjust the spanEndIdx to be the start of this new span -1.
     // This ensures the tags are rendered correctly in the browser.
     // Note that this seems to get called multiple times when applying tags because they are applied in reverse order,
     // but the spanEndIdx will be set as below for the next annotation anyway so that shouldn't be an issue.
-    if(prevAnnotation) {
-      if(this.sameMention(prevAnnotation) && !this.sameEntityClasses(prevAnnotation) && prevAnnotation.hasLabel()) {  
-        prevAnnotation.setSpanEndIdx(spanStartIdx - 1);
-      }
-    }
+    // if(prevAnnotation) {
+    //   if(this.sameMention(prevAnnotation) && !this.sameEntityClasses(prevAnnotation) && prevAnnotation.hasLabel()) {  
+    //     prevAnnotation.setSpanEndIdx(spanStartIdx - 1);
+    //   }
+    // }
 
     // Adjust the span.
     this.spanText = spanText;
@@ -560,7 +561,6 @@ class Annotation {
       delete this.spanStartIdx;
       delete this.spanEndIdx;
     }
-    console.log("bio")
   }
 
   // Change the bio tag of this annotation to another bio tag.
@@ -1081,6 +1081,8 @@ class TaggingInterface extends Component {
         var start = sel.wordStartIndex;
         var end = sel.wordEndIndex;
 
+
+        /* 1. Disjoint spans */
         // Check all labels across this selected span of tokens are the same before proceeding.
         // If they are not, they must be cleared before adding a label.
         var annotationSpanStart = annotations[doc_idx][start].spanStartIdx;
@@ -1125,22 +1127,44 @@ class TaggingInterface extends Component {
                 annotation.changeBioTag("B") // I am realising now that this BIO tag is unnecessary - it could be inferred
               }
             }
-
-            console.log(annotation, start, end);
           }
         }
 
+
+
+        /* 2. Overlapping spans */
+        // Check for any spans that this new span will cut into.
+        // First, check to the left and adjust the spanEndIdx of all Annotation objects
+        // to the left of this span if they overlap.
+        for(var ann_idx in annotations[doc_idx].slice(0, start + 1)) {
+          var annotation = annotations[doc_idx][ann_idx];
+          if(annotation.spanStartIdx < start && annotation.spanEndIdx >= end) {
+            annotation.setSpanEndIdx(start - 1);
+          }
+        }
+
+        // Do the same for any Annotation objects on the right hand side of this span, which are part of the same
+        // mention.
+        for(var ann_idx in annotations[doc_idx].slice(end + 1, annotations[doc_idx].length)) {
+          var annotation = annotations[doc_idx][parseInt(ann_idx) + end + 1];
+          if(annotation.spanStartIdx < start && annotation.spanEndIdx >= end) {
+            annotation.setSpanStartIdx(end + 1);
+            if(ann_idx === '0') {
+              annotation.changeBioTag("B");
+            }
+          }
+        }
+
+        /* 3. Applying the labels */
         // Now, apply the tags to every token in the selected span.
-        // Note that going backwards is the only way to get the annotations to apply correctly, due to the nature of BIO.
-        // If we went forwards the BIO tags wouldn't be assigned correctly (hard to explain)
-        for(var k = end; k >= start; k--) {
+        for(var k = start; k <= end; k++) {
           var bioTag = k === start ? "B" : "I";
           var spanText = documents[doc_idx].slice(start, end + 1).join(' ');
 
-          var prevAnnotation = k > 0 ? annotations[doc_idx][k - 1] : null;
-          var nextAnnotation = k < (documents[doc_idx].length - 1) ? annotations[doc_idx][k + 1] : null;          
+          //var prevAnnotation = k > 0 ? annotations[doc_idx][k - 1] : null;
+          //var nextAnnotation = k < (documents[doc_idx].length - 1) ? annotations[doc_idx][k + 1] : null;          
 
-          annotations[doc_idx][k].addLabel(bioTag, entityClass, spanText, start, end, prevAnnotation, nextAnnotation, (k + 1) > end ? true : false);
+          annotations[doc_idx][k].addLabel(bioTag, entityClass, spanText, start, end);
         }
 
         // TODO: Capture event here
@@ -1160,13 +1184,15 @@ class TaggingInterface extends Component {
 
   // Deletes the specified tag.
   deleteTag(sentenceIndex, wordIndex, entityClass) {
-    console.log("Deleting" , sentenceIndex, wordIndex, entityClass);
+    
     var annotations = this.state.annotations;
     var annotation = annotations[sentenceIndex][wordIndex];
 
     // Retrieve the span start idx and span end idx of the annotation corresponding to (sentence_index, word_index)
     var spanStart = annotation.spanStartIdx;
     var spanEnd = annotation.spanEndIdx;
+
+    console.log("Deleting" , sentenceIndex, wordIndex, entityClass, this.state.data.documentGroup[sentenceIndex].slice(spanStart, spanEnd + 1).join(' '));
 
     // Find all annotations in this document in the same mention span and remove the label from all of them.
     // (this will also remove the label from the annotation object at (sentence_index, word_index)).
