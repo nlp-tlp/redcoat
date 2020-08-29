@@ -271,6 +271,13 @@ class CategoryHierarchy extends Component {
 }
 
 
+// Returns the colour id of the given entityClass according to the entityColourMap, e.g.
+// 'item/pump': 1 (because "item" is the top level category)
+function getColourIdx(entityClass, entityColourMap) {
+  var baseClass = entityClass.split("/").slice(0, 1)[0];
+  return entityColourMap[baseClass];
+}
+
 // A label, drawn underneath a word.
 class Label extends Component {
   constructor(props) {
@@ -279,7 +286,7 @@ class Label extends Component {
 
   render() {
     return (
-      <span className="label">{this.props.entityClass}</span>
+      <span className={"label tag-" + this.props.colourIdx}>{this.props.entityClass}</span>
     )
   }
 
@@ -302,7 +309,7 @@ class Word extends Component {
 
     if(hasLabel) {
       var labels = this.props.annotation.entityClasses.map((entityClass, i) => 
-                  <Label key={i} bioTag={this.props.annotation.bioTag} entityClass={entityClass} />
+                  <Label key={i} bioTag={this.props.annotation.bioTag} entityClass={entityClass} colourIdx={getColourIdx(entityClass, this.props.entityColourMap)} />
                   )
       
     } else {
@@ -364,6 +371,7 @@ class Sentence extends Component {
                 selected={isWordSelected(i)}
                 annotation={this.props.annotations[i]}
                 updateSelections={this.updateSelections.bind(this)}
+                entityColourMap={this.props.entityColourMap}
           />)
         }
         
@@ -606,6 +614,8 @@ class TaggingInterface extends Component {
       holdingCtrl: false, // Whether the user is currently holding the ctrl key.
       holdingShift: false, // Whether the user is currently holding the shift key.
 
+      entityColourMap: {} // A mapping of the top-level entity classes to a colour
+
 
     }    
   }
@@ -631,9 +641,12 @@ class TaggingInterface extends Component {
       var sel = window.getSelection && window.getSelection();
 
       if (sel && sel.rangeCount > 0) {
-        var r =  getRangeSelectedNodes(sel.getRangeAt(0));        
+        console.log(sel.getRangeAt(0));
+        console.log('--')
+        var r =  getRangeSelectedNodes(sel.getRangeAt(0));  
+        console.log(r);      
         words.removeClass('highlighted');
-        $(r).addClass('highlighted');          
+        $(r).find('.word-inner').addClass('highlighted');          
       }
     })
 
@@ -820,6 +833,20 @@ class TaggingInterface extends Component {
     return annotations;
   }
 
+  // Initialise the entity colour map, which maps entity_class: colour_index, e.g. "Item": 1. Passed to the Word components to colour
+  // their labels accordingly.
+  initEntityColourMap(categoryHierarchy) {
+    var entityColourMap = {}
+    for(var ec_idx in categoryHierarchy) {
+      var entityClass = categoryHierarchy[ec_idx];
+      entityColourMap[entityClass.name] = entityClass.colorId + 1;
+    }
+    this.setState({
+      entityColourMap: entityColourMap
+    });
+  }
+
+
   /* Miscellaneous */
 
   // Justify the words to the nearest 25px (i.e. round their width up to the nearest 25px).
@@ -863,6 +890,7 @@ class TaggingInterface extends Component {
             this.initKeybinds();
             this.initMouseEvents();
             this.initHotkeyMap(this.state.data.categoryHierarchy.children);
+            this.initEntityColourMap(this.state.data.categoryHierarchy.children);
             this.justifyWords();
           })
       });
@@ -962,10 +990,10 @@ class TaggingInterface extends Component {
       wordStartIndex = wordIndex;
       wordEndIndex = -1;
 
+      // A new selection is made, capturing the index of the sentence that the user clicked on and the index of the word that they clicked.
       currentSelection = {
         sentenceIndex: sentenceIndex,
-        wordStartIndex: wordStartIndex,
-        wordEndIndex: wordEndIndex
+        wordStartIndex: wordStartIndex
       }      
 
     } else if(action === "up") { // Mouse up, i.e. mouse was released when hovering over a word.
@@ -992,6 +1020,7 @@ class TaggingInterface extends Component {
         wordEndIndex = s;
       }     
 
+      // Create a new selections json object and push it to the selections array for this sentence.
       currentSelection = this.getEmptyCurrentSelection();
       selections[sentenceIndex].push({
         wordStartIndex: wordStartIndex,
@@ -1027,15 +1056,14 @@ class TaggingInterface extends Component {
         var start = sel.wordStartIndex;
         var end = sel.wordEndIndex;
 
-
-
         // Check all labels across this selected span of tokens are the same before proceeding.
         // If they are not, they must be cleared before adding a label.
-        var entityClasses = annotations[doc_idx][start].entityClasses;
+        var annotationSpanStart = annotations[doc_idx][start].spanStartIdx;
+        var annotationSpanEnd   = annotations[doc_idx][start].spanEndIdx;
         var notAllEqual = false;          
         for(var k = start + 1; k <= end; k++) {
-          var annotation = annotations[doc_idx][k]; 
-          if(!_.isEqual(annotation.entityClasses, entityClasses)) {
+          var otherAnnotation = annotations[doc_idx][k]; 
+          if(annotationSpanStart !== otherAnnotation.spanStartIdx || annotationSpanEnd !== otherAnnotation.spanEndIdx) {
             notAllEqual = true;
             break;
           }          
@@ -1050,21 +1078,21 @@ class TaggingInterface extends Component {
             var annotation = annotations[doc_idx][k];
             annotation.removeAllLabels();
           }          
-          // Adjust the span end of all prev labels with start - 1 as span end
+          // Adjust the span end index of all prev labels to be start index - 1
+          // A shame that we have to iterate across all annotations in this document - this could probably be optimised
+          // but it probably barely impacts performance even on large docs (I think)
           for(var x in annotations[doc_idx]) {
             var annotation = annotations[doc_idx][x];
-            console.log("before:", annotation, start);
             if(annotation.spanEndIdx >= start) {
               annotation.setSpanEndIdx(start - 1);
-              console.log("after:", annotation);
             }
           }
         }
 
-
-
         // Now, apply the tags to every token in the selected span.
-        for(var k = end; k >= start; k--) { // Going backwards is the only way to get the annotations to apply correctly, due to the nature of BIO
+        // Note that going backwards is the only way to get the annotations to apply correctly, due to the nature of BIO.
+        // If we went forwards the BIO tags wouldn't be assigned correctly (hard to explain)
+        for(var k = end; k >= start; k--) {
           var bioTag = k === start ? "B" : "I";
           var spanText = documents[doc_idx].slice(start, end + 1).join(' ');
           var nextAnnotation = k < (documents[doc_idx].length - 1) ? annotations[doc_idx][k + 1] : null;
@@ -1099,6 +1127,7 @@ class TaggingInterface extends Component {
                 annotations={this.state.annotations[i]}  
                 selections={this.state.selections[i]}
                 updateSelections={this.updateSelections.bind(this)}
+                entityColourMap={this.state.entityColourMap}
             />)}
           </div>
         </div>
