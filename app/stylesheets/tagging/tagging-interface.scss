@@ -75,100 +75,229 @@
 
 
 .document-container {
-	display: flex;
+	
 	padding-right: 0px;
 	align-items: stretch;
-	&:first-child .sentence {
+	&:not(.header) {		
+		padding: 10px;
+		background: #eee;
+	}
+	&.header .sentence {
 		padding-top: 90px;
 	}
 
-	&.header { // Emulates an extra bit of padding at the top
-		background: #e9e9e9;
-		font-weight: bold;
-		font-size: 0.9em;
-		text-align: center;
-		.sentence-index {
-			border: none;
-			padding: 0;
+	$conf_low: #FFCCCC;
+	$conf_med: #FFFF99;
+	$conf_high: #CCFF99;
+
+	&.conf {
+		.document {
+			background: rgba(255, 255, 255, 0.4);
+		}
+	}
+	&.conf-low { 
+		background: rgba(darken($conf_low, 11), 0.2);		
+	}
+
+	&.conf-medium {
+		background: rgba(darken($conf_med, 11), 0.2);		
+	}
+	&.conf-high {
+		background: rgba(darken($conf_high, 11), 0.2);		
+	}
+
+
+	.document {
+		display: flex;
+		background: #fefefe;
+		box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
+
+
+		&.header { // Emulates an extra bit of padding at the top
+			background: #e2e2e2;
+			font-weight: bold;
+			font-size: 0.9em;
 			text-align: center;
-			padding-left: 120px;
-			margin-right: 80px;
-		}
-		.sentence {
-			padding: 0;
-		}
-		.confidence-buttons {
+			.sentence-index {
+				border: none;
+				padding: 0;
+				text-align: center;
+				padding-left: 120px;
+				margin-right: 80px;
+			}
+			.sentence {
+				padding: 0;
+			}
 			
-			background: #e9e9e9;
 		}
-	}
 
-	
-	&:nth-child(even) {
-		background: #fafafa;
-	}
-	.sentence {
-		width: 100%;
-		padding-top: 60px;
-		padding-bottom: 60px;
-		padding-left: 60px;
-		padding-right: 80px;
-	}
-	&:not(.header) .sentence-index {
-		color: #bbb;
-		pointer-events: none;
-		font-size: 22px;
-		padding: 20px 20px;
-		text-align: right;
-		border-right: 2px solid #ddd;
-		margin-right: 40px;
-		height: 40px;
-		display: flex;
-		align-self: center;
-		padding-left: 120px;
-		margin-right: 80px;
-	}
-	.confidence-buttons {
-		background: #e9e9e9;
-		justify-content: center;
-		display: flex;
-		vertical-align: middle;
-		align-items: center;
 		
-		min-width: 28.2%; // Equivalent to 22% of the entire page
-		.confidence-button {
-			width: 35px;
-			height: 35px;
-			border: 2px solid #bbb;
-			border-radius: 4px;
-			display: inline-block;
-			background: #f2f2f2;
-			cursor: pointer;
-			&:not(:last-child) {
-				margin-right: 25px;
-			}
+		// &:nth-child(even) {
+		// 	background: #fafafa;
+		// 	&.conf-low 		{ 
+		// 		background: rgba(darken($conf_low, 8), 0.2);
+		// 		.confidence-buttons {
+		// 			background: rgba(darken($conf_low, 8), 0.2);
+		// 		}
+		// 	}
+		// 	&.conf-medium 	{
+		// 		background: rgba(darken($conf_med, 8), 0.2);
+		// 		.confidence-buttons {
+		// 			background: rgba(darken($conf_med, 8), 0.2);
+		// 		}
+		// 	}
+		// 	&.conf-high 	{
+		// 		background: rgba(darken($conf_high, 8), 0.2);
+		// 		.confidence-buttons {
+		// 			background: rgba(darken($conf_high, 8), 0.2);
+		// 		}
+		// 	}
+		// }
 
-			&:hover {
+		// &:nth-child(even):not(.conf) .confidence-buttons {
+		// 	background: #e3e3e3;
+		// }
 
-				&.conf-low {
-					background: #FFCCCC;
-					border-color: desaturate(darken(#FFCCCC, 60), 40);
-				}
-				&.conf-medium {
-					background: #FFFF99;
-					border-color: darken(#FFFF99, 50);
-				}
-				&.conf-high {
-					background: #CCFF99;
-					border-color: darken(#CCFF99, 50);
-				}
+		// &:not(.conf) .confidence-buttons {
+		// 	background: #e9e9e9;
+		// }
 
+
+		
+
+
+		.sentence {
+			width: 100%;
+			padding-top: 30px;
+			padding-bottom: 30px;
+			padding-left: 30px;
+			padding-right: 80px;		
+		}
+		&:not(.header) .sentence-index {
+			color: #bbb;
+			pointer-events: none;
+			
+			text-align: right;
+			
+			
+			
+			display: flex;
+			align-items: center;
+			//padding-left: 80px;
+
+			.inner {
+				padding: 20px 50px;
+				font-size: 22px;
+				//border-right: 2px solid #ddd;
+				line-height: 100%;
+				height: 30px;
 			}
 		}
+
+		&:not(.header) .confidence-buttons {
+			background: rgba(0, 0, 0, 0.025);
+			background-blend-mode: multiply;
+		}
+		
+		.confidence-buttons {		
+			justify-content: center;
+			display: flex;
+			vertical-align: middle;
+			align-items: center;
+
+
+			
+			min-width: 28.2%; // Equivalent to 22% of the entire page
+
+			.confidence-button {
+				width: 35px;
+				height: 35px;
+				border: 2px solid #bbb;
+				border-radius: 4px;
+				display: inline-block;
+				background: #f2f2f2;
+				cursor: pointer;
+				position: relative;
+				
+
+				&:not(:last-child) {
+					margin-right: 25px;
+					&:before { // circles between boxes
+						position: absolute;
+						top: calc(50% - 3px);
+						right: -18px;
+						content: " ";
+						border: 3px solid #777;
+						border-radius: 50%;
+					}
+				}
+
+				&:active {
+					transform: translate(0, 1px);
+				}
+				&:hover, &.checked {
+
+					&.conf-low {
+						background: $conf_low;
+						border-color: desaturate(darken($conf_low, 60), 40);
+						&.checked:after {
+							color: desaturate(darken($conf_low, 60), 50);
+						}
+					}
+					&.conf-medium {
+						background: $conf_med;
+						border-color: darken($conf_med, 50);
+						&.checked:after {
+							color: darken($conf_med, 70);
+						}
+					}
+					&.conf-high {
+						background: $conf_high;
+						border-color: darken($conf_high, 50);
+						&.checked:after {
+							color: darken($conf_high, 70);
+						}
+					}
+
+				}
+				&.checked {
+					&:after {
+						position: absolute;
+						top: 0;
+						left: 0;
+						width: 100%;
+						text-align: center;
+						height: 100%;				
+						line-height: 35px;
+						font-weight: bold;
+					}
+					&.conf-low:after {
+						content: "L";
+					}
+					&.conf-medium:after {
+						content: "M";
+					}
+					&.conf-high:after {
+						content: "H";
+					}
+				}
+
+			}		
+		}
 	}
-	&:nth-child(even) .confidence-buttons {
-		background: #e3e3e3;
-	}
+
+	// &:nth-child(even) .confidence-buttons {
+	// 	&.conf-low {
+	// 		background: desaturate(darken($conf_low, 8), 10);
+	// 	}
+	// 	&.conf-medium {
+	// 		background: desaturate(darken($conf_med, 8), 10);
+	// 	}
+	// 	&.conf-high {
+	// 		background: desaturate(darken($conf_high, 8), 10);
+	// 	}
+	// }
+	
 
 
 
@@ -231,7 +360,8 @@
 			cursor: url($base_url + 'images/pencil.png'), pointer; 
 		}
 		&.highlighted {
-			background: #efefef;
+			background: rgba(240, 240, 240, 0.75);
+			background-blend-mode: screen;
 			cursor: url($base_url + 'images/pencil.png'), pointer; 
 			// <div>Icons made by <a href="https://www.flaticon.com/authors/icongeek26" title="Icongeek26">Icongeek26</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
 			
@@ -430,7 +560,9 @@
 
 
 #sentence-tagging .sentence .word.selected .word-inner:before {
-	background: #f8f8f8;
+	//background: #f8f8f8;
+	background: rgba(240, 240, 240, 1);
+	background-blend-mode: luminosity;
 	background-image: url($base_url + 'images/stripes-darker-trans-50.png');
 	animation: animatedBackground 20s linear infinite;
 	content: " ";

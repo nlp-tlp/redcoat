@@ -335,6 +335,23 @@ class Word extends Component {
   }
 }
 
+
+// A single confidence button, which may have the value 'low' 'medium' or 'high'.
+class ConfidenceButton extends Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    var docIdx = this.props.docIdx;
+    var value = this.props.value;
+    return (
+      <span className={"confidence-button conf-" + value + (this.props.checked ? " checked" : "")}
+            onClick={() => this.props.updateConfidence(docIdx, value)}></span>
+    )
+  }
+}
+
+
 class ConfidenceButtons extends Component {
   constructor(props) {
     super(props);
@@ -342,15 +359,11 @@ class ConfidenceButtons extends Component {
 
   render() {
     return (
-      <div className="confidence-buttons">
-        <span className="confidence-button conf-low"></span>
-        <span className="confidence-button conf-medium"></span>
-        <span className="confidence-button conf-high"></span>
-
-
+      <div className={"confidence-buttons"}>
+        <ConfidenceButton value="low"    checked={this.props.confidence === "low"} { ...this.props }/>
+        <ConfidenceButton value="medium" checked={this.props.confidence === "medium"} { ...this.props }/>
+        <ConfidenceButton value="high"   checked={this.props.confidence === "high"} { ...this.props }/>        
       </div>
-
-
     )
   }
 }
@@ -364,18 +377,20 @@ class DocumentContainer extends Component {
   render() {
 
     return (
-      <div className="document-container">
-        <div className="sentence-index">{this.props.index + 1}</div>
-        <Sentence 
-          index={this.props.index}
-          words={this.props.words}              
-          annotations={this.props.annotations}  
-          selections={this.props.selections}
-          updateSelections={this.props.updateSelections}
-          entityColourMap={this.props.entityColourMap}
-          deleteTag={this.props.deleteTag}
-        />
-        <ConfidenceButtons/>
+      <div className={"document-container" + (this.props.confidence ? " conf conf-" + this.props.confidence : "")}>
+        <div className="document">
+          <div className="sentence-index"><span className="inner">{this.props.index + 1}</span></div>
+          <Sentence 
+            index={this.props.index}
+            words={this.props.words}              
+            annotations={this.props.annotations}  
+            selections={this.props.selections}
+            updateSelections={this.props.updateSelections}
+            entityColourMap={this.props.entityColourMap}
+            deleteTag={this.props.deleteTag}
+          />
+          <ConfidenceButtons docIdx={this.props.index} confidence={this.props.confidence} updateConfidence={this.props.updateConfidence}/>
+        </div>
       </div>
     )
   }
@@ -676,6 +691,7 @@ class TaggingInterface extends Component {
 
       // Annotations array
       annotations: [],  // Stores the user's annotations.
+      confidences: [],  // Stores the user's confidences.
 
       // Selections
       selections: this.getEmptySelectionsArray(10),       // The selections is an array containing a sub-array for each document,
@@ -911,6 +927,12 @@ class TaggingInterface extends Component {
     return annotations;
   }
 
+  // Initialise the confidences array.
+  initConfidencesArray(documents) {
+    var confidences = new Array(documents.length);
+    return confidences;
+  }
+
   // Initialise the entity colour map, which maps entity_class: colour_index, e.g. "Item": 1. Passed to the Word components to colour
   // their labels accordingly.
   initEntityColourMap(categoryHierarchy) {
@@ -919,9 +941,7 @@ class TaggingInterface extends Component {
       var entityClass = categoryHierarchy[ec_idx];
       entityColourMap[entityClass.name] = entityClass.colorId + 1;
     }
-    this.setState({
-      entityColourMap: entityColourMap
-    });
+    return entityColourMap;
   }
 
 
@@ -961,6 +981,8 @@ class TaggingInterface extends Component {
         this.setState(
           {
             data: d,
+            entityColourMap: this.initEntityColourMap(d.categoryHierarchy.children),
+            confidences: this.initConfidencesArray(d.documentGroup),
             annotations: this.initAnnotationsArray(d.documentGroup, d.automaticAnnotations),
             selections: this.getEmptySelectionsArray(d.documentGroup.length)
           }, () => { 
@@ -968,7 +990,7 @@ class TaggingInterface extends Component {
             this.initKeybinds();
             this.initMouseEvents();
             this.initHotkeyMap(this.state.data.categoryHierarchy.children);
-            this.initEntityColourMap(this.state.data.categoryHierarchy.children);
+            
             this.justifyWords();
           })
       });
@@ -1265,6 +1287,24 @@ class TaggingInterface extends Component {
 
   }
 
+  /* Confidence */
+
+  // Updates the confidences array for the given doc.
+  // If the user clicks on the button they already clicked, then the confidence is reset to undefined.
+  updateConfidence(sentenceIndex, confidence) {
+    var confidences = this.state.confidences;
+    if(confidences[sentenceIndex] === confidence) {
+      confidences[sentenceIndex] = undefined;
+    } else {
+      confidences[sentenceIndex] = confidence;
+    }
+    this.setState({
+      confidences: confidences
+    }, () => {
+      console.log(this.state.confidences)
+    })
+  }
+
   /* Events */
 
   // Capture an event
@@ -1298,9 +1338,11 @@ class TaggingInterface extends Component {
         <div id="tagging-container">
           <div id="sentence-tagging">
               <div className="document-container header">
-                <div className="sentence-index"></div>
-                <div className="sentence">Document</div>
-                <div className="confidence-buttons">Confidence</div>
+                <div className="document header">
+                  <div className="sentence-index"></div>
+                  <div className="sentence">Document</div>
+                  <div className="confidence-buttons">Confidence</div>
+                </div>
 
               </div>
             
@@ -1311,8 +1353,10 @@ class TaggingInterface extends Component {
                   index={i}
                   words={doc}              
                   annotations={this.state.annotations[i]}  
+                  confidence={this.state.confidences[i]}
                   selections={this.state.selections[i]}
                   updateSelections={this.updateSelections.bind(this)}
+                  updateConfidence={this.updateConfidence.bind(this)}
                   entityColourMap={this.state.entityColourMap}
                   deleteTag={this.deleteTag.bind(this)}
                 />
