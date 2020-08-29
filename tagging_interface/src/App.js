@@ -286,7 +286,7 @@ class Label extends Component {
 
   render() {
     return (
-      <span className={"label tag-" + this.props.colourIdx} onClick={(e) => {this.props.deleteTag(this.props.entityClass);  }}>{this.props.entityClass}</span>
+      <span className={"label tag-" + this.props.colourIdx} onClick={(e) => {this.props.deleteTag(this.props.entityClass);  }}><span className="label-name">{this.props.entityClass}</span></span>
     )
   }
 }
@@ -491,14 +491,17 @@ class Annotation {
     this.bioTag = bioTag;
     if(this.entityClasses === undefined) this.entityClasses = new Array();
 
-    // If the label was already on this token, don't do anything.
-    if(this.entityClasses.indexOf(entityClass) > -1) {
-      return;
-    }
+    // Adjust the span.
+    this.spanText = spanText;
+    this.spanStartIdx = spanStartIdx;
+    this.spanEndIdx = spanEndIdx;
 
     // Add the entityClass to the entityClasses array for this Annotation.
-    this.entityClasses.push(entityClass);
-    
+    // If it is already there, don't add it again.
+    if(this.entityClasses.indexOf(entityClass) === -1) {
+      this.entityClasses.push(entityClass);
+    }
+  
     // If the nextAnnotation is from the same mention (AKA span) as this one, and does not have exactly the same labels after
     // the new class has been appended to this annotation's entityClasses, change its BIO tag to B.
     // This is the part that ensures mentions are split up when the user changes the label of token(s) inside that mention.
@@ -520,11 +523,6 @@ class Annotation {
     //     prevAnnotation.setSpanEndIdx(spanStartIdx - 1);
     //   }
     // }
-
-    // Adjust the span.
-    this.spanText = spanText;
-    this.spanStartIdx = spanStartIdx;
-    this.spanEndIdx = spanEndIdx;
   }
 
   removeAllLabels() {
@@ -1111,6 +1109,7 @@ class TaggingInterface extends Component {
           for(var x in annotations[doc_idx]) {
             var annotation = annotations[doc_idx][x];
 
+
             // If this new span overlaps the *end* of an existing span, change that span's end index to the start of this new
             // span, -1
 
@@ -1122,7 +1121,7 @@ class TaggingInterface extends Component {
             // If this new span overlaps the *start* of an existing span, change that span's start index to be the end of this new span -1
             // and change the BIO tag to "B".
             if(annotation.spanStartIdx <= end) {
-              annotation.setSpanStartIdx(end + 1);
+              annotation.setSpanStartIdx(end + 1);              
               if(annotation.tokenIndex === (end + 1)) {
                 annotation.changeBioTag("B") // I am realising now that this BIO tag is unnecessary - it could be inferred
               }
@@ -1136,9 +1135,9 @@ class TaggingInterface extends Component {
         // Check for any spans that this new span will cut into.
         // First, check to the left and adjust the spanEndIdx of all Annotation objects
         // to the left of this span if they overlap.
-        for(var ann_idx in annotations[doc_idx].slice(0, start + 1)) {
-          var annotation = annotations[doc_idx][ann_idx];
-          if(annotation.spanStartIdx < start && annotation.spanEndIdx >= end) {
+        for(var ann_idx in annotations[doc_idx].slice(0, start)) {
+          var annotation = annotations[doc_idx][ann_idx];          
+          if(annotation.spanStartIdx < start && annotation.spanEndIdx >= end) {            
             annotation.setSpanEndIdx(start - 1);
           }
         }
@@ -1147,7 +1146,7 @@ class TaggingInterface extends Component {
         // mention.
         for(var ann_idx in annotations[doc_idx].slice(end + 1, annotations[doc_idx].length)) {
           var annotation = annotations[doc_idx][parseInt(ann_idx) + end + 1];
-          if(annotation.spanStartIdx < start && annotation.spanEndIdx >= end) {
+          if(annotation.spanStartIdx <= start && annotation.spanEndIdx >= end) {
             annotation.setSpanStartIdx(end + 1);
             if(ann_idx === '0') {
               annotation.changeBioTag("B");
@@ -1165,6 +1164,7 @@ class TaggingInterface extends Component {
           //var nextAnnotation = k < (documents[doc_idx].length - 1) ? annotations[doc_idx][k + 1] : null;          
 
           annotations[doc_idx][k].addLabel(bioTag, entityClass, spanText, start, end);
+
         }
 
         // TODO: Capture event here
@@ -1211,8 +1211,9 @@ class TaggingInterface extends Component {
 
   /* Rendering function */
 
-  render() {
 
+  render() {
+  
     return (
       <div id="tagging-interface">
         <div id="tagging-container">
@@ -1235,7 +1236,7 @@ class TaggingInterface extends Component {
             <div className="tokens-info">Wikipedia placeholder</div>
             <HotkeyInfo 
               chain={this.state.hotkeyChain}
-              entityclassName={this.state.reverseHotkeyMap[this.state.hotkeyChain.join('')]}
+              entityClass={this.state.reverseHotkeyMap[this.state.hotkeyChain.join('')]}
             />            
             
             <CategoryHierarchy
