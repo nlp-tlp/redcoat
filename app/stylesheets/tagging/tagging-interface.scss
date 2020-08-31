@@ -59,7 +59,7 @@
 	max-width: 100%;
 	min-height: 25vh;
 	margin-left: 22%;
-	background: #fefefe;
+	background: #eee;
 
 }
 #sentence-tagging {
@@ -83,15 +83,14 @@ body.taking-screenshot .save-to-png {
 	
 	padding-right: 0px;
 	align-items: stretch;
-	&:not(.header) {		
-		padding: 10px 50px;
-		background: #eee;
-	}
+	padding: 10px 120px;
+	
 	&.header .sentence {
 		padding-top: 90px;
 	}
 	&.header {
-		padding: 0 50px;
+		padding-top: 0;
+		padding-bottom: 0;
 		background: #eee;
 		.document {
 			box-shadow: none;
@@ -467,13 +466,13 @@ body.taking-screenshot .save-to-png {
 
 
 		.label-name {
-			display: inline;
+			//display: inline;
 			max-width: 100%;
 			top: 11px;
 			left: 18px;
 			width: 100%;
 			height: 100%;
-			position: absolute; 
+			//position: absolute; 
 			&::selection {
 				background: rgba(0, 0, 0, 0);
 			}
@@ -586,6 +585,7 @@ body.taking-screenshot .save-to-png {
 	overflow: hidden;
 	box-sizing: border-box;
 }
+
 
 #sentence-tagging .sentence .word.selected .word-inner:after {
 	display: block;
