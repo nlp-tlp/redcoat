@@ -3,6 +3,7 @@ var logger = require('config/winston');
 
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
+var DocumentGroup = require('./document_group');
 
 var cf = require("./common/common_functions.js")
 
@@ -183,6 +184,86 @@ DocumentGroupAnnotationSchema.methods.updateProjectNumDocumentGroupAnnotations =
     });
   });
 }
+
+
+// Converts this documentGroupAnnotation into a mention-formatted json, for example if the DocumentGroup of this DGA was:
+// DG: ['sump', 'pump']
+//
+// and this DGA was:
+//
+// DGA: ['B': ["Item"], "I": ["Item"]]
+//
+// Then the output of this function would be:
+//
+// { tokens: ['sump', 'pump'], mentions: [{start: 0, end: 2, labels: ["Item"]}]}
+DocumentGroupAnnotationSchema.methods.toMentionsJSON = function(done) {
+	var t = this;
+	
+	DocumentGroup.findById({_id: this.document_group_id}, function(err, dg) {
+		if(err) return done(err);
+
+		var documents = dg.documents;
+		var documentJSON = [];
+
+		for(var doc_idx in documents) {
+			var tokens = documents[doc_idx];
+			var annotations = t.labels[doc_idx];
+			var currentMention = null;
+			var mentions = [];
+
+			for(var token_idx in tokens) {
+				var token_idx = parseInt(token_idx);
+
+				var token = tokens[token_idx];
+				var bioTagAndLabels = annotations[token_idx];
+
+				if(currentMention) {
+					currentMention.end = token_idx;
+				}				
+
+				if(bioTagAndLabels.length === 1) {	// [""] is effectively an "O", i.e. this token is not part of a mention
+					var bioTag = null;
+					var labels = null;
+
+					if(currentMention) {
+						mentions.push(currentMention);
+						currentMention = null;
+					}
+					
+				} else {
+					var bioTag = bioTagAndLabels[0];
+					var labels = bioTagAndLabels[1];
+					if(bioTag === "B-") {
+						if(currentMention) {
+							mentions.push(currentMention);
+						}
+						currentMention = { start: token_idx, end: null, labels: labels }
+
+					} else if (bioTag === "I-") {
+						// No need to do anything
+					}
+				}
+				if(token_idx === (tokens.length - 1)) {
+					if(currentMention) {
+						mentions.push(currentMention);
+					}					
+				}
+			}
+
+			documentJSON.push({
+				tokens: tokens,
+				mentions: mentions
+			})
+		}
+
+
+		//console.log(err, dg)
+		
+		return done(null, documentJSON);
+	});
+}
+
+
 
 /* Middleware */
 

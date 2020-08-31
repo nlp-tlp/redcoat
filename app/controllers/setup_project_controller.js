@@ -36,7 +36,24 @@ exports.index = function(req, res, next) {
   // If they don't, create a new one
 
   function renderPage(wip_project, project_name, project_desc, file_metadata, category_hierarchy, category_metadata, user_emails, category_hierarchy_permissions, user_email, automatic_tagging, automatic_tagging_dictionary_metadata, overlap, distribute_self) {
-     res.render('setup-project', { wip_project_id: wip_project._id, project_name: project_name, project_desc: project_desc, file_metadata: file_metadata, category_hierarchy: category_hierarchy, category_metadata: category_metadata, user_emails: user_emails, csrfToken: req.csrfToken(), path: req.path, title: "Setup project", max_filesize_mb: MAX_FILESIZE_MB, max_emails: USERS_PER_PROJECT_MAXCOUNT, category_hierarchy_permissions: category_hierarchy_permissions, user_email: user_email, automatic_tagging: automatic_tagging, automatic_tagging_dictionary_metadata: automatic_tagging_dictionary_metadata, overlap: overlap, distribute_self: distribute_self });
+     res.render('setup-project', 
+        { wip_project_id: wip_project._id,
+          project_name: project_name,
+          project_desc: project_desc,
+          file_metadata: file_metadata,
+          category_hierarchy: category_hierarchy,
+          category_metadata: category_metadata,
+          user_emails: user_emails,
+          csrfToken: req.csrfToken(), // TODO: Make this work in development mode
+          path: req.path, title: "Setup project",
+          max_filesize_mb: MAX_FILESIZE_MB,
+          max_emails: USERS_PER_PROJECT_MAXCOUNT,
+          category_hierarchy_permissions: category_hierarchy_permissions,
+          user_email: user_email,
+          automatic_tagging: automatic_tagging,
+          automatic_tagging_dictionary_metadata: automatic_tagging_dictionary_metadata,
+          overlap: overlap,
+          distribute_self: distribute_self });
   }
 
   WipProject.findWipByUserId(testuser._id, function(err, wip_project) {

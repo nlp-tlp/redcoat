@@ -46,13 +46,14 @@
 	}
 }
 
-#submit-annotations {
-	cursor: pointer;
-}
 
-#submit-annotations:hover {
-	border: 2px solid $primary-orange;
-}
+// #submit-annotations {
+// 	cursor: pointer;
+// }
+
+// #submit-annotations:hover {
+// 	border: 2px solid $primary-orange;
+// }
 
 #tagging-container {
 	width: 78%;
@@ -63,19 +64,226 @@
 
 }
 #sentence-tagging {
-	margin-top: 50px;
+	margin-top: $navbar-height * 2;
+	margin-bottom: 200px;
+	min-height: 69vh;
+
 }
 #sentence-tagging, #ending-message {
 	font-size: 24px;
 	color: #333;
-	line-height: 220%;
+}
+#sentence-tagging .sentence {
+		line-height: 220%;
 }
 
 
 body.taking-screenshot .save-to-png {
 	display: none !important;
-	.word.highlighted, .word.selected {
+	.word-inner.highlighted, .word.selected, .word-inner:active {
 		background: none !important;
+	}
+}
+
+
+
+#pagination {
+	display: flex;
+	width: calc(78%);
+	justify-content: center;
+	align-items: center;
+	position: fixed;
+	top: $navbar-height;
+	left: calc(22%);
+	background: #f6f6f6;
+	padding: 5px 5px;
+	z-index: 5555100;
+	box-sizing: border-box;
+	height: $navbar-height;
+	font-size: 0.7em;
+	user-select: none;
+
+
+	box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
+
+	&:before { // Hides the box shadow from the left panel
+		position: absolute;
+		top: 0;
+		left: -3px;
+		width: 4px;
+		height: 100%;
+		background: #f6f6f6;
+		content: " ";
+	}
+
+	.group-last-modified {
+		display: block;
+		color: #777;
+		font-size: 0.9em;
+		width: fit-content;
+		min-width: 220px;
+		text-align: right;
+		padding-right: 20px;
+	}
+	.filler-left {
+		min-width: 220px;
+	}
+
+	.current-page-container {
+		font-size: 0.9em;
+		span.group-name {
+			display: block;
+		}		
+	}
+
+	.page-button-container {
+		
+		
+		height: 100%;
+		align-items: center;
+		display: flex;
+		padding: 0 10px;
+		box-sizing: border-box;
+		button.save-button {
+			position: relative;
+			margin-right: 10px;
+			background: $primary-blue;
+			color: white;
+			min-width: 100px;
+			padding: 5px 10px;
+			//padding-right: 40px;
+			overflow: hidden;
+			i {
+				margin-right: 10px;
+			}
+			margin-right: -5px;
+			&:hover {
+				background: lighten($primary-blue, 10);
+				.save-and-next {
+					color: rgba(255, 255, 255, 0);
+				}
+			}
+			&.disabled {
+				opacity: 0.2;
+			}
+			&.recently-saved {
+				background: $primary-green;
+				&:hover {
+					background: lighten($primary-green, 10); // IDK why you would want to click this again but ok
+				}
+			}
+			.save-and-next {
+				background: lighten($primary-blue, 10);
+				position: absolute;
+				top: 0;
+				right: 0;
+				height: 100%;
+				width: 30px;
+				text-align: center;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 0;
+				box-sizing: border-box;
+				transition: padding 0.2s ease;
+				border-left: 2px solid #f2f2f2;
+
+				i {
+					margin: 0;
+				}
+				&:hover {
+					background: lighten($primary-blue, 25);
+					padding-left: 5px;
+					color: white;
+				}
+			}
+		}
+		button {
+			min-width: 100px;
+
+			font-size: 1em;
+			padding: 5px 15px;
+			width: 100%;
+			margin: 0;
+			line-height: inherit;
+			border-radius: 3px;
+			cursor: pointer;
+			border: 0px solid #ddd;
+			background: #e3e3e3;
+			//box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
+			&.disabled {
+				pointer-events: none;
+				opacity: 0.6;
+				color: #aaa;
+			}
+			&:hover {
+				background: lighten($primary-blue, 10);
+				color: white;
+			}
+			&:active, &:focus {				
+				outline: none !important;
+			}
+			&:active {
+				transform: translate(0px, 1px);
+			}
+			i {
+				font-size: 0.9em;
+			}
+		}
+		&.previous-page {
+			i {
+				margin-right: 10px;
+			}	
+		}
+		&.next-page {
+			i {
+				margin-left: 10px;
+			}
+		}
+	}
+	.current-page-container {
+		width: 100%;
+		text-align: center;
+	}
+}
+
+.submit-annotations-container {
+	padding: 50px 130px;
+	display: flex;
+	justify-content: center;
+	background: #333;
+	margin-top: 50px;
+	box-shadow: inset 0px 2px 5px -3px rgba(0, 0, 0, 0.9);
+	//background-image: url($base_url + 'images/skewed_print_@2X.png');
+
+
+	.submit-annotations-button {
+		background: #e2e2e2;
+		width: 300px;
+		cursor: pointer;
+		border: none;
+		border-radius: 3px;
+		padding: 40px;
+		box-shadow: 3px 3px 4px -3px rgba(0, 0, 0, 0.9);
+		transition: padding 0.2s ease;
+
+
+		i {
+			margin-left: 5px;
+			font-size: 0.8em;
+		}
+		&:hover {
+			background: $primary-blue;
+			color: white;
+			padding-left: 45px;
+			padding-right: 35px;
+		}
+		&:focus {
+			border: none;
+		}
+		&:active {
+			transform: translate(0, 1px);
+		}
 	}
 }
 
@@ -83,15 +291,18 @@ body.taking-screenshot .save-to-png {
 	
 	padding-right: 0px;
 	align-items: stretch;
-	padding: 10px 120px;
+	padding: 10px 130px;
+
 	
 	&.header .sentence {
 		padding-top: 90px;
 	}
 	&.header {
-		padding-top: 0;
-		padding-bottom: 0;
+		padding-top: 5px;
+		padding-bottom: 5px;
+		margin-bottom: -10px;
 		background: #eee;
+		font-size: 0.9em;
 		.document {
 			box-shadow: none;
 		}
@@ -392,7 +603,7 @@ body.taking-screenshot .save-to-png {
 			//background: #efefef;
 			cursor: url($base_url + 'images/pencil.png'), pointer; 
 		}
-		&.highlighted {
+		&.highlighted, &:active {
 			background: rgba(230, 230, 230, 0.75);
 			background-blend-mode: screen;
 			cursor: url($base_url + 'images/pencil.png'), pointer; 
@@ -1006,6 +1217,28 @@ button.blue-button {
 	}
 }
 
+#tagging-interface {
+	&.loading {
+		#sentence-tagging .document-container //, #tagging-menu, #pagination > *
+	 	{
+			opacity: 0.6;
+			pointer-events: none;
+		}
+	}
+	.loading-message {
+		position: fixed;
+		top: calc(50% - 30px);
+		left: 22%;
+		width: 78%;
+		text-align: center;
+		font-size: 32px;
+		color: #777;
+		z-index: 10000;		
+		i {
+			margin-right: 20px;
+		}
+	}
+}
 
 #tagging-menu {
 	position: fixed;
@@ -1100,6 +1333,10 @@ button.blue-button {
 			}
 			&.down:before {
 				content: "\f078";
+			}
+			&.down {
+				height: $navbar-height;
+				line-height: 50px;
 			}
 		}
 
@@ -1497,6 +1734,9 @@ a#untag-tokens {
 		background: white;
 		border: 2px solid #222;
 	}
+	> ul:not(.dragging) li:hover span.drag-handle {
+		opacity: 1;
+	}
 	ul {
 		box-sizing: border-box;
 		padding: 0;
@@ -1570,6 +1810,7 @@ a#untag-tokens {
 				
 			}
 			
+			
 			span.drag-handle {
 				width: 24px;	// The width of the drag handle is much larger than it appears to make it easier to click
 				display: inline-block;
@@ -1577,6 +1818,7 @@ a#untag-tokens {
 				margin-top: 6px;
 				margin-left: -4px;
 				position: absolute;
+				opacity: 0;
 				&:before {	// Pseudo elements are necessary to draw the borders correctly
 					border-left: 2px dotted #aaa;
 					content: " ";

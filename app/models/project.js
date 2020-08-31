@@ -176,13 +176,21 @@ ProjectSchema.methods.getNumDocumentGroupAnnotations = function(next) {
   return DocumentGroupAnnotation.count({ project_id: this._id }).exec(next);  
 }
 
+
+// Return the document groups annotated by the user for this project.
+ProjectSchema.methods.getDocumentGroupsAnnotatedByUser = function(user, next) {
+  DocumentGroupAnnotation = require('./document_group_annotation');
+  return DocumentGroupAnnotation.find( {project_id: this._id, user_id: user._id }).sort({created_at: 'asc'}).exec(next);
+}
+
+
 // Return the number of document groups annotated by the user for this project.
 ProjectSchema.methods.getDocumentGroupsAnnotatedByUserCount = function(user, next) {
   DocumentGroupAnnotation = require('./document_group_annotation');
   return DocumentGroupAnnotation.count( {project_id: this._id, user_id: user._id }).exec(next);
 }
 
-// Return the number of documents annotated by the user for this project. More correct than the DocumentGroups method above.
+// Return the number of *documents* (not documentGroups) annotated by the user for this project. More correct than the DocumentGroups method above.
 ProjectSchema.methods.getDocumentsAnnotatedByUserCount = function(user, next) {
   var t = this;
   var DocumentGroupAnnotation = require('./document_group_annotation');
@@ -199,14 +207,13 @@ ProjectSchema.methods.getDocumentsAnnotatedByUserCount = function(user, next) {
       }
     }
   ], function(err, results) {
+    console.log(results, "<<<");
     if(results.length > 0)
       var count = results[0].count;
     else
       var count = 0;
     return next(err, count);
   });
-
-
 }
 
 // Retrieve a list of all annotators of the project: the active, inactive, and declined users, as well as the pending invitations.

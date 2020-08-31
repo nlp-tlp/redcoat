@@ -11,7 +11,7 @@ import _ from 'underscore';
 import html2canvas from 'html2canvas';
 import { saveAs } from 'file-saver';
 import domtoimage from 'dom-to-image';
-
+var dateFormat = require('dateformat');
 
 // https://stackoverflow.com/questions/3169786/clear-text-selection-with-javascript
 function clearWindowSelection() {
@@ -25,6 +25,26 @@ function clearWindowSelection() {
     document.selection.empty();
   }
 }
+
+
+// Function for getting value from a cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+
 
 
 // The navbar, which appears at the top of the page.
@@ -44,7 +64,7 @@ class Navbar extends Component {
             </a>
           </div>
         </div>
-        <div className="navbar-centre">Tagging Interface (WIP)</div>
+        <div className="navbar-centre">{this.props.pageTitle}</div>
         <div className="navbar-right">
           <div className="dropdown-menu short">
             <a href="features">v1.0</a>
@@ -384,7 +404,7 @@ class DocumentContainer extends Component {
     return (
       <div className={"document-container" + (this.props.confidence ? " conf conf-" + this.props.confidence : "")}>
         <div className="document">
-          <div className="sentence-index"><span className="inner">{this.props.index + 1}</span></div>
+          <div className="sentence-index"><span className="inner">{this.props.displayIndex}</span></div>
           <Sentence 
             index={this.props.index}
             words={this.props.words}              
@@ -833,7 +853,9 @@ class TaggingInterface extends Component {
       // Data (from the server)
       data: {
         documentGroup: [],
-        categoryHierarchy: {'children': []}
+        categoryHierarchy: {'children': []},
+        pageNumber: -1,
+        annotatedDocGroups: -1,
       },
 
       // Annotations array
@@ -859,10 +881,59 @@ class TaggingInterface extends Component {
       holdingCtrl: false, // Whether the user is currently holding the ctrl key.
       holdingShift: false, // Whether the user is currently holding the shift key.
 
-      entityColourMap: {} // A mapping of the top-level entity classes to a colour
+      entityColourMap: {}, // A mapping of the top-level entity classes to a colour
 
+      docGroupLastModified: null, // Stores when the current document group was last saved.
+
+      pageNumber: -1,
+      totalPages: -1,
+
+      changesMade: false, // Stores whether the user has made any changes to the current document group.
+      recentlySaved: false, // Whether the doc group has been recently saved
+
+      selectionChangeFn: null,
+      windowMouseUpFn: null,
+
+      loading: {  // Stores whether this interface is currently requesting a docgroup from the server, or saving one
+        querying: true,
+        saving: false,
+        firstLoad: true,
+      }
 
     }    
+  }
+
+
+
+  // When the user highlights text anywhere on the page, this function captures the event.
+  // If the user never selected a word to begin with, nothing happens.
+  // All it does is apply the 'highlighted' class onto any words that were caught in the highlighting.
+  // This function is purely stylistic, i.e. it doesn't affect any other components etc.
+  selectionChange(e, words) {
+    if(this.state.currentSelection.wordStartIndex < 0) {
+      return;
+    }
+    var sel = window.getSelection && window.getSelection();
+
+    if (sel && sel.rangeCount > 0) {
+      var r =  getRangeSelectedNodes(sel.getRangeAt(0));  
+      words.removeClass('highlighted');
+      $(r).find('.word-inner').addClass('highlighted');  
+    }
+  }
+
+  // When the user releases the mouse, remove all highlighting from words (i.e. the words in the selection).
+  // If the user never selected a word to begin with (i.e. wordStartIndex < 0), clear all selections.
+  windowMouseUp(e, words) {
+    words.removeClass('highlighted');
+    if(this.state.currentSelection.wordStartIndex < 0) {
+      clearWindowSelection();
+      return;
+    }
+    if(!e.target.classList.contains('word-inner')) { // Ensure that the user is not hovering over a word            
+      var sentenceIndex = this.state.currentSelection.sentenceIndex;
+      this.updateSelections(sentenceIndex, this.state.data.documentGroup[sentenceIndex].length - 1, 'up');
+    } 
   }
 
   /* Mouse and keyboard events */
@@ -871,40 +942,26 @@ class TaggingInterface extends Component {
   // Note that in order to see the default browser highlighting the CSS file needs to be modified (it makes it invisible).
   // Another for when the user releases the mouse anywhere on the page.
   // Note that the majority of the mouse events are not in this function but are passed down to the Word elements via updateSelections.
+  // The event listeners need to be removed and reapplied to prevent duplication.
   initMouseEvents() {
 
-    var words = $('.word-inner')
+    var words = $('.word-inner');
 
-    // When the user highlights text anywhere on the page, this function captures the event.
-    // If the user never selected a word to begin with, nothing happens.
-    // All it does is apply the 'highlighted' class onto any words that were caught in the highlighting.
-    // This function is purely stylistic, i.e. it doesn't affect any other components etc.
-    document.addEventListener("selectionchange", event =>{
-      if(this.state.currentSelection.wordStartIndex < 0) {
-        return;
-      }
-      var sel = window.getSelection && window.getSelection();
+    var selectionChangeFn = (e) => this.selectionChange(e, words);
+    var windowMouseUpFn = (e) => this.windowMouseUp(e, words);
+    
+    // Remove the old event listeners.
+    document.removeEventListener("selectionchange", this.state.selectionChangeFn);   
+    window.removeEventListener('mouseup', this.state.windowMouseUpFn);
 
-      if (sel && sel.rangeCount > 0) {
-        var r =  getRangeSelectedNodes(sel.getRangeAt(0));  
-        words.removeClass('highlighted');
-        $(r).find('.word-inner').addClass('highlighted');          
-      }
-    })
-
-    // When the user releases the mouse, remove all highlighting from words (i.e. the words in the selection).
-    // If the user never selected a word to begin with (i.e. wordStartIndex < 0), clear all selections.
-    window.addEventListener('mouseup', (e) => {
-      words.removeClass('highlighted');
-      if(this.state.currentSelection.wordStartIndex < 0) {
-        clearWindowSelection();
-        return;
-      }
-      if(!e.target.classList.contains('word-inner')) { // Ensure that the user is not hovering over a word            
-        var sentenceIndex = this.state.currentSelection.sentenceIndex;
-        this.updateSelections(sentenceIndex, this.state.data.documentGroup[sentenceIndex].length - 1, 'up');
-      }        
-    });
+    this.setState({
+      selectionChangeFn: selectionChangeFn,
+      windowMouseUpFn: windowMouseUpFn
+    }, () => {
+      // Add the new event listeners.
+      document.addEventListener("selectionchange", this.state.selectionChangeFn);
+      window.addEventListener('mouseup', this.state.windowMouseUpFn);
+    });    
   }
 
   // Set up the key binds (ctrl, shift, left right up down etc).
@@ -1043,7 +1100,9 @@ class TaggingInterface extends Component {
 
   // Sets up an array to store the annotations with the same length as docGroup.
   // Prepopulate the annotations array with the automaticAnnotations if available (after converting them to BIO).
+  // This could be either the dictionary-based annotations or the annotations that the user has previously entered.
   initAnnotationsArray(documents, automaticAnnotations) {
+
     var annotations = new Array(documents.length);
     for(var doc_idx in documents) {
       annotations[doc_idx] = new Array(documents[doc_idx].length);
@@ -1056,9 +1115,9 @@ class TaggingInterface extends Component {
 
     // Load annotations from the automaticAnnotations array if present.
     for(var doc_idx in automaticAnnotations) {
-      for(var mention_idx in automaticAnnotations[doc_idx]) {
+      for(var mention_idx in automaticAnnotations[doc_idx]['mentions']) {
 
-        var mention = automaticAnnotations[doc_idx][mention_idx];
+        var mention = automaticAnnotations[doc_idx]['mentions'][mention_idx];
         var start = mention['start'];
         var end = mention['end'];
 
@@ -1106,42 +1165,195 @@ class TaggingInterface extends Component {
     });
   }
 
+  // Remove min-width from words that do not have a tag
+  // (necessary to call between pages)
+  clearWordJustification() {
+    $('.word:not(.tag) .word-inner').each((i, ele) => {
+       $(ele).css('min-width', 'auto');
+    })
+  }
+
+  // Load the next page by calling the API.
+  // Query without a page number (i.e. request the latest group)
+  // if the user is looking at the group before the latest group.
+  //
+  // TODO: Make it so that when the user has made a change to the group they're looking at,
+  // pop up a confirmation window to confirm their changes before loading the next page?
+  loadNextPage() {
+    var nextPageNumber = this.state.pageNumber + 1;
+    if(nextPageNumber === (this.state.totalPages)) {
+      this.queryAPI(false);
+    } else {
+      this.queryAPI(false, nextPageNumber);
+    }
+  }
+
+  // Load the previous page by calling the API.
+  loadPreviousPage() {
+    this.queryAPI(false, this.state.pageNumber - 1);
+  }
+
+  /* API calls */
+
+  queryAPI(firstLoad, pageNumber) {
+    const fetchConfig = {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    };
+    var route = 'getDocumentGroup';
+
+    // If this function was called with a pageNumber, load a specific documentGroupAnnotation.
+    if(pageNumber) {
+      route = 'getPreviouslyAnnotatedDocumentGroup?pageNumber=' + pageNumber;
+    }
+
+    this.setState({
+      loading: {
+        querying: true,
+        saving: false,
+        firstLoad: firstLoad,
+      }
+    }, function() {
+      fetch('http://localhost:3000/projects/' + this.state.project_id + '/tagging/' + route, fetchConfig) // TODO: move localhost out
+        .then(response => response.text())
+        .then((data) => {         
+          try { 
+            var d = JSON.parse(data);
+          } catch(err) {
+            alert(data);
+          }
+          this.setState(
+            {
+              data: d,
+              entityColourMap: this.initEntityColourMap(d.categoryHierarchy.children),
+              confidences: this.initConfidencesArray(d.documentGroup),
+              annotations: this.initAnnotationsArray(d.documentGroup, d.automaticAnnotations),
+              selections: this.getEmptySelectionsArray(d.documentGroup.length),
+              mostRecentSelectionText: null,
+              pageNumber: d.pageNumber,
+              totalPages: d.annotatedDocGroups + 1,
+              docGroupLastModified: d.lastModified,
+              changesMade: false,
+              recentlySaved: false,
+              loading: {
+                querying: false,
+                saving: false
+              },
+            }, () => { 
+              console.log("Data:", this.state.data);
+
+              // Initialise keybinds and mouse events only on the first API call.
+              if(!firstLoad) {
+                this.initKeybinds();              
+                this.initHotkeyMap(this.state.data.categoryHierarchy.children);   
+              }
+
+              this.initMouseEvents();
+              this.clearWordJustification();    
+              this.justifyWords();    
+              this.selectFirstWord();
+
+              window.scrollTo(0, 0);
+
+
+
+            })
+        });
+        
+
+    }.bind(this));
+  }
+
+  // Convert the annotations array into JSON.
+  annotationsToJSON() {
+    var annotations = this.state.annotations;
+    var annotationsJSON = [];
+    for(var doc_idx in annotations) {
+        
+      var docLabels = [];
+      for(var token_idx in annotations[doc_idx]) {
+        var ann = annotations[doc_idx][token_idx];
+        if(ann.entityClasses) {
+          docLabels.push([ann.bioTag + "-", ann.entityClasses]);
+        } else {
+          docLabels.push([""])
+        }
+      }
+      annotationsJSON.push(docLabels);
+    }
+    return annotationsJSON;
+  }
+
+
+  // Submit the annotations of the document group that the user is currently looking at.
+  // TODO: Maybe make it so that you can't save the annoations until the user has put all their confidences in?
+  // Or perhaps do a check and pop a confirmation window up if they click save without doing anything to >= 1 document
+  submitAnnotations() {
+
+    const csrfToken = getCookie('csrf-token');
+
+    var annotationsJSON = this.annotationsToJSON();
+
+    const fetchConfig = {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'csrf-token': csrfToken,
+      },
+      dataType: "json",
+      body: JSON.stringify({
+        documentGroupId: this.state.data.documentGroupId,
+        documentGroupAnnotationId: this.state.data.documentGroupAnnotationId,
+        labels: annotationsJSON
+      }),  
+    };
+
+    console.log(this.state.data.documentGroupAnnotationId);
+
+    fetch('http://localhost:3000/projects/' + this.state.project_id + '/tagging/submitAnnotations', fetchConfig) // TODO: move localhost out
+    .then(response => response.text())
+    .then((data) => {
+      try { 
+        var d = JSON.parse(data);
+        console.log("Submitted annotations OK");
+
+        // If the user is on the last page (i.e. the 'current group'), add one to the totalPages array so that the user can
+        // click 'Next' to go to the latest doc group.
+        if(this.state.pageNumber === this.state.totalPages) {
+          var newTotalPages = this.state.totalPages + 1;
+        } else {
+          var newTotalPages = this.state.totalPages;
+        }
+
+        this.setState({
+           docGroupLastModified: Date.now(),
+           totalPages: newTotalPages,
+           changesMade: false,
+           recentlySaved: true,
+        });
+      } catch(err) {
+        console.log(err);
+        alert(data);
+      }
+      
+      //this.queryAPI(this.state.data.pageNumber + 1);
+    });
+  }
+
   /* Mounting function */
 
   // When this component is mounted, call the API.
   // Set up the keybinds and mouseup event when done.
   componentWillMount() {
+    var project_id = '-krXeW3R2'; // TODO: Determine pid via URL
 
-    const fetchConfig = {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      };
-
-    var pid = 'RtJp98vxk'; // TODO: Determine pid via URL
-
-    fetch('http://localhost:3000/projects/' + pid + '/tagging/getDocumentGroup', fetchConfig) // TODO: move localhost out
-      .then(response => response.text())
-      .then((data) => {         
-        var d = JSON.parse(data);
-        this.setState(
-          {
-            data: d,
-            entityColourMap: this.initEntityColourMap(d.categoryHierarchy.children),
-            confidences: this.initConfidencesArray(d.documentGroup),
-            annotations: this.initAnnotationsArray(d.documentGroup, d.automaticAnnotations),
-            selections: this.getEmptySelectionsArray(d.documentGroup.length)
-          }, () => { 
-            console.log("Data:", this.state.data);
-            this.initKeybinds();
-            this.initMouseEvents();
-            this.initHotkeyMap(this.state.data.categoryHierarchy.children);
-            
-            this.justifyWords();            
-          })
-      });
+    this.setState({
+      project_id: project_id
+    }, () => { this.queryAPI(true) });
   }  
 
   /* Selection functions */
@@ -1211,9 +1423,22 @@ class TaggingInterface extends Component {
     var selections = new Array(numDocs);
     for(var i = 0; i < selections.length; i++) {
       selections[i] = new Array();
-    }
+    }    
     return selections;
   }  
+
+  // Select the first word in the first sentence.
+  // (called when a new group is loaded).
+  selectFirstWord() {
+    var selections = this.state.selections;
+    selections[0].push({
+      wordStartIndex: 0,
+      wordEndIndex: 0
+    });
+    this.setState({
+      selections: selections
+    });
+  }
 
   // Clear all active selections by resetting the selections array.
   clearSelections() {
@@ -1360,8 +1585,6 @@ class TaggingInterface extends Component {
           }
         }
 
-
-
         /* 2. Overlapping spans */
         // Check for any spans that this new span will cut into.
         // First, check to the left and adjust the spanEndIdx of all Annotation objects
@@ -1477,6 +1700,12 @@ class TaggingInterface extends Component {
     }
 
     console.log(event);
+    if(eventAction === "Applied label" || eventAction === "Deleted label") {
+      this.setState({
+        changesMade: true,
+        recentlySaved: false,
+      })
+    }
 
   }
 
@@ -1485,24 +1714,59 @@ class TaggingInterface extends Component {
 
   render() {
   
+    var groupName = <span>Group <b>{this.state.pageNumber}</b> of <b>{this.state.totalPages}</b></span>
+    var latestGroup = (this.state.totalPages) === this.state.pageNumber
+
+    var lastModified = this.state.docGroupLastModified ? "Saved on " + dateFormat(this.state.docGroupLastModified, 'dd mmm') + ' at ' + dateFormat(this.state.docGroupLastModified, 'h:MM tt') : (this.state.changesMade ? "Changes not saved" : "");
+
+    var saveButton = <button className={"save-button" + (this.state.changesMade ? "" : (this.state.recentlySaved ? " recently-saved" : " disabled"))} onClick={this.submitAnnotations.bind(this)}><i className={"fa fa-" + (this.state.recentlySaved ? "check" : "save")}></i>{ this.state.recentlySaved ? "Saved" : "Save"}</button>
+
+
     return (
-      <div id="tagging-interface">
-        <div id="tagging-container">
-          <div id="sentence-tagging">
+      <div id="app">      
+        <Navbar pageTitle={"Annotating project: " + this.state.data.projectName}/>  
+        <div id="tagging-interface" className={this.state.loading.querying ? "loading" : ""}>
+
+
+
+          <div id="tagging-container">
+            <div id="sentence-tagging">
+
+              { this.state.loading.firstLoad && 
+              <div class="loading-message">
+                <i class="fa fa-cog fa-spin"></i>Loading...
+              </div>
+              }
+
+
+              <div id="pagination">
+                <div className="page-button-container previous-page"><button className={(this.state.pageNumber === 1 ? " disabled" : "")} onClick={this.loadPreviousPage.bind(this)}><i className="fa fa-chevron-left"></i>Prev</button></div>
+                <div className="filler-left"></div>
+                <div className="current-page-container"><span className="group-name">{ groupName }</span></div>
+
+                <div className="group-last-modified">{ lastModified }</div>
+                <div className="page-button-container ">{ saveButton }</div>
+
+                <div className="page-button-container next-page"><button className={(latestGroup ? " disabled" : "")}  onClick={this.loadNextPage.bind(this)}>Next<i className="fa fa-chevron-right"></i></button></div>
+              </div>
+
+
               <div className="document-container header">
                 <div className="document header">
                   <div className="sentence-index"></div>
                   <div className="sentence">Document</div>
                   <div className="confidence-buttons">Confidence</div>
                 </div>
-
               </div>
+
+
             
               { this.state.data.documentGroup.map((doc, i) => 
 
                 <DocumentContainer
                   key={i}
-                  index={i}
+                  index={ i }
+                  displayIndex={( (this.state.pageNumber - 1) * 10 ) + i + 1  }
                   words={doc}              
                   annotations={this.state.annotations[i]}  
                   confidence={this.state.confidences[i]}
@@ -1514,23 +1778,25 @@ class TaggingInterface extends Component {
                 />
                 )}
 
+
+            </div>
           </div>
+          <div id="tagging-menu">
+            <WikipediaSummary tokens={this.state.mostRecentSelectionText}/>
+            <HotkeyInfo 
+              chain={this.state.hotkeyChain}
+              entityClass={this.state.reverseHotkeyMap[this.state.hotkeyChain.join('')]}
+            />            
+            
+            <CategoryHierarchy
+              items={this.state.data.categoryHierarchy.children}
+              hotkeyMap={this.state.hotkeyMap}
+              hotkeyChain={this.state.hotkeyChain.join('')}
+              initHotkeyMap={this.initHotkeyMap.bind(this)}
+              applyTag={this.applyTag.bind(this)}              
+            />
+          </div>      
         </div>
-        <div id="tagging-menu">
-          <WikipediaSummary tokens={this.state.mostRecentSelectionText}/>
-          <HotkeyInfo 
-            chain={this.state.hotkeyChain}
-            entityClass={this.state.reverseHotkeyMap[this.state.hotkeyChain.join('')]}
-          />            
-          
-          <CategoryHierarchy
-            items={this.state.data.categoryHierarchy.children}
-            hotkeyMap={this.state.hotkeyMap}
-            hotkeyChain={this.state.hotkeyChain.join('')}
-            initHotkeyMap={this.initHotkeyMap.bind(this)}
-            applyTag={this.applyTag.bind(this)}              
-          />
-        </div>      
       </div>
     )
   }
@@ -1539,12 +1805,18 @@ class TaggingInterface extends Component {
 
 // The app, which renders the navbar and the tagging interface inside a container.
 function App() {
-  return (
-    <div id="app">
-      <Navbar/>  
-      <TaggingInterface/>
-    </div>
+  return (    
+    <TaggingInterface/>   
   );
 }
 
+
+
 export default App;
+
+// Old code
+/* 
+<div className="submit-annotations-container">
+  <button className="submit-annotations-button" onClick={this.submitAnnotations.bind(this)}>Submit annotations <i className="fa fa-chevron-right"></i></button>
+</div>
+*/

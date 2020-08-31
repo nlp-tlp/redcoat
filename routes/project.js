@@ -17,7 +17,7 @@ verifyUserOwnsProject = function(req, res, next) {
 
 verifyUserInProject = function(req, res, next) {
 	Project.findById(req.params.id, function(err, proj) {
-		console.log(err, proj);
+		//console.log(err, proj);
 		if(err || proj === null) { return res.send("Error: Project does not exist")}
 		if(!proj.projectHasUser(req.user._id)) return res.send("Error: user does not belong to project");
 		next();
@@ -38,6 +38,8 @@ router.get('/:id/tagging', verifyUserInProject, projectController.tagging);
 
 
 router.get('/:id/tagging/getDocumentGroup', verifyUserInProject, projectController.getDocumentGroup);
+router.get('/:id/tagging/getPreviouslyAnnotatedDocumentGroup', verifyUserInProject, projectController.getPreviouslyAnnotatedDocumentGroup);
+
 router.post('/:id/tagging/modify_hierarchy', verifyUserInProject, projectController.modifyHierarchy);
 
 router.post('/:id/tagging/submitAnnotations', verifyUserInProject, projectController.submitAnnotations);

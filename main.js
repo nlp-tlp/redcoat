@@ -107,18 +107,45 @@ passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-app.use(csrf({ cookie: true }));
+app.use(function(req, res, next) {
+
+
+  console.log(req.headers);
+  next(null, req, res);
+})
+
+
+if (app.get('env') !== 'development') {
+  var useCSRF = true;
+  app.use(csrf({ cookie: true }));  
+} else {
+  var useCSRF = false;
+}
+
 
 
 
 // Setup local variables that are used in almost every view.
 app.use(function(req, res, next) {
+
+  
+
   res.locals.base_url = BASE_URL;
-  res.locals.csrfToken = req.csrfToken();
+  
   res.locals.user = req.user;
   res.locals.path = req.path;
   res.locals.project_invitations = null;
-  console.log(req.user, "==")
+
+  if(useCSRF) {
+    var csrfToken = req.csrfToken();
+    res.locals.csrfToken = req.csrfToken();
+    res.cookie('csrf-token', csrfToken);
+    console.log("CSRF:", csrfToken);
+  }
+  //res.cookie('csrf-token', res.locals.csrfToken);
+  //console.log(req.user, "==")
+
+  
 
 
   // If using the development server, log in as 'test'.

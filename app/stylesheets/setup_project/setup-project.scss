@@ -409,7 +409,7 @@ select {
 	background: white;
 	cursor: pointer;
 }
-input:not([type="file"]):not([type=range]), textarea, select, button {
+input:not([type="file"]):not([type=range]), textarea, select, button:not(.pagination-button) {
 	box-sizing: border-box;
 	width: 95%;
 	padding: 10px;
@@ -420,7 +420,7 @@ input:not([type="file"]):not([type=range]), textarea, select, button {
 	border: 2px solid #ddd;
 	transition: border-color 0.2s ease;
 }
-input:not([type="file"]):not([type=range]), textarea, button {
+input:not([type="file"]):not([type=range]), textarea, button:not(.pagination-button) {
 	&:focus {
 		outline: none;
 		border: 2px solid $primary-orange;

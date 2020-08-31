@@ -4,6 +4,7 @@ const path = require('path');
 var appRoot = require('app-root-path');
 
 var Project = require('app/models/project');
+var DocumentGroup = require('app/models/document_group')
 var DocumentGroupAnnotation = require('app/models/document_group_annotation')
 var ProjectInvitation = require('app/models/project_invitation')
 
@@ -39,10 +40,11 @@ module.exports.getProjects = function(req, res) {
 
 
 // The tagging interface.
+
+
 // module.exports.tagging = function(req, res) {
 //   var id = req.params.id;
 //   var user = req.user;
-//   console.log("bing")
 //   Project.findOne({ _id: id }, function(err, proj) {
 //     if(err) {
 //       res.send("error");
@@ -79,8 +81,8 @@ module.exports.getProjects = function(req, res) {
 
 
 module.exports.tagging = function(req, res) {
-
-
+  //console.log("TOKEN:", res.locals.csrfToken);
+ 
   res.sendFile(path.join(appRoot+'/../tagging_interface/build/index.html'));
 }
 
@@ -91,11 +93,11 @@ module.exports.tagging = function(req, res) {
 function runDictionaryTagging(documentGroup, dictionary) {
   // Build the automatic annotations based on the groupData.
   var automaticAnnotations = [];
-  console.log(documentGroup)
+  //console.log(documentGroup)
 
   for(var doc_id = 0; doc_id < documentGroup.length; doc_id++) {
     var doc = documentGroup[doc_id];
-    var anns = [];
+    var mentions = [];
       //console.log(doc)
 
     labeledTokens = new Array(doc.length);
@@ -110,7 +112,7 @@ function runDictionaryTagging(documentGroup, dictionary) {
         var ngram = doc.slice(i, i + ngram_size).join(" ")
 
         if(dictionary.hasOwnProperty(ngram)) {
-          console.log(ngram, "is in the dictionary! Class:", dictionary[ngram])
+          //console.log(ngram, "is in the dictionary! Class:", dictionary[ngram])
           
           var start = i;
           var end = i + ngram_size;
@@ -122,24 +124,21 @@ function runDictionaryTagging(documentGroup, dictionary) {
           }
 
           if(!alreadyLabeled) {
-            anns.push({start: start, end: end, labels: dictionary[ngram]});
+            mentions.push({start: start, end: end, labels: dictionary[ngram]});
             for(var x = i; x < end; x++) {
               labeledTokens[x] = 1;              
             }
           }
         }
-
-
         //console.log('ngram:', ngram)
       }
-
     }
-    automaticAnnotations.push(anns);
+    automaticAnnotations.push({'mentions': mentions});
 
     
   }
 
-  console.log("Automatic annotations:", automaticAnnotations)
+  //console.log("Automatic annotations:", automaticAnnotations)
 
   return automaticAnnotations;
 }
@@ -204,8 +203,60 @@ function txt2json(text, slash) {
 
 
 
+// Retrieve a previously annotated document group for this project.
+// Called when the user navigates between pages.
+module.exports.getPreviouslyAnnotatedDocumentGroup = function(req, res) {
+  var id = req.params.id;
+  try {
+    var pageNumber = parseInt(req.query.pageNumber);
+  } catch(err) {
+    return res.send("Error: could not parse page number");
+  }
+  console.log("Page num:", pageNumber)
+  if(pageNumber < 1) {
+    return res.send("Error: Page number must be >= 1");
+  }
+
+  Project.findOne({ _id: id }, function(err, proj) {
+    if(err) { return res.send("error"); }
+
+    proj.getDocumentGroupsAnnotatedByUser(req.user, function(err, annotatedDocGroups) {
+      if(err) { return res.send("error"); }
+
+      if(pageNumber > annotatedDocGroups.length) {
+        return res.send("Error: Page number must be lower than number of doc groups annotated so far");
+      }
+
+      var dga = annotatedDocGroups[pageNumber - 1];
+
+      var tree = txt2json(slash2txt(proj.category_hierarchy), proj.category_hierarchy)
+
+      DocumentGroup.findById({_id: dga.document_group_id}, function(err, docgroup) {
+        if(err) { return res.send("error: docgroup not found"); }
+        dga.toMentionsJSON(function(err, mentionsJSON) {
+          if(err) { return res.send(err); }
 
 
+          proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, numAnnotatedDocGroups) {
+              res.send({
+                documentGroupId: docgroup._id,
+                documentGroup: docgroup.documents,
+                documentGroupAnnotationId: dga._id,
+                automaticAnnotations: mentionsJSON,
+                entityClasses: proj.category_hierarchy,
+                categoryHierarchy: tree,
+                annotatedDocGroups: numAnnotatedDocGroups,
+                pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\"",
+                pageNumber: pageNumber,  
+                projectName: proj.project_name,     
+                lastModified: dga.updated_at,
+            });
+          });
+        });
+      })
+    });
+  });
+}
 
 // Retrieve a single document group for the tagging interface.
 module.exports.getDocumentGroup = function(req, res) {
@@ -214,8 +265,8 @@ module.exports.getDocumentGroup = function(req, res) {
     if(err) {
       res.send("error");
     }
-    console.log("PROJECT", proj)
-    console.log("USER", req.user)
+    console.log("PROJECT", proj._id)
+    console.log("USER", req.user.username)
 
     proj.recommendDocgroupToUser(req.user, function(err, docgroup) {
       //console.log(err, docgroup)
@@ -231,7 +282,7 @@ module.exports.getDocumentGroup = function(req, res) {
         logger.debug("Sending doc group id: " + docgroup._id)
 
         var tree = txt2json(slash2txt(proj.category_hierarchy), proj.category_hierarchy)
-        console.log("tree:", tree);
+        //console.log("tree:", tree);
 
         if(proj.automatic_tagging_dictionary) {
           var automaticAnnotations = runDictionaryTagging(docgroup.documents, proj.automatic_tagging_dictionary)
@@ -239,7 +290,11 @@ module.exports.getDocumentGroup = function(req, res) {
           var automaticAnnotations = null;
         }
 
-        proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, annotatedDocGroups) {
+       
+
+
+
+        proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, numAnnotatedDocGroups) {
           res.send({
               documentGroupId: docgroup._id,
               documentGroup: docgroup.documents,
@@ -247,15 +302,19 @@ module.exports.getDocumentGroup = function(req, res) {
               //automaticTaggingDictionary: proj.automatic_tagging_dictionary,
               entityClasses: proj.category_hierarchy,
               categoryHierarchy: tree,
-              annotatedDocGroups: annotatedDocGroups,
-              pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\""          
+              annotatedDocGroups: numAnnotatedDocGroups,
+              pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\"",
+              pageNumber: numAnnotatedDocGroups + 1,         
+              projectName: proj.project_name, 
           });
         });
-      }
-      
+      }      
     });
   });
 }
+
+
+
 
 module.exports.submitAnnotations = function(req, res) {
   var User = require('app/models/user');
@@ -264,27 +323,42 @@ module.exports.submitAnnotations = function(req, res) {
   var projectId = req.params.id;
   var labels = req.body.labels;
 
-  console.log("Labels", labels)
 
-  var documentGroupAnnotation = new DocumentGroupAnnotation({
-    user_id: userId,
-    document_group_id: documentGroupId,
-    labels: labels,
-  });
-  documentGroupAnnotation.save(function(err, dga) {
+  var documentGroupAnnotationId = req.body.documentGroupAnnotationId; // if null, this document group annotation is new
 
+
+  var documentGroupAnnotationId = req.body.documentGroupAnnotationId;
+  if(documentGroupAnnotationId) {  
+    DocumentGroupAnnotation.findById({_id: documentGroupAnnotationId}, function(err, documentGroupAnnotation) {
+      if(err) { return res.send("error"); }
+      console.log("DGA:", documentGroupAnnotation);
+      documentGroupAnnotation.labels = labels;
+
+      proceed(req, res, documentGroupAnnotation, false);
+    });
+  } else {
+    var documentGroupAnnotation = new DocumentGroupAnnotation({
+      user_id: userId,
+      document_group_id: documentGroupId,
+      labels: labels,
+    });
+    proceed(req, res, documentGroupAnnotation, true);
+  }
+
+
+  function proceed(req, res, documentGroupAnnotation, newDGA) {
+
+    documentGroupAnnotation.save(function(err, dga) {
     
-    if(err) {
-      logger.error(err.stack);
-      return res.send({error: err})
-    }
-    
-    // Add the docgroup to the user's docgroups_annotated array.
+      if(err) {
+        logger.error(err.stack);
+        return res.send({error: err})
+      }
 
-    //console.log(dga._id)
-    User.findByIdAndUpdate(userId, { $addToSet: { 'docgroups_annotated': documentGroupId }}, function(err) {
-      //console.log(req.user);
-
+      console.log("Saved");
+      
+      // Add the docgroup to the user's docgroups_annotated array.
+      User.findByIdAndUpdate(userId, { $addToSet: { 'docgroups_annotated': documentGroupId }}, function(err) {
         if(err) {
           logger.error(err.stack);
           res.send({error: err})
@@ -292,16 +366,28 @@ module.exports.submitAnnotations = function(req, res) {
 
           DocumentGroup = require('app/models/document_group')
           // Update the document group's times_annotated field
-          DocumentGroup.update({_id: documentGroupId}, { $inc: {times_annotated: 1 } }, function(err) {
 
-            if(err) return res.send("error");
-            logger.debug("Saved document group annotation " + dga._id)
+          if(newDGA) {
+            DocumentGroup.update({_id: documentGroupId}, { $inc: {times_annotated: 1 } }, function(err) {
+              if(err) return res.send("error");
+              logger.debug("Saved document group annotation " + dga._id)
+              res.send({success: true});
+            });
+          } else {
+            logger.debug("Updated document group annotation " + dga._id);
             res.send({success: true});
-
-          });
+          }            
         } 
+      });
     });
-  });
+
+
+  }
+
+
+
+
+  
 }
 
 module.exports.downloadAnnotationsOfUser = function(req, res) {
