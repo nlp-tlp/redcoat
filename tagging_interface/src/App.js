@@ -859,6 +859,9 @@ class TaggingInterface extends Component {
         annotatedDocGroups: -1,
       },
 
+      documentGroupAnnotationId: null, // The ID of the document group annotation object related to the document group the user is currently
+                                       // looking at. Will be null if the doc group has not been annotated by the user yet.
+
       // Annotations array
       annotations: [],  // Stores the user's annotations.
       confidences: [],  // Stores the user's confidences.
@@ -1238,6 +1241,7 @@ class TaggingInterface extends Component {
               pageNumber: d.pageNumber,
               totalPages: d.annotatedDocGroups + 1,
               docGroupLastModified: d.lastModified,
+              documentGroupAnnotationId: d.documentGroupAnnotationId, // Will be null if this doc group has not yet been annotated
               changesMade: false,
               recentlySaved: false,
               loading: {
@@ -1309,7 +1313,7 @@ class TaggingInterface extends Component {
       dataType: "json",
       body: JSON.stringify({
         documentGroupId: this.state.data.documentGroupId,
-        documentGroupAnnotationId: this.state.data.documentGroupAnnotationId,
+        documentGroupAnnotationId: this.state.documentGroupAnnotationId,
         labels: annotationsJSON
       }),  
     };
@@ -1319,6 +1323,10 @@ class TaggingInterface extends Component {
     .then((data) => {
       try { 
         var d = JSON.parse(data);
+
+        console.log(d);
+
+        var documentGroupAnnotationId = d.documentGroupAnnotationId;
         console.log("Submitted annotations OK");
 
         // If the user is on the last page (i.e. the 'current group'), add one to the totalPages array so that the user can
@@ -1342,6 +1350,7 @@ class TaggingInterface extends Component {
            totalPages: newTotalPages,
            changesMade: false,
            recentlySaved: true,
+           documentGroupAnnotationId: documentGroupAnnotationId,
         });
       } catch(err) {
         console.log(err);

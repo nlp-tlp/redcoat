@@ -376,11 +376,11 @@ module.exports.submitAnnotations = function(req, res) {
             DocumentGroup.update({_id: documentGroupId}, { $inc: {times_annotated: 1 } }, function(err) {
               if(err) return res.send("error");
               logger.debug("Saved document group annotation " + dga._id)
-              res.send({success: true});
+              res.send({success: true, documentGroupAnnotationId: dga._id});
             });
           } else {
             logger.debug("Updated document group annotation " + dga._id);
-            res.send({success: true});
+            res.send({success: true, documentGroupAnnotationId: dga._id});
           }            
         } 
       });
