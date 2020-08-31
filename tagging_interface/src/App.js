@@ -166,14 +166,6 @@ const reorder = (list, startIndex, endIndex) => {
   return result;
 };
 
-function animateProgressBar() {
-  var pbi = $(".progress-bar .inner");
-  pbi.addClass("play");
-  console.log(pbi);
-  window.setTimeout(function() {
-    pbi.removeClass("play");
-  }, 1000)
-}
 
 
 // Retrieve a list of ordered items based on an order array.
@@ -907,7 +899,8 @@ class TaggingInterface extends Component {
         querying: true,
         saving: false,
         firstLoad: true,
-      }
+      },
+      showingProgressBar: false, // Whether the progress bar is currently visible
 
     }    
   }
@@ -1250,7 +1243,7 @@ class TaggingInterface extends Component {
               loading: {
                 querying: false,
                 saving: false
-              },
+              },              
             }, () => { 
               console.log("Data:", this.state.data);
 
@@ -1332,7 +1325,13 @@ class TaggingInterface extends Component {
         // click 'Next' to go to the latest doc group.
         if(this.state.pageNumber === this.state.totalPages) {
           var newTotalPages = this.state.totalPages + 1;
-          animateProgressBar(); // Make it look cooler by moving it a little bit
+          this.setState({
+            showingProgressBar: true,
+          }, () => {
+            window.setTimeout(() => this.setState({
+              showingProgressBar: false,
+            }), 3000);
+          })
 
         } else {
           var newTotalPages = this.state.totalPages;
@@ -1725,14 +1724,14 @@ class TaggingInterface extends Component {
 
     // TODO: Move all these to separate components
 
-    var groupName = <span>Group <b>{this.state.pageNumber}</b> of <b>{this.state.data.docGroupsPerUser}</b></span>
+    var groupName = <span className={"group-name" + (this.state.showingProgressBar ? " progress-bar-underneath" : "")}><span>Group <b>{this.state.pageNumber}</b> of <b>{this.state.data.docGroupsPerUser}</b></span></span>
     var latestGroup = (this.state.totalPages) === this.state.pageNumber
 
     var lastModified = this.state.docGroupLastModified ? "Saved on " + dateFormat(this.state.docGroupLastModified, 'dd mmm') + ' at ' + dateFormat(this.state.docGroupLastModified, 'h:MM tt') : (this.state.changesMade ? "Changes not saved" : "");
 
     var saveButton = <button className={"save-button" + (this.state.changesMade ? "" : (this.state.recentlySaved ? " recently-saved" : " disabled"))} onClick={this.submitAnnotations.bind(this)}><i className={"fa fa-" + (this.state.recentlySaved ? "check" : "save")}></i>{ this.state.recentlySaved ? "Saved" : "Save"}</button>
 
-    var progressBar = <div id="tagging-progress-bar"><span className="progress-bar"><span className="inner no-animation" style={{"width": this.state.totalPages / this.state.data.docGroupsPerUser * 100 + "%"}}></span></span></div>
+    var progressBar = <div id="tagging-progress-bar" className={(this.state.showingProgressBar ? "show" : "hide")}><span className="progress-bar"><span className="inner" style={{"width": this.state.totalPages / this.state.data.docGroupsPerUser * 100 + "%"}}></span></span></div>
 
     return (
       <div id="app">      
@@ -1754,7 +1753,7 @@ class TaggingInterface extends Component {
               <div id="pagination">
                 <div className="page-button-container previous-page"><button className={(this.state.pageNumber === 1 ? " disabled" : "")} onClick={this.loadPreviousPage.bind(this)}><i className="fa fa-chevron-left"></i>Prev</button></div>
                 <div className="filler-left"></div>
-                <div className="current-page-container"><span className="group-name">{ groupName }</span>{ progressBar }</div>
+                <div className="current-page-container">{ groupName }{ progressBar }</div>
 
                 <div className="group-last-modified">{ lastModified }</div>
                 <div className="page-button-container ">{ saveButton }</div>

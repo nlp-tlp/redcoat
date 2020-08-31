@@ -131,8 +131,13 @@ body.taking-screenshot .save-to-png {
 
 	.current-page-container {
 		font-size: 0.9em;
+		position: relative;
 		span.group-name {
 			display: block;
+			transition: padding-bottom 0.3s ease;
+			&.progress-bar-underneath {
+				padding-bottom: 18px;
+			}
 		}		
 	}
 
@@ -1726,15 +1731,26 @@ a#untag-tokens {
 // }
 
 #tagging-progress-bar {
-	max-width: 50%;
+	max-width: 70%;
 	margin: 0 auto;
-	width: 100%;
+	
 	margin-top: 5px;
 	position: relative;
 	height: 12px;
 	display: block;
+	opacity: 1;
+	transition: opacity 0.3s ease;
+	&.hide {
+		opacity: 0;
+	}
+	position: absolute;
+	top: 20px;
+	left: 17.5%;
+	width: 100%;
 }
+
 span.progress-bar {
+	width: 50%;
 	height: 100%;
 	background: #666;
 	display: block;
