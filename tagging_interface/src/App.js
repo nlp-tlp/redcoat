@@ -852,6 +852,7 @@ class TaggingInterface extends Component {
       project_id: 'RtJp98vxk', // debug
 
       // Data (from the server)
+      // The data in this object is only changed by calling the queryAPI method.
       data: {
         documentGroup: [],
         categoryHierarchy: {'children': []},
@@ -861,6 +862,8 @@ class TaggingInterface extends Component {
 
       documentGroupAnnotationId: null, // The ID of the document group annotation object related to the document group the user is currently
                                        // looking at. Will be null if the doc group has not been annotated by the user yet.
+                                       // Will be set when querying the API (for a previously annotated document group) or when
+                                       // submitting the annotations of a document group via submitAnnotations().
 
       // Annotations array
       annotations: [],  // Stores the user's annotations.
@@ -1298,6 +1301,11 @@ class TaggingInterface extends Component {
   // TODO: Maybe make it so that you can't save the annoations until the user has put all their confidences in?
   // Or perhaps do a check and pop a confirmation window up if they click save without doing anything to >= 1 document
   submitAnnotations() {
+    if(this.state.recentlySaved) { return; } // If the user clicks on the green save button, provide them with the illusion that it is doing
+                                             // something when in fact nothing actually happens. Prevents people from spam clicking the save and
+                                             // calling the API 5000 times...
+                                             // It's kind of like how google sheets allows you to press Ctrl + S despite it saving every action
+                                             // automatically.
 
     const csrfToken = getCookie('csrf-token');
 
@@ -1453,7 +1461,8 @@ class TaggingInterface extends Component {
       wordEndIndex: 0
     });
     this.setState({
-      selections: selections
+      selections: selections,
+      mostRecentSelectionText: this.state.data.documentGroup[0][0],
     });
   }
 
@@ -1528,7 +1537,7 @@ class TaggingInterface extends Component {
     this.setState({
       currentSelection: currentSelection,
       selections: selections,
-      mostRecentSelectionText: mostRecentSelectionText ? mostRecentSelectionText : this.state.mostRecentSelectionText
+      mostRecentSelectionText: mostRecentSelectionText ? mostRecentSelectionText : this.state.mostRecentSelectionText,
     });
   }
 

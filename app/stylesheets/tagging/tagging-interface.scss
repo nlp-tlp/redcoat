@@ -29,7 +29,9 @@
 
 
 
-
+body.tagging-interface-body {
+	background: #eee;
+}
 #annotation-complete {
 	padding-top: 100px;
 	padding-left: 50px;
@@ -453,7 +455,7 @@ body.taking-screenshot .save-to-png {
 
 
 			
-			min-width: 28.2%; // Equivalent to 22% of the entire page
+			min-width: 22%; 
 
 			.confidence-button {
 				width: 35px;
