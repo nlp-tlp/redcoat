@@ -302,8 +302,17 @@ span.progress-bar {
 			opacity: 0.2;			
 
 		}
-		&:not(.no-animation):before {
-			animation: animatedBackground 40s linear infinite;
+		&:before {
+			animation: animatedBackground 30s linear infinite;
+
+		}
+		&.no-animation:before {
+			-webkit-animation-play-state: paused;
+			animation-play-state: paused;
+		}
+		&.play:before {
+			-webkit-animation-play-state: running;
+			animation-play-state: running;
 		}
 	}
 	.progress-text {

@@ -237,19 +237,22 @@ module.exports.getPreviouslyAnnotatedDocumentGroup = function(req, res) {
           if(err) { return res.send(err); }
 
 
-          proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, numAnnotatedDocGroups) {
-              res.send({
-                documentGroupId: docgroup._id,
-                documentGroup: docgroup.documents,
-                documentGroupAnnotationId: dga._id,
-                automaticAnnotations: mentionsJSON,
-                entityClasses: proj.category_hierarchy,
-                categoryHierarchy: tree,
-                annotatedDocGroups: numAnnotatedDocGroups,
-                pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\"",
-                pageNumber: pageNumber,  
-                projectName: proj.project_name,     
-                lastModified: dga.updated_at,
+          proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
+            proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, numAnnotatedDocGroups) {
+                res.send({
+                  documentGroupId: docgroup._id,
+                  documentGroup: docgroup.documents,
+                  documentGroupAnnotationId: dga._id,
+                  automaticAnnotations: mentionsJSON,
+                  entityClasses: proj.category_hierarchy,
+                  categoryHierarchy: tree,
+                  annotatedDocGroups: numAnnotatedDocGroups,
+                  pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\"",
+                  pageNumber: pageNumber,  
+                  projectName: proj.project_name,     
+                  lastModified: dga.updated_at,
+                  docGroupsPerUser: docGroupsPerUser,
+              });
             });
           });
         });
@@ -293,19 +296,21 @@ module.exports.getDocumentGroup = function(req, res) {
        
 
 
-
-        proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, numAnnotatedDocGroups) {
-          res.send({
-              documentGroupId: docgroup._id,
-              documentGroup: docgroup.documents,
-              automaticAnnotations: automaticAnnotations,
-              //automaticTaggingDictionary: proj.automatic_tagging_dictionary,
-              entityClasses: proj.category_hierarchy,
-              categoryHierarchy: tree,
-              annotatedDocGroups: numAnnotatedDocGroups,
-              pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\"",
-              pageNumber: numAnnotatedDocGroups + 1,         
-              projectName: proj.project_name, 
+        proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
+          proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, numAnnotatedDocGroups) {
+            res.send({
+                documentGroupId: docgroup._id,
+                documentGroup: docgroup.documents,
+                automaticAnnotations: automaticAnnotations,
+                //automaticTaggingDictionary: proj.automatic_tagging_dictionary,
+                entityClasses: proj.category_hierarchy,
+                categoryHierarchy: tree,
+                annotatedDocGroups: numAnnotatedDocGroups,
+                pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\"",
+                pageNumber: numAnnotatedDocGroups + 1,         
+                projectName: proj.project_name, 
+                docGroupsPerUser: docGroupsPerUser,
+            });
           });
         });
       }      

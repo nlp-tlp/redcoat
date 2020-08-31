@@ -1667,62 +1667,94 @@ a#untag-tokens {
 
 
 
-#tagging-progress-bar-background {
-	background: #444;
-	position: fixed;
-	top: $navbar-height;
-	right: 0;
-	width: 15%;
-	padding: 0 9px;
-	padding-right: 27px;
-	height: $tagging-progress-bar-height;
-	z-index: 995; // Navbar has 1000
+// #tagging-progress-bar-background {
+// 	background: #444;
+// 	position: fixed;
+// 	top: $navbar-height;
+// 	right: 0;
+// 	width: 15%;
+// 	padding: 0 9px;
+// 	padding-right: 27px;
+// 	height: $tagging-progress-bar-height;
+// 	z-index: 995; // Navbar has 1000
 
-	&:before {
-		position: absolute;
-		top: 0;
-		left: -70px;
-		background: url($base_url + 'images/corner.png');
-		background-size: 100% 100%;
-		width: 70px;//$tagging-progress-bar-height;
-		height: $tagging-progress-bar-height;
-		content: " ";
-	}
+// 	&:before {
+// 		position: absolute;
+// 		top: 0;
+// 		left: -70px;
+// 		background: url($base_url + 'images/corner.png');
+// 		background-size: 100% 100%;
+// 		width: 70px;//$tagging-progress-bar-height;
+// 		height: $tagging-progress-bar-height;
+// 		content: " ";
+// 	}
 
-	#tagging-project-title {
-		color: white;
-		font-size: 15px;
-		font-weight: bold;
-		margin: 0;
-		margin-top: 1px;
-		display: block;
-		text-align: center;
-	}
+// 	#tagging-project-title {
+// 		color: white;
+// 		font-size: 15px;
+// 		font-weight: bold;
+// 		margin: 0;
+// 		margin-top: 1px;
+// 		display: block;
+// 		text-align: center;
+// 	}
 
-	#tagging-progress-bar {
-		max-width: 100%;
-		margin: 0 auto;
-		width: 100%;
-		margin-top: 5px;
+// 	#tagging-progress-bar {
+// 		max-width: 100%;
+// 		margin: 0 auto;
+// 		width: 100%;
+// 		margin-top: 5px;
 
-		height: 18px;
-		display: block;
-	}
-	span.progress-bar {
+// 		height: 18px;
+// 		display: block;
+// 	}
+// 	span.progress-bar {
+// 		height: 100%;
+// 		background: #666;
+// 		display: block;
+// 		.inner {
+// 			height: 100%;
+// 			display: block;
+// 			background: linear-gradient(lighten($primary-green, 5), lighten($primary-green, 1));
+// 		}
+// 		.progress-text {
+// 			font-size: 14px;
+// 			margin-top: -4px;
+
+// 		}	
+// 	}
+// }
+
+#tagging-progress-bar {
+	max-width: 50%;
+	margin: 0 auto;
+	width: 100%;
+	margin-top: 5px;
+	position: relative;
+	height: 12px;
+	display: block;
+}
+span.progress-bar {
+	height: 100%;
+	background: #666;
+	display: block;
+	position: absolute !important;
+	top: 0;
+	left: 0;
+
+	.inner {
 		height: 100%;
-		background: #666;
 		display: block;
-		.inner {
-			height: 100%;
-			display: block;
-			background: linear-gradient(lighten($primary-green, 5), lighten($primary-green, 1));
-		}
-		.progress-text {
-			font-size: 14px;
-			margin-top: -4px;
-
-		}	
+		position: absolute !important;
+		top: 0;
+		left: 0;
+		background: linear-gradient(lighten($primary-green, 5), lighten($primary-green, 1)) !important;
 	}
+	.progress-text {
+		font-size: 14px;
+		margin-top: -4px;
+
+	}	
 }
 
 
