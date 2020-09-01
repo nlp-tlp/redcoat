@@ -4,6 +4,8 @@ import redcoatMan from './redcoat-1-threshold.png';
 import './stylesheets/stylesheet.scss';
 import {Component} from 'react';
 import $ from 'jquery';
+import { findDOMNode } from 'react-dom';
+
 //const ReactDragListView = require('react-drag-listview');
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import styled from 'styled-components';
@@ -347,8 +349,13 @@ class Label extends Component {
   }
 
   render() {
+
+    var split = this.props.entityClass.split('/');
+    var truncatedLabel = split.length > 1 ? "/" : ""
+    truncatedLabel = truncatedLabel + split[split.length - 1];
+
     return (
-      <span className={"label tag-" + this.props.colourIdx} onClick={(e) => {this.props.deleteTag(this.props.entityClass);  }}><span className="label-name">{this.props.entityClass}</span></span>
+      <span className={"label tag-" + this.props.colourIdx} onClick={(e) => {this.props.deleteTag(this.props.entityClass);  }}><span className="label-name">{truncatedLabel}</span></span>
     )
   }
 }
@@ -360,6 +367,7 @@ class Word extends Component {
     this.state = {
       selected: false,
     }
+    this.wordInnerRef = React.createRef();
   }
 
   // Calls this.props.deleteTag with the index of this word as a parameter.
@@ -367,27 +375,46 @@ class Word extends Component {
     this.props.deleteTag(this.props.index, entityClass);
   }
 
+  // Clear the word justification of this word if it is does not have a label.
+  componentDidUpdate(prevProps, prevState) {
+
+    if(this.props.entityClasses.length > prevProps.entityClasses.length) {
+      console.log(this.props.text);
+    }
+
+    if(this.props.entityClasses.length === 0) {
+
+      var ele =  this.wordInnerRef.current;
+      $(ele).css("min-width", "auto");
+
+      var width = ele.offsetWidth;
+      var newWidth = Math.ceil(width / 25) * 25;
+      $(ele).css('min-width', newWidth + 'px');        
+
+    }
+  }
+
   render() {
 
-    var hasLabel = this.props.annotation.hasLabel();
+    var hasLabel = this.props.entityClasses.length > 0;
 
-    var tagClass = hasLabel ? (" tag " + ((this.props.annotation.bioTag === "B") ? "tag-begin" : "") + (this.props.annotation.isLastInSpan() ? " tag-end" : "")) : "";
+    var tagClass = hasLabel ? (" tag " + ((this.props.bioTag === "B") ? "tag-begin" : "") + (this.props.isLastInSpan ? " tag-end" : "")) : "";
 
     if(hasLabel) {
-      var labels = this.props.annotation.entityClasses.map((entityClass, i) => 
-                  <Label deleteTag={this.deleteTag.bind(this)} key={i} bioTag={this.props.annotation.bioTag} entityClass={entityClass} colourIdx={getColourIdx(entityClass, this.props.entityColourMap)} />
+      var labels = this.props.entityClasses.map((entityClass, i) => 
+                  <Label deleteTag={this.deleteTag.bind(this)} key={i} bioTag={this.props.bioTag} entityClass={entityClass} colourIdx={getColourIdx(entityClass, this.props.entityColourMap)} />
                   )
       
     } else {
       var labels = '';
     }
 
-    var wordColourClass = (hasLabel ? (" tag-" + getColourIdx(this.props.annotation.entityClasses[0], this.props.entityColourMap)) : "")
+    var wordColourClass = (hasLabel ? (" tag-" + getColourIdx(this.props.entityClasses[0], this.props.entityColourMap)) : "")
 
     return (
       <span className={"word" + (this.props.selected ? " selected" : "") + tagClass}>
 
-        <span className={"word-inner" + wordColourClass}
+        <span className={"word-inner" + wordColourClass} ref={this.wordInnerRef}
               onMouseUp=  {() => this.props.updateSelections(this.props.index, 'up')}
               onMouseDown={() => this.props.updateSelections(this.props.index, 'down')}>
           {this.props.text}
@@ -541,10 +568,14 @@ class Sentence extends Component {
                 index={i}
                 text={word}
                 selected={isWordSelected(i)}
-                annotation={this.props.annotations[i]}
+                entityClasses={this.props.annotations[i].entityClasses || []}
+                isLastInSpan={this.props.annotations[i].isLastInSpan()}
+                bioTag={this.props.annotations[i].bioTag}
                 updateSelections={this.updateSelections.bind(this)}
                 entityColourMap={this.props.entityColourMap}
                 deleteTag={this.deleteTag.bind(this)}
+
+
           />)
         }   
         <div className="save-to-png" onClick={this.saveToPng.bind(this)} title="Click to download a .png file of this document"><i className="fa fa-download"></i></div>     
@@ -1835,7 +1866,6 @@ class TaggingInterface extends Component {
       "tokenString": tokenString
     }
 
-    console.log(event);
     if(eventAction === "Applied label" || eventAction === "Deleted label") {
       this.setState({
         changesMade: true,
