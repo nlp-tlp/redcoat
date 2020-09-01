@@ -254,6 +254,52 @@ body.taking-screenshot .save-to-png {
 	}
 }
 
+#tagging-interface {
+	display: flex;
+}
+.tagging-complete-page {
+	#pagination {
+		.page-button-container .save-button {
+			opacity: 0 !important;
+			pointer-events: none;
+		}
+		.page-button-container.next-page {
+			opacity: 0;
+			pointer-events: none;
+		}
+		.group-last-modified {
+			opacity: 0;
+			pointer-events: none;
+		}
+	}
+	.tokens-info {
+		display: none;
+
+	}
+	#category-hierarchy-tree {
+		overflow-y: hidden;
+	}
+	.document-container.header {
+		display: none;
+	}
+}
+#tagging-complete-message {
+	width: 100%;
+	height: calc(100vh - 300px);
+	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-image: url($base_url + 'images/redcoat-1-grey-transparent.png');
+	background-repeat: no-repeat;
+	background-size: contain;
+	background-position: center;
+	span.tagging-complete-text {
+
+	}
+
+}
+
 .submit-annotations-container {
 	padding: 50px 130px;
 	display: flex;
@@ -1749,9 +1795,7 @@ a#untag-tokens {
 	top: 20px;
 	left: 17.5%;
 	width: 100%;
-}
-
-span.progress-bar {
+	span.progress-bar {
 	width: 50%;
 	height: 100%;
 	background: #666;
@@ -1774,6 +1818,9 @@ span.progress-bar {
 
 	}	
 }
+}
+
+
 
 
 

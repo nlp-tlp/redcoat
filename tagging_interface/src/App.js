@@ -1,5 +1,6 @@
 import React from 'react';
 import logo from './favicon.png'
+import redcoatMan from './redcoat-1-threshold.png';
 import './stylesheets/stylesheet.scss';
 import {Component} from 'react';
 import $ from 'jquery';
@@ -908,6 +909,8 @@ class TaggingInterface extends Component {
       },
       showingProgressBar: false, // Whether the progress bar is currently visible
 
+      taggingCompletePage: false, // Set to true when the user is on the 'tagging complete' page.
+
     }    
   }
 
@@ -1227,12 +1230,40 @@ class TaggingInterface extends Component {
     }, function() {
       fetch('http://localhost:3000/projects/' + this.state.project_id + '/tagging/' + route, fetchConfig) // TODO: move localhost out
         .then(response => response.text())
-        .then((data) => {         
+        .then((data) => {
           try { 
             var d = JSON.parse(data);
           } catch(err) {
-            alert(data);
+            alert(err);
+            return;
           }
+
+
+          if(d.tagging_complete) {
+            console.log(d);
+            this.setState({
+              taggingCompletePage: true,
+              totalPages: d.annotatedDocGroups + 1,
+              pageNumber: d.annotatedDocGroups + 1,
+              changesMade: false,
+              recentlySaved: false,
+
+              loading: {
+                querying: false,
+                saving: false,
+              },
+              data: {
+                projectName: d.projectName,
+                documentGroup: [],
+                categoryHierarchy: {'children': []},
+                pageNumber: -1,
+                annotatedDocGroups: -1,
+              },
+            })
+            return;
+          } 
+
+          
           this.setState(
             {
               data: d,
@@ -1250,7 +1281,8 @@ class TaggingInterface extends Component {
               loading: {
                 querying: false,
                 saving: false
-              },              
+              },     
+              taggingCompletePage: false,         
             }, () => { 
               console.log("Data:", this.state.data);
 
@@ -1266,9 +1298,6 @@ class TaggingInterface extends Component {
               this.selectFirstWord();
 
               window.scrollTo(0, 0);
-
-
-
             })
         });
         
@@ -1374,7 +1403,18 @@ class TaggingInterface extends Component {
   // When this component is mounted, call the API.
   // Set up the keybinds and mouseup event when done.
   componentWillMount() {
-    var project_id = '-krXeW3R2'; // TODO: Determine pid via URL
+
+    var pathname = window.location.pathname;
+    var project_id = pathname.split('/')[2];
+    if(pathname === "/") {
+      var project_id = 'RtJp98vxk'; // React development
+    }
+    if(!project_id || project_id.length !== 9) {
+      alert("invalid project");
+      return;
+    }
+
+
 
     this.setState({
       project_id: project_id
@@ -1741,8 +1781,13 @@ class TaggingInterface extends Component {
   render() {
 
     // TODO: Move all these to separate components
+    var taggingCompletePage = this.state.taggingCompletePage;
 
     var groupName = <span className={"group-name" + (this.state.showingProgressBar ? " progress-bar-underneath" : "")}><span>Group <b>{this.state.pageNumber}</b> of <b>{this.state.data.docGroupsPerUser}</b></span></span>
+    if(taggingCompletePage) {
+      groupName = <span className="group-name"><b>Annotation complete!</b></span>
+    }
+
     var latestGroup = (this.state.totalPages) === this.state.pageNumber
 
     var lastModified = this.state.docGroupLastModified ? "Saved on " + dateFormat(this.state.docGroupLastModified, 'dd mmm') + ' at ' + dateFormat(this.state.docGroupLastModified, 'h:MM tt') : (this.state.changesMade ? "Changes not saved" : "");
@@ -1754,7 +1799,7 @@ class TaggingInterface extends Component {
     return (
       <div id="app">      
         <Navbar pageTitle={"Annotating project: " + this.state.data.projectName}/>  
-        <div id="tagging-interface" className={this.state.loading.querying ? "loading" : ""}>
+        <div id="tagging-interface" className={(this.state.loading.querying ? "loading" : "") + (this.state.taggingCompletePage ? " tagging-complete-page" : "")}>
 
 
 
@@ -1762,8 +1807,8 @@ class TaggingInterface extends Component {
             <div id="sentence-tagging">
 
               { this.state.loading.firstLoad && 
-              <div class="loading-message">
-                <i class="fa fa-cog fa-spin"></i>Loading...
+              <div className="loading-message">
+                <i className="fa fa-cog fa-spin"></i>Loading...
               </div>
               }
 
@@ -1773,10 +1818,10 @@ class TaggingInterface extends Component {
                 <div className="filler-left"></div>
                 <div className="current-page-container">{ groupName }{ progressBar }</div>
 
-                <div className="group-last-modified">{ lastModified }</div>
-                <div className="page-button-container ">{ saveButton }</div>
-
+                <div className="group-last-modified">{lastModified }</div>
+                <div className="page-button-container ">{saveButton }</div>
                 <div className="page-button-container next-page"><button className={(latestGroup ? " disabled" : "")}  onClick={this.loadNextPage.bind(this)}>Next<i className="fa fa-chevron-right"></i></button></div>
+              
               </div>
 
 
@@ -1787,6 +1832,8 @@ class TaggingInterface extends Component {
                   <div className="confidence-buttons">Confidence</div>
                 </div>
               </div>
+
+              { taggingCompletePage && <TaggingCompletePage/>}
 
 
             
@@ -1831,6 +1878,28 @@ class TaggingInterface extends Component {
   }
 }
 
+
+class TaggingCompletePage extends Component {
+
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <div id="tagging-complete-message">
+        <span class="tagging-complete-text">
+          <h2>Annotation complete!</h2>
+          <p>Thank you for your participation in this project.</p>
+
+        </span>
+
+
+      </div>
+    )
+
+  }
+}
 
 // The app, which renders the navbar and the tagging interface inside a container.
 function App() {

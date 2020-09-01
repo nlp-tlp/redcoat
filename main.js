@@ -115,15 +115,10 @@ app.use(function(req, res, next) {
 })
 
 
-if (app.get('env') !== 'development') {
-  var useCSRF = true;
-  app.use(csrf({ cookie: true }));  
-} else {
-  var useCSRF = false;
-}
 
+const useCSRF = false; // Set to false when working on the React interface on localhost:4000.
 
-
+if(useCSRF) app.use(csrf({ cookie: true }));
 
 // Setup local variables that are used in almost every view.
 app.use(function(req, res, next) {

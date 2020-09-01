@@ -271,49 +271,55 @@ module.exports.getDocumentGroup = function(req, res) {
     console.log("PROJECT", proj._id)
     console.log("USER", req.user.username)
 
-    proj.recommendDocgroupToUser(req.user, function(err, docgroup) {
-      //console.log(err, docgroup)
+    proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, numAnnotatedDocGroups) {
+      proj.recommendDocgroupToUser(req.user, function(err, docgroup) {
+        //console.log(err, docgroup)
 
-      console.log(err);
-      if(err) {
-        if(err.message == "No document groups left") {
-          return res.send("tagging complete");
-        }
-        return res.send("error");
-      } else {     
-
-        logger.debug("Sending doc group id: " + docgroup._id)
-
-        var tree = txt2json(slash2txt(proj.category_hierarchy), proj.category_hierarchy)
-        //console.log("tree:", tree);
-
-        if(proj.automatic_tagging_dictionary) {
-          var automaticAnnotations = runDictionaryTagging(docgroup.documents, proj.automatic_tagging_dictionary)
-        } else {
-          var automaticAnnotations = null;
-        }
-
-       
-
-
-        proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
-          proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, numAnnotatedDocGroups) {
-            res.send({
-                documentGroupId: docgroup._id,
-                documentGroup: docgroup.documents,
-                automaticAnnotations: automaticAnnotations,
-                //automaticTaggingDictionary: proj.automatic_tagging_dictionary,
-                entityClasses: proj.category_hierarchy,
-                categoryHierarchy: tree,
-                annotatedDocGroups: numAnnotatedDocGroups,
-                pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\"",
-                pageNumber: numAnnotatedDocGroups + 1,         
-                projectName: proj.project_name, 
-                docGroupsPerUser: docGroupsPerUser,
+        console.log(err);
+        if(err) {
+          if(err.message == "No document groups left") {
+            return res.send({
+              tagging_complete: true,
+              annotatedDocGroups: numAnnotatedDocGroups,
+              projectName: proj.project_name,
             });
+          }
+          return res.send("error");
+        } else {     
+
+          logger.debug("Sending doc group id: " + docgroup._id)
+
+          var tree = txt2json(slash2txt(proj.category_hierarchy), proj.category_hierarchy)
+          //console.log("tree:", tree);
+
+          if(proj.automatic_tagging_dictionary) {
+            var automaticAnnotations = runDictionaryTagging(docgroup.documents, proj.automatic_tagging_dictionary)
+          } else {
+            var automaticAnnotations = null;
+          }
+
+         
+
+
+          proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
+            
+              res.send({
+                  documentGroupId: docgroup._id,
+                  documentGroup: docgroup.documents,
+                  automaticAnnotations: automaticAnnotations,
+                  //automaticTaggingDictionary: proj.automatic_tagging_dictionary,
+                  entityClasses: proj.category_hierarchy,
+                  categoryHierarchy: tree,
+                  annotatedDocGroups: numAnnotatedDocGroups,
+                  pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\"",
+                  pageNumber: numAnnotatedDocGroups + 1,         
+                  projectName: proj.project_name, 
+                  docGroupsPerUser: docGroupsPerUser,
+              });
+            
           });
-        });
-      }      
+        }  
+      });
     });
   });
 }
