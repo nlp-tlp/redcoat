@@ -998,6 +998,8 @@ class TaggingInterface extends Component {
   // When the user releases the mouse, remove all highlighting from words (i.e. the words in the selection).
   // If the user never selected a word to begin with (i.e. wordStartIndex < 0), clear all selections.
   windowMouseUp(e, words) {
+    if(e.target.classList.contains('page-input')) return;
+
     words.removeClass('highlighted');
     if(this.state.currentSelection.wordStartIndex < 0) {
       clearWindowSelection();
@@ -1070,6 +1072,7 @@ class TaggingInterface extends Component {
   // Apply the corresponding entity class and reset the hotkey chain.
   hotkeyTimeout() {
     var hotkeyChainStr = this.state.hotkeyChain.join('');
+
     var entityClass = this.state.reverseHotkeyMap[hotkeyChainStr];
     if(entityClass !== undefined) this.applyTag(entityClass);
 
@@ -1087,6 +1090,9 @@ class TaggingInterface extends Component {
   bindHotkeys(e, hotkeyMap) {
     if(e.keyCode < 49 || e.keyCode > 57) return; // Hotkeys are in the range 1-9, which are keyCode 49-57.
     var key = e.keyCode - 48;
+
+    // If user is currently focused on the page input, do nothing.
+    if($("#page-input").is(":focus")) return;
 
     // Update the hotkey chain to include the key that was pressed
     var hotkeyChain = Array.prototype.concat(this.state.hotkeyChain, key);
@@ -1276,6 +1282,14 @@ class TaggingInterface extends Component {
       this.queryAPI(false);
     } else {
       this.queryAPI(false, nextPageNumber);
+    }
+  }
+
+  goToPage(pageNumber) {
+    if(pageNumber === (this.state.totalPagesAvailable)) {
+      this.queryAPI(false);
+    } else {
+      this.queryAPI(false, pageNumber);
     }
   }
 
@@ -1798,6 +1812,7 @@ class TaggingInterface extends Component {
   }
 
   // Deletes the specified tag.
+  // Unlike applyTag, this is applied to a specified sentenceIndex and wordIndex rather than to all current selections.
   deleteTag(sentenceIndex, wordIndex, entityClass) {
     
     var annotations = this.state.annotations;
@@ -1820,7 +1835,7 @@ class TaggingInterface extends Component {
 
     this.setState({
       annotations: annotations
-    })
+    });
 
   }
 
@@ -1905,6 +1920,7 @@ class TaggingInterface extends Component {
                 submitAnnotations={this.submitAnnotations.bind(this)}
                 loadPreviousPage={this.loadPreviousPage.bind(this)}
                 loadNextPage={this.loadNextPage.bind(this)}
+                goToPage={this.goToPage.bind(this)}
               />
 
               <DocumentContainerHeader/>
@@ -2000,13 +2016,79 @@ class ControlBar extends Component {
 
   constructor(props) {
     super(props);
+    this.state =  {
+      pageNumber: null, // The desired page number of the user (not necessarily the one they are currently on).
+      pageNumberError: false,
+    }
+    this.pageInputRef = React.createRef();
+  }
+
+  // clearPageNumberError() {
+  //   this.setState({
+  //     pageNumber: this.props.pageNumber,
+  //     pageNumberError: false,
+  //   })
+  // }
+
+  clearPageNumberInput() {
+    var ele = $(this.pageInputRef.current);
+    ele.val('');
+    ele.blur();
+  }
+
+  goToPage(e) {
+
+    this.clearPageNumberInput();
+
+    if(this.state.pageNumber < 1) {
+      this.setState({
+        pageNumber: 1,
+      }, () => { this.props.goToPage(this.state.pageNumber)});
+    } else if (this.state.pageNumber > this.props.totalPagesAvailable) {
+      this.setState({
+        pageNumber: this.props.totalPagesAvailable,
+      }, () => { this.props.goToPage(this.state.pageNumber)});
+    } else {
+      this.props.goToPage(this.state.pageNumber);
+    }
+ 
+
+    e.preventDefault();
+    return null;
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if(this.props.pageNumber !== prevProps.pageNumber) {
+      this.setState({
+        pageNumber: this.props.pageNumber
+      })
+    }
+  }
+
+
+  changePageNumber(e) {
+    this.setState({
+      pageNumber: e.target.value,
+    });
   }
 
   render() {
 
     var groupName = (
       <span className={"group-name" + (this.props.showingProgressBar ? " progress-bar-underneath" : "")}>
-        <span>Group <b>{this.props.pageNumber}</b> of <b>{this.props.totalPages}</b></span>
+        <span>Group <b>
+          <form onSubmit={this.goToPage.bind(this)}>
+          <input 
+                 id="page-input"
+                 className={"page-input" + (this.state.pageNumberError ? " error" : "")}
+                 placeholder={this.state.pageNumber}
+                 name="page-input"
+                 onChange={(e) => this.changePageNumber(e)}
+                 ref={this.pageInputRef}
+                 />
+          </form>
+          
+        </b> of <b>{this.props.totalPages}</b></span>
       </span>
     );
 

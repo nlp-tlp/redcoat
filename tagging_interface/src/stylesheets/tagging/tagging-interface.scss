@@ -35,10 +35,11 @@
 
 	.word-inner {
 		height: 55px;
-		//transition: margin 0.3s ease;
+		
 	}
 	.word {
 		margin-bottom: 0;
+		//transition: margin 0.3s ease;
 	}
 	.word.selected:not(.tag) {
 		margin-bottom: 1px;
@@ -180,6 +181,23 @@ body.taking-screenshot .save-to-png {
 			transition: padding-bottom 0.3s ease;
 			&.progress-bar-underneath {
 				padding-bottom: 18px;
+			}
+			form {
+				display: inline;
+			}
+
+			input.page-input {
+				width: 50px;
+				padding: 4px;
+				text-align: center;
+				font-size: 1em;
+				margin: 0 4px;
+				&:focus {
+					border: 2px solid $button-blue;
+				}
+				&.error {
+					border-color: $primary-red;
+				}
 			}
 		}		
 	}
@@ -535,6 +553,7 @@ body.taking-screenshot .save-to-png {
 
 			.inner {
 				padding: 20px 50px;
+				padding-right: 20px;
 				font-size: 22px;
 				//border-right: 2px solid #ddd;
 				line-height: 100%;
@@ -1845,29 +1864,30 @@ a#untag-tokens {
 	top: 20px;
 	left: 17.5%;
 	width: 100%;
+	pointer-events: none;
 	span.progress-bar {
-	width: 100%;
-	height: 100%;
-	background: #666;
-	display: block;
-	position: absolute !important;
-	top: 0;
-	left: 0;
-
-	.inner {
+		width: 100%;
 		height: 100%;
+		background: #ddd;
 		display: block;
 		position: absolute !important;
 		top: 0;
 		left: 0;
-		background: linear-gradient(lighten($primary-green, 5), lighten($primary-green, 1)) !important;
-	}
-	.progress-text {
-		font-size: 14px;
-		margin-top: -4px;
 
-	}	
-}
+		.inner {
+			height: 100%;
+			display: block;
+			position: absolute !important;
+			top: 0;
+			left: 0;
+			background: linear-gradient(lighten($primary-green, 5), lighten($primary-green, 1)) !important;
+		}
+		.progress-text {
+			font-size: 14px;
+			margin-top: -4px;
+
+		}	
+	}
 }
 
 
