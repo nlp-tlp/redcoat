@@ -180,7 +180,7 @@ body.taking-screenshot .save-to-png {
 			display: block;
 			transition: padding-bottom 0.3s ease;
 			&.progress-bar-underneath {
-				padding-bottom: 18px;
+				padding-bottom: 15px;
 			}
 			form {
 				display: inline;
@@ -188,7 +188,7 @@ body.taking-screenshot .save-to-png {
 
 			input.page-input {
 				width: 50px;
-				padding: 4px;
+				padding: 2px;
 				text-align: center;
 				font-size: 1em;
 				margin: 0 4px;
@@ -1861,7 +1861,7 @@ a#untag-tokens {
 		opacity: 0;
 	}
 	position: absolute;
-	top: 20px;
+	top: 25px;
 	left: 17.5%;
 	width: 100%;
 	pointer-events: none;

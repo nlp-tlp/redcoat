@@ -794,7 +794,9 @@ class WikipediaSummary extends Component {
     }
   }
 
+
   queryWikipedia() {
+    if(this.state.querying) return; // Don't query multiple things at once
 
     var tokens = this.props.tokens;
 
@@ -2039,6 +2041,11 @@ class ControlBar extends Component {
   goToPage(e) {
 
     this.clearPageNumberInput();
+    if(this.state.pageNumber === '') {
+      this.setState({ pageNumber: this.props.pageNumber })
+      e.preventDefault();
+      return null;
+    }
 
     if(this.state.pageNumber < 1) {
       this.setState({
