@@ -116,7 +116,7 @@ app.use(function(req, res, next) {
 
 
 
-var useCSRF = true; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.
+var useCSRF = false; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.
                      // When not running localhost:4000, this should be set to true.
 if(app.get('env') === 'production') useCSRF = true;
 

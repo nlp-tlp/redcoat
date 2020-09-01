@@ -382,16 +382,18 @@ class Word extends Component {
       var labels = '';
     }
 
+    var wordColourClass = (hasLabel ? (" tag-" + getColourIdx(this.props.annotation.entityClasses[0], this.props.entityColourMap)) : "")
+
     return (
-      <span className={"word" + (this.props.selected ? " selected" : "") + tagClass}
-        
-        >
-        <span className="word-inner"
+      <span className={"word" + (this.props.selected ? " selected" : "") + tagClass}>
+
+        <span className={"word-inner" + wordColourClass}
               onMouseUp=  {() => this.props.updateSelections(this.props.index, 'up')}
               onMouseDown={() => this.props.updateSelections(this.props.index, 'down')}>
           {this.props.text}
         </span>
-        { labels }
+        {labels}
+        
       </span>
     );
   }
@@ -1987,7 +1989,7 @@ class ControlBar extends Component {
 
     var latestGroup = (this.props.totalPagesAvailable) === this.props.pageNumber // Whether the user is looking at the latest group, that they have not yet annotated
 
-    var lastModified = this.props.lastModified ? "Saved on " + dateFormat(this.props.lastModified, 'dd mmm') + ' at ' + dateFormat(this.props.lastModified, 'h:MM tt') : (this.props.changesMade && !this.props.saving ? "Changes not saved" : "");
+    var lastModified = this.props.changesMade ? (this.props.saving ? "" : "Changes not saved") : (this.props.lastModified ? "Saved on " + dateFormat(this.props.lastModified, 'dd mmm') + ' at ' + dateFormat(this.props.lastModified, 'h:MM tt') : "");
 
     return (
       <div id="pagination">
