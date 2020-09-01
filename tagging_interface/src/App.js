@@ -395,6 +395,25 @@ class ConfidenceButtons extends Component {
   }
 }
 
+
+// The document container header, which appears at the top of the sentence tagging page.
+class DocumentContainerHeader extends Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    return (
+      <div className="document-container header">
+        <div className="document header">
+          <div className="sentence-index"></div>
+          <div className="sentence">Document</div>
+          <div className="confidence-buttons">Confidence</div>
+        </div>
+      </div>
+    )
+  }
+}
+
 // A document container, which contains the sentence index (on the left), the sentence, and the confidence buttons.
 class DocumentContainer extends Component {
   constructor(props) {
@@ -752,7 +771,6 @@ class WikipediaSummary extends Component {
           var wurl = "https://en.wikipedia.org/wiki/" + data.query.search[0].title.replace(/ /g, '_');
           return next(title, snippet, wurl);
         } catch(err) {
-          // console.log("No article found.");
           next();
         }
       }
@@ -1124,8 +1142,6 @@ class TaggingInterface extends Component {
 
     if(!automaticAnnotations) return annotations;
 
-    console.log(automaticAnnotations);
-
     // Load annotations from the automaticAnnotations array if present.
     for(var doc_idx in automaticAnnotations) {
       for(var mention_idx in automaticAnnotations[doc_idx]['mentions']) {
@@ -1324,7 +1340,6 @@ class TaggingInterface extends Component {
       }
       annotationsJSON.push(docLabels);
     }
-    console.log(annotationsJSON);
     return annotationsJSON;
   }
 
@@ -1358,46 +1373,58 @@ class TaggingInterface extends Component {
       }),  
     };
 
-    fetch('http://localhost:3000/projects/' + this.state.project_id + '/tagging/submitAnnotations', fetchConfig) // TODO: move localhost out
-    .then(response => response.text())
-    .then((data) => {
-      try { 
-        var d = JSON.parse(data);
-
-        console.log(d);
-
-        var documentGroupAnnotationId = d.documentGroupAnnotationId;
-        console.log("Submitted annotations OK");
-
-        // If the user is on the last page (i.e. the 'current group'), add one to the totalPages array so that the user can
-        // click 'Next' to go to the latest doc group.
-        if(this.state.pageNumber === this.state.totalPages) {
-          var newTotalPages = this.state.totalPages + 1;
-          this.setState({
-            showingProgressBar: true,
-          }, () => {
-            window.setTimeout(() => this.setState({
-              showingProgressBar: false,
-            }), 3000);
-          })
-
-        } else {
-          var newTotalPages = this.state.totalPages;
-        }
-
-        this.setState({
-           docGroupLastModified: Date.now(),
-           totalPages: newTotalPages,
-           changesMade: false,
-           recentlySaved: true,
-           documentGroupAnnotationId: documentGroupAnnotationId,
-        });
-      } catch(err) {
-        console.log(err);
-        alert(data);
+    this.setState({
+      loading: {
+        querying: false,
+        saving: true,
       }
-      
-      //this.queryAPI(this.state.data.pageNumber + 1);
+    }, () => {
+
+      fetch('http://localhost:3000/projects/' + this.state.project_id + '/tagging/submitAnnotations', fetchConfig) // TODO: move localhost out
+      .then(response => response.text())
+      .then((data) => {
+        try { 
+          var d = JSON.parse(data);
+
+          console.log(d);
+
+          var documentGroupAnnotationId = d.documentGroupAnnotationId;
+          console.log("Submitted annotations OK");
+
+          // If the user is on the last page (i.e. the 'current group'), add one to the totalPages array so that the user can
+          // click 'Next' to go to the latest doc group.
+          if(this.state.pageNumber === this.state.totalPages) {
+            var newTotalPages = this.state.totalPages + 1;
+            this.setState({
+              showingProgressBar: true,
+            }, () => {
+              window.setTimeout(() => this.setState({
+                showingProgressBar: false,
+              }), 3000);
+            })
+
+          } else {
+            var newTotalPages = this.state.totalPages;
+          }
+
+          this.setState({
+             docGroupLastModified: Date.now(),
+             totalPages: newTotalPages,
+             changesMade: false,
+             recentlySaved: true,
+             documentGroupAnnotationId: documentGroupAnnotationId,
+             loading: {
+              querying: false,
+              saving: false
+             }
+          });
+        } catch(err) {
+          console.log("ERROR:", err);
+          alert(data);
+        }
+        
+        //this.queryAPI(this.state.data.pageNumber + 1);
+      });
     });
   }
 
@@ -1784,63 +1811,43 @@ class TaggingInterface extends Component {
 
   render() {
 
-    // TODO: Move all these to separate components
+
     var taggingCompletePage = this.state.taggingCompletePage;
-
-    var groupName = <span className={"group-name" + (this.state.showingProgressBar ? " progress-bar-underneath" : "")}><span>Group <b>{this.state.pageNumber}</b> of <b>{this.state.data.docGroupsPerUser}</b></span></span>
-
-    var latestGroup = (this.state.totalPages) === this.state.pageNumber
-
-    var lastModified = this.state.docGroupLastModified ? "Saved on " + dateFormat(this.state.docGroupLastModified, 'dd mmm') + ' at ' + dateFormat(this.state.docGroupLastModified, 'h:MM tt') : (this.state.changesMade ? "Changes not saved" : "");
-
-    var saveButton = <button className={"save-button" + (this.state.changesMade ? "" : (this.state.recentlySaved ? " recently-saved" : " disabled"))} onClick={this.submitAnnotations.bind(this)}><i className={"fa fa-" + (this.state.recentlySaved ? "check" : "save")}></i>{ this.state.recentlySaved ? "Saved" : "Save"}</button>
-
-    var progressBar = <div id="tagging-progress-bar" className={(this.state.showingProgressBar ? "show" : "hide")}><span className="progress-bar"><span className="inner" style={{"width": this.state.totalPages / this.state.data.docGroupsPerUser * 100 + "%"}}></span></span></div>
 
     return (
       <div id="app">      
         <Navbar pageTitle={"Annotating project: " + this.state.data.projectName}/>  
-        <div id="tagging-interface" className={(this.state.loading.querying ? "loading" : "") + (this.state.taggingCompletePage ? " tagging-complete-page" : "")}>
-
-
+        <div id="tagging-interface" className={(this.state.loading.querying ? "loading" : "") + (taggingCompletePage ? " tagging-complete-page" : "")}>
 
           <div id="tagging-container">
             { taggingCompletePage && <TaggingCompletePage/>}
             <div id="sentence-tagging">
 
               { this.state.loading.firstLoad && 
-              <div className="loading-message">
-                <i className="fa fa-cog fa-spin"></i>Loading...
-              </div>
+                <div className="loading-message">
+                  <i className="fa fa-cog fa-spin"></i>Loading...
+                </div>
               }
 
+              <ControlBar
+                showingProgressBar = {this.state.showingProgressBar}
+                pageNumber = {this.state.pageNumber}
+                totalPages = {this.state.data.docGroupsPerUser}
+                totalPagesAvailable = {this.state.totalPages}
+                lastModified={this.state.docGroupLastModified}
+                recentlySaved={this.state.recentlySaved}
+                changesMade={this.state.changesMade}
+                querying={this.state.loading.querying}
+                saving={this.state.loading.saving}
 
-              <div id="pagination">
-                <div className="page-button-container previous-page"><button className={(this.state.pageNumber === 1 ? " disabled" : "")} onClick={this.loadPreviousPage.bind(this)}><i className="fa fa-chevron-left"></i>Prev</button></div>
-                <div className="filler-left"></div>
-                <div className="current-page-container">{ groupName }{ progressBar }</div>
+                submitAnnotations={this.submitAnnotations.bind(this)}
+                loadPreviousPage={this.loadPreviousPage.bind(this)}
+                loadNextPage={this.loadNextPage.bind(this)}
+              />
 
-                <div className="group-last-modified">{lastModified }</div>
-                <div className="page-button-container ">{saveButton }</div>
-                <div className="page-button-container next-page"><button className={(latestGroup ? " disabled" : "")}  onClick={this.loadNextPage.bind(this)}>Next<i className="fa fa-chevron-right"></i></button></div>
-              
-              </div>
-
-
-              <div className="document-container header">
-                <div className="document header">
-                  <div className="sentence-index"></div>
-                  <div className="sentence">Document</div>
-                  <div className="confidence-buttons">Confidence</div>
-                </div>
-              </div>
-
-              
-
-
-            
+              <DocumentContainerHeader/>
+                  
               { this.state.data.documentGroup.map((doc, i) => 
-
                 <DocumentContainer
                   key={i}
                   index={ i }
@@ -1855,7 +1862,6 @@ class TaggingInterface extends Component {
                   deleteTag={this.deleteTag.bind(this)}
                 />
                 )}
-
 
             </div>
           </div>
@@ -1880,6 +1886,96 @@ class TaggingInterface extends Component {
   }
 }
 
+// The humble save button that appears at the top of the page.
+class SaveButton extends Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+
+    var buttonClass = " disabled";
+    if(this.props.changesMade) buttonClass = "";
+    if(this.props.recentlySaved) buttonClass = " recently-saved";
+    if(this.props.saving) buttonClass = " saving";
+
+    var iconClass = "fa-save";
+    if(this.props.recentlySaved) iconClass = "fa-check";
+    if(this.props.saving) iconClass = "fa-cog fa-spin"
+
+    var text = "Save";
+    if(this.props.recentlySaved) text = "Saved";
+    if(this.props.saving) text = "Saving";
+
+    return (
+      <button className={"save-button" + buttonClass} onClick={this.props.submitAnnotations}>
+        <i className={"fa " + iconClass}></i>
+        { text }
+      </button>
+    )
+  }
+}
+
+
+// The progress bar that appears when the user saves a new doc group.
+class ProgressBar extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <div id="tagging-progress-bar" className={(this.props.show ? "show" : "hide")}>
+        <span className="progress-bar">
+          <span className="inner" style={{"width": this.props.totalPagesAvailable / this.props.totalPages * 100 + "%"}}></span>
+        </span>
+      </div>
+    )
+  }
+}
+
+// The 'control bar', which appears at the top of the interface (with page numbers, group number etc).
+class ControlBar extends Component {
+
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+
+    var groupName = (
+      <span className={"group-name" + (this.props.showingProgressBar ? " progress-bar-underneath" : "")}>
+        <span>Group <b>{this.props.pageNumber}</b> of <b>{this.props.totalPages}</b></span>
+      </span>
+    );
+
+    var latestGroup = (this.props.totalPagesAvailable) === this.props.pageNumber // Whether the user is looking at the latest group, that they have not yet annotated
+
+    var lastModified = this.props.lastModified ? "Saved on " + dateFormat(this.props.lastModified, 'dd mmm') + ' at ' + dateFormat(this.props.lastModified, 'h:MM tt') : (this.props.changesMade && !this.props.saving ? "Changes not saved" : "");
+
+    return (
+      <div id="pagination">
+        <div className="page-button-container previous-page">
+          <button className={(this.props.pageNumber === 1 ? " disabled" : "")} onClick={this.props.loadPreviousPage}><i className="fa fa-chevron-left"></i>Prev
+          </button>
+        </div>
+        <div className="filler-left"></div>
+        <div className="current-page-container">
+          { groupName }
+          <ProgressBar 
+            show={this.props.showingProgressBar}
+            totalPagesAvailable={this.props.totalPagesAvailable}
+            totalPages={this.props.totalPages}
+          />
+        </div>
+        <div className="group-last-modified">{lastModified }</div>
+        <div className="page-button-container "><SaveButton changesMade={this.props.changesMade} recentlySaved={this.props.recentlySaved} saving={this.props.saving} submitAnnotations={this.props.submitAnnotations}  /></div>
+        <div className="page-button-container next-page">
+          <button className={(latestGroup ? " disabled" : "")}  onClick={this.props.loadNextPage}>Next<i className="fa fa-chevron-right"></i></button>
+        </div>              
+      </div>
+    )
+  }
+}
 
 class TaggingCompletePage extends Component {
 

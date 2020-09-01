@@ -156,7 +156,7 @@ body.taking-screenshot .save-to-png {
 			margin-right: 10px;
 			background: $primary-blue;
 			color: white;
-			min-width: 100px;
+			min-width: 110px;
 			padding: 5px 10px;
 			//padding-right: 40px;
 			overflow: hidden;
@@ -178,6 +178,10 @@ body.taking-screenshot .save-to-png {
 				&:hover {
 					background: lighten($primary-green, 10); // IDK why you would want to click this again but ok
 				}
+			}
+			&.saving {
+				pointer-events: none;
+				background: #ccc;
 			}
 			.save-and-next {
 				background: lighten($primary-blue, 10);
