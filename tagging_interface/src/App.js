@@ -1124,6 +1124,8 @@ class TaggingInterface extends Component {
 
     if(!automaticAnnotations) return annotations;
 
+    console.log(automaticAnnotations);
+
     // Load annotations from the automaticAnnotations array if present.
     for(var doc_idx in automaticAnnotations) {
       for(var mention_idx in automaticAnnotations[doc_idx]['mentions']) {
@@ -1138,7 +1140,7 @@ class TaggingInterface extends Component {
           for(var k = start; k < end; k++) {
             var bioTag = k === start ? 'B' : "I";
             annotations[doc_idx][k].addLabel(bioTag, label, documents[doc_idx].slice(start, end).join(' '), start, end - 1)
-          }          
+          }
         }
       }        
     }
@@ -1322,6 +1324,7 @@ class TaggingInterface extends Component {
       }
       annotationsJSON.push(docLabels);
     }
+    console.log(annotationsJSON);
     return annotationsJSON;
   }
 

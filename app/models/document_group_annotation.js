@@ -283,6 +283,7 @@ DocumentGroupAnnotationSchema.methods.toMentionsJSON = function(done) {
 				}
 				if(token_idx === (tokens.length - 1)) {
 					if(currentMention) {
+						currentMention.end = token_idx + 1;
 						mentions.push(currentMention);
 					}					
 				}
@@ -296,6 +297,7 @@ DocumentGroupAnnotationSchema.methods.toMentionsJSON = function(done) {
 
 
 		//console.log(err, dg)
+		console.log(">>>>>>>>>", documentJSON[1]['mentions']);
 		
 		return done(null, documentJSON);
 	});
