@@ -32,17 +32,27 @@
 
 #sentence-tagging .sentence {
 
+	.word {
+		//transition: margin 0.3s ease;
+	}
 
 	.word.tag-end {
 		margin-right: 4px;
 	}
 	.word.tag-begin {
+		margin-left: 4px;
 		border-top-left-radius: 4px;
 		overflow: hidden;
+		&:first-child {
+			margin-left: 0;
+		}
 	}
 	.word.tag-end {
 		border-top-right-radius: 4px;
 		overflow: hidden;
+	}
+	.word.tag-end + .word.tag-begin  {
+		margin-left: 0;
 	}
 }
 
@@ -661,7 +671,7 @@ body.taking-screenshot .save-to-png {
 	vertical-align: top;
 	margin-top: 4px;
 	border-bottom: 0;
-
+	cursor: url($base_url + 'images/pencil.png') 3 13, pointer;
 
 
 
@@ -687,17 +697,15 @@ body.taking-screenshot .save-to-png {
 		}
 		
 
-		&:hover {
-			//background: #efefef;
-			cursor: url($base_url + 'images/pencil.png') 3 13, pointer; 
-		}
+
 		&.highlighted, &:active {
 			&:before {
 				background: rgba(240, 240, 240, 0.75);
 				background-blend-mode: screen;
-				cursor: url($base_url + 'images/pencil.png') 3 13, pointer;
+				
 			}
 		}
+
 		&.highlighted, &:hover {			
 			&:after {
 				display: block;
