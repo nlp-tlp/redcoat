@@ -1407,7 +1407,8 @@ class TaggingInterface extends Component {
     var pathname = window.location.pathname;
     var project_id = pathname.split('/')[2];
     if(pathname === "/") {
-      var project_id = 'RtJp98vxk'; // React development
+      //var project_id = 'RtJp98vxk'; // React development (completed project)
+      var project_id = '-krXeW3R2'; // React development (big one)
     }
     if(!project_id || project_id.length !== 9) {
       alert("invalid project");
@@ -1784,9 +1785,6 @@ class TaggingInterface extends Component {
     var taggingCompletePage = this.state.taggingCompletePage;
 
     var groupName = <span className={"group-name" + (this.state.showingProgressBar ? " progress-bar-underneath" : "")}><span>Group <b>{this.state.pageNumber}</b> of <b>{this.state.data.docGroupsPerUser}</b></span></span>
-    if(taggingCompletePage) {
-      groupName = <span className="group-name"><b>Annotation complete!</b></span>
-    }
 
     var latestGroup = (this.state.totalPages) === this.state.pageNumber
 
@@ -1804,6 +1802,7 @@ class TaggingInterface extends Component {
 
 
           <div id="tagging-container">
+            { taggingCompletePage && <TaggingCompletePage/>}
             <div id="sentence-tagging">
 
               { this.state.loading.firstLoad && 
@@ -1833,7 +1832,7 @@ class TaggingInterface extends Component {
                 </div>
               </div>
 
-              { taggingCompletePage && <TaggingCompletePage/>}
+              
 
 
             

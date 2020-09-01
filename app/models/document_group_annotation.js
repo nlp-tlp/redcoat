@@ -49,6 +49,9 @@ var DocumentGroupAnnotationSchema = new Schema({
   }
 });
 
+DocumentGroupAnnotationSchema.index({user_id: 1, document_group_id: 1}, {unique: true, dropDups: true, sparse:true});
+
+
 /* Common methods */
 
 DocumentGroupAnnotationSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists;
@@ -176,6 +179,41 @@ DocumentGroupAnnotationSchema.methods.verifyUserIdListedInProjectUserIds = funct
   });
 }
 
+
+// Validates that this document group annotation object was not created by a user who has already
+// created another DGA for the same document as this one.
+// 
+// No longer necessary because we have a compound index now
+// can use mongodump, drop the collection, and then use mongorestore to get it to work
+// DocumentGroupAnnotationSchema.methods.verifyNotDuplicate = function(next) {
+// 	var t = this;
+
+// 	var DocumentGroup = require('./document_group');  
+// 	var User = require('./user');  
+
+// 	User.findById({_id: t.user_id}, function(err, user) {
+
+// 		console.log(user.docgroups_annotated.length);
+
+// 		var q = { $and: [{ project_id: t.project_id}, { document_group_id: { $in: user.docgroups_annotated }}, { document_group_id: t.document_group_id } ] };
+
+// 		DocumentGroupAnnotation.aggregate([
+// 		  { $match: q, }		
+// 		], function(err, dgas) {
+// 		  console.log(dgas.length, "<>");
+// 		  if(err) return next(err);
+// 		  if(dgas.length > 1) {
+// 		  	e = new Error("User has already annotated this document group.");
+// 		  	return next(e);
+// 		  }
+// 		  next(null);		 
+// 	   	});
+// 	});
+	
+// }
+
+
+
 DocumentGroupAnnotationSchema.methods.updateProjectNumDocumentGroupAnnotations = function(done) {
   var Project = require('./project');
   Project.findById({_id: this.project_id}, function(err, proj) {
@@ -295,7 +333,9 @@ DocumentGroupAnnotationSchema.pre('save', function(next) {
           // 5. Verify user_id of this doc group is in the project's users array
           t.verifyUserIdListedInProjectUserIds(function(err) {          
             if(err) { next(err); return; }
-            next(err);
+            return next(err);
+
+          
 
           });        
         }); 
@@ -317,5 +357,12 @@ DocumentGroupAnnotationSchema.post('save', function(obj) {
 /* Model */
 
 var DocumentGroupAnnotation = mongoose.model('DocumentGroupAnnotation', DocumentGroupAnnotationSchema);
+
+
+
+DocumentGroupAnnotation.createIndexes()
+DocumentGroupAnnotation.on('index', function(err){
+	console.log("ERROR:", err)
+})
 
 module.exports = DocumentGroupAnnotation;

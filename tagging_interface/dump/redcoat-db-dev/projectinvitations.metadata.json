@@ -1,0 +1,1 @@
+{"options":{},"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"redcoat-db-dev.projectinvitations"},{"v":{"$numberInt":"2"},"key":{"project_id":{"$numberInt":"1"}},"name":"project_id_1","ns":"redcoat-db-dev.projectinvitations","background":true}],"uuid":"183eb14e6bbf49838d6e1725182a52ea"}

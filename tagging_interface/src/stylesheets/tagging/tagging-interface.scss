@@ -258,7 +258,16 @@ body.taking-screenshot .save-to-png {
 	display: flex;
 }
 .tagging-complete-page {
+	#sentence-tagging {
+		min-height: 0px;
+		padding: 0;
+		margin: 0;
+	}
 	#pagination {
+		.group-name {
+			opacity: 0;
+			pointer-events: none;
+		}
 		.page-button-container .save-button {
 			opacity: 0 !important;
 			pointer-events: none;
@@ -285,7 +294,7 @@ body.taking-screenshot .save-to-png {
 }
 #tagging-complete-message {
 	width: 100%;
-	height: calc(100vh - 300px);
+	height: calc(100vh);
 	text-align: center;
 	display: flex;
 	align-items: center;
@@ -1796,7 +1805,7 @@ a#untag-tokens {
 	left: 17.5%;
 	width: 100%;
 	span.progress-bar {
-	width: 50%;
+	width: 100%;
 	height: 100%;
 	background: #666;
 	display: block;

@@ -1,0 +1,1 @@
+{"options":{},"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"mudlark-db-dev.projects"},{"v":{"$numberInt":"2"},"unique":true,"key":{"user_id":{"$numberInt":"1"}},"name":"user_id_1","ns":"mudlark-db-dev.projects","background":true}],"uuid":"a70fb65192aa4234a60182ff07694485"}

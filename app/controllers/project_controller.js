@@ -360,7 +360,7 @@ module.exports.submitAnnotations = function(req, res) {
   function proceed(req, res, documentGroupAnnotation, newDGA) {
 
     documentGroupAnnotation.save(function(err, dga) {
-    
+      
       if(err) {
         logger.error(err.stack);
         return res.send({error: err})

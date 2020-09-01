@@ -1,0 +1,1 @@
+{"options":{},"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"rsc-uwa.reports"}],"uuid":"d41f6046d8744653839640a45bfa43cf"}
