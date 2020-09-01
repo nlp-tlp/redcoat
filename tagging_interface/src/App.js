@@ -33,7 +33,6 @@ function clearWindowSelection() {
   }
 }
 
-
 // Function for getting value from a cookie
 function getCookie(name) {
     let cookieValue = null;
@@ -50,25 +49,6 @@ function getCookie(name) {
     }
     return cookieValue;
 }
-
-/* div(class="dropdown-menu")
-        button Projects
-          //span(class="caret") &#9660; 
-        ul(class="dropdown-menu-items")
-          li: a(href="" + base_url + "projects") Projects list
-          li: a(href="" + base_url + "setup-project") Setup project
-          if (recent_projects.length > 0)
-            li.separator Recent projects
-            each project in recent_projects
-              li: a(href="" + base_url + "projects#" + project.project_id) #{project.project_name}
-
-      div(class="dropdown-menu")
-        button Logged in as #{user.username}
-          //span(class="caret") &#9660; 
-        ul(class="dropdown-menu-items")
-          li: a(href="" + base_url + "profile") Profile
-          li: a(href="" + base_url + "logout") Logout*/
-
 
 // The navbar, which appears at the top of the page.
 class Navbar extends Component {
@@ -203,8 +183,6 @@ const reorder = (list, startIndex, endIndex) => {
 
   return result;
 };
-
-
 
 // Retrieve a list of ordered items based on an order array.
 function getOrderedItems(items, order) {
@@ -377,11 +355,6 @@ class Word extends Component {
 
   // Clear the word justification of this word if it is does not have a label.
   componentDidUpdate(prevProps, prevState) {
-
-    if(this.props.entityClasses.length > prevProps.entityClasses.length) {
-      console.log(this.props.text);
-    }
-
     if(this.props.entityClasses.length === 0) {
 
       var ele =  this.wordInnerRef.current;
@@ -614,7 +587,6 @@ function getRangeSelectedNodes(range) {
         return [node.parentNode];
     }
 
-
     // Iterate nodes until we hit the end container
     var rangeNodes = [];
     while (node && node != endNode) {
@@ -630,7 +602,6 @@ function getRangeSelectedNodes(range) {
 
     return rangeNodes;
 }
-
 
 
 // A simple class for displaying information related to the hotkeys the user is currently pressing.
@@ -729,6 +700,7 @@ class Annotation {
     // }
   }
 
+  // Removes all the labels from this annotation and resets the bioTag to "O".
   removeAllLabels() {
     delete this.entityClasses;
     delete this.spanText;
@@ -747,8 +719,8 @@ class Annotation {
     return _.isEqual(this.entityClasses, otherAnnotation.entityClasses);
   }
 
-  // Removes a label from this annotation.
-  // If it was the last label, reset this annotation's bioTag to "O" and delete the entityClasses and text properties.
+  // Removes a specific label from this annotation.
+  // If it was the last label, reset this annotation's bioTag to "O" and delete the entityClasses and other properties.
   removeLabel(entityClass) {
     var index = this.entityClasses.indexOf(entityClass);
     if(index === -1) {
@@ -809,6 +781,7 @@ function prettyPrintAnnotations(documentAnnotations) {
   }
 }
 
+// The Wikipedia summary container, at the top-left.
 class WikipediaSummary extends Component {
 
   constructor(props) {
@@ -967,6 +940,8 @@ class TaggingInterface extends Component {
       // Hotkeys
       hotkeyMap: {},  // Stores a mapping of hotkey to number, e.g. 'item/pump': '11'.
       reverseHotkeyMap: {}, // Stores the reverse of the above (number to hotkey), e.g. '11': 'item/pump'.
+      terminalHotkeys: new Set(),  // Stores the hotkeys of classes that are terminal, e.g. '1', '2' because Item and Activity do not have subclasses
+
       hotkeyChain: [], // Stores the current hotkey chain, e.g. [1, 2, 3] = the user has pressed 1, then 2, then 3 in quick succession
       hotkeyBindingFn: null,  // Stores the function that gets called via an eventlistener when a hotkey is pressed. Must be stored as a state
                               // variable so that it can be detached when the hotkeys change.
@@ -980,8 +955,8 @@ class TaggingInterface extends Component {
 
       docGroupLastModified: null, // Stores when the current document group was last saved.
 
-      pageNumber: -1,
-      totalPages: -1,
+      pageNumber: -1, // The current page number the user is looking at.
+      totalPagesAvailable: -1, // The total number of pages available to the user, e.g. if they have annotated 1 group so far, then it's 2.
 
       changesMade: false, // Stores whether the user has made any changes to the current document group.
       recentlySaved: false, // Whether the doc group has been recently saved
@@ -1118,13 +1093,24 @@ class TaggingInterface extends Component {
     this.setState({
       hotkeyChain: hotkeyChain
     }, () => {
-      // Remove the previous timeout and set up a new one
-      window.clearTimeout(this.state.hotkeyTimeoutFn);      
-      var hotkeyTimeoutFn = window.setTimeout(() => this.hotkeyTimeout(), 333);
 
-      this.setState({
-        hotkeyTimeoutFn: hotkeyTimeoutFn
-      });
+      // Remove the previous timeout and set up a new one
+      window.clearTimeout(this.state.hotkeyTimeoutFn);
+
+
+
+      // Check if hotkey was terminal, i.e. at the leaf of the tree
+      if(this.state.terminalHotkeys.has(hotkeyChain.join(''))) {
+        this.hotkeyTimeout();
+      } else {
+        var hotkeyTimeoutFn = window.setTimeout(() => this.hotkeyTimeout(), 333);
+        this.setState({
+          hotkeyTimeoutFn: hotkeyTimeoutFn
+        });
+      }
+
+            
+      
     });
   }
 
@@ -1132,6 +1118,8 @@ class TaggingInterface extends Component {
   setupHotkeyKeybinds() {
     
     console.log("Setting up hotkey keybinds...")
+
+    console.log(this.state.reverseHotkeyMap);
 
     // Clear the current hotkey binding function and set up a new one.
     document.removeEventListener('keydown', this.state.hotkeyBindingFn);
@@ -1161,16 +1149,18 @@ class TaggingInterface extends Component {
           'activity': [2]
         }
     */
-    function traverseChild(child, index, hotkeyMap, hotkeys, firstPass) {
+    function traverseChild(child, index, hotkeyMap, hotkeys, terminalHotkeys, firstPass) {
       if(!firstPass) {
         hotkeyMap[child.full_name] = hotkeys;
       }
       if(child.children) {
         for(var i = 0; i < Math.min(9, child.children.length); i++) { // Don't go past index 9 so that the hotkeys make sense
-          traverseChild(child.children[i], i + 1, hotkeyMap, Array.prototype.concat(hotkeys, i + 1));
+          traverseChild(child.children[i], i + 1, hotkeyMap, Array.prototype.concat(hotkeys, i + 1), terminalHotkeys);
         }
+      } else {
+        terminalHotkeys.add(hotkeys.join(''));
       }
-      return hotkeyMap;          
+      return {hotkeyMap: hotkeyMap, terminalHotkeys: terminalHotkeys};          
     }    
 
     // Build the reverse of the hotkeyMap, i.e. swap the keys with the values.
@@ -1185,13 +1175,16 @@ class TaggingInterface extends Component {
     }
 
 
-    var hotkeyMap = traverseChild({children: orderedItems}, 1, [], [], true);
+    var d = traverseChild({children: orderedItems}, 1, [], [], new Set(), true);
+    var hotkeyMap = d.hotkeyMap;
+    var terminalHotkeys = d.terminalHotkeys;
     var reverseHotkeyMap = buildReverseHotkeyMap(hotkeyMap);
 
     // Once the hotkeyMap (and reverseHotkeyMap) has been created, set up the hotkey keybinds and call the callback fn.
     this.setState({
       hotkeyMap: hotkeyMap,
-      reverseHotkeyMap: reverseHotkeyMap
+      reverseHotkeyMap: reverseHotkeyMap,
+      terminalHotkeys: terminalHotkeys,
     }, () => { this.setupHotkeyKeybinds(); if(next) next(); });
   }
 
@@ -1279,7 +1272,7 @@ class TaggingInterface extends Component {
   // pop up a confirmation window to confirm their changes before loading the next page?
   loadNextPage() {
     var nextPageNumber = this.state.pageNumber + 1;
-    if(nextPageNumber === (this.state.totalPages)) {
+    if(nextPageNumber === (this.state.totalPagesAvailable)) {
       this.queryAPI(false);
     } else {
       this.queryAPI(false, nextPageNumber);
@@ -1330,7 +1323,7 @@ class TaggingInterface extends Component {
             console.log(d);
             this.setState({
               taggingCompletePage: true,
-              totalPages: d.annotatedDocGroups + 1,
+              totalPagesAvailable: d.annotatedDocGroups + 1,
               pageNumber: d.annotatedDocGroups + 1,
               changesMade: false,
               recentlySaved: false,
@@ -1361,7 +1354,7 @@ class TaggingInterface extends Component {
               selections: this.getEmptySelectionsArray(d.documentGroup.length),
               mostRecentSelectionText: null,
               pageNumber: d.pageNumber,
-              totalPages: d.annotatedDocGroups + 1,
+              totalPagesAvailable: d.annotatedDocGroups + 1,
               docGroupLastModified: d.lastModified,
               documentGroupAnnotationId: d.documentGroupAnnotationId, // Will be null if this doc group has not yet been annotated
               changesMade: false,
@@ -1463,8 +1456,8 @@ class TaggingInterface extends Component {
 
           // If the user is on the last page (i.e. the 'current group'), add one to the totalPages array so that the user can
           // click 'Next' to go to the latest doc group.
-          if(this.state.pageNumber === this.state.totalPages) {
-            var newTotalPages = this.state.totalPages + 1;
+          if(this.state.pageNumber === this.state.totalPagesAvailable) {
+            var newTotalPagesAvailable = this.state.totalPagesAvailable + 1;
             this.setState({
               showingProgressBar: true,
             }, () => {
@@ -1474,12 +1467,12 @@ class TaggingInterface extends Component {
             })
 
           } else {
-            var newTotalPages = this.state.totalPages;
+            var newTotalPagesAvailable = this.state.totalPagesAvailable;
           }
 
           this.setState({
              docGroupLastModified: Date.now(),
-             totalPages: newTotalPages,
+             totalPagesAvailable: newTotalPagesAvailable,
              changesMade: false,
              recentlySaved: true,
              documentGroupAnnotationId: documentGroupAnnotationId,
@@ -1902,7 +1895,7 @@ class TaggingInterface extends Component {
                 showingProgressBar = {this.state.showingProgressBar}
                 pageNumber = {this.state.pageNumber}
                 totalPages = {this.state.data.docGroupsPerUser}
-                totalPagesAvailable = {this.state.totalPages}
+                totalPagesAvailable = {this.state.totalPagesAvailable}
                 lastModified={this.state.docGroupLastModified}
                 recentlySaved={this.state.recentlySaved}
                 changesMade={this.state.changesMade}
