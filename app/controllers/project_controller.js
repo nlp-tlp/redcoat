@@ -252,6 +252,7 @@ module.exports.getPreviouslyAnnotatedDocumentGroup = function(req, res) {
                   projectName: proj.project_name,     
                   lastModified: dga.updated_at,
                   docGroupsPerUser: docGroupsPerUser,
+                  username: req.user.username,
               });
             });
           });
@@ -315,6 +316,7 @@ module.exports.getDocumentGroup = function(req, res) {
                   pageNumber: numAnnotatedDocGroups + 1,         
                   projectName: proj.project_name, 
                   docGroupsPerUser: docGroupsPerUser,
+                  username: req.user.username,
               });
             
           });
@@ -337,8 +339,7 @@ module.exports.submitAnnotations = function(req, res) {
 
   var documentGroupAnnotationId = req.body.documentGroupAnnotationId; // if null, this document group annotation is new
 
-
-  var documentGroupAnnotationId = req.body.documentGroupAnnotationId;
+  // If this is an existing documentGroupAnnotation, find the corresponding record and proceed to save it and send its details to the user
   if(documentGroupAnnotationId) {  
     DocumentGroupAnnotation.findById({_id: documentGroupAnnotationId}, function(err, documentGroupAnnotation) {
       if(err) { return res.send("error"); }
@@ -347,6 +348,8 @@ module.exports.submitAnnotations = function(req, res) {
 
       proceed(req, res, documentGroupAnnotation, false);
     });
+
+  // If this a brand new document group annotation, create a new object to save to the database.
   } else {
     var documentGroupAnnotation = new DocumentGroupAnnotation({
       user_id: userId,
@@ -357,10 +360,11 @@ module.exports.submitAnnotations = function(req, res) {
   }
 
 
+  // Awkward having another function here but it seems to be the best way to keep the code the same for both conditions above.
   function proceed(req, res, documentGroupAnnotation, newDGA) {
 
     documentGroupAnnotation.save(function(err, dga) {
-      
+
       if(err) {
         logger.error(err.stack);
         return res.send({error: err})
@@ -372,23 +376,21 @@ module.exports.submitAnnotations = function(req, res) {
       User.findByIdAndUpdate(userId, { $addToSet: { 'docgroups_annotated': documentGroupId }}, function(err) {
         if(err) {
           logger.error(err.stack);
-          res.send({error: err})
-        } else {
+          return res.send({error: err})
+        }
 
-          DocumentGroup = require('app/models/document_group')
-          // Update the document group's times_annotated field
-
-          if(newDGA) {
-            DocumentGroup.update({_id: documentGroupId}, { $inc: {times_annotated: 1 } }, function(err) {
-              if(err) return res.send("error");
-              logger.debug("Saved document group annotation " + dga._id)
-              res.send({success: true, documentGroupAnnotationId: dga._id});
-            });
-          } else {
-            logger.debug("Updated document group annotation " + dga._id);
+        // Update the document group's times_annotated field
+        if(newDGA) {
+          DocumentGroup.update({_id: documentGroupId}, { $inc: {times_annotated: 1 } }, function(err) {
+            if(err) return res.send("error");
+            logger.debug("Saved document group annotation " + dga._id)
             res.send({success: true, documentGroupAnnotationId: dga._id});
-          }            
-        } 
+          });
+        } else {
+          logger.debug("Updated document group annotation " + dga._id);
+          res.send({success: true, documentGroupAnnotationId: dga._id});
+        }            
+         
       });
     });
 

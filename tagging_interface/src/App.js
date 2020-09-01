@@ -12,7 +12,11 @@ import _ from 'underscore';
 import html2canvas from 'html2canvas';
 import { saveAs } from 'file-saver';
 import domtoimage from 'dom-to-image';
-var dateFormat = require('dateformat');
+const dateFormat = require('dateformat');
+
+const BASE_URL = "/"
+
+
 
 // https://stackoverflow.com/questions/3169786/clear-text-selection-with-javascript
 function clearWindowSelection() {
@@ -45,7 +49,23 @@ function getCookie(name) {
     return cookieValue;
 }
 
+/* div(class="dropdown-menu")
+        button Projects
+          //span(class="caret") &#9660; 
+        ul(class="dropdown-menu-items")
+          li: a(href="" + base_url + "projects") Projects list
+          li: a(href="" + base_url + "setup-project") Setup project
+          if (recent_projects.length > 0)
+            li.separator Recent projects
+            each project in recent_projects
+              li: a(href="" + base_url + "projects#" + project.project_id) #{project.project_name}
 
+      div(class="dropdown-menu")
+        button Logged in as #{user.username}
+          //span(class="caret") &#9660; 
+        ul(class="dropdown-menu-items")
+          li: a(href="" + base_url + "profile") Profile
+          li: a(href="" + base_url + "logout") Logout*/
 
 
 // The navbar, which appears at the top of the page.
@@ -55,7 +75,7 @@ class Navbar extends Component {
       <nav id="navbar">
         <div className="navbar-left">
           <div id="logo">
-            <a href="/redcoat">
+            <a href={BASE_URL}>
               <span className="inner">
                 <span className="img">
                   <img src={logo}/>
@@ -63,12 +83,27 @@ class Navbar extends Component {
                 <span>Redcoat</span>
               </span>
             </a>
-          </div>
+          </div>         
         </div>
         <div className="navbar-centre">{this.props.pageTitle}</div>
         <div className="navbar-right">
+          <div className="dropdown-menu">
+            <button>Projects</button>
+            <ul className="dropdown-menu-items">
+              <li><a href={"" + BASE_URL + "projects"}>Projects list</a></li>
+              <li><a href={"" + BASE_URL + "setup-project"}>Setup project</a></li>
+            </ul>
+          </div>
+
+          <div className="dropdown-menu">
+            <button>Logged in as {this.props.username}</button>
+            <ul className="dropdown-menu-items">
+              <li><a href={"" + BASE_URL + "profile"}>Profile</a></li>
+              <li><a href={"" + BASE_URL + "logout"}>Logout</a></li>
+            </ul>
+          </div>
           <div className="dropdown-menu short">
-            <a href="features">v1.0</a>
+            <a href={"" + BASE_URL + "features"}>v1.0</a>
           </div>
         </div>
       </nav>
@@ -877,6 +912,7 @@ class TaggingInterface extends Component {
         categoryHierarchy: {'children': []},
         pageNumber: -1,
         annotatedDocGroups: -1,
+        username: "",
       },
 
       documentGroupAnnotationId: null, // The ID of the document group annotation object related to the document group the user is currently
@@ -1271,6 +1307,7 @@ class TaggingInterface extends Component {
                 saving: false,
               },
               data: {
+                username: d.username,
                 projectName: d.projectName,
                 documentGroup: [],
                 categoryHierarchy: {'children': []},
@@ -1440,7 +1477,7 @@ class TaggingInterface extends Component {
       //var project_id = 'RtJp98vxk'; // React development (completed project)
       var project_id = '-krXeW3R2'; // React development (big one)
     }
-    if(!project_id || project_id.length !== 9) {
+    if(!project_id || project_id.length < 8) {
       alert("invalid project");
       return;
     }
@@ -1816,7 +1853,7 @@ class TaggingInterface extends Component {
 
     return (
       <div id="app">      
-        <Navbar pageTitle={"Annotating project: " + this.state.data.projectName}/>  
+        <Navbar pageTitle={"Annotating project: " + this.state.data.projectName} username={this.state.data.username} />  
         <div id="tagging-interface" className={(this.state.loading.querying ? "loading" : "") + (taggingCompletePage ? " tagging-complete-page" : "")}>
 
           <div id="tagging-container">
@@ -1926,7 +1963,7 @@ class ProgressBar extends Component {
     return (
       <div id="tagging-progress-bar" className={(this.props.show ? "show" : "hide")}>
         <span className="progress-bar">
-          <span className="inner" style={{"width": this.props.totalPagesAvailable / this.props.totalPages * 100 + "%"}}></span>
+          <span className="inner" style={{"width": (this.props.totalPagesAvailable - 1) / this.props.totalPages * 100 + "%"}}></span>
         </span>
       </div>
     )

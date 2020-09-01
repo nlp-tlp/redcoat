@@ -116,7 +116,10 @@ app.use(function(req, res, next) {
 
 
 
-const useCSRF = false; // Set to false when working on the React interface on localhost:4000.
+var useCSRF = true; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.
+                     // When not running localhost:4000, this should be set to true.
+if(app.get('env') === 'production') useCSRF = true;
+
 
 if(useCSRF) app.use(csrf({ cookie: true }));
 

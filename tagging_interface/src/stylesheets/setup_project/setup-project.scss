@@ -423,7 +423,7 @@ input:not([type="file"]):not([type=range]), textarea, select, button:not(.pagina
 input:not([type="file"]):not([type=range]), textarea, button:not(.pagination-button) {
 	&:focus {
 		outline: none;
-		border: 2px solid $primary-orange;
+		//border: 2px solid $primary-orange;
 	}
 }
 

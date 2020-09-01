@@ -15,7 +15,8 @@ $error-red: lighten(rgb(185, 12, 5), 6);
 
 $primary-font: "Open Sans", sans-serif;
 
-$primary-blue: darken(#009FFD, 5);
+$primary-blue: darken(rgb(46, 141, 191), 9);
+$button-blue: darken(#009FFD, 5);
 $primary-red: #f44242;
 $primary-red-dark: saturate(darken($primary-red, 38), 80);
 $primary-gold: #ffcc00;
