@@ -31,7 +31,7 @@ router.get('/',            projectController.index);
 
 router.get('/:id',         verifyUserOwnsProject, projectController.getProjectDetails);
 //router.get('/:id/tagging', verifyUserInProject, projectController.tagging);
-router.get('/:id/tagging', verifyUserInProject, projectController.tagging);
+//router.get('/:id/tagging', verifyUserInProject, projectController.tagging);
 
 
 

@@ -54,6 +54,14 @@ body {
 	}
 }
 
+#app {
+	&.loading {
+
+		main {
+			opacity: 0.5;
+		}
+	}
+}
 
 pre.error-stack {
 	font-size: 14px;
@@ -159,6 +167,20 @@ main {
 	@media(max-width: 1700px) {
 		width: 80%;
 		margin-left: 20%; 
+	}
+	box-sizing: border-box;
+	min-height: calc(100vh - 50px);
+	&.error-page {
+		background-image: url($base_url + 'images/redcoat-1-grey-transparent.png');
+		background-position: center;
+		background-repeat: no-repeat;
+		margin-top: 50px;
+		margin-left: 15%;
+		margin-right: 15%;
+		padding-top: 60px;
+		font-size: 1.3em;
+		width: 70%;
+		text-align: center;
 	}
 }
 

@@ -38,7 +38,7 @@ function checkVersion(version) {
 
 
 
-var flash = require('express-flash')
+// var flash = require('express-flash')
 
   
 
@@ -53,7 +53,9 @@ var path = require('path');
 var app = express();
 
 var cors = require('cors');
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:4000'
+}));
 
 
 // view engine setup
@@ -79,7 +81,7 @@ app.use(
    })
 );
 
-app.use(flash());
+// app.use(flash());
 
 //app.use(session({keys: ['redcoatisaprettycoolannotationtool!']}));
 
@@ -92,7 +94,7 @@ app.enable('trust proxy');
 	rolling: true,
 
 }));*/
-app.use(session({keys: ['kjhkjhkukg', 'kufk8fyukukfkuyf']}));
+//app.use(session({keys: ['kjhkjhkukg', 'kufk8fyukukfkuyf']}));
 
 
 
@@ -107,16 +109,22 @@ passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-app.use(function(req, res, next) {
-
-
-  console.log(req.headers);
-  next(null, req, res);
-})
 
 
 
-var useCSRF = false; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.
+// app.use(function(req, res, next) {
+//   res.header('Content-Type', 'application/json;charset=UTF-8')
+//   res.header('Access-Control-Allow-Credentials', true)
+//   res.header(
+//     'Access-Control-Allow-Headers',
+//     'Origin, X-Requested-With, Content-Type, Accept'
+//   )
+//   next();
+// })
+
+
+
+var useCSRF = true; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.
                      // When not running localhost:4000, this should be set to true.
 if(app.get('env') === 'production') useCSRF = true;
 
@@ -128,6 +136,9 @@ app.use(function(req, res, next) {
 
   
 
+
+  console.log("HELLO")
+
   res.locals.base_url = BASE_URL;
   
   res.locals.user = req.user;
@@ -137,9 +148,15 @@ app.use(function(req, res, next) {
   if(useCSRF) {
     var csrfToken = req.csrfToken();
     res.locals.csrfToken = req.csrfToken();
-    res.cookie('csrf-token', csrfToken);
+    //res.cookie('csrf-token', csrfToken);
     console.log("CSRF:", csrfToken);
   }
+
+
+
+  //res.cookie('test', 'value')
+
+  
   //res.cookie('csrf-token', res.locals.csrfToken);
   //console.log(req.user, "==")
 
@@ -159,6 +176,10 @@ app.use(function(req, res, next) {
     });
     return;
   }
+
+
+
+  //res.cookie('username', res.locals.user.username);
 
   // if (app.get('env') === 'development' && req.user === undefined) {
   //   User.findOne({username: "test"}, function(err, user) {      
@@ -205,6 +226,7 @@ const NON_LOGIN_PATHS = new Set([
   "/features",
   "/forgot_password",
   "/reset_password",
+  "/pageData",
 ]);
 app.use(function(req, res, next) {
     logger.debug(req.path);
@@ -217,10 +239,16 @@ app.use(function(req, res, next) {
       return next();
     } 
 
-    console.log('not logged in', req.path)
+    console.log('not logged in', req.path);
+    
+    // TODO: IF working with new React interface, return res.send({"error": "user must be logged in"}) and redirect in the front end
 
     res.redirect(BASE_URL + 'login');
 });
+
+
+
+
 
 
 // Setup routes
@@ -235,7 +263,15 @@ for(var i in routes) {
   app.use(routes[i][0], routes[i][1]);
 }
 
+var homepageController = require("app/controllers/homepage_controller");
 
+app.get('/pageData', function(req, res, next) {
+  res.send({
+    username: req.user ? req.user.username : null
+  });
+})
+
+app.all('*', homepageController.index);
 
 
 // catch 404 and forward to error handler

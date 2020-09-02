@@ -11,13 +11,63 @@ const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 
+/* GET Actions */
 
-// The registration page.
+// GET: Render the 'registration' page.
 exports.registerPage = function(req, res) {
   res.render('users/register', { title: "Register", formData: {} });
 }
 
-// The register action.
+// GET: Render the login page.
+exports.loginPage = function(req, res) {
+  if(req.user)
+    res.redirect(BASE_URL + 'projects');
+  res.render('users/login', {formData: {}, title: "Login"});
+}
+
+// GET: Render the 'user profile' page.
+module.exports.user_profile = function(req, res) {
+  res.render('users/profile', {title: "Your Profile"} )
+}
+
+// GET: Render the 'forgot password' page.
+exports.forgot_password = function(req, res) { 
+  return res.render('users/forgot_password', {
+    formData: {
+      password: req.body.email,
+    },
+    title: "Forgot password"
+  });
+}
+
+// GET: Render the reset password page, called by clicking on the link sent via the reset password email.
+exports.reset_password = function(req, res) {
+  User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, function(err, user) {
+    if(!user) {
+      return res.render('users/forgot_password', {
+        message: "Password reset link is invalid or has expired.",
+        formData: {}
+      });
+    }
+    res.render('users/reset_password', {
+      //user: req.user,
+      token: req.params.token,
+      formData: {}
+    });
+  });
+}
+
+// GET: The logout action.
+exports.logout = function(req, res) {
+  req.logout();
+  res.redirect(BASE_URL);
+}
+
+
+
+/* POST Actions */
+
+// POST: The register action.
 exports.register = function(req, res, next) {
     logger.info('Registering user "' + req.body.username + '".');
     User.register(new User({username: req.body.username, email: req.body.email}), req.body.password, function(err, user) {
@@ -42,14 +92,7 @@ exports.register = function(req, res, next) {
     });
   }
 
-// The login page.
-exports.loginPage = function(req, res) {
-  if(req.user)
-    res.redirect(BASE_URL + 'projects');
-  res.render('users/login', {formData: {}, title: "Login"});
-}
-
-// The login action.
+// POST: The login action.
 exports.login = function(req, res, next) {
   passport.authenticate('local', function(err, user, info) {
     if(err) return next(err);
@@ -71,25 +114,7 @@ exports.login = function(req, res, next) {
    
 }
 
-// The logout action.
-exports.logout = function(req, res) {
-  req.logout();
-  res.redirect(BASE_URL);
-}
-
-module.exports.user_profile = function(req, res) {
-  res.render('users/profile', {title: "Your Profile"} )
-}
-
-exports.forgot_password = function(req, res) { 
-  return res.render('users/forgot_password', {
-    formData: {
-      password: req.body.email,
-    },
-    title: "Forgot password"
-  });
-}
-
+// POST: The forgot password submit action, called when the user clicks the 'submit' button on the forgot password page.
 exports.forgot_password_submit = function(req, res, next) {
   User.findOne({ email: req.body.email }, function(err, user) {
     console.log('u', err, user)
@@ -104,9 +129,13 @@ exports.forgot_password_submit = function(req, res, next) {
       });
     }
 
-    console.log(process.env.SENDGRID_API_KEY)
+    //console.log(process.env.SENDGRID_API_KEY)
+
+    // Generate a random password reset token.
     crypto.randomBytes(20, function(err, buf) {
       var token = buf.toString('hex');
+
+      // Send the token to the user via email.
       const msg = {
         to: req.body.email,
         from: 'Redcoat@nlp-tools.org',
@@ -114,7 +143,7 @@ exports.forgot_password_submit = function(req, res, next) {
         subject: 'Password reset',
         text: 'You are receiving this email because you (or someone else) has requested your Redcoat password to be reset.\n\n' +
         'To reset your password, please click on the following link, or paste it into your browser:\n\n' +
-        'http://' + req.headers.host + BASE_URL + 'reset_password/' + token +'\n\n' +
+        'https://' + req.headers.host + BASE_URL + 'reset_password/' + token +'\n\n' +
         'If you did not request your password to be reset, please ignore this email and your password will remain unchanged. The link above will expire after 1 hour.',
       };
 
@@ -123,7 +152,7 @@ exports.forgot_password_submit = function(req, res, next) {
 
       //passport.authenticate('local')(req,res, function() {
         user.save(function(err) {
-          console.log(err);
+          if(err) { return next(err); }
           sgMail.send(msg, function(err, result) {
             if(err) return next(err);
             return res.render('users/forgot_password', {
@@ -134,34 +163,16 @@ exports.forgot_password_submit = function(req, res, next) {
         });
       //});
     });
-
-    
-
-
-
-
-
   });
 }
 
-exports.reset_password = function(req, res) {
-  User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, function(err, user) {
-    if(!user) {
-      return res.render('users/forgot_password', {
-        message: "Password reset link is invalid or has expired.",
-        formData: {}
-      });
-    }
-    res.render('users/reset_password', {
-      //user: req.user,
-      token: req.params.token,
-      formData: {}
-    });
-  });
-}
-
+// POST: The reset password submit action.
+// Resets the user's password to the password entered in the form.
+// Requires a valid token that was generated via the forgot_password_submit function.
 exports.reset_password_submit = function(req, res, next) {
   User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, function(err, user) {
+    
+    // If the user is not found, or the token is invalid, render the forgot password page.
     if(!user) {
       return res.render('users/forgot_password', {
         message: "Password reset link is invalid or has expired.",
@@ -170,6 +181,7 @@ exports.reset_password_submit = function(req, res, next) {
       });
     }
 
+    // Let the user know that their password was changed.
     const msg = {
       to: user.email,
       from: 'Redcoat@nlp-tools.org',
@@ -181,6 +193,8 @@ exports.reset_password_submit = function(req, res, next) {
     user.password = req.body.password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
+
+    // Set the password of the user to the value entered in the form.
     user.setPassword(req.body.password, function(err) {
       if(err) return next(err);
       user.save(function(err) {

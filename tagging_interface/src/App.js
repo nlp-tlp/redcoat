@@ -14,7 +14,17 @@ import _ from 'underscore';
 import html2canvas from 'html2canvas';
 import { saveAs } from 'file-saver';
 import domtoimage from 'dom-to-image';
+
+import { Redirect, Link, BrowserRouter, Route, Switch } from 'react-router-dom'
+
+import FeaturesPage from './pages/FeaturesPage';
+
+
 const dateFormat = require('dateformat');
+
+
+
+
 
 const BASE_URL = "/"
 
@@ -57,35 +67,54 @@ class Navbar extends Component {
       <nav id="navbar">
         <div className="navbar-left">
           <div id="logo">
-            <a href={BASE_URL}>
+            <Link to="/">
               <span className="inner">
                 <span className="img">
                   <img src={logo}/>
                 </span>
                 <span>Redcoat</span>
               </span>
-            </a>
+            </Link>
           </div>         
         </div>
         <div className="navbar-centre">{this.props.pageTitle}</div>
         <div className="navbar-right">
-          <div className="dropdown-menu">
-            <button>Projects</button>
-            <ul className="dropdown-menu-items">
-              <li><a href={"" + BASE_URL + "projects"}>Projects list</a></li>
-              <li><a href={"" + BASE_URL + "setup-project"}>Setup project</a></li>
-            </ul>
-          </div>
 
-          <div className="dropdown-menu">
-            <button>Logged in as {this.props.username}</button>
-            <ul className="dropdown-menu-items">
-              <li><a href={"" + BASE_URL + "profile"}>Profile</a></li>
-              <li><a href={"" + BASE_URL + "logout"}>Logout</a></li>
-            </ul>
-          </div>
+
+          { this.props.username && 
+            <div className="dropdown-menu">
+              <button>Projects</button>
+              <ul className="dropdown-menu-items">
+                <li><Link to={"" + BASE_URL + "projects"}>Projects list</Link></li>
+                <li><Link to={"" + BASE_URL + "setup-project"}>Setup project</Link></li>
+              </ul>
+            </div>
+          }
+
+          { this.props.username &&
+
+            <div className="dropdown-menu">
+              <button>Logged in as {this.props.username}</button>
+              <ul className="dropdown-menu-items">
+                <li><Link to={"" + BASE_URL + "profile"}>Profile</Link></li>
+                <li><Link to={"" + BASE_URL + "logout"}>Logout</Link></li>
+              </ul>
+            </div>
+          }
+
+          { !this.props.username && 
+
+            <div className="dropdown-menu">
+              <button>Not logged in</button>
+              <ul className="dropdown-menu-items">
+                <li><Link to={"" + BASE_URL + "login"}>Login</Link></li>
+                <li><Link to={"" + BASE_URL + "register"}>Register</Link></li>
+              </ul>
+            </div>
+          }
+
           <div className="dropdown-menu short">
-            <a href={"" + BASE_URL + "features"}>v1.0</a>
+            <Link to={"" + BASE_URL + "features"}>v1.0</Link>
           </div>
         </div>
       </nav>
@@ -355,16 +384,22 @@ class Word extends Component {
 
   // Clear the word justification of this word if it is does not have a label.
   componentDidUpdate(prevProps, prevState) {
-    if(this.props.entityClasses.length === 0) {
 
-      var ele =  this.wordInnerRef.current;
-      $(ele).css("min-width", "auto");
+    /* TODO: Fix the below to be much faster.
+       The code should update the width of this word back to auto if this word no longer has a label,
+       but it is too slow on long docs so I took it out.
+    */
 
-      var width = ele.offsetWidth;
-      var newWidth = Math.ceil(width / 25) * 25;
-      $(ele).css('min-width', newWidth + 'px');        
+    // if(this.props.entityClasses.length === 0) {
 
-    }
+    //   var ele =  this.wordInnerRef.current;
+    //   $(ele).css("min-width", "auto");
+
+    //   var width = ele.offsetWidth;
+    //   var newWidth = Math.ceil(width / 25) * 25;
+    //   $(ele).css('min-width', newWidth + 'px');        
+
+    // }
   }
 
   render() {
@@ -784,6 +819,8 @@ function prettyPrintAnnotations(documentAnnotations) {
 // The Wikipedia summary container, at the top-left.
 class WikipediaSummary extends Component {
 
+  _isMounted = false;
+
   constructor(props) {
     super(props);
     this.state = {
@@ -792,6 +829,7 @@ class WikipediaSummary extends Component {
       wikipediaSummary: null,
       wikipediaReadMoreUrl: null,
     }
+
   }
 
 
@@ -834,6 +872,9 @@ class WikipediaSummary extends Component {
       var t = this;
 
       runQuery(function(title, snippet, wurl) {
+        if(!t._isMounted) return;
+
+
         var wikipediaTitle = tokens;
         if(snippet) {        
           if(title.toLowerCase() !== tokens.toLowerCase()) {
@@ -855,6 +896,16 @@ class WikipediaSummary extends Component {
       });
 
     });
+  }
+
+
+  // Ensure API calls to Wikipedia aren't being made while this component is not mounted.
+  componentDidMount() {
+    this._isMounted = true;
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   toggleVisibility() {
@@ -1324,7 +1375,7 @@ class TaggingInterface extends Component {
         firstLoad: firstLoad,
       }
     }, function() {
-      fetch('http://localhost:3000/projects/' + this.state.project_id + '/tagging/' + route, fetchConfig) // TODO: move localhost out
+      fetch('http://localhost:3000/projects/' + this.props.project_id + '/tagging/' + route, fetchConfig) // TODO: move localhost out
         .then(response => response.text())
         .then((data) => {
           try { 
@@ -1513,22 +1564,24 @@ class TaggingInterface extends Component {
   // Set up the keybinds and mouseup event when done.
   componentWillMount() {
 
-    var pathname = window.location.pathname;
-    var project_id = pathname.split('/')[2];
-    if(pathname === "/") {
-      //var project_id = 'RtJp98vxk'; // React development (completed project)
-      var project_id = '-krXeW3R2'; // React development (big one)
-    }
-    if(!project_id || project_id.length < 8) {
-      alert("invalid project");
-      return;
-    }
+    // var pathname = window.location.pathname;
+    // var project_id = pathname.split('/')[2];
+    // if(pathname === "/") {
+    //   //var project_id = 'RtJp98vxk'; // React development (completed project)
+    //   //var project_id = 'KPJqR4HB8'; // React development (long docs)
+    //   var project_id = '-krXeW3R2'; // React development (big work order one)
+    // }
+    // if(!project_id || project_id.length < 8) {
+    //   alert("invalid project");
+    //   return;
+    // }
 
 
 
-    this.setState({
-      project_id: project_id
-    }, () => { this.queryAPI(true) });
+    // this.setState({
+    //   project_id: project_id
+    // }, () => { 
+    this.queryAPI(true);
   }  
 
   /* Selection functions */
@@ -1889,79 +1942,77 @@ class TaggingInterface extends Component {
 
 
   render() {
-
-
     var taggingCompletePage = this.state.taggingCompletePage;
 
     return (
-      <div id="app">      
-        <Navbar pageTitle={"Annotating project: " + this.state.data.projectName} username={this.state.data.username} />  
-        <div id="tagging-interface" className={(this.state.loading.querying ? "loading" : "") + (taggingCompletePage ? " tagging-complete-page" : "")}>
+        <div>            
+          <div id="tagging-interface" className={(this.state.loading.querying ? "loading" : "") + (taggingCompletePage ? " tagging-complete-page" : "")}>
 
-          <div id="tagging-container">
-            { taggingCompletePage && <TaggingCompletePage/>}
-            <div id="sentence-tagging">
+            <div id="tagging-container">
+              { taggingCompletePage && <TaggingCompletePage/>}
+              <div id="sentence-tagging">
 
-              { this.state.loading.firstLoad && 
-                <div className="loading-message">
-                  <i className="fa fa-cog fa-spin"></i>Loading...
-                </div>
-              }
+                { this.state.loading.firstLoad && 
+                  <div className="loading-message">
+                    <i className="fa fa-cog fa-spin"></i>Loading...
+                  </div>
+                }
 
-              <ControlBar
-                showingProgressBar = {this.state.showingProgressBar}
-                pageNumber = {this.state.pageNumber}
-                totalPages = {this.state.data.docGroupsPerUser}
-                totalPagesAvailable = {this.state.totalPagesAvailable}
-                lastModified={this.state.docGroupLastModified}
-                recentlySaved={this.state.recentlySaved}
-                changesMade={this.state.changesMade}
-                querying={this.state.loading.querying}
-                saving={this.state.loading.saving}
+                <ControlBar
+                  showingProgressBar = {this.state.showingProgressBar}
+                  pageNumber = {this.state.pageNumber}
+                  totalPages = {this.state.data.docGroupsPerUser}
+                  totalPagesAvailable = {this.state.totalPagesAvailable}
+                  lastModified={this.state.docGroupLastModified}
+                  recentlySaved={this.state.recentlySaved}
+                  changesMade={this.state.changesMade}
+                  querying={this.state.loading.querying}
+                  saving={this.state.loading.saving}
 
-                submitAnnotations={this.submitAnnotations.bind(this)}
-                loadPreviousPage={this.loadPreviousPage.bind(this)}
-                loadNextPage={this.loadNextPage.bind(this)}
-                goToPage={this.goToPage.bind(this)}
-              />
-
-              <DocumentContainerHeader/>
-                  
-              { this.state.data.documentGroup.map((doc, i) => 
-                <DocumentContainer
-                  key={i}
-                  index={ i }
-                  displayIndex={( (this.state.pageNumber - 1) * 10 ) + i + 1  }
-                  words={doc}              
-                  annotations={this.state.annotations[i]}  
-                  confidence={this.state.confidences[i]}
-                  selections={this.state.selections[i]}
-                  updateSelections={this.updateSelections.bind(this)}
-                  updateConfidence={this.updateConfidence.bind(this)}
-                  entityColourMap={this.state.entityColourMap}
-                  deleteTag={this.deleteTag.bind(this)}
+                  submitAnnotations={this.submitAnnotations.bind(this)}
+                  loadPreviousPage={this.loadPreviousPage.bind(this)}
+                  loadNextPage={this.loadNextPage.bind(this)}
+                  goToPage={this.goToPage.bind(this)}
                 />
-                )}
 
+                <DocumentContainerHeader/>
+                    
+                { this.state.data.documentGroup.map((doc, i) => 
+                  <DocumentContainer
+                    key={i}
+                    index={ i }
+                    displayIndex={( (this.state.pageNumber - 1) * 10 ) + i + 1  }
+                    words={doc}              
+                    annotations={this.state.annotations[i]}  
+                    confidence={this.state.confidences[i]}
+                    selections={this.state.selections[i]}
+                    updateSelections={this.updateSelections.bind(this)}
+                    updateConfidence={this.updateConfidence.bind(this)}
+                    entityColourMap={this.state.entityColourMap}
+                    deleteTag={this.deleteTag.bind(this)}
+                  />
+                  )}
+
+              </div>
             </div>
+            <div id="tagging-menu">
+              <WikipediaSummary tokens={this.state.mostRecentSelectionText}/>
+              <HotkeyInfo 
+                chain={this.state.hotkeyChain}
+                entityClass={this.state.reverseHotkeyMap[this.state.hotkeyChain.join('')]}
+              />            
+              
+              <CategoryHierarchy
+                items={this.state.data.categoryHierarchy.children}
+                hotkeyMap={this.state.hotkeyMap}
+                hotkeyChain={this.state.hotkeyChain.join('')}
+                initHotkeyMap={this.initHotkeyMap.bind(this)}
+                applyTag={this.applyTag.bind(this)}              
+              />
+            </div>      
           </div>
-          <div id="tagging-menu">
-            <WikipediaSummary tokens={this.state.mostRecentSelectionText}/>
-            <HotkeyInfo 
-              chain={this.state.hotkeyChain}
-              entityClass={this.state.reverseHotkeyMap[this.state.hotkeyChain.join('')]}
-            />            
-            
-            <CategoryHierarchy
-              items={this.state.data.categoryHierarchy.children}
-              hotkeyMap={this.state.hotkeyMap}
-              hotkeyChain={this.state.hotkeyChain.join('')}
-              initHotkeyMap={this.initHotkeyMap.bind(this)}
-              applyTag={this.applyTag.bind(this)}              
-            />
-          </div>      
         </div>
-      </div>
+       
     )
   }
 }
@@ -2150,11 +2201,140 @@ class TaggingCompletePage extends Component {
   }
 }
 
-// The app, which renders the navbar and the tagging interface inside a container.
-function App() {
-  return (    
-    <TaggingInterface/>   
-  );
+class Page404 extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <main class="error-page">
+
+        <h1>404: Page not found.</h1>
+        <p>The page you were looking for does not appear to exist.</p>
+
+
+      </main>
+    )
+  }
+}
+
+class Homepage extends Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    return (
+      <div>
+        <p>Hello I am a homepage</p>
+        <p><Link to="/projects/-krXeW3R2/tagging">open project</Link></p>
+
+
+      </div>
+
+    )
+  }
+}
+
+
+// A template component that renders the majority of the pages.
+class MainTemplate extends Component {
+
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+
+    return (
+      <div>
+        <Navbar pageTitle={this.props.pageTitle} username={this.props.username} />
+        <main>
+          { this.props.pageComponent }
+        </main>
+      </div>
+    )
+  }
+}
+
+// A template component for the tagging interface, which is almost the same as MainTemplate but without the <main> container.
+class TaggingInterfaceTemplate extends Component {
+
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+
+    return (
+      <div>
+        <Navbar pageTitle={this.props.pageTitle} username={this.props.username} />
+          { this.props.pageComponent }
+      </div>
+    )
+  }
+}
+
+
+
+
+
+// The app, which routes everything and renders the pages.
+class App extends Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      pageTitle: "Redcoat",
+      username: "???"
+    }
+  }
+
+  // When mounted, query the server for the logged in user.
+  componentWillMount() {
+    const fetchConfig = {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    };
+
+    this.setState({
+      loading: true
+    }, () => {
+
+
+      fetch('http://localhost:3000/pageData', fetchConfig) // TODO: move localhost out
+      .then(response => response.text())
+      .then((data) => {
+        console.log(data);
+        var d = JSON.parse(data);
+        this.setState({
+          username: d.username,
+          loading: false
+        })
+      }); 
+    });
+  }
+
+
+
+  render() {
+    return (    
+
+      <div id="app" class={this.state.loading ? "loading" : ""}>
+        <BrowserRouter>
+          <Switch>
+            <Route        path="/projects/:id/tagging"  render={(p) => <TaggingInterfaceTemplate {...this.state} pageComponent={<TaggingInterface project_id={p.match.params.id} />}/>} /> 
+            <Route        path="/features"              render={( ) => <MainTemplate {...this.state} pageTitle="Redcoat - Features" pageComponent={ <FeaturesPage/> } />} />     
+            <Route  exact path="/"                      render={( ) => <MainTemplate {...this.state} pageTitle="Redcoat - Home" pageComponent={ <Homepage/> } />} />
+            <Route                                      render={( ) => <MainTemplate {...this.state} pageTitle="Redcoat - 404" pageComponent={ <Page404/> } />} /> />
+          </Switch>
+        </BrowserRouter>
+      </div>      
+    );
+  }
 }
 
 

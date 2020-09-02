@@ -10,29 +10,23 @@ var ProjectInvitation = require('app/models/project_invitation')
 
 var mongoose = require('mongoose');
 
-// The project dashboard. Renders the projects page that lists all the projects of a user.
+/* GET Actions */
+
+// GET: The project dashboard. Renders the projects page that lists all the projects of a user.
 // Doesn't actually send any projects - that's done by 'getProjects', via AJAX.
 module.exports.index = function(req, res) {
-  // req.flash('success', "projects are cool");
   req.user.getProjects(function(err, projects) {
-    if(err)
-      res.send(err);
-    else {
-      res.render('projects', { title: "Projects" })
-    }
+    if(err) return res.send(err);
+    res.render('projects', { title: "Projects" })
   });  
 }
 
-// A function that returns all the projects of a user.
+// GET (AJAX): A function that returns all the projects of a user.
+// This should be called via AJAX to populate the projects table.
 module.exports.getProjects = function(req, res) {
   req.user.getProjectsTableData(function(err, projects) {
-    if(err) res.send(err);
-    else {
-
-      //setTimeout(function() {
-      res.send({projects: projects});
-      //}, 1);
-    }
+    if(err) return res.send(err);
+    res.send({projects: projects});
   });
 }
 
@@ -40,60 +34,68 @@ module.exports.getProjects = function(req, res) {
 
 
 // The tagging interface.
+// This was the old code for loading the tagging interface... it's all React now.
+// Will delete this code later
 
+/*
+module.exports.tagging = function(req, res) {
+  var id = req.params.id;
+  var user = req.user;
+  Project.findOne({ _id: id }, function(err, proj) {
+    if(err) {
+      res.send("error");
+    }
+    user.addProjectToRecentProjects(proj, function(err) {
 
-// module.exports.tagging = function(req, res) {
-//   var id = req.params.id;
-//   var user = req.user;
-//   Project.findOne({ _id: id }, function(err, proj) {
-//     if(err) {
-//       res.send("error");
-//     }
-//     user.addProjectToRecentProjects(proj, function(err) {
+      var canCreateNewCategories = user._id.equals(proj.user_id) || new Set(["full_permission", "create_edit_only"]).has(proj.category_hierarchy_permissions);
+      var canDeleteCategories = user._id.equals(proj.user_id) || proj.category_hierarchy_permissions === "full_permission";
 
-//       var canCreateNewCategories = user._id.equals(proj.user_id) || new Set(["full_permission", "create_edit_only"]).has(proj.category_hierarchy_permissions);
-//       var canDeleteCategories = user._id.equals(proj.user_id) || proj.category_hierarchy_permissions === "full_permission";
-
-//       proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
-//         if(err) { res.send("error"); }
-//         res.render('tagging', { 
-//          projectName: proj.project_name,
-//          tagging: true,
-//          title: "Annotation Interface",
-//          numDocuments: docGroupsPerUser,
-//          canCreateNewCategories: canCreateNewCategories,
-//          canDeleteCategories: canDeleteCategories,
-// 	       runDictionaryTagging: false// proj.user_id.equals(mongoose.Types.ObjectId("5ddcec0744a8f102041b524d"))
-//         });
+      proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
+        if(err) { res.send("error"); }
+        res.render('tagging', { 
+         projectName: proj.project_name,
+         tagging: true,
+         title: "Annotation Interface",
+         numDocuments: docGroupsPerUser,
+         canCreateNewCategories: canCreateNewCategories,
+         canDeleteCategories: canDeleteCategories,
+	       runDictionaryTagging: false// proj.user_id.equals(mongoose.Types.ObjectId("5ddcec0744a8f102041b524d"))
+        });
 
         
 
-//       });
+      });
 
-//     });
-
-
-
-
-//   });
-// }
+    });
 
 
 
-module.exports.tagging = function(req, res) {
-  //console.log("TOKEN:", res.locals.csrfToken);
- 
-  res.sendFile(path.join(appRoot+'/../tagging_interface/build/index.html'));
+
+  });
 }
+*/
 
 
 
+// GET: The tagging interface simply loads the html page from the build directory in the React interface folder.
+// note that the react interface needs to be run via 'npm run build' before it will be updated in the build directory.
+//module.exports.tagging = function(req, res) {
+//  res.sendFile(path.join(appRoot+'/../tagging_interface/build/index.html'));
+//}
+
+
+
+
+
+
+
+/* Miscellaneous controller actions (which should probably be in a separate file) */
 
 // Automatically tag all tokens on the screen that appear in the dictionary.
+// Returns an array of [{ mentions: [] }, { mentions: [] }] (one mentions array per document)
 function runDictionaryTagging(documentGroup, dictionary) {
   // Build the automatic annotations based on the groupData.
   var automaticAnnotations = [];
-  //console.log(documentGroup)
 
   for(var doc_id = 0; doc_id < documentGroup.length; doc_id++) {
     var doc = documentGroup[doc_id];
@@ -104,7 +106,6 @@ function runDictionaryTagging(documentGroup, dictionary) {
     for(var x = i; x < labeledTokens.length; x++) {
       labeledTokens[x] = 0;              
     }
-
 
     for(var ngram_size = 3; ngram_size >= 1; ngram_size--) {
       //console.log("NGRAM SIZE:", ngram_size)
@@ -130,21 +131,18 @@ function runDictionaryTagging(documentGroup, dictionary) {
             }
           }
         }
-        //console.log('ngram:', ngram)
       }
     }
     automaticAnnotations.push({'mentions': mentions});
-
     
   }
-
-  //console.log("Automatic annotations:", automaticAnnotations)
 
   return automaticAnnotations;
 }
 
 
 
+// TODO : Move these utility functions elsewhere
 
 // Remove empty children from the JSON data.
 function removeEmptyChildren(obj) {
@@ -203,7 +201,10 @@ function txt2json(text, slash) {
 
 
 
-// Retrieve a previously annotated document group for this project.
+
+
+
+// GET (AJAX): Retrieve a previously annotated document group for this project.
 // Called when the user navigates between pages.
 module.exports.getPreviouslyAnnotatedDocumentGroup = function(req, res) {
   var id = req.params.id;
@@ -212,7 +213,6 @@ module.exports.getPreviouslyAnnotatedDocumentGroup = function(req, res) {
   } catch(err) {
     return res.send("Error: could not parse page number");
   }
-  console.log("Page num:", pageNumber)
   if(pageNumber < 1) {
     return res.send("Error: Page number must be >= 1");
   }
@@ -240,19 +240,18 @@ module.exports.getPreviouslyAnnotatedDocumentGroup = function(req, res) {
           proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
             proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, numAnnotatedDocGroups) {
                 res.send({
-                  documentGroupId: docgroup._id,
-                  documentGroup: docgroup.documents,
-                  documentGroupAnnotationId: dga._id,
-                  automaticAnnotations: mentionsJSON,
-                  entityClasses: proj.category_hierarchy,
-                  categoryHierarchy: tree,
-                  annotatedDocGroups: numAnnotatedDocGroups,
-                  pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\"",
-                  pageNumber: pageNumber,  
-                  projectName: proj.project_name,     
-                  lastModified: dga.updated_at,
-                  docGroupsPerUser: docGroupsPerUser,
-                  username: req.user.username,
+                  documentGroupId:            docgroup._id,
+                  documentGroup:              docgroup.documents,
+                  documentGroupAnnotationId:  dga._id,
+                  automaticAnnotations:       mentionsJSON,
+                  entityClasses:              proj.category_hierarchy,
+                  categoryHierarchy:          tree,
+                  annotatedDocGroups:         numAnnotatedDocGroups,
+                  pageNumber:                 pageNumber,
+                  projectName:                proj.project_name,     
+                  lastModified:               dga.updated_at,
+                  docGroupsPerUser:           docGroupsPerUser,
+                  username:                   req.user.username,
               });
             });
           });
@@ -262,7 +261,7 @@ module.exports.getPreviouslyAnnotatedDocumentGroup = function(req, res) {
   });
 }
 
-// Retrieve a single document group for the tagging interface.
+// GET (AJAX): Retrieve a single document group for the tagging interface.
 module.exports.getDocumentGroup = function(req, res) {
   var id = req.params.id;
   Project.findOne({ _id: id }, function(err, proj) {
@@ -299,26 +298,21 @@ module.exports.getDocumentGroup = function(req, res) {
             var automaticAnnotations = null;
           }
 
-         
+          
+          proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {    
 
-
-          proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
-            
-              res.send({
-                  documentGroupId: docgroup._id,
-                  documentGroup: docgroup.documents,
-                  automaticAnnotations: automaticAnnotations,
-                  //automaticTaggingDictionary: proj.automatic_tagging_dictionary,
-                  entityClasses: proj.category_hierarchy,
-                  categoryHierarchy: tree,
-                  annotatedDocGroups: numAnnotatedDocGroups,
-                  pageTitle: "Annotating group: \"" + (docgroup.display_name || "UnnamedGroup") + "\"",
-                  pageNumber: numAnnotatedDocGroups + 1,         
-                  projectName: proj.project_name, 
-                  docGroupsPerUser: docGroupsPerUser,
-                  username: req.user.username,
-              });
-            
+            res.send({
+                documentGroupId:        docgroup._id,
+                documentGroup:          docgroup.documents,
+                automaticAnnotations:   automaticAnnotations,
+                entityClasses:          proj.category_hierarchy,
+                categoryHierarchy:      tree,
+                annotatedDocGroups:     numAnnotatedDocGroups,
+                pageNumber:             numAnnotatedDocGroups + 1, // numAnnotatedDocGroups + 1 is the latest page        
+                projectName:            proj.project_name, 
+                docGroupsPerUser:       docGroupsPerUser,
+                username:               req.user.username,
+            });            
           });
         }  
       });
@@ -328,7 +322,8 @@ module.exports.getDocumentGroup = function(req, res) {
 
 
 
-
+// POST (AJAX): Submit the annotations of the user for the current document group.
+// 
 module.exports.submitAnnotations = function(req, res) {
   var User = require('app/models/user');
   var documentGroupId = req.body.documentGroupId;
@@ -336,14 +331,13 @@ module.exports.submitAnnotations = function(req, res) {
   var projectId = req.params.id;
   var labels = req.body.labels;
 
-
   var documentGroupAnnotationId = req.body.documentGroupAnnotationId; // if null, this document group annotation is new
 
   // If this is an existing documentGroupAnnotation, find the corresponding record and proceed to save it and send its details to the user
   if(documentGroupAnnotationId) {  
     DocumentGroupAnnotation.findById({_id: documentGroupAnnotationId}, function(err, documentGroupAnnotation) {
       if(err) { return res.send("error"); }
-      console.log("DGA:", documentGroupAnnotation);
+      //console.log("DGA:", documentGroupAnnotation);
       documentGroupAnnotation.labels = labels;
 
       proceed(req, res, documentGroupAnnotation, false);
@@ -370,7 +364,7 @@ module.exports.submitAnnotations = function(req, res) {
         return res.send({error: err})
       }
 
-      console.log("Saved");
+      //console.log("Saved");
       
       // Add the docgroup to the user's docgroups_annotated array.
       User.findByIdAndUpdate(userId, { $addToSet: { 'docgroups_annotated': documentGroupId }}, function(err) {
@@ -393,16 +387,11 @@ module.exports.submitAnnotations = function(req, res) {
          
       });
     });
-
-
-  }
-
-
-
-
-  
+  }  
 }
 
+
+// GET: Download the annotations of the user. Sends the user a file.
 module.exports.downloadAnnotationsOfUser = function(req, res) {
   var User = require('app/models/user')
   var proj_id = req.params.id;
@@ -411,7 +400,7 @@ module.exports.downloadAnnotationsOfUser = function(req, res) {
   
 
   User.findById(user_id, function(err, user) {
-    console.log(user)
+    //console.log(user)
     Project.findById(proj_id, function(err, proj) {
       //console.log(err, proj)
       if(!proj.user_id.equals(req.user._id)) {
@@ -436,6 +425,8 @@ module.exports.downloadAnnotationsOfUser = function(req, res) {
   });
 }
 
+// GET: Download all combined annotations of all users for this project.
+// Sends the user a file.
 module.exports.downloadCombinedAnnotations = function(req, res) {
   var proj_id = req.params.id;
   Project.findById(proj_id, function(err, proj) {
@@ -455,11 +446,9 @@ module.exports.downloadCombinedAnnotations = function(req, res) {
       });
     });
   });
-
 }
 
-
-// AJAX function to retrieve details of a project (annotators, metrics).
+// GET (AJAX): function to retrieve details of a project (annotators, metrics).
 module.exports.getProjectDetails = function(req, res) {
   var id = req.params.id;
 
@@ -480,12 +469,9 @@ module.exports.getProjectDetails = function(req, res) {
   });
 }
 
-
-
+// POST: Accept an invitation.
 module.exports.acceptInvitation = function(req, res) {
   var invitation_id = req.params.id;
-
-  setTimeout(function() {
 
   // TODO: Verify user is same as user_email in ProjectInvitation object
   ProjectInvitation.findById(invitation_id, function(err, invitation) {
@@ -494,19 +480,12 @@ module.exports.acceptInvitation = function(req, res) {
       if(err) { return res.send("error"); }
       res.send({success: true});
     });    
-  });
-
-
-  }, 1)
-  
-  
+  });  
 }
 
+// POST: Decline an invitation.
 module.exports.declineInvitation = function(req, res) {
   var invitation_id = req.params.id;
-
-  setTimeout(function() {
-
   // TODO: Verify user is same as user_email in ProjectInvitation object
   ProjectInvitation.findById(invitation_id, function(err, invitation) {
     if(err) { return res.send("error"); }
@@ -515,27 +494,22 @@ module.exports.declineInvitation = function(req, res) {
       res.send({success: true});
     });    
   });
-
-
-  }, 1)
 }
 
 
 
-
+// POST: Modify the category hierarchy.
+// TODO: Connect this up to the interface again (it is not currently in the interface).
 module.exports.modifyHierarchy = function(req, res) {
   var project_id = req.params.id;
   var new_hierarchy = req.body.new_hierarchy;
 
-  // TODO: Verify that the category hierarchy is able to be modified
+  // TODO: Verify that the category hierarchy is able to be modified in the project options.
   Project.findById(project_id, function(err, proj) {
     proj.modifyHierarchy(new_hierarchy, req.user, function(err) {
       if(err) { logger.error(err.stack); return res.status(400).send(); }
       res.send({"success": true});
     });
   });
-
-    //res.status(400).send({});
-  //}, 1000)
 }
 

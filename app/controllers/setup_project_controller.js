@@ -21,8 +21,9 @@ var path = require('path');
 
 
 
+/* GET Actions */
 
-// The setup_project page.
+// GET: The setup_project page.
 exports.index = function(req, res, next) {
 
   res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
@@ -35,6 +36,7 @@ exports.index = function(req, res, next) {
 
   // If they don't, create a new one
 
+  // TODO: This is horrible, needs refactoring big time
   function renderPage(wip_project, project_name, project_desc, file_metadata, category_hierarchy, category_metadata, user_emails, category_hierarchy_permissions, user_email, automatic_tagging, automatic_tagging_dictionary_metadata, overlap, distribute_self) {
      res.render('setup-project', 
         { wip_project_id: wip_project._id,
@@ -92,10 +94,9 @@ exports.index = function(req, res, next) {
 }
 
 
-/* AJAX Functions that are called as the form is being filled out */
+/* POST AJAX Functions that are called as the form is being filled out */
 
-
-// Upload the name and description of the project.
+// POST: Upload the name and description of the project.
 exports.upload_name_desc = function(req, res, next) {
   wip_project = res.locals.wip_project;
 
@@ -127,31 +128,31 @@ exports.upload_name_desc = function(req, res, next) {
 }
 
 // Returns an errors object
+// Not sure if this is used?
 function processErrors(err_lines, field) {
   try {
-  errors = new Array(field.length); // One error per line
-  for(var i = 0; i < errors.length; i++) {
-    errors[i] = [];
-  }    
-  for(var i = 0; i < err_lines.length; i++) {
-    var ind = parseInt(err_lines[i].slice(0, err_lines[i].indexOf(":")));
-    var item_name = err_lines[i].slice(err_lines[i].indexOf("[") + 1, err_lines[i].indexOf("]"))
-    var error_message = err_lines[i].slice(err_lines[i].indexOf("] ") + 2, err_lines[i].length);
-    errors[ind].push({ item_name: item_name, message: error_message });
+    errors = new Array(field.length); // One error per line
+    for(var i = 0; i < errors.length; i++) {
+      errors[i] = [];
+    }    
+    for(var i = 0; i < err_lines.length; i++) {
+      var ind = parseInt(err_lines[i].slice(0, err_lines[i].indexOf(":")));
+      var item_name = err_lines[i].slice(err_lines[i].indexOf("[") + 1, err_lines[i].indexOf("]"))
+      var error_message = err_lines[i].slice(err_lines[i].indexOf("] ") + 2, err_lines[i].length);
+      errors[ind].push({ item_name: item_name, message: error_message });
 
+    }
+    console.log(errors);  
+  } catch(e) {
+    console.log(e)
   }
-  console.log(errors);  
-} catch(e) {
-  console.log(e)
-}
-  return errors;
-
+    return errors;
 }
 
 
 
 
-
+// POST: Upload the emails and save them to the WIP Project.
 exports.upload_emails = function(req, res, next) {
   wip_project = res.locals.wip_project;
   console.log(req.body)
@@ -173,11 +174,9 @@ exports.upload_emails = function(req, res, next) {
 
 }
 
-
+// POST: Upload the category hierarchy and save it to the WIP Project.
 exports.upload_hierarchy = function(req, res, next) {
   wip_project = res.locals.wip_project;
-
-
 
   setTimeout(function() {
     wip_project.category_hierarchy = req.body.data;
@@ -185,8 +184,6 @@ exports.upload_hierarchy = function(req, res, next) {
       wip_project.category_hierarchy = [];
       //wip_project.category_metadata = null;
     }
-
-
 
     wip_project.validate(function(err) {
       var errors = null;
@@ -200,16 +197,10 @@ exports.upload_hierarchy = function(req, res, next) {
           //wip_project.category_metadata = null;
           console.log("ERRORS", errors)
           res.send( { "success": false, "errors": errors });
-        } else {
-
-          
-          //
-
-
+        } else {        
           console.log(wip_project.category_hierarchy)
           console.log(wip_project.category_metadata)
-          console.log('yay')
-
+          console.log('yay');
           res.send({ "success": true, metadata: wip_project.categoryMetadataToArray() }); //wip_project.categoryHierarchyMetadataToArray()
         }
       });
@@ -217,6 +208,7 @@ exports.upload_hierarchy = function(req, res, next) {
   }, 1000);
 }
 
+// POST: Upload the category hierarchy permissions and save them to the WIP Project.
 exports.upload_hierarchy_permissions = function(req, res, next) {
   wip_project = res.locals.wip_project;
   var d = req.body.val;
@@ -227,6 +219,7 @@ exports.upload_hierarchy_permissions = function(req, res, next) {
   });  
 }
 
+// POST: Upload the automatic tagging (boolean) and save it to the WIP Project.
 exports.upload_automatic_tagging = function(req, res, next) {
   wip_project = res.locals.wip_project;
   var d = req.body.use_automatic_tagging;
@@ -238,6 +231,7 @@ exports.upload_automatic_tagging = function(req, res, next) {
   });
 }
 
+// POST: Upload the overlap value and save it to the WIP Project.
 exports.upload_overlap = function(req, res, next) {
   wip_project = res.locals.wip_project;
   var d = req.body.val;
@@ -248,7 +242,7 @@ exports.upload_overlap = function(req, res, next) {
   });
 }
 
-// Reset the WIP Project's documents and file metadata.
+// POST: Reset the WIP Project's documents and file metadata.
 // This method is necessary because without it, a user who submits an invalid file after
 // submitting a valid one will think their documents have been lost when they'd actually
 // still be there, and would appear after refreshing the setup page.
@@ -260,6 +254,7 @@ exports.upload_tokenized_reset = function(req, res, next) {
   });
 }
 
+// POST: Reset the dictionary completely.
 exports.upload_dictionary_reset = function(req, res, next) {
   wip_project = res.locals.wip_project;
   // TODO: Clear the dictionary
@@ -270,9 +265,7 @@ exports.upload_dictionary_reset = function(req, res, next) {
   });
 }
 
-
-
-
+// POST: Upload the automatic tagging dictionary.
 exports.upload_dictionary = function(req, res, next) {
   wip_project = res.locals.wip_project;
   responded = false;
@@ -347,7 +340,7 @@ exports.upload_dictionary = function(req, res, next) {
 
 }
 
-// Upload a dataset.
+// POST: Upload a dataset, which will be tokenised here.
 exports.upload_tokenized = function(req, res, next) {
 
   wip_project = res.locals.wip_project;
@@ -376,15 +369,6 @@ exports.upload_tokenized = function(req, res, next) {
     // store all uploads in the /uploads directory - cannot use it
     form.uploadDir = path.join(__dirname, '../../db/tmp');
 
-    // form.on('fileBegin', function(field, file) {
-    //     responded = false;
-    //     var fileType = file.type;
-    //     console.log(fileType)
-    //     if (fileType != 'text/plain') {
-    //       this.emit('error', new Error("File must be a plain text file."));
-    //     }
-    // });
-
     // every time a file has been uploaded successfully,
     // read it and tokenize it
     form.on('file', function(field, file) {
@@ -398,7 +382,6 @@ exports.upload_tokenized = function(req, res, next) {
         return;
       }
       
-
       // Tokenize the file with the WipProject.
       var str = fs.readFileSync(file.path, 'utf-8');
       wip_project.createDocumentGroupsFromString(str, function(err, numberOfLines, numberOfTokens) {
@@ -410,7 +393,6 @@ exports.upload_tokenized = function(req, res, next) {
           });
         } else {
 
-
           // numberOfLines = wip_project.documents.length;
           // numberOfTokens = [].concat.apply([], wip_project.documents).length;
 
@@ -419,10 +401,7 @@ exports.upload_tokenized = function(req, res, next) {
             "Number of documents": numberOfLines,
             "Number of tokens" : numberOfTokens,
             "Average tokens/document" : parseFloat((numberOfTokens / numberOfLines).toFixed(2))
-          });
-
-
-          
+          });         
 
           wip_project.save(function(err, wip_project) {
             if(err) { 
@@ -443,27 +422,18 @@ exports.upload_tokenized = function(req, res, next) {
           });
         }
       });
-
-
-
     });
 
     // log any errors that occur
     form.on('error', function(err) {
-
         if(!responded) {
-
           // If err.message is the one about filesize being too large, change it to a nicer message.
           if(err.message.substr(0, 20) == 'maxFileSize exceeded') {
             err.message = "The file was too large. Please ensure it is less than 1mb.";
           }
-
-
           res.send({ "success": false, "error": err.message });
           res.end();
-          responded = true;
-          
-          
+          responded = true;          
         }   
     });
 
@@ -473,21 +443,18 @@ exports.upload_tokenized = function(req, res, next) {
         res.send({'success': true, details: wip_project.fileMetadataToArray() });
       }
     });
-
-
   });
 }
 
 
-
+// POST: Submit the new project!
+// Ensure the invitations sent correctly, render an error if not (this will be due to Sendgrid not being set up correctly).
+// Once done, redirect back to /projects.
 exports.submit_new_project_form = function(req, res, next) {
   wip_project = res.locals.wip_project;
   wip_project.convertToProject(function(err, failed_invitations, project) {
 
-
     // TODO: Have a secondary 'err' just related to invitation errors, as they are sent out AFTER the project is created.
-
-    //console.log(err);
     if(err) {
       console.log(err);
       res.render("temp-render-form", {err: err });
@@ -499,16 +466,6 @@ exports.submit_new_project_form = function(req, res, next) {
       return;
     } {
       res.redirect(BASE_URL + 'projects#' + project._id);
-      // project.getDocumentGroups(function(err2, document_groups) {
-      //   project.getFrequentTokens(function(err3, frequent_tokens) {
-      //     if(err) {
-      //       console.log(err);
-      //       res.render("temp-render-form", {err: err });
-      //     } else {
-      //       res.render("temp-render-form", {project: JSON.stringify(project, null, 4), frequent_tokens: JSON.stringify(frequent_tokens, null, 4), wip_project: JSON.stringify(wip_project, null, 4), n_document_groups: document_groups.length, document_groups: JSON.stringify(document_groups.splice(0, 1), null, 4), path: req.path});
-      //     }
-      //   });
-      // });
     }
   });
 }

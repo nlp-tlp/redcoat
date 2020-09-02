@@ -358,7 +358,7 @@ var DocumentGroupAnnotation = mongoose.model('DocumentGroupAnnotation', Document
 
 DocumentGroupAnnotation.createIndexes()
 DocumentGroupAnnotation.on('index', function(err){
-	console.log("ERROR:", err)
+	if(err) console.log("ERROR:", err)
 })
 
 module.exports = DocumentGroupAnnotation;
