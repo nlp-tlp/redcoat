@@ -565,13 +565,13 @@ function nextNode(node) {
     if (node.hasChildNodes()) {
         return node.firstChild;
     } else {
-        while (node && !node.nextSibling) {
-            node = node.parentNode;
-        }
-        if (!node) {
-            return null;
-        }
-        return node.nextSibling;
+      while (node && !node.nextSibling) {
+          node = node.parentNode;
+      }
+      if (!node) {
+          return null;
+      }
+      return node.nextSibling;
     }
 }
 
