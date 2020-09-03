@@ -144,6 +144,11 @@ ProjectSchema.statics.getTableData = function(p, user_id) {
  
 }
 
+// Return the total number of users (active or inactive) of this project.
+ProjectSchema.methods.getTotalUsers = function() {
+  return this.user_ids.active.length + this.user_ids.inactive.length;
+}
+
 
 // Adds the creator of the project (or WIP Project) to its list of user_ids.active if it is not there.
 ProjectSchema.methods.addCreatorToUsers = function() {

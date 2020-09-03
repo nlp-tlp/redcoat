@@ -24,8 +24,12 @@ verifyUserInProject = function(req, res, next) {
 	});
 }
 
-router.get('/getprojects', projectController.getProjects);
-router.get('/',            projectController.index);
+router.get('/', projectController.getProjects);
+//router.get('/joined', projectController.getProjects);
+
+
+
+//router.get('/',            projectController.index);
 
 
 

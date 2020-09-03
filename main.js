@@ -11,6 +11,9 @@ var LocalStrategy = require('passport-local').Strategy;
 var logger = require("./config/winston.js");
 var mongoose = require('mongoose')
 var BASE_URL = require('./config/base_url.js').base_url;
+
+
+
 mongoose.connect('mongodb://localhost/redcoat-db-dev', function(err, db) {
   if(err) { console.log("\x1b[31m" + err.message); }
 });
@@ -124,7 +127,7 @@ passport.deserializeUser(User.deserializeUser());
 
 
 
-var useCSRF = true; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.
+var useCSRF = false; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.
                      // When not running localhost:4000, this should be set to true.
 if(app.get('env') === 'production') useCSRF = true;
 
@@ -154,7 +157,7 @@ app.use(function(req, res, next) {
 
 
 
-  //res.cookie('test', 'value')
+  
 
   
   //res.cookie('csrf-token', res.locals.csrfToken);
@@ -179,7 +182,7 @@ app.use(function(req, res, next) {
 
 
 
-  //res.cookie('username', res.locals.user.username);
+  
 
   // if (app.get('env') === 'development' && req.user === undefined) {
   //   User.findOne({username: "test"}, function(err, user) {      

@@ -100,10 +100,10 @@ body.tagging-interface-body {
 // }
 
 #tagging-container {
-	width: 78%;
+	width: 80%;
 	max-width: 100%;
 	min-height: 25vh;
-	margin-left: 22%;
+	margin-left: 20%;
 	background: #eee;
 
 }
@@ -133,13 +133,13 @@ body.taking-screenshot .save-to-png {
 
 #pagination {
 	display: flex;
-	width: calc(78%);
+	width: 80%;
 	justify-content: center;
 	align-items: center;
 	position: fixed;
 	top: $navbar-height;
-	left: calc(22%);
-	background: #f6f6f6;
+	left: 20%;
+	background: #fefefe;
 	padding: 5px 5px;
 	z-index: 991;
 	box-sizing: border-box;
@@ -156,7 +156,7 @@ body.taking-screenshot .save-to-png {
 		left: -3px;
 		width: 4px;
 		height: 100%;
-		background: #f6f6f6;
+		background: #fefefe;
 		content: " ";
 	}
 
@@ -1323,21 +1323,22 @@ button.blue-button {
 }
 
 
-.tagging ~ #main-container {
-	background: url($base_url + 'images/stripes-light.png');
-	width: 100%;
-	main {
-		width: 78%;
-		margin: 0;
-		margin-left: 22%;
-		background: #f6f6f6;
-		min-height: 80vh;
-		padding: 0 80px 0 40px;
-		border-left: 1px solid #ddd;
-		border-right: 1px solid #ddd;
-		box-sizing: border-box;
-	}
-}
+
+// .tagging ~ #main-container {
+	
+// 	width: 100%;
+// 	main {
+// 		width: 78%;
+// 		margin: 0;
+// 		margin-left: 22%;
+// 		background: #f6f6f6;
+// 		min-height: 80vh;
+// 		padding: 0 80px 0 40px;
+// 		border-left: 1px solid #ddd;
+// 		border-right: 1px solid #ddd;
+// 		box-sizing: border-box;
+// 	}
+// }
 
 #tagging-interface {
 	&.loading {
@@ -1366,10 +1367,11 @@ button.blue-button {
 	position: fixed;
 	top: $navbar-height;
 	left: 0;
-	width: 22%;
+	width: 20%;
 	z-index: 990; // Navbar has 1000
 	height: calc(100% - 50px);
-	background: url($base_url + 'images/stripes-light.png');
+	background: #fff;
+	background-image: url($base_url + 'images/stripes-light.png');
 	box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
 	display: flex;
 
@@ -1423,7 +1425,7 @@ button.blue-button {
 		border-bottom: 1px solid #ddd;
 		font-size: 0.8em;
 		margin-bottom: 20px;
-		background: #f6f6f6;	
+		background: #fefefe;	
 		padding-bottom: 0;	
 		padding-top: 0;
 

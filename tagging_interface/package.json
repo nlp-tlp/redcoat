@@ -15,8 +15,10 @@
     "react-beautiful-dnd": "^13.0.0",
     "react-dom": "^16.13.1",
     "react-drag-listview": "^0.1.7",
+    "react-minimal-pie-chart": "^8.0.1",
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.3",
+    "react-transition-group": "^4.4.1",
     "styled-components": "^5.1.1",
     "underscore": "^1.10.2",
     "watch": "^1.0.2"

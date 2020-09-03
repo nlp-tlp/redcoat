@@ -14,21 +14,33 @@ var mongoose = require('mongoose');
 
 // GET: The project dashboard. Renders the projects page that lists all the projects of a user.
 // Doesn't actually send any projects - that's done by 'getProjects', via AJAX.
-module.exports.index = function(req, res) {
-  req.user.getProjects(function(err, projects) {
-    if(err) return res.send(err);
-    res.render('projects', { title: "Projects" })
-  });  
-}
+// module.exports.index = function(req, res) {
+//   req.user.getProjects(function(err, projects) {
+//     if(err) return res.send(err);
+//     res.render('projects', { title: "Projects" })
+//   });  
+// }
 
-// GET (AJAX): A function that returns all the projects of a user.
-// This should be called via AJAX to populate the projects table.
+
+
+// GET (AJAX): Return some basic details of the projects that this user is involved in.
 module.exports.getProjects = function(req, res) {
-  req.user.getProjectsTableData(function(err, projects) {
+  console.log('hi')
+  req.user.getInvolvedProjectData(function(err, data) {
+    console.log(err, data);
     if(err) return res.send(err);
-    res.send({projects: projects});
+    res.send(data);
   });
 }
+
+// // GET (AJAX): A function that returns all the projects of a user.
+// // This should be called via AJAX to populate the projects table.
+// module.exports.getProjects = function(req, res) {
+//   req.user.getProjectsTableData(function(err, projects) {
+//     if(err) return res.send(err);
+//     res.send({projects: projects});
+//   });
+// }
 
 
 

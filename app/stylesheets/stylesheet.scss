@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,600,700');
 @import url('https://fonts.googleapis.com/css?family=Droid+Sans+Mono:400,700');
 
 @import "mixins";
@@ -33,7 +33,7 @@ body {
 	font-family: $primary-font;
 	padding: 0;
 	margin: 0;
-	background: #f2f2f2;
+	background: #e9e9e9;
 	color: #222;
 	font-size: 20px;
 	//background-image: url("/images/pattern.svg")
@@ -59,6 +59,9 @@ body {
 
 		main {
 			opacity: 0.5;
+		}
+		#navbar .log-in {
+			display: none;
 		}
 	}
 }
@@ -161,13 +164,11 @@ main {
 	position: relative;
 	//padding-top: 150px;
 	//padding-left: 200px;
-	padding-top: 80px;
-	width: 85%;
-	margin-left: 15%; 
-	@media(max-width: 1700px) {
-		width: 80%;
-		margin-left: 20%; 
-	}
+	//width: 70%;
+	// margin: 0 auto; 
+	// @media(max-width: 1700px) {
+	// 	width: 60%;
+	// }
 	box-sizing: border-box;
 	min-height: calc(100vh - 50px);
 	&.error-page {
@@ -183,6 +184,10 @@ main {
 		text-align: center;
 	}
 }
+.container {
+	width: 70%;
+	margin: 0 auto;
+}
 
 i.fa-xxs {
 	font-size: 0.8em;
@@ -194,7 +199,7 @@ i.fa-xxs {
 
 header.bg-header {
 	margin-top: $navbar-height;
-	height: $navbar-height*2;
+	height: 75px;
 	background: linear-gradient(135deg, rgb(200, 89, 41), rgb(185, 12, 5)) no-repeat;
 	background-size: cover;
 	width: 100%;
@@ -203,14 +208,16 @@ header.bg-header {
 	overflow: hidden;
 	position: relative;
 	box-shadow: inset 0px -2px 6px -3px rgba(0, 0, 0, 0.5);
+
+
+	display: flex;
+	align-items: center;
 	.message-bar {
 
 	}
 	.title {
-		position: absolute;
-		width: 83.5%;
-		padding-left: 17.5%;
-		padding-right: 190px;
+		
+	
 		color: white;
 		&.can-fade {
 			opacity: 0;
@@ -227,10 +234,10 @@ header.bg-header {
 		h1 {
 			text-shadow: 1px 1px #111;
 			margin: 0;
-			padding: 16px 0;
-			margin-left: 90px;
-			font-size: 50px;
+			padding: 12px 0;
+			font-size: 40px;
 			float: left;
+			margin-left: 300px;
 		}
 		.left {
 			position: absolute;
@@ -364,3 +371,77 @@ span.progress-bar {
 	}
 
 }
+
+// Transitions
+.fade-enter {
+    margin-left: -30px;
+    opacity: 0.00001;
+}
+
+.fade-enter.fade-enter-active {
+    margin-left: 0;  
+    opacity: 1;
+    margin-left: 0px;
+}
+
+.fade-exit {
+    margin-left: 0;
+    opacity: 1;
+    margin-left: 0px;
+
+}
+
+.fade-exit.fade-exit-active {
+    margin-left: 0px;
+    opacity: 0.00001;
+    transition: all 100ms ease;
+    margin-left: -30px;
+    
+}
+
+
+
+
+section.route-section {
+    position: absolute;
+    width: 100%;
+    top: 0;
+    left: 0;
+    transition: all 300ms ease;
+    box-sizing: border-box;
+
+  }
+div.transition-group {
+   position: relative;
+   width: 100%;
+}
+
+
+// Skeleton text
+
+.st {
+	position: relative;
+
+	&:after {
+		position: absolute;
+		top: 0.3em;
+		left: 0;
+		width: 100%;
+		height: 0.8em;
+		content: " ";
+		pointer-events: none;
+	}
+}
+.loading {
+	.st {
+		color: rgba(0, 0, 0, 0) !important;
+	}
+	.st:after {
+		background: #eee;
+	}
+	.st-darker:after {
+		background: #ddd;
+	}
+
+}
+

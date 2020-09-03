@@ -242,14 +242,82 @@ UserSchema.methods.getProjectInvitations = function(done) {
 // Todo: Get all projects this user is the admin of.
 
 // Gets all projects the user is involved in.
-UserSchema.methods.getProjects = function(done) {
+UserSchema.methods.getInvolvedProjects = function(done) {
   var tid = this._id;
   var Project = require('./project')
   Project.find( { "user_ids.active": { $elemMatch : { $eq : tid } } } ).sort('-created_at').lean().exec(function(err, projs) {
     if(err) { done(new Error("There was an error attempting to run the find projects query.")); return; }
     else { done(null, projs); return; }
+  });  
+}
+
+
+// Get some basic details about this user's projects.
+// Returns {projects: { id: <_id>, name: "<name>", description: "<project_description">, total_users: <total users> },
+// numCreatedByUser: the number of projects created by this user
+// numUserInvolvedIn: the number of projects this user is involved in
+UserSchema.methods.getInvolvedProjectData = function(done) {
+
+  var t = this;
+
+  // Get the total users of a project (active + inactive).
+  // Not defined on Project model because there's no way to call it with a lean() query.
+  function getTotalUsers(project) {
+    return project.user_ids.active.length + project.user_ids.inactive.length
+  }
+
+  // Get an abbreviated name for this project, to appear in the icon next to it
+  function getIconName(project_name) {
+    var splitName = project_name.split(" ");
+    var iconName = '';
+    if(splitName.length > 2) {
+      iconName = splitName[0][0] + splitName[1][0];
+    } else {
+      if(splitName[0].length > 1) {
+        iconName = splitName[0].slice(0, 2);
+      } else {
+        iconName = splitName[0];
+      }      
+    }
+    return iconName.toUpperCase();
+  }
+
+  var Project = require('./project')
+  console.log('hello')
+  Project.find( { "user_ids.active": { $elemMatch : { $eq : t._id } } } ).sort('-created_at').lean().exec(function(err, projects) {
+  //Project.find( { user_id: this.id } ).sort('-created_at').lean().exec(function(err, projects) {
+    if(err) return done(err);
+
+    var returnedProjects = [];
+    var numCreatedByUser = 0;
+    var numUserInvolvedIn = 0;
+
+
+
+    for(var project_idx in projects) {
+      var project = projects[project_idx];
+
+      var isCreatedByUser = t._id.equals(project.user_id);
+      if(isCreatedByUser) numCreatedByUser++;
+
+      returnedProjects.push({
+
+        _id: project._id,
+        name: project.project_name,
+        description: project.project_description,
+        total_users:  getTotalUsers(project),
+        creator:   t.username,
+        created_at:   project.created_at,
+        icon_name:    getIconName(project.project_name),
+
+        userIsCreator: isCreatedByUser,
+      });
+    }
+    console.log(returnedProjects)
+    done(null, {projects: returnedProjects, numCreatedByUser: numCreatedByUser, numUserInvolvedIn: projects.length });
   });
 }
+
 
 // Gets all projects the user is involved in.
 // Returns the data in a format suitable for display in the 'projects' page.
