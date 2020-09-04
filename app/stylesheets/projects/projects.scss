@@ -863,18 +863,7 @@
 	}
 }
 
-.circle-icon {
-	min-width: 50px;
-	min-height: 50px;
-	border-radius: 50%;
-	background: #ddd;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	margin-right: 20px;
-	pointer-events: none;
-	
-}
+
 
 #projects-table.loading {
 	pointer-events: none;
@@ -936,7 +925,7 @@
 	//margin-top: $navbar-height;
 	main {
 		margin-top: 40px;
-		min-height: auto;
+		min-height: 80vh;
 	}
 }
 
@@ -958,6 +947,13 @@
 			&:hover {
 				text-decoration: underline;
 			}
+		}
+	}
+	a {
+		color: #222;
+		text-decoration: none;
+		&:hover {
+			text-decoration: underline;
 		}
 	}
 }
@@ -1036,7 +1032,7 @@
 .project-view-wrapper {
 	width: 100%;
 	height: 100%;
-	padding: 00 40px;
+	padding: 40px 40px;
 
 }
 
@@ -1055,7 +1051,7 @@
 		padding: 0 15px;
 		.annotate-button {
 			margin-right: 60px;
-			margin-top: 20px;
+			margin-top: -15px;
 			display: block;
 			padding: 30px 20px;
 			padding-right: 30px;
@@ -1070,7 +1066,7 @@
 			box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
 			font-weight: 600;
 			i {
-				margin-right: 10px;
+				margin-right: 15px;
 			}
 			&:hover {
 				background: lighten($button-blue, 10);
@@ -1082,8 +1078,8 @@
 		}
 		
 		.dashboard-key-items {
-			padding: 20px;
-			padding-top: 30px;
+			margin-top: -10px;
+			padding: 0 20px;
 			padding-bottom: 0;
 			display: flex;
 
@@ -1230,21 +1226,6 @@
 
 }
 
-.profile-icon {
-	position: relative;
-	overflow: hidden;
-	&:after {
-		position: absolute;
-		top: 5px;
-		left: 0;
-		width: 100%;
-		text-align: center;
-		content: "\f007";
-		font-size: 50px;
-		color: rgba(0, 0, 0, 0.3);
-		font-family: FontAwesome;
-	}
-}
 
 .comments-wrapper {
 	overflow-y: scroll;
@@ -1287,3 +1268,11 @@
 	}
 }
 
+.annotations-per-doc-donut {
+	padding-top: 10px;
+	box-sizing: border-box;
+}
+
+.loading .annotations-per-doc-donut {
+	padding-top: 0;
+}

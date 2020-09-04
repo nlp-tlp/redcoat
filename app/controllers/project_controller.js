@@ -460,26 +460,53 @@ module.exports.downloadCombinedAnnotations = function(req, res) {
   });
 }
 
+
+
+
 // GET (AJAX): function to retrieve details of a project (annotators, metrics).
 module.exports.getProjectDetails = function(req, res) {
   var id = req.params.id;
 
   Project.findOne({ _id: id}, function(err, proj) {
-    proj.getAnnotationsTableData(function(err, annotations, annotationsAvailable) {
+
+    proj.getDetails(function(err, data) {
       if(err) { return res.send("error") }
-      proj.getInvitationsTableData(function(err, invitations) {
-        if(err) { return res.send("error") }
-        res.send( {
-          invitations: invitations,
-          annotations: annotations,
-          combined_annotations_available: annotationsAvailable,
-          project_id: proj._id
-        });   
-      }); 
-    });
+
+      
+
+      
+
+
+
+
+      res.send(data);
+
+
+
+    })
+
+
+    // proj.getAnnotationsTableData(function(err, annotations, annotationsAvailable) {
+    //   if(err) { return res.send("error") }
+    //   proj.getInvitationsTableData(function(err, invitations) {
+    //     if(err) { return res.send("error") }
+    //     res.send( {
+    //       invitations: invitations,
+    //       annotations: annotations,
+    //       combined_annotations_available: annotationsAvailable,
+    //       project_id: proj._id
+    //     });   
+    //   }); 
+    // });
+
+
    
   });
 }
+
+
+
+
 
 // POST: Accept an invitation.
 module.exports.acceptInvitation = function(req, res) {

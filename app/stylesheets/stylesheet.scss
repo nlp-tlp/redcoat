@@ -424,8 +424,43 @@ span.progress-bar {
 
 
 
+.circle-icon {
+	min-width: 50px;
+	min-height: 50px;
+	border-radius: 50%;
+	background: #ddd;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-right: 20px;
+	pointer-events: none;
+	
+}
 
+.profile-icon {
+	position: relative;
+	overflow: hidden;
+	&:after {
+		position: absolute;
+		top: 5px;
+		left: 0;
+		width: 100%;
+		text-align: center;
+		content: "\f007";
+		font-size: 50px;
+		color: rgba(0, 0, 0, 0.3);
+		font-family: FontAwesome;
+	}
+}
 
+.circle-icon.small {
+	min-width: 35px;
+	min-height: 35px;
+	&:after {
+		top: 6px;
+		font-size: 36px;
+	} 
+}
 
 section.route-section {
     position: absolute;
@@ -487,6 +522,7 @@ div.transition-group {
 	position: relative;
 	display: inline-block;
 
+
 	&:after {
 		position: absolute;
 		top: 0.3em;
@@ -512,7 +548,7 @@ blockquote {
 }
 
 
-.loading {
+:not(#tagging-interface).loading {
 	.st {
 		color: rgba(0, 0, 0, 0) !important;
 
@@ -520,6 +556,7 @@ blockquote {
 	}
 	blockquote.st {
 		border-left: 4px solid rgba(0, 0, 0, 0);
+		background: #eee;
 	}
 	.st:after {
 		background: #eee;

@@ -4,6 +4,8 @@ import redcoatMan from '../redcoat-1-threshold.png';
 import {Component} from 'react';
 import $ from 'jquery';
 import { findDOMNode } from 'react-dom';
+import { Link } from 'react-router-dom'
+
 
 //const ReactDragListView = require('react-drag-listview');
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
@@ -1916,9 +1918,9 @@ class TaggingInterface extends Component {
             </div>
             <div id="tagging-menu">
               <div className="project-card">
-                <div className="circle-icon"><div className="inner">PO</div></div>
+                <div className="circle-icon"><div className="inner"></div></div>
                 <div>
-                  <div className="project-name st " style={{'display': 'block'}}>{this.state.data.projectName}</div>
+                  <div className="project-name st " style={{'display': 'block'}}><Link to={"/projects/" + this.props.project_id + "/dashboard"}>{this.state.data.projectName}</Link></div>
                   <div className="project-creator st">Created by <span className="creator-name">someone</span></div>
                 </div>
               </div>

@@ -12,20 +12,10 @@ class Navbar extends Component {
       <nav id="navbar">
         <div className="navbar-left">
           <div id="logo">
-            <Link to="/">
-              <span className="inner">
-                <span className="img">
-                  <img src={logo}/>
-                </span>
-                <span>Redcoat</span>
-              </span>
+            <Link to="/">             
+              <img src={logo}/> <span class="text">Redcoat</span>         
             </Link>
-          </div>         
-        </div>
-        <div className="navbar-centre"></div>
-        <div className="navbar-right">
-
-
+          </div>
           { this.props.username && 
             <div className="dropdown-menu">
               <button>Projects</button>
@@ -35,11 +25,17 @@ class Navbar extends Component {
               </ul>
             </div>
           }
+   
+        </div>
+        <div className="navbar-centre"></div>
+        <div className="navbar-right">
+
+
 
           { this.props.username &&
 
             <div className="dropdown-menu">
-              <button>Logged in as {this.props.username}</button>
+              <button className="flex"><div className="circle-icon profile-icon small"></div><span>Logged in as {this.props.username}</span></button>
               <ul className="dropdown-menu-items">
                 <li><Link to={"" + BASE_URL + "profile"}>Profile</Link></li>
                 <li><Link to={"" + BASE_URL + "logout"}>Logout</Link></li>

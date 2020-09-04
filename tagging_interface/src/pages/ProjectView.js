@@ -4,11 +4,20 @@ import { PieChart } from 'react-minimal-pie-chart';
 import { Redirect, Link, BrowserRouter, Route, Switch, withRouter } from 'react-router-dom'
 import { TransitionGroup, CSSTransition } from "react-transition-group";
 import Error404Page from '../pages/Error404Page';
-import {Bar, Line} from 'react-chartjs-2';
+import {Bar, Line, HorizontalBar, Doughnut } from 'react-chartjs-2';
 
 import { defaults } from 'react-chartjs-2'
 
 defaults.global.defaultFontFamily = 'Open Sans'
+
+// Config for all API fetch requests
+const fetchConfigGET = {
+  method: 'GET',
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
+  }
+};
 
 
 class Comment extends Component {
@@ -17,7 +26,6 @@ class Comment extends Component {
   }
 
   render() {
-    console.log(this.props);
     return (
       <div className="comment-box">
         <div className="comment-left">                  
@@ -33,6 +41,72 @@ class Comment extends Component {
   }
 }
 
+// Returns a JSON array of styles for the entity chart.
+function getEntityChartStyles() {
+  return {
+    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+    borderColor: 'rgba(54, 162, 235, 0.6)',
+    borderWidth: 1,
+    hoverBackgroundColor: 'rgba(54, 162, 235, 0.6)',
+    hoverBorderColor: 'rgba(54, 162, 235, 0.6)',
+  }
+}
+
+const chartColours = [
+"#36A2EB",
+"#FF6384",
+"#6dc922",
+"#B4436C",
+"#FFCE56",
+"#F78154",
+"#5FAD56",
+"#4D9078",
+"#586BA4",
+"#324376",
+"#F5DD90",
+"#6665DD",
+"#7B4B94",
+];
+
+
+// https://stackoverflow.com/questions/2901102/how-to-print-a-number-with-commas-as-thousands-separators-in-javascript
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// Set the styles of the activity chart data.
+function setActivityChartStyles(activityChartData) {
+
+  for(var i in activityChartData.datasets) {
+    var colourIdx = parseInt(i) % chartColours.length;
+    activityChartData.datasets[i] = Object.assign({}, activityChartData.datasets[i], {
+      fill: false,
+      lineTension: 0.1,
+      backgroundColor: chartColours[colourIdx],
+      borderColor: chartColours[colourIdx],
+      borderCapStyle: 'butt',
+      borderDash: [],
+      borderDashOffset: 0.0,
+      borderJoinStyle: 'miter',
+      pointBorderColor: chartColours[colourIdx],
+      pointBackgroundColor: '#fff',
+      pointBorderWidth: 1,
+      pointHoverRadius: 5,
+      pointHoverBackgroundColor: chartColours[colourIdx],
+      pointHoverBorderColor: 'rgba(220,220,220,1)',
+      pointHoverBorderWidth: 2,
+      pointRadius: 1,
+      pointHitRadius: 10,
+    })
+
+  }
+  return activityChartData;
+}
+
+
+// The project dashboard, which renders in the container to the right of the navigation.
+// Its data comes from props, not state (so that the dashboard doesn't need to be reloaded when switching between
+// pages in the Project view).
 class ProjectDashboard extends Component {
   constructor(props) {
     super(props);    
@@ -57,7 +131,7 @@ class ProjectDashboard extends Component {
 
               <div>
                 <div className="name"># Annotated</div>
-                <div className="value"><span class="st st-darker">{ this.props.data.numDocGroupsAnnotated } / { this.props.data.totalDocGroups }</span></div>
+                <div className="value"><span class="st st-darker">{ numberWithCommas(this.props.data.numDocGroupsAnnotated) } / { numberWithCommas(this.props.data.totalDocGroups) }</span></div>
               </div>
 
               <div class="pieChart">
@@ -118,14 +192,14 @@ class ProjectDashboard extends Component {
 
             <div className="dashboard-item col-100">
               <div className="inner">
-                <h3>Entity classes</h3>
+                <h3>Entity frequencies</h3>
                 <div>
                   { this.props.loading && 
                     <div className="chart-placeholder"><i class="fa fa-cog fa-spin"></i>Loading...</div>
                   }
                   { !this.props.loading && 
                   <Bar
-                    data={this.props.data.chartData.entityClasses}
+                    data={this.props.data.entityChartData.entityClasses}
                     height={230}
                     options={{
                       responsive: true,
@@ -134,10 +208,11 @@ class ProjectDashboard extends Component {
                         yAxes: [{
                           ticks: {
                             beginAtZero: true,
+                            precision: 0
                             
                           }
                         }]
-                      }
+                      },
                     }}
                   />}
 
@@ -155,11 +230,19 @@ class ProjectDashboard extends Component {
                   }
                   { !this.props.loading && 
                   <Line
-                    data={this.props.data.chartData.activity}
+                    data={this.props.data.activityChartData}
                     height={230}
                     options={{
                       responsive: true,
-                      maintainAspectRatio: false
+                      maintainAspectRatio: false,
+                      scales: {
+                        xAxes: [{
+                          type: 'time',
+                          time: {
+                            unit: 'day',
+                          }
+                        }]
+                      }
                     }}/>
                   }
                 </div>
@@ -170,8 +253,38 @@ class ProjectDashboard extends Component {
 
             <div className="dashboard-item col-40">
               <div className="inner">
-                <h3>Existential box</h3>
-                <p><span class="st">this box doesn't know what it wants to be</span></p>
+                <h3>Annotations per doc</h3>
+                <div class="annotations-per-doc-donut">
+                  { this.props.loading && 
+                    <div className="chart-placeholder"><i class="fa fa-cog fa-spin"></i>Loading...</div>
+                  }
+                  { !this.props.loading && 
+                    <Doughnut
+                    height={230}
+                    options={{
+                      legend: {
+                        display: false,
+                      },
+
+
+                    }}
+                    data={ {
+                      labels: ['3','2','1', '0'],                    
+                      datasets: [
+                        {
+                          data: [5, 10, 40, 10],
+                          backgroundColor: [
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(54, 162, 235, 0.4)',
+                            'rgba(54, 162, 235, 0.08)',
+                          ],
+                        }
+                      ]}
+                    }                    
+                  />
+                  }
+                </div>
               </div>
             </div>
           </div>
@@ -231,13 +344,11 @@ class ProjectViewSidenav extends Component {
 
     return (
       <nav id="project-view-sidenav">
-
-        
         <div className="project-card">
-          <div className="circle-icon"><div className="inner">PO</div></div>
+          <div className="circle-icon"><div className="inner"></div></div>
           <div>
-            <div className="project-name st " style={{'display': 'block'}}>Project one</div>
-            <div className="project-creator st">Created by <span className="creator-name">someone</span></div>
+            <div className="project-name st " style={{'display': 'block'}}><Link to={"/projects/" + this.props.project_id + "/dashboard"}>{this.props.project_name}</Link></div>
+            <div className="project-creator st">Created by <span className="creator-name">{this.props.project_author}</span></div>
           </div>
         </div>
 
@@ -286,8 +397,10 @@ class ProjectView extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      projectTitle: "Project one",
       loading: true,
+
+      project_name: "????????",
+      project_author: "????????",
 
       data: {
 
@@ -320,72 +433,6 @@ class ProjectView extends Component {
               document: "look at flange more",
             }
           ],
-
-          chartData: {
-
-            entityClasses: {
-              labels: ['x', 'y', 'z'],
-              datasets: [
-                {
-                  label: 'Mentions',
-                  backgroundColor: 'rgba(0, 159, 253, 0.2)',
-                  borderColor: 'rgba(0, 159, 253, 1)',
-                  borderWidth: 1,
-                  hoverBackgroundColor: 'rgba(0, 159, 253, 0.4)',
-                  hoverBorderColor: 'rgba(0, 159, 253, 1)',
-                  data: [0,0,0]
-                }
-              ]
-            },
-
-            activity: {
-              labels: ['1 Sept', '2 Sept', '3 Sept', '4 Sept', '5 Sept', '6 Sept', '7 Sept'],
-              datasets: [
-                {
-                  label: 'michael',
-                  fill: false,
-                  lineTension: 0.1,
-                  backgroundColor: 'rgba(75,192,192,0.4)',
-                  borderColor: 'rgba(75,192,192,1)',
-                  borderCapStyle: 'butt',
-                  borderDash: [],
-                  borderDashOffset: 0.0,
-                  borderJoinStyle: 'miter',
-                  pointBorderColor: 'rgba(75,192,192,1)',
-                  pointBackgroundColor: '#fff',
-                  pointBorderWidth: 1,
-                  pointHoverRadius: 5,
-                  pointHoverBackgroundColor: 'rgba(75,192,192,1)',
-                  pointHoverBorderColor: 'rgba(220,220,220,1)',
-                  pointHoverBorderWidth: 2,
-                  pointRadius: 1,
-                  pointHitRadius: 10,
-                  data: [65, 59, 80, 81, 56, 55, 40]
-                },
-                  {
-                  label: 'pingu',
-                  fill: false,
-                  lineTension: 0.1,
-                  backgroundColor: 'rgba(75,192,192,0.4)',
-                  borderColor: 'rgba(240,32,32,1)',
-                  borderCapStyle: 'butt',
-                  borderDash: [],
-                  borderDashOffset: 0.0,
-                  borderJoinStyle: 'miter',
-                  pointBorderColor: 'rgba(75,192,192,1)',
-                  pointBackgroundColor: '#fff',
-                  pointBorderWidth: 1,
-                  pointHoverRadius: 5,
-                  pointHoverBackgroundColor: 'rgba(75,192,192,1)',
-                  pointHoverBorderColor: 'rgba(220,220,220,1)',
-                  pointHoverBorderWidth: 2,
-                  pointRadius: 1,
-                  pointHitRadius: 10,
-                  data: [35, 79, 50, 71, 66, 35, 50]
-                }
-              ]              
-            }
-          }
         }        
       }   
     }
@@ -393,31 +440,39 @@ class ProjectView extends Component {
 
   componentWillMount() {
     var t = this;
-    window.setTimeout(() => {
 
-      var dashboardData = this.state.data.dashboard;
-      dashboardData = {
-          numDocGroupsAnnotated: 700,
-          totalDocGroups: 1200,
+    fetch('http://localhost:3000/projects/' + this.props.project_id, fetchConfigGET) // TODO: move localhost out
+      .then(response => response.text())
+      .then((data) => {
+        console.log(data, "<<<");
+        var d = JSON.parse(data);
 
-          avgAgreement: 0.5,
-          avgTimePerDocument: 15,
+        window.setTimeout(() => {
 
-          comments: dashboardData.comments,
-          chartData: dashboardData.chartData,
-      }
-      dashboardData.chartData.entityClasses.datasets[0].data = [155, 139, 120, 81, 56, 25, 10];
-      dashboardData.chartData.entityClasses.labels = ['Item', 'Activity', 'Observation', 'Consumable', 'Cardinality', 'Event', 'Attribute'];
-      
-      t.setState({
-        loading: false,
-        data: {
-          dashboard: dashboardData,
-        },
+          // Add the chart styles here in the front-end
+          var entityChartData = Object.assign({}, d.dashboard.entityChartData.entityClasses.datasets[0], getEntityChartStyles())
+          d.dashboard.entityChartData.entityClasses.datasets[0] = entityChartData;
 
-        
-      })
-    }, 1030);
+          d.dashboard.activityChartData = setActivityChartStyles(d.dashboard.activityChartData);
+
+
+          t.setState({
+            loading: false,
+
+            project_name: d.project_name,
+            project_author: d.project_author,
+
+            data: d,
+
+            
+          }, () => { console.log(this.state.data.dashboard.entityChartData)} );
+      }, 1030);
+    });
+
+
+
+
+    
     // Query api for project
 
   }
@@ -429,7 +484,11 @@ class ProjectView extends Component {
       <div>
         <div id="project-view" className={this.state.loading ? "loading" : ""}>
           <ProjectViewSidenav view={this.state.view}
-                              project_id={this.props.project_id} />
+                              project_id={this.props.project_id}
+                              project_name={this.state.project_name}
+                              project_author={this.state.project_author}
+
+                               />
 
 
           <div className="project-view-wrapper">

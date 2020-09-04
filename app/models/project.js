@@ -212,7 +212,7 @@ ProjectSchema.methods.getDocumentsAnnotatedByUserCount = function(user, next) {
       }
     }
   ], function(err, results) {
-    console.log(results, "<<<");
+    //console.log(results, "<<<");
     if(results.length > 0)
       var count = results[0].count;
     else
@@ -407,6 +407,7 @@ ProjectSchema.methods.getCombinedAnnotations = function(next) {
 
   var t = this;
   var DocumentGroup = require('./document_group');
+  var DocumentGroupAnnotation = require('./document_group_annotation')
   DocumentGroupAnnotation.aggregate([
     {
       $match: {
@@ -446,7 +447,7 @@ ProjectSchema.methods.getCombinedAnnotations = function(next) {
      
     ]).allowDiskUse(true)
     .exec(function(err, document_groups) {
-      console.log(document_groups)
+      //console.log(document_groups)
       if(err) return next(err);
       next(null, document_groups);
 
@@ -582,8 +583,8 @@ ProjectSchema.methods.getEntityTypingAnnotations = function(annotations,  next) 
       } else if (annotations[i].hasOwnProperty('all_labels')) {
         labels = annotations[i]['all_labels'];
       }
-      console.log("labels:", annotations[i]['labels'])
-      console.log("all:", annotations[i]['all_labels'])
+      //console.log("labels:", annotations[i]['labels'])
+      //console.log("all:", annotations[i]['all_labels'])
       var numUsers = labels.length;
       if(numUsers % 2 == 0) {
         var m = Math.ceil((numUsers / 2) + 0.0001);
@@ -609,7 +610,7 @@ ProjectSchema.methods.getEntityTypingAnnotations = function(annotations,  next) 
         var label_counts  = {}
         var majority_markers = new Set();
         var majority_labels = new Set();
-        console.log(zipped_labels[l])
+        //console.log(zipped_labels[l])
 
 
         for(var idx in zl) {
@@ -633,7 +634,7 @@ ProjectSchema.methods.getEntityTypingAnnotations = function(annotations,  next) 
         }
                 
 
-        console.log(mentionLabels)
+        //console.log(mentionLabels)
         // 2.a If we are not in a mention, count B tags
         if(mentionStart === -1) {
 
@@ -894,6 +895,312 @@ ProjectSchema.methods.modifyHierarchy = function(new_hierarchy, user, done) {
 }
 
 
+
+// Retrieve the counts of every label in this project, based on the 'combined annotations' (i.e. the automatically compiled ones).
+// This is probably not very efficient.
+// These kind of functions make me wish this was python not js.......
+ProjectSchema.methods.getLabelCounts = function(done) {
+  var t = this;
+
+  var starty = new Date().getTime();
+  console.log("Getting combined anns...")
+
+  t.getCombinedAnnotations(function(err, annotations) {
+    if(err) return res.send(err);
+
+    var elapsed = new Date().getTime() - starty;
+    console.log("... done (" + elapsed + "ms)")
+
+
+    
+    var entityCounts = {}
+    
+    for(var docgroup_idx in annotations) {
+
+      for(var doc_idx in annotations[docgroup_idx].all_labels[0]) { // Not sure why all labels is an array of length 1         
+
+        for(var token_idx in annotations[docgroup_idx].all_labels[0][doc_idx]) {
+
+          var tokenAnnotation = annotations[docgroup_idx].all_labels[0][doc_idx][token_idx];
+          var bioTag = tokenAnnotation[0];
+
+          if(bioTag === "B-") {
+            for(var label_idx in tokenAnnotation[1]) {
+              var label = tokenAnnotation[1][label_idx];
+              var split = label.split('/');
+              var truncatedLabel = split.length > 1 ? "/" : ""
+              truncatedLabel = truncatedLabel + split[split.length - 1];
+              if(!entityCounts.hasOwnProperty(truncatedLabel)) {
+                entityCounts[truncatedLabel] = 0;
+              }
+              entityCounts[truncatedLabel]++;
+            }
+          }
+        }
+      }
+    }
+
+
+    // Old code (for getting via mentions from getEntityTypingAnnotations)
+    // for(var doc_idx in et_annotations) {
+    //   var annotated_doc = et_annotations[doc_idx];
+    //   for(var mention_idx in annotated_doc.mentions) {
+    //     var mention = annotated_doc.mentions[mention_idx];
+    //     for(var label_idx in mention.labels) {
+    //       var label = mention.labels[label_idx];
+
+    //       var split = label.split('/');
+    //       var truncatedLabel = split.length > 1 ? "/" : ""
+    //       truncatedLabel = truncatedLabel + split[split.length - 1];
+
+    //       if(!entityCounts.hasOwnProperty(truncatedLabel)) {
+    //         entityCounts[truncatedLabel] = 0;
+    //       }
+    //       entityCounts[truncatedLabel]++;
+    //     }
+        
+    //   }
+    // }
+
+    // Sort the labels by frequency and return the entity labels and counts as separate arrays.
+    // This is 20 lines of js that could be done in 1 line of python :(
+    sortedEntityCounts = [];
+    for(var i in entityCounts) {
+      sortedEntityCounts.push([i, entityCounts[i]]);
+    }
+    console.log(sortedEntityCounts);
+
+    function compareFn(x, y) {
+      if(x[1] < y[1]) return 1;
+      if(x[1] > y[1]) return -1;
+      return 0;
+    }
+
+    sortedEntityCounts.sort(compareFn);
+
+    entities = [];
+    counts   = [];
+
+    for(var i in sortedEntityCounts) {
+      entities.push(sortedEntityCounts[i][0])
+      counts.push(sortedEntityCounts[i][1])
+    }
+
+    done({entities: entities, counts: counts});
+
+  });
+
+}
+
+
+
+// Retrieve the activity chart data for this project.
+ProjectSchema.methods.getActivityChartData = function(done) {
+  // var activityChartData = 
+  //   {
+  //     labels: [new Date(2020, 9, 1), new Date(2020, 9, 2), new Date(2020, 9, 3), new Date(2020, 9, 4), new Date(2020, 9, 7)],
+  //     datasets: [
+  //       {
+  //         label: 'michael',
+  //         data: [3, 59, 80, 81, 56],          
+  //       },
+  //       {
+  //         label: 'pingu',
+  //         data: [35, 79, 50, 71, 66],          
+  //       }
+  //     ]
+  //   }
+
+  var t = this;
+  var DocumentGroupAnnotation = require('./document_group_annotation');
+  var d = DocumentGroupAnnotation.aggregate([
+    { $match: { project_id: t._id} },
+    { $unwind: "$labels"},
+    { $project:
+      { created_at:
+        {
+          $dateToString:
+          {format:"%Y-%m-%d", date:"$created_at"}
+        }, 
+        user_id: '$user_id',
+      }
+    },
+    {
+      $group: {
+        _id: { created_at: "$created_at", user_id: "$user_id" },
+        count: {
+          $sum: 1
+        },
+      }
+    },
+    {
+      $sort: {
+        created_at: -1,
+      }
+    }
+    // {
+    //   $group: {
+    //     _id: "$user_id",
+    //     count: {
+    //       $sum: 1
+    //     }
+    //   }
+    // },
+  ], function(err, results) {
+
+    console.log("RESULTS", results);
+
+    var activityChartData = {
+      labels: [],
+      datasets: [],
+    };
+
+    var datasets = {}
+
+    for(var result_idx in results) {
+      console.log(results[result_idx]._id, results[result_idx].count);
+
+      var result = results[result_idx];
+      // var s = result._id.created_at.split('-');
+      // var year = s[0];
+      // var month = s[1];
+      // var day = s[2];
+
+      activityChartData.labels.push(result._id.created_at);
+
+      var user_id = results[result_idx]._id.user_id;
+      if(!datasets.hasOwnProperty(user_id)) {
+        datasets[user_id] = [];
+      }
+      datasets[user_id].push(result.count);
+
+    }
+    for(var user_id in datasets) {
+      activityChartData.datasets.push({
+        label: user_id,
+        data: datasets[user_id],
+      })
+    }
+
+    console.log(activityChartData);
+
+    done(activityChartData);
+
+    // //console.log(results, "<<<");
+    // if(results.length > 0)
+    //   var count = results[0].count;
+    // else
+    //   var count = 0;
+    // return next(err, count);
+  });
+
+
+
+
+
+ 
+
+
+}
+
+
+// Retrieve all the relevant details of this project so that they can be displayed in the project view.
+/*
+  project_name: 
+  project_author:
+
+  avgAgreement: 
+  avgTimePerDocument:
+
+  dashboard: the data for the dashboard,
+  annotations: ??
+*/
+
+ProjectSchema.methods.getDetails = function(done) {
+
+  var t = this;
+
+
+  var start = new Date().getTime();
+  console.log("Retrieving project details...")
+
+  //   project["annotations_required"] = Math.ceil(p.file_metadata["Number of documents"] / 10) * p.overlap;
+
+  // //console.log(p.project_title, p.completed_annotations, "<<>>")
+  // //project["completed_annotations"] = (p.completed_annotations || 0) / 10);
+
+  // //project["percent_complete"] = project["completed_annotations"] / (Math.ceil(project["annotations_required"]/10) * 10) * 100;
+  // project["percent_complete"] = project["completed_annotations"] / project["annotations_required"] * 100;
+
+
+  t.getLabelCounts(function(entityCounts) {
+    t.getActivityChartData(function(activityChartData) {
+      
+
+      var data = {
+
+        project_name: t.project_name,
+        project_author: t.author,
+
+        dashboard: {
+          numDocGroupsAnnotated: t.completed_annotations * cf.DOCUMENT_MAXCOUNT, // not going to be exact because some doc groups might not be max len
+          totalDocGroups: Math.ceil(t.file_metadata["Number of documents"]) * t.overlap,
+
+          avgAgreement: 0.5,
+          avgTimePerDocument: 15,
+
+          comments: [
+            {
+              author: "Mr Pingu",
+              date: "4 Sept",
+              text: "Noot noot! I don't know what this is",
+              document: "replace a/c converter cap",
+            },
+            {
+              author: "Mrs Pingu",
+              date: "3 Sept",
+              text: "This doesn't make sense",
+              document: "fix 50 things on seal",
+            },
+            {
+              author: "Michael",
+              date: "1 Sept",
+              text: "Not sure what a flange is",
+              document: "look at flange more",
+            }
+          ],
+
+          entityChartData: {
+
+            entityClasses: {
+              labels: entityCounts.entities,
+              datasets: [
+                {
+                  label: 'Mentions',
+                  data: entityCounts.counts,
+                }
+              ]
+            },
+
+            
+          },
+
+          activityChartData: activityChartData
+
+
+        },   
+      };
+
+      var elapsed = new Date().getTime() - start;
+
+      console.log("... done (" + elapsed + "ms)")
+      return done(null, data);
+    });
+
+  })
+
+
+}
 
 /* Middleware */
 
