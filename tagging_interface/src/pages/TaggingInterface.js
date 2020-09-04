@@ -1915,6 +1915,13 @@ class TaggingInterface extends Component {
               </div>
             </div>
             <div id="tagging-menu">
+              <div className="project-card">
+                <div className="circle-icon"><div className="inner">PO</div></div>
+                <div>
+                  <div className="project-name st " style={{'display': 'block'}}>{this.state.data.projectName}</div>
+                  <div className="project-creator st">Created by <span className="creator-name">someone</span></div>
+                </div>
+              </div>
               <WikipediaSummary tokens={this.state.mostRecentSelectionText}/>
               <HotkeyInfo 
                 chain={this.state.hotkeyChain}

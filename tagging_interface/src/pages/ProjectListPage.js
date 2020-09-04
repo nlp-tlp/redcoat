@@ -132,7 +132,7 @@ class ProjectListPage extends Component {
           
             <div className="row" index={i}>
               <div className="col-name-desc">
-                <div className="project-icon"><div className="inner">{ project.icon_name }</div></div>
+                <div className="circle-icon"><div className="inner">{ project.icon_name }</div></div>
                 <div className="name-desc-row">
                   <div className="project-name"><Link to={'/projects/' + project._id + '/dashboard'}>{ project.name}</Link></div>
                   {project.description && <div className="project-description">{ project.description }</div> }

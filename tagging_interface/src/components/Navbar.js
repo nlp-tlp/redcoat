@@ -64,6 +64,7 @@ class Navbar extends Component {
             <Link to={"" + BASE_URL + "features"}>v1.0</Link>
           </div>
         </div>
+        <header className="decorative-bar"></header>
       </nav>
     )
   }

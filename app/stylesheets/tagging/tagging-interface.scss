@@ -103,13 +103,13 @@ body.tagging-interface-body {
 	width: 80%;
 	max-width: 100%;
 	min-height: 25vh;
-	margin-left: 20%;
+	margin-left: 370px;
 	background: #eee;
 
 }
 #sentence-tagging {
 	margin-top: $navbar-height * 2;
-	margin-bottom: 200px;
+	margin-bottom: 300px;
 	min-height: 69vh;
 
 }
@@ -137,8 +137,8 @@ body.taking-screenshot .save-to-png {
 	justify-content: center;
 	align-items: center;
 	position: fixed;
-	top: $navbar-height;
-	left: 20%;
+	top: $navbar-height + 4px;
+	left: 370px;
 	background: #fefefe;
 	padding: 5px 5px;
 	z-index: 991;
@@ -1365,9 +1365,9 @@ button.blue-button {
 
 #tagging-menu {
 	position: fixed;
-	top: $navbar-height;
+	top: $navbar-height + 4px;
 	left: 0;
-	width: 20%;
+	width: 370px;
 	z-index: 990; // Navbar has 1000
 	height: calc(100% - 50px);
 	background: #fff;
@@ -1422,6 +1422,7 @@ button.blue-button {
 	.tokens-info {
 		padding: 15px;
 		background: white;
+		border-top: 1px solid #ddd;
 		border-bottom: 1px solid #ddd;
 		font-size: 0.8em;
 		margin-bottom: 20px;

@@ -20,6 +20,8 @@ import HomePage from './pages/HomePage';
 import Error404Page from './pages/Error404Page';
 import SetupProjectPage from './pages/SetupProjectPage';
 
+import redcoatMan from './images/redcoat-1-grey.png'
+
 // Config for all API fetch requests
 const fetchConfigGET = {
   method: 'GET',
@@ -68,7 +70,7 @@ class TaggingInterfaceTemplate extends Component {
   render() {
 
     return (
-      <div>
+      <div>        
         { this.props.pageComponent }
       </div>
     )
@@ -94,6 +96,24 @@ class ProjectViewTemplate extends Component {
       <div>
         { this.props.pageComponent }
       </div>
+    )
+  }
+}
+
+class Footer extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <footer>
+        <div className="footer-logo"></div>
+        <h2>Redcoat</h2>
+        <p>Built by the NLP-TLP team at UWA.</p>
+
+      </footer>
+
     )
   }
 }
@@ -172,6 +192,7 @@ class App extends Component {
 
             
         </BrowserRouter>
+        <Footer/>
       </div>      
     );
   }
