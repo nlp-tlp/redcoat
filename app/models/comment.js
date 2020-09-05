@@ -26,7 +26,11 @@ var CommentSchema = new Schema({
     type: String,
     ref: 'Project',
     required: true,
-    index: true
+  },
+  author: {
+    type: String,
+    maxlength: 50,
+    required: true,
   },
   text: { // The comment message
     type: String,

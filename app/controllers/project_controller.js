@@ -4,6 +4,7 @@ const path = require('path');
 var appRoot = require('app-root-path');
 
 var Project = require('app/models/project');
+var Comment = require('app/models/comment');
 var DocumentGroup = require('app/models/document_group')
 var DocumentGroupAnnotation = require('app/models/document_group_annotation')
 var ProjectInvitation = require('app/models/project_invitation')
@@ -251,11 +252,14 @@ module.exports.getPreviouslyAnnotatedDocumentGroup = function(req, res) {
 
           proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
             proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, numAnnotatedDocGroups) {
+              proj.getDocgroupCommentsArray(docgroup, function(err, comments) {
+
                 res.send({
                   documentGroupId:            docgroup._id,
                   documentGroup:              docgroup.documents,
                   documentGroupAnnotationId:  dga._id,
                   automaticAnnotations:       mentionsJSON,
+                  comments:                   comments,
                   entityClasses:              proj.category_hierarchy,
                   categoryHierarchy:          tree,
                   annotatedDocGroups:         numAnnotatedDocGroups,
@@ -264,6 +268,7 @@ module.exports.getPreviouslyAnnotatedDocumentGroup = function(req, res) {
                   lastModified:               dga.updated_at,
                   docGroupsPerUser:           docGroupsPerUser,
                   username:                   req.user.username,
+                });
               });
             });
           });
@@ -475,18 +480,7 @@ module.exports.getProjectDetails = function(req, res) {
 
     proj.getDetails(function(err, data) {
       if(err) { return res.send("error") }
-
-      
-
-      
-
-
-
-
       res.send(data);
-
-
-
     })
 
 
@@ -537,6 +531,39 @@ module.exports.declineInvitation = function(req, res) {
       res.send({success: true});
     });    
   });
+}
+
+module.exports.submitComment = function(req, res) {
+
+  console.log("Submitting comment...");
+
+  try {
+
+    var document_index = req.body.documentIndex;
+    var document_group_id = req.body.documentGroupId;
+    var document_string = req.body.documentString;
+    var text = req.body.text;
+
+    var project_id = req.params.id;
+
+    var comment = new Comment({
+      author: req.user.username,
+      user_id: req.user._id,
+      project_id: project_id,
+      document_group_id: document_group_id,
+      document_index: document_index,
+      text: text,
+      document_string: document_string,
+
+    });  
+    comment.save(function(err, comment) {
+      if(err) { console.log(err); return res.status(500).send({"error": "could not save comment"})}
+      console.log("Comment saved OK", comment);
+      res.send({comment: comment});
+    })
+  } catch(err) {
+    res.status(500).send({"error": "could not save comment"})
+  }
 }
 
 

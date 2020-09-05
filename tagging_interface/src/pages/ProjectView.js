@@ -152,10 +152,10 @@ function setActivityChartStyles(activityChartData) {
       lineTension: 0.1,
       backgroundColor: chartColours[colourIdx],
       borderColor: chartColours[colourIdx],
-      borderCapStyle: 'butt',
+      borderCapStyle: 'square',
       borderDash: [],
       borderDashOffset: 0.0,
-      borderJoinStyle: 'miter',
+      borderJoinStyle: 'bevel',
       pointBorderColor: chartColours[colourIdx],
       pointBackgroundColor: chartColours[colourIdx],
       pointBorderWidth: 3,
@@ -165,6 +165,7 @@ function setActivityChartStyles(activityChartData) {
       pointHoverBorderWidth: 2,
       pointRadius: 1,
       pointHitRadius: 10,
+      lineTension: 0,
     })
 
   }
@@ -374,7 +375,7 @@ class ProjectDashboard extends Component {
 
             <div className="comments-wrapper">              
 
-              { this.props.data.comments.map((comment, i) => <Comment index={i} text={comment.text} date={comment.date} author={comment.author} document={comment.document} />) }
+              { this.props.data.comments.map((comment, i) => <Comment index={i} text={comment.text} date={comment.created_at} author={comment.author} document={comment.document_string} />) }
 
             </div>
           </div>
@@ -465,7 +466,7 @@ class EmptyThing extends Component {
     super(props);
   }
   render() {
-    return ( <div>Hello I am empty lol</div> )
+    return ( <div>This page is still a work in progress!</div> )
   }
 }
 
@@ -544,7 +545,7 @@ class ProjectView extends Component {
 
             
           }, () => { console.log(this.state.data.dashboard.entityChartData)} );
-      }, 1);
+      }, 534);
     });
 
 

@@ -133,7 +133,7 @@ body.taking-screenshot .save-to-png {
 
 #pagination {
 	display: flex;
-	width: 80%;
+	width: calc(100% - 370px);
 	justify-content: center;
 	align-items: center;
 	position: fixed;
@@ -281,6 +281,7 @@ body.taking-screenshot .save-to-png {
 			border: 0px solid #ddd;
 			background: #e3e3e3;
 			//box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
+
 			&.disabled {
 				pointer-events: none;
 				opacity: 0.6;
@@ -477,17 +478,24 @@ body.taking-screenshot .save-to-png {
 		}
 
 		&.document-underneath {
-			background: rgba(255, 255, 255, 0.6);
+			background: rgba(255, 255, 255, 0.3);
 			transition: background 0.2s ease;
+			.confidence-buttons {
+				background: none !important;
+			}
 			&.open {
-				background: rgba(0, 0, 0, 0.05);
+				box-shadow: inset 0px 1px 3px -3px rgba(0, 0, 0, 0.9);
+				background: rgba(0, 0, 0, 0.08);
+				.confidence-buttons {
+				background: none !important;
+				}
 			}
 
 			.bottom-buttons {
 				display: flex;
 				justify-content: flex-end;				
 				line-height: 100%;
-				padding: 10px 0;
+				padding: 5px 0;
 
 
 
@@ -497,7 +505,8 @@ body.taking-screenshot .save-to-png {
 					
 					
 					user-select: none;
-					background: #f3f3f3;
+
+					background: rgba(255, 255, 255, 0.95);
 					color: rgba(0, 0, 0, 0.3);
 					.inner {
 						display: flex;
@@ -575,13 +584,13 @@ body.taking-screenshot .save-to-png {
 			.comments-wrapper {
 				display: none;
 
-				background: #fefefe;
+				background: rgba(255, 255, 255, 0.8);
 				height: auto;
 				border: 1px solid #ddd;
 				border-radius: 4px;
-				margin-bottom: 10px;
+				margin-bottom: 40px;
 
-				//box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
+				box-shadow: 1px 1px 3px -3px rgba(0, 0, 0, 0.9);
 				//z-index: 100;
 				padding: 0;
 				box-sizing: border-box;
@@ -601,8 +610,10 @@ body.taking-screenshot .save-to-png {
 					box-sizing: border-box;
 				}
 				.comments-inner {
-					max-height: 300px;
-					overflow-y: scroll;
+					.comments-even-more-inner { // dont care anymore
+						max-height: 400px;
+						overflow-y: scroll;
+					}					
 				}
 			
 				.comment-box {
@@ -649,8 +660,8 @@ body.taking-screenshot .save-to-png {
 
 		.sentence {
 			width: 100%;
-			padding-top: 30px;
-			padding-bottom: 30px;
+			padding-top: 15px;
+			padding-bottom: 15px;
 			padding-left: 30px;
 			padding-right: 80px;	
 

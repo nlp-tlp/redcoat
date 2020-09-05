@@ -798,29 +798,33 @@ ProjectSchema.methods.recommendDocgroupToUser = function(user, next) {
 }
 
 
+
+
+// Retrieve all comments on a particular docgroup, and arrange them in a list.
+ProjectSchema.methods.getAllCommentsArray = function(done) {
+  Comment.find({project_id: this._id}).sort('-created_at').lean().exec(function(err, comments) {
+    console.log(comments);
+    done(err, comments);
+  });
+}
+
+
+
+
 // Retrieve all comments on a particular docgroup, and arrange them in a list.
 ProjectSchema.methods.getDocgroupCommentsArray = function(docgroup, done) {
-  console.log("getting comments");
-  Comment.find({docgroup_id: docgroup._id}).lean().exec(function(err, comments) {
+  console.log("getting comments", docgroup._id);
+  Comment.find({document_group_id: docgroup._id}).lean().exec(function(err, comments) {
+
+    console.log("comments query:", comments);
 
     var commentsArray = new Array(cf.DOCUMENT_MAXCOUNT).fill(null);
     for(var i = 0; i < cf.DOCUMENT_MAXCOUNT; i++) {
       commentsArray[i] = new Array();
     }
     for(var i in comments) {
-
       commentsArray[comments[i].document_index].push(comments[i]);
     }
-
-    commentsArray[0].push({
-      author: "mstewart",
-      text: 'what is this?',
-      document_string: "rewire machine",
-      created_at: new Date(),
-      document_index: 0,
-    })
-
-    console.log("Comments: ", commentsArray)
     done(err, commentsArray);
   });
 }
@@ -1260,70 +1264,54 @@ ProjectSchema.methods.getDetails = function(done) {
 
       t.getAnnotationsChartData(function(annotationsChartData) {
 
-        var data = {
+        t.getAllCommentsArray(function(err, comments) {
 
-          project_name: t.project_name,
-          project_author: t.author,
+          console.log(comments);
 
-          dashboard: {
-            numDocGroupsAnnotated: t.completed_annotations * cf.DOCUMENT_MAXCOUNT, // not going to be exact because some doc groups might not be max len
-            totalDocGroups: Math.ceil(t.file_metadata["Number of documents"]) * t.overlap,
+          var data = {
 
-            avgAgreement: 0.5,
-            avgTimePerDocument: 15,
+            project_name: t.project_name,
+            project_author: t.author,
 
-            comments: [
-              {
-                author: "Mr Pingu",
-                date: "4 Sept",
-                text: "Noot noot! I don't know what this is",
-                document: "replace a/c converter cap",
-              },
-              {
-                author: "Mrs Pingu",
-                date: "3 Sept",
-                text: "This doesn't make sense",
-                document: "fix 50 things on seal",
-              },
-              {
-                author: "Michael",
-                date: "1 Sept",
-                text: "Not sure what a flange is",
-                document: "look at flange more",
-              }
-            ],
+            dashboard: {
+              numDocGroupsAnnotated: t.completed_annotations * cf.DOCUMENT_MAXCOUNT, // not going to be exact because some doc groups might not be max len
+              totalDocGroups: Math.ceil(t.file_metadata["Number of documents"]) * t.overlap,
 
-            entityChartData: {
+              avgAgreement: 0.5,
+              avgTimePerDocument: 15,
 
-              entityClasses: {
-                labels: entityCounts.entities,
-                datasets: [
-                  {
-                    label: 'Mentions',
-                    data: entityCounts.counts,
-                  }
-                ]
+              comments: comments,
+
+              entityChartData: {
+
+                entityClasses: {
+                  labels: entityCounts.entities,
+                  datasets: [
+                    {
+                      label: 'Mentions',
+                      data: entityCounts.counts,
+                    }
+                  ]
+                },
+
+                
               },
 
-              
-            },
+              activityChartData: activityChartData,
 
-            activityChartData: activityChartData,
-
-            annotationsChartData: annotationsChartData,
+              annotationsChartData: annotationsChartData,
 
 
-          },   
-        };
+            },   
+          };
 
-        var elapsed = new Date().getTime() - start;
+          var elapsed = new Date().getTime() - start;
 
-        console.log("... done (" + elapsed + "ms)")
-        return done(null, data);
+          console.log("... done (" + elapsed + "ms)")
+          return done(null, data);
+        });
       });
     });
-      
-
   });
 
 

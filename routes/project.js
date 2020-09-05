@@ -54,6 +54,9 @@ router.post('/:id/tagging/submitAnnotations', verifyUserInProject, projectContro
 router.get('/:id/download_annotations/:user_id', verifyUserOwnsProject, projectController.downloadAnnotationsOfUser);
 router.get('/:id/download_combined_annotations', verifyUserOwnsProject, projectController.downloadCombinedAnnotations);
 
+
+router.post('/:id/comments/submit', verifyUserInProject, projectController.submitComment);
+
 router.post('/invitations/:id/accept', projectController.acceptInvitation);
 router.post('/invitations/:id/decline', projectController.declineInvitation);
 

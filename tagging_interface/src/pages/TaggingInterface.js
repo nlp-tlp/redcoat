@@ -426,6 +426,17 @@ class DocumentContainer extends Component {
     }
     this.sentenceRef = React.createRef();
     this.documentUnderneathRef = React.createRef(); // The reference for the grey area underneath the doc
+    this.commentBoxRef = React.createRef();
+  }
+
+
+  // Close the comment box when changing doc groups.
+  componentDidUpdate(prevProps, prevState) {
+    if(!_.isEqual(prevProps.words, this.props.words) && this.state.commentsOpen) {
+      this.setState({
+        commentsOpen: false,
+      })
+    }
   }
 
   // closeCommentBox(e) {
@@ -474,6 +485,14 @@ class DocumentContainer extends Component {
 
   }
 
+  submitComment(message, next) {
+    var t = this;
+    this.props.submitComment(message, this.props.index, () => {
+      next();
+      t.commentBoxRef.current.scrollTop = t.commentBoxRef.current.scrollHeight;
+    });
+  }
+
   render() {
 
     return (
@@ -518,8 +537,11 @@ class DocumentContainer extends Component {
 
               <div className="comments-wrapper">
                 <div className="comments-inner">
-                { this.props.comments.map((comment, i) => <Comment index={i} text={comment.text} date={comment.date} author={comment.author} />) }
-                  <CommentInput/>          
+                  <div className="comments-even-more-inner" ref={this.commentBoxRef}>
+                    { this.props.comments.map((comment, i) => <Comment index={i} text={comment.text} date={comment.created_at} author={comment.author} />) }
+                  </div>
+                  <CommentInput submitComment={this.submitComment.bind(this)}/>
+
                 </div>
               </div>
             </div>
@@ -1155,6 +1177,7 @@ class TaggingInterface extends Component {
 
     // If user is currently focused on the page input, do nothing.
     if($("#page-input").is(":focus")) return;
+    if($("textarea").is(":focus")) return;
 
     // Update the hotkey chain to include the key that was pressed
     var hotkeyChain = Array.prototype.concat(this.state.hotkeyChain, key);
@@ -1339,6 +1362,7 @@ class TaggingInterface extends Component {
   // TODO: Make it so that when the user has made a change to the group they're looking at,
   // pop up a confirmation window to confirm their changes before loading the next page?
   loadNextPage() {
+    if(this.state.loading.querying) return; // Don't load new page if currently loading
     var nextPageNumber = this.state.pageNumber + 1;
     if(nextPageNumber === (this.state.totalPagesAvailable)) {
       this.queryAPI(false);
@@ -1348,6 +1372,7 @@ class TaggingInterface extends Component {
   }
 
   goToPage(pageNumber) {
+    if(this.state.loading.querying) return; // Don't load new page if currently loading
     if(pageNumber === (this.state.totalPagesAvailable)) {
       this.queryAPI(false);
     } else {
@@ -1914,6 +1939,55 @@ class TaggingInterface extends Component {
     });
   }
 
+
+  /* Comments */
+
+  submitComment(message, documentIndex, next) {
+    console.log("Message:", message, "Document index", documentIndex);
+
+    const csrfToken = getCookie('csrf-token');
+
+    const fetchConfigPOST = {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'csrf-token': csrfToken,
+      },
+      dataType: "json",
+      body: JSON.stringify({
+        text: message,
+        documentGroupId: this.state.data.documentGroupId,
+        documentIndex: documentIndex,
+        documentString: this.state.data.documentGroup[documentIndex].join(' '),
+      }),  
+    };
+
+    fetch('http://localhost:3000/projects/' + this.props.project_id + '/comments/submit', fetchConfigPOST) // TODO: move localhost out
+    .then(response => response.text())
+    .then((data) => {
+      console.log(data);
+      try { 
+        var d = JSON.parse(data);
+        
+
+        console.log("Submitted comment OK");
+
+        var comments = this.state.comments;
+        comments[documentIndex].push(d.comment);
+
+        this.setState({
+           comments: comments,
+        }, next);
+      } catch(err) {
+        console.log("ERROR:", err);
+      }      
+    });
+
+
+    
+  }
+
   /* Events */
 
   // Capture an event
@@ -1995,6 +2069,7 @@ class TaggingInterface extends Component {
                     updateConfidence={this.updateConfidence.bind(this)}
                     entityColourMap={this.state.entityColourMap}
                     deleteTag={this.deleteTag.bind(this)}
+                    submitComment={this.submitComment.bind(this)}
                   />
                   )}
 
@@ -2169,7 +2244,7 @@ class ControlBar extends Component {
     return (
       <div id="pagination">
         <div className="page-button-container previous-page">
-          <button className={(this.props.pageNumber === 1 ? " disabled" : "")} onClick={this.props.loadPreviousPage}><i className="fa fa-chevron-left"></i>Prev
+          <button className={(this.props.pageNumber === 1 ? " disabled" : (this.props.querying ? "loading" : ""))} onClick={this.props.loadPreviousPage}><i className="fa fa-chevron-left"></i>Prev
           </button>
         </div>
         <div className="filler-left"></div>
@@ -2184,7 +2259,7 @@ class ControlBar extends Component {
         <div className="group-last-modified">{lastModified }</div>
         <div className="page-button-container "><SaveButton changesMade={this.props.changesMade} recentlySaved={this.props.recentlySaved} saving={this.props.saving} submitAnnotations={this.props.submitAnnotations}  /></div>
         <div className="page-button-container next-page">
-          <button className={(latestGroup ? " disabled" : "")}  onClick={this.props.loadNextPage}>Next<i className="fa fa-chevron-right"></i></button>
+          <button className={(latestGroup  ? " disabled" : (this.props.querying ? "loading" : ""))}  onClick={this.props.loadNextPage}>Next<i className="fa fa-chevron-right"></i></button>
         </div>              
       </div>
     )
