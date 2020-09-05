@@ -1276,3 +1276,229 @@
 .loading .annotations-per-doc-donut {
 	padding-top: 0;
 }
+
+@keyframes fadein {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
+
+
+.waffle-chart-container {
+	display: flex;
+    -webkit-animation: fadein 1s; /* Safari, Chrome and Opera > 12.1 */
+    -moz-animation: fadein 1s; /* Firefox < 16 */
+    -ms-animation: fadein 1s; /* Internet Explorer */
+    -o-animation: fadein 1s; /* Opera < 12.1 */
+    animation: fadein 1s;
+    margin: 0 auto;
+
+    justify-content: center;
+
+	.waffle-chart-legend {
+		margin-right: 30px;
+		display: flex;
+		flex-direction: column;
+		span {
+			color: #555;
+			font-size: 12px;
+			text-align: center;
+			padding: 5px 0;
+			&:first-child {
+				padding-top: 0;
+			}
+			&:last-child {
+				padding-bottom: 0;
+			}
+		}
+		.waffle-chart-legend-inner {
+			background: linear-gradient(to top, rgba($button-blue, 0.1), $button-blue);
+			width: 10px;
+			height: 100%;
+
+		}
+	}
+
+	.waffle-chart {
+		width: 196px;
+		min-width: 196px;
+		background: #fff;
+		padding-left: 1px;
+		padding-top: 1px;
+		position: relative;
+
+		&:hover .waffle-chart-tooltips {
+			opacity: 1;
+		}
+		.waffle-chart-tooltips {
+			opacity: 0;
+			pointer-events: none;
+			transition: opacity 0.1s ease;
+			.waffle-chart-tooltip {
+				line-height: 100%;
+				font-size: 12px;
+				background: #fafafa;
+				padding: 1px 7px;
+				position: absolute;
+				box-sizing: border-box;
+				text-align: center;
+				
+				box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
+				border: 1px solid #ddd;
+				padding: 0;
+				height: 20px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				white-space: nowrap;
+
+
+				b {
+					box-sizing: border-box;
+					padding: 0 6px;
+					height: 20px;
+					align-items: center;
+					display: flex;
+					flex-wrap: nowrap;
+					flex: 1;
+				}
+				span.num-docs {
+					text-align: center;
+					justify-content: center;
+					padding: 0 6px;
+					flex-wrap: nowrap;
+					display: flex;
+					flex: 1;
+				}
+
+				&.tooltip-left {
+					justify-content: left;
+					right: calc(100% + 10px);
+					border-top-right-radius: 0;
+					border-bottom-right-radius: 0;
+					b {
+						border-top-left-radius: 3px;
+						border-bottom-left-radius: 3px;
+					}
+					&:after {
+						width: 0; 
+						height: 0; 
+						border-top: 10px solid transparent;
+						border-bottom: 10px solid transparent; 
+						 
+						border-left: 10px solid #fafafa; 
+						position: absolute;
+						right: -10px;
+						top: -1px;
+						content: " ";
+						
+					}
+					&:before {
+						width: 0; 
+						height: 0; 
+						border-top: 10px solid transparent;
+						border-bottom: 10px solid transparent; 
+						 
+						border-left: 10px solid #ddd; 
+						position: absolute;
+						right: -11px;
+						top: -1px;
+						content: " ";
+
+						
+					}
+
+					
+
+				}
+				&.tooltip-right {
+					flex-direction: row-reverse;
+					justify-content: right;
+					left: calc(100% + 6px);
+					border-top-left-radius: 0;
+					border-bottom-left-radius: 0;
+
+					border-top-right-radius: 3px;
+					border-bottom-right-radius: 3px;
+					&:after {
+						width: 0; 
+						height: 0; 
+						border-top: 10px solid transparent;
+						border-bottom: 10px solid transparent; 
+						 
+						border-right: 10px solid #fafafa; 
+						position: absolute;
+						left: -10px;
+						top: -1px;
+						content: " ";
+						
+					}
+					&:before {
+						width: 0; 
+						height: 0; 
+						border-top: 10px solid transparent;
+						border-bottom: 10px solid transparent; 
+						 
+						border-right: 10px solid #ddd; 
+						position: absolute;
+						left: -11px;
+						top: -1px;
+						content: " ";
+						
+					}
+				}
+
+			}
+		}
+		
+
+
+		.waffle-chart-info {
+			font-size: 12px;
+			color: #777;
+			margin-top: 7px;
+			text-align: center;
+			font-style: italic;
+		}
+
+		.waffle-chart-squares {
+			display: flex;
+			align-items: flex-start;
+			flex-direction: column wrap;
+			flex-wrap: wrap;
+
+			span {
+				display: inline-flex;
+
+			}
+
+		
+
+			
+
+			.waffle-square {
+				width: 18px;
+				height: 18px;
+				margin-right: 1px;
+				margin-bottom: 1px;
+				font-size: 9px;
+				text-align: center;
+				color: rgba(0, 0, 0, 0);
+				padding-top: 0px;
+				pointer-events: none;
+				background: $button-blue;
+				padding-top: 2px;
+				box-sizing: border-box;
+				
+			}
+			&:hover .waffle-square {
+				//color: rgba(darken($button-blue, 40), 0.8);
+				margin-right: 0;
+				margin-bottom: 0;
+				width: 19px;
+				height: 19px;
+			}
+			
+		}
+		
+	}
+}

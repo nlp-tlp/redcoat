@@ -4,7 +4,7 @@ import { PieChart } from 'react-minimal-pie-chart';
 import { Redirect, Link, BrowserRouter, Route, Switch, withRouter } from 'react-router-dom'
 import { TransitionGroup, CSSTransition } from "react-transition-group";
 import Error404Page from '../pages/Error404Page';
-import {Bar, Line, HorizontalBar, Doughnut } from 'react-chartjs-2';
+import {Bar, Line, HorizontalBar } from 'react-chartjs-2';
 
 import { defaults } from 'react-chartjs-2'
 
@@ -19,6 +19,94 @@ const fetchConfigGET = {
   }
 };
 
+
+// Couldn't find a good component for this online so I made my own. It visualises the 'annotations per doc' in the form of a 
+// waffle chart, which looks more or less like a heat map but without any labels. The data should be ordered in descending freq
+// of number of annotations.
+class WaffleChart extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+
+
+  render() {
+    var maxValue = this.props.data.length - 1;
+
+    var total = this.props.data.reduce((a, b) => a + b, 0);
+    var ratio = 100 / total;
+
+
+
+
+
+    var tooltips = [];
+
+    var tooltipSide = -1;
+    var rowIdx = 0;
+
+    var data = this.props.data.reverse();
+
+    // Calculate the tooltip positions
+    var totalSquares = 0;
+    for(var i in this.props.data) {
+
+      var count = this.props.data[i];
+      var squares = Math.ceil(count * ratio);
+
+      tooltips.push(
+        <span style={{'top': (Math.ceil(totalSquares / 10) * 19) + 'px'}} className={"waffle-chart-tooltip tooltip-" + (tooltipSide === 1 ? "right" : "left")}>
+
+          <b style={{'background': 'rgba(54, 162, 235,' + Math.max(0.1, ((maxValue - i) / maxValue)) + ')'}}>{maxValue - i} annotation{maxValue - i === 1 ? '' : 's'}</b>
+          <span className="num-docs">{this.props.data[i]} docs</span>
+        </span>
+      );
+
+      tooltipSide *= -1;
+
+      rowIdx += Math.floor(squares / 10) + 1;
+      totalSquares += squares;
+
+      
+    }
+
+
+    return (
+      <div className="waffle-chart-container">
+        <div className="waffle-chart-legend">
+          <span>{maxValue}</span>
+          <div className="waffle-chart-legend-inner"></div>
+          <span>0</span>
+
+
+        </div>
+        <div className="waffle-chart" id="annotations-per-doc-chart">
+          <div className="waffle-chart-squares">
+            { this.props.data.map((frequency, groupIndex) => {
+
+              var value = maxValue - groupIndex;
+
+              return new Array(Math.ceil(frequency * ratio)).fill(0).map((square, squareIndex) => {
+                return (
+                  <div className="waffle-square" style={
+                    {'background': 'rgba(54, 162, 235,' + Math.max(0.1, ((value) / maxValue)) + ')'}}>
+                    { value }
+                  </div>
+                )
+              }
+              )}
+            )}
+          </div>
+          <div className="waffle-chart-info">1 square = ~{ Math.ceil(1 / ratio) } documents</div> 
+          <div className="waffle-chart-tooltips">{ tooltips }</div>
+        </div>    
+
+
+      </div>
+
+      )
+  }
+}
 
 class Comment extends Component {
   constructor(props) {
@@ -53,13 +141,14 @@ function getEntityChartStyles() {
 }
 
 const chartColours = [
-"#36A2EB",
+
 "#FF6384",
 "#6dc922",
 "#B4436C",
 "#FFCE56",
 "#F78154",
 "#5FAD56",
+"#36A2EB",
 "#4D9078",
 "#586BA4",
 "#324376",
@@ -118,6 +207,18 @@ class ProjectDashboard extends Component {
 
 
   render() {
+
+    // var heatmapData = new Array(198).fill(3);
+    // var h1 = new Array(200).fill(2)
+    // var h2 = new Array(200).fill(1)
+    // var h3 = new Array(200).fill(0)
+    // heatmapData = heatmapData.concat(h1);
+    // heatmapData = heatmapData.concat(h2);
+    // heatmapData = heatmapData.concat(h3);
+
+    
+
+    //heatmapData = heatmapData.map(() => Math.random())
 
     return (
      
@@ -240,6 +341,16 @@ class ProjectDashboard extends Component {
                           type: 'time',
                           time: {
                             unit: 'day',
+                          },
+                          ticks: {
+                            max: new Date()
+                          }
+                        }],
+                        yAxes: [{
+                          ticks: {
+                            beginAtZero: true,
+                            precision: 0
+                            
                           }
                         }]
                       }
@@ -254,37 +365,12 @@ class ProjectDashboard extends Component {
             <div className="dashboard-item col-40">
               <div className="inner">
                 <h3>Annotations per doc</h3>
-                <div class="annotations-per-doc-donut">
-                  { this.props.loading && 
-                    <div className="chart-placeholder"><i class="fa fa-cog fa-spin"></i>Loading...</div>
-                  }
-                  { !this.props.loading && 
-                    <Doughnut
-                    height={230}
-                    options={{
-                      legend: {
-                        display: false,
-                      },
-
-
-                    }}
-                    data={ {
-                      labels: ['3','2','1', '0'],                    
-                      datasets: [
-                        {
-                          data: [5, 10, 40, 10],
-                          backgroundColor: [
-                            'rgba(54, 162, 235, 1)',
-                            'rgba(54, 162, 235, 0.7)',
-                            'rgba(54, 162, 235, 0.4)',
-                            'rgba(54, 162, 235, 0.08)',
-                          ],
-                        }
-                      ]}
-                    }                    
-                  />
-                  }
-                </div>
+                { this.props.loading && 
+                  <div className="chart-placeholder"><i class="fa fa-cog fa-spin"></i>Loading...</div>
+                }
+                { !this.props.loading && 
+                  <WaffleChart data={this.props.data.annotationsChartData}/>
+                }
               </div>
             </div>
           </div>
@@ -454,6 +540,8 @@ class ProjectView extends Component {
           d.dashboard.entityChartData.entityClasses.datasets[0] = entityChartData;
 
           d.dashboard.activityChartData = setActivityChartStyles(d.dashboard.activityChartData);
+
+
 
 
           t.setState({

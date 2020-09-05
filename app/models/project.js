@@ -993,6 +993,48 @@ ProjectSchema.methods.getLabelCounts = function(done) {
 }
 
 
+// Returns a list for the annotationsChart on the dashboard.
+ProjectSchema.methods.getAnnotationsChartData = function(done) {
+
+  var t = this;
+  var DocumentGroup = require('./document_group');
+
+
+  var d = DocumentGroup.aggregate([
+    { $match: { project_id: t._id} },
+    {
+      $group: {
+        _id: { times_annotated: "$times_annotated" },
+        count: {
+          $sum: 1
+        },
+      }
+    },
+    {
+      $sort: {
+        '_id.times_annotated': -1,
+      }
+    },
+  ], function(err, results) {
+
+    console.log("RESULTS::", results);
+
+    
+
+
+    if(results.length === 0) return done([]);
+
+    var annotationsChartData = new Array(parseInt(results[0]._id.times_annotated)).fill(0);
+    for(var i in results) {
+      var result = results[i];
+      annotationsChartData[result._id.times_annotated] = result.count * cf.DOCUMENT_MAXCOUNT;
+    }
+
+    console.log(annotationsChartData);
+    done(annotationsChartData);
+  });
+
+}
 
 // Retrieve the activity chart data for this project.
 ProjectSchema.methods.getActivityChartData = function(done) {
@@ -1015,7 +1057,7 @@ ProjectSchema.methods.getActivityChartData = function(done) {
   var DocumentGroupAnnotation = require('./document_group_annotation');
   var d = DocumentGroupAnnotation.aggregate([
     { $match: { project_id: t._id} },
-    { $unwind: "$labels"},
+    { $unwind: "$labels"},    
     { $project:
       { created_at:
         {
@@ -1025,6 +1067,7 @@ ProjectSchema.methods.getActivityChartData = function(done) {
         user_id: '$user_id',
       }
     },
+    
     {
       $group: {
         _id: { created_at: "$created_at", user_id: "$user_id" },
@@ -1035,9 +1078,10 @@ ProjectSchema.methods.getActivityChartData = function(done) {
     },
     {
       $sort: {
-        created_at: -1,
+        '_id.created_at': -1,
       }
-    }
+    },
+
     // {
     //   $group: {
     //     _id: "$user_id",
@@ -1048,7 +1092,7 @@ ProjectSchema.methods.getActivityChartData = function(done) {
     // },
   ], function(err, results) {
 
-    console.log("RESULTS", results);
+    //console.log("RESULTS", results);
 
     var activityChartData = {
       labels: [],
@@ -1075,17 +1119,47 @@ ProjectSchema.methods.getActivityChartData = function(done) {
       datasets[user_id].push(result.count);
 
     }
+
+    var user_ids = [];
     for(var user_id in datasets) {
       activityChartData.datasets.push({
         label: user_id,
         data: datasets[user_id],
       })
+      user_ids.push(user_id);
     }
 
-    console.log(activityChartData);
 
-    done(activityChartData);
+    if(user_ids.length === 0) {
+      return done({})
+    }
 
+    function getUsernames(objects, usernames, done) {
+        obj = objects.pop()
+        User.findById({_id: obj}, function(err, user) {
+          var username = user.username;
+          usernames.push(username);
+          if (objects.length > 0) getUsernames(objects, usernames, done);
+          else done(usernames);      
+        })       
+    }
+
+    var usernames = getUsernames(user_ids, new Array(), function(usernames) {
+      
+      for(var i in usernames) {
+        activityChartData.datasets[i].label = usernames[i];
+      }
+      console.log(activityChartData);
+
+      done(activityChartData);
+
+
+
+    });
+
+    
+
+    
     // //console.log(results, "<<<");
     // if(results.length > 0)
     //   var count = results[0].count;
@@ -1124,6 +1198,8 @@ ProjectSchema.methods.getDetails = function(done) {
   var start = new Date().getTime();
   console.log("Retrieving project details...")
 
+  
+
   //   project["annotations_required"] = Math.ceil(p.file_metadata["Number of documents"] / 10) * p.overlap;
 
   // //console.log(p.project_title, p.completed_annotations, "<<>>")
@@ -1135,69 +1211,74 @@ ProjectSchema.methods.getDetails = function(done) {
 
   t.getLabelCounts(function(entityCounts) {
     t.getActivityChartData(function(activityChartData) {
+
+      t.getAnnotationsChartData(function(annotationsChartData) {
+
+        var data = {
+
+          project_name: t.project_name,
+          project_author: t.author,
+
+          dashboard: {
+            numDocGroupsAnnotated: t.completed_annotations * cf.DOCUMENT_MAXCOUNT, // not going to be exact because some doc groups might not be max len
+            totalDocGroups: Math.ceil(t.file_metadata["Number of documents"]) * t.overlap,
+
+            avgAgreement: 0.5,
+            avgTimePerDocument: 15,
+
+            comments: [
+              {
+                author: "Mr Pingu",
+                date: "4 Sept",
+                text: "Noot noot! I don't know what this is",
+                document: "replace a/c converter cap",
+              },
+              {
+                author: "Mrs Pingu",
+                date: "3 Sept",
+                text: "This doesn't make sense",
+                document: "fix 50 things on seal",
+              },
+              {
+                author: "Michael",
+                date: "1 Sept",
+                text: "Not sure what a flange is",
+                document: "look at flange more",
+              }
+            ],
+
+            entityChartData: {
+
+              entityClasses: {
+                labels: entityCounts.entities,
+                datasets: [
+                  {
+                    label: 'Mentions',
+                    data: entityCounts.counts,
+                  }
+                ]
+              },
+
+              
+            },
+
+            activityChartData: activityChartData,
+
+            annotationsChartData: annotationsChartData,
+
+
+          },   
+        };
+
+        var elapsed = new Date().getTime() - start;
+
+        console.log("... done (" + elapsed + "ms)")
+        return done(null, data);
+      });
+    });
       
 
-      var data = {
-
-        project_name: t.project_name,
-        project_author: t.author,
-
-        dashboard: {
-          numDocGroupsAnnotated: t.completed_annotations * cf.DOCUMENT_MAXCOUNT, // not going to be exact because some doc groups might not be max len
-          totalDocGroups: Math.ceil(t.file_metadata["Number of documents"]) * t.overlap,
-
-          avgAgreement: 0.5,
-          avgTimePerDocument: 15,
-
-          comments: [
-            {
-              author: "Mr Pingu",
-              date: "4 Sept",
-              text: "Noot noot! I don't know what this is",
-              document: "replace a/c converter cap",
-            },
-            {
-              author: "Mrs Pingu",
-              date: "3 Sept",
-              text: "This doesn't make sense",
-              document: "fix 50 things on seal",
-            },
-            {
-              author: "Michael",
-              date: "1 Sept",
-              text: "Not sure what a flange is",
-              document: "look at flange more",
-            }
-          ],
-
-          entityChartData: {
-
-            entityClasses: {
-              labels: entityCounts.entities,
-              datasets: [
-                {
-                  label: 'Mentions',
-                  data: entityCounts.counts,
-                }
-              ]
-            },
-
-            
-          },
-
-          activityChartData: activityChartData
-
-
-        },   
-      };
-
-      var elapsed = new Date().getTime() - start;
-
-      console.log("... done (" + elapsed + "ms)")
-      return done(null, data);
-    });
-
-  })
+  });
 
 
 }

@@ -17,6 +17,7 @@
     "react-chartjs-2": "^2.10.0",
     "react-dom": "^16.13.1",
     "react-drag-listview": "^0.1.7",
+    "react-heatmap-grid": "^0.8.2",
     "react-minimal-pie-chart": "^8.0.1",
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.3",
