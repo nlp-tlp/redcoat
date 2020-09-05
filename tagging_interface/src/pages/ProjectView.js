@@ -8,6 +8,8 @@ import {Bar, Line, HorizontalBar } from 'react-chartjs-2';
 
 import { defaults } from 'react-chartjs-2'
 
+import { Comment } from '../components/Comment';
+
 defaults.global.defaultFontFamily = 'Open Sans'
 
 // Config for all API fetch requests
@@ -18,6 +20,23 @@ const fetchConfigGET = {
     'Content-Type': 'application/json'
   }
 };
+
+
+const chartColours = [
+"#36A2EB",
+"#FF6384",
+"#6dc922",
+"#B4436C",
+"#FFCE56",
+"#F78154",
+"#5FAD56",
+"#4D9078",
+"#586BA4",
+"#324376",
+"#F5DD90",
+"#6665DD",
+"#7B4B94",
+];
 
 
 // Couldn't find a good component for this online so I made my own. It visualises the 'annotations per doc' in the form of a 
@@ -36,16 +55,12 @@ class WaffleChart extends Component {
     var total = this.props.data.reduce((a, b) => a + b, 0);
     var ratio = 100 / total;
 
-
-
-
-
     var tooltips = [];
 
     var tooltipSide = -1;
     var rowIdx = 0;
 
-    var data = this.props.data.reverse();
+    var data = this.props.data.reverse(); // Reverse the order so that the docs annotated more are on top
 
     // Calculate the tooltip positions
     var totalSquares = 0;
@@ -57,7 +72,9 @@ class WaffleChart extends Component {
       tooltips.push(
         <span style={{'top': (Math.ceil(totalSquares / 10) * 19) + 'px'}} className={"waffle-chart-tooltip tooltip-" + (tooltipSide === 1 ? "right" : "left")}>
 
-          <b style={{'background': 'rgba(54, 162, 235,' + Math.max(0.1, ((maxValue - i) / maxValue)) + ')'}}>{maxValue - i} annotation{maxValue - i === 1 ? '' : 's'}</b>
+          <b style={{'background': 'rgba(54, 162, 235,' + Math.max(0.1, ((maxValue - i) / maxValue)) + ')'}}>
+            {(maxValue - i === 0) ? "Not yet annotated" : ((maxValue - i) + " annotation" + (maxValue - i === 1 ? '' : 's'))}
+          </b>
           <span className="num-docs">{this.props.data[i]} docs</span>
         </span>
       );
@@ -66,7 +83,6 @@ class WaffleChart extends Component {
 
       rowIdx += Math.floor(squares / 10) + 1;
       totalSquares += squares;
-
       
     }
 
@@ -108,26 +124,6 @@ class WaffleChart extends Component {
   }
 }
 
-class Comment extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    return (
-      <div className="comment-box">
-        <div className="comment-left">                  
-          <div className="circle-icon profile-icon"></div>
-        </div>
-        <div className="comment-right">
-          <div className={"comment-author st"}>{this.props.author}<span className="comment-date">{this.props.date}</span></div>
-          <div className="comment-text st st-block">{this.props.text}</div>
-          <blockquote className="comment-document st">{this.props.document}</blockquote>
-        </div>
-      </div>
-    )
-  }
-}
 
 // Returns a JSON array of styles for the entity chart.
 function getEntityChartStyles() {
@@ -139,23 +135,6 @@ function getEntityChartStyles() {
     hoverBorderColor: 'rgba(54, 162, 235, 0.6)',
   }
 }
-
-const chartColours = [
-
-"#FF6384",
-"#6dc922",
-"#B4436C",
-"#FFCE56",
-"#F78154",
-"#5FAD56",
-"#36A2EB",
-"#4D9078",
-"#586BA4",
-"#324376",
-"#F5DD90",
-"#6665DD",
-"#7B4B94",
-];
 
 
 // https://stackoverflow.com/questions/2901102/how-to-print-a-number-with-commas-as-thousands-separators-in-javascript
@@ -169,7 +148,7 @@ function setActivityChartStyles(activityChartData) {
   for(var i in activityChartData.datasets) {
     var colourIdx = parseInt(i) % chartColours.length;
     activityChartData.datasets[i] = Object.assign({}, activityChartData.datasets[i], {
-      fill: false,
+      fill: true,
       lineTension: 0.1,
       backgroundColor: chartColours[colourIdx],
       borderColor: chartColours[colourIdx],
@@ -178,9 +157,9 @@ function setActivityChartStyles(activityChartData) {
       borderDashOffset: 0.0,
       borderJoinStyle: 'miter',
       pointBorderColor: chartColours[colourIdx],
-      pointBackgroundColor: '#fff',
-      pointBorderWidth: 1,
-      pointHoverRadius: 5,
+      pointBackgroundColor: chartColours[colourIdx],
+      pointBorderWidth: 3,
+      pointHoverRadius: 6,
       pointHoverBackgroundColor: chartColours[colourIdx],
       pointHoverBorderColor: 'rgba(220,220,220,1)',
       pointHoverBorderWidth: 2,
@@ -305,12 +284,19 @@ class ProjectDashboard extends Component {
                     options={{
                       responsive: true,
                       maintainAspectRatio: false,
+                      legend: {
+                        display: false
+                      },
                       scales: {
                         yAxes: [{
                           ticks: {
                             beginAtZero: true,
                             precision: 0
                             
+                          },
+                          scaleLabel: {
+                            display: true,
+                            labelString: "Frequency"
                           }
                         }]
                       },
@@ -351,6 +337,10 @@ class ProjectDashboard extends Component {
                             beginAtZero: true,
                             precision: 0
                             
+                          },
+                          scaleLabel: {
+                            display: true,
+                            labelString: "Annotations"
                           }
                         }]
                       }
@@ -364,7 +354,7 @@ class ProjectDashboard extends Component {
 
             <div className="dashboard-item col-40">
               <div className="inner">
-                <h3>Annotations per doc</h3>
+                <h3>Annotations/document</h3>
                 { this.props.loading && 
                   <div className="chart-placeholder"><i class="fa fa-cog fa-spin"></i>Loading...</div>
                 }
@@ -382,7 +372,7 @@ class ProjectDashboard extends Component {
           <div className="inner">
             <h3>Comments</h3>
 
-            <div className="comments-wrapper">
+            <div className="comments-wrapper">              
 
               { this.props.data.comments.map((comment, i) => <Comment index={i} text={comment.text} date={comment.date} author={comment.author} document={comment.document} />) }
 
@@ -554,7 +544,7 @@ class ProjectView extends Component {
 
             
           }, () => { console.log(this.state.data.dashboard.entityChartData)} );
-      }, 1030);
+      }, 1);
     });
 
 

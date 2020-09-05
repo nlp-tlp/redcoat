@@ -311,19 +311,23 @@ module.exports.getDocumentGroup = function(req, res) {
           }
 
           
-          proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {    
+          proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {   
 
-            res.send({
-                documentGroupId:        docgroup._id,
-                documentGroup:          docgroup.documents,
-                automaticAnnotations:   automaticAnnotations,
-                entityClasses:          proj.category_hierarchy,
-                categoryHierarchy:      tree,
-                annotatedDocGroups:     numAnnotatedDocGroups,
-                pageNumber:             numAnnotatedDocGroups + 1, // numAnnotatedDocGroups + 1 is the latest page        
-                projectName:            proj.project_name, 
-                docGroupsPerUser:       docGroupsPerUser,
-                username:               req.user.username,
+            proj.getDocgroupCommentsArray(docgroup, function(err, comments) {
+
+              res.send({
+                  documentGroupId:        docgroup._id,
+                  documentGroup:          docgroup.documents,
+                  automaticAnnotations:   automaticAnnotations,
+                  comments:               comments,
+                  entityClasses:          proj.category_hierarchy,
+                  categoryHierarchy:      tree,
+                  annotatedDocGroups:     numAnnotatedDocGroups,
+                  pageNumber:             numAnnotatedDocGroups + 1, // numAnnotatedDocGroups + 1 is the latest page        
+                  projectName:            proj.project_name, 
+                  docGroupsPerUser:       docGroupsPerUser,
+                  username:               req.user.username,
+              });
             });            
           });
         }  

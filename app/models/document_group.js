@@ -5,7 +5,6 @@ var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
 var sw = require('stopword');
 
-
 var cf = require("./common/common_functions.js")
 
 
@@ -22,7 +21,6 @@ var DocumentGroupSchema = new Schema({
   times_annotated: {
     type: Number,
     default: 0,
-    index: true
   },
   display_name: {
     type: String,

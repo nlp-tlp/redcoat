@@ -16,9 +16,12 @@ import html2canvas from 'html2canvas';
 import { saveAs } from 'file-saver';
 import domtoimage from 'dom-to-image';
 
+import {Comment, CommentInput} from '../components/Comment';
+
 import getCookie from '../functions/getCookie';
 
 import formatDate  from '../functions/formatDate';
+
 
 
 const BASE_URL = "/"
@@ -417,24 +420,112 @@ class DocumentContainerHeader extends Component {
 class DocumentContainer extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      commentsOpen: false,
+      // windowMouseDownFn: null,
+    }
+    this.sentenceRef = React.createRef();
+    this.documentUnderneathRef = React.createRef(); // The reference for the grey area underneath the doc
+  }
+
+  // closeCommentBox(e) {
+  //   if(this.documentUnderneathRef.current && this.documentUnderneathRef.current.contains(e.target)) return;
+  //   this.setState({
+  //     commentsOpen: false,
+  //   })
+  // }
+
+  // Opens or closes the comments.
+  // Binds the mouse down function on the window if opening the comment box.
+  toggleOpenComments() {
+
+
+    // var windowMouseDownFn = (e) => this.closeCommentBox(e);
+    
+    // Remove the old event listeners.
+    // window.removeEventListener('mousedown', this.state.windowMouseDownFn);
+    // window.addEventListener('mousedown', windowMouseDownFn);
+
+    this.setState({
+      // windowMouseDownFn: windowMouseDownFn,
+      commentsOpen: !this.state.commentsOpen,
+    }, () => {
+    });
+  }
+
+  // Saves this sentence to a PNG file. wow!
+  saveToPng() {
+    var t = this;
+    var node = this.sentenceRef.current;
+
+    console.log(node);
+
+    function filter(node) {
+      if(node.classList) {
+        return !node.classList.contains('sentence-index') && !node.classList.contains('confidence-buttons');
+      }
+      return node;
+    }
+
+    domtoimage.toBlob(node, {bgcolor: '#fefefe'})
+    .then(function(blob) {
+      saveAs(blob, "document-" + t.props.index + ".png"); 
+    });
+
   }
 
   render() {
 
     return (
       <div className={"document-container" + (this.props.confidence ? " conf conf-" + this.props.confidence : "")}>
-        <div className="document">
-          <div className="sentence-index"><span className="inner">{this.props.displayIndex}</span></div>
-          <Sentence 
-            index={this.props.index}
-            words={this.props.words}              
-            annotations={this.props.annotations}  
-            selections={this.props.selections}
-            updateSelections={this.props.updateSelections}
-            entityColourMap={this.props.entityColourMap}
-            deleteTag={this.props.deleteTag}
-          />
-          <ConfidenceButtons docIdx={this.props.index} confidence={this.props.confidence} updateConfidence={this.props.updateConfidence}/>
+
+        <div className="document-wrapper">
+          <div className="document">
+            <div className="sentence-index"><span className="inner">{this.props.displayIndex}</span></div>
+            <div className="sentence" ref={this.sentenceRef}>
+              <Sentence 
+                index={this.props.index}
+                words={this.props.words}              
+                annotations={this.props.annotations}  
+                selections={this.props.selections}
+                updateSelections={this.props.updateSelections}
+                entityColourMap={this.props.entityColourMap}
+                deleteTag={this.props.deleteTag}
+              />
+            </div>
+            <ConfidenceButtons docIdx={this.props.index} confidence={this.props.confidence} updateConfidence={this.props.updateConfidence}/>
+          </div>
+
+          <div className={"document document-underneath" + (this.state.commentsOpen ? " open" : "")} ref={this.documentUnderneathRef}>
+            <div className="sentence-index"></div>
+            <div className="sentence">
+
+              <div className="bottom-buttons">
+            
+            
+                <div className={"open-comments-button" + (this.props.comments.length > 0 ? " has-comment" : "")}>
+                  <span className="inner" onClick={this.toggleOpenComments.bind(this)}>
+                    <i className="fa fa-comment"></i>
+                    <span className="num-comments">{this.props.comments.length}</span>
+                  </span>            
+                </div> 
+
+                <div className="save-to-png" onClick={this.saveToPng.bind(this)} title="Click to download a .png file of this document"><span className="inner"><i className="fa fa-download"></i></span>
+                </div>     
+              </div>
+
+
+
+              <div className="comments-wrapper">
+                <div className="comments-inner">
+                { this.props.comments.map((comment, i) => <Comment index={i} text={comment.text} date={comment.date} author={comment.author} />) }
+                  <CommentInput/>          
+                </div>
+              </div>
+            </div>
+            <div className="confidence-buttons"></div>
+
+          </div>
         </div>
       </div>
     )
@@ -448,6 +539,7 @@ class DocumentContainer extends Component {
 class Sentence extends Component {
   constructor(props) {
     super(props);
+
   }
 
   // Call the updateSelections function of the parent of this component (i.e. TaggingInterface), with this sentence's index included.
@@ -459,24 +551,10 @@ class Sentence extends Component {
     this.props.deleteTag(this.props.index, wordIndex, entityClass);
   }
 
-  // Saves this sentence to a PNG file. wow!
-  saveToPng() {
-    var t = this;
-    var node = $("#sentence-tagging .sentence")[this.props.index + 1];
 
-    function filter(node) {
-      if(node.classList) {
-        return !node.classList.contains('save-to-png');
-      }
-      return node;
-    }
 
-    domtoimage.toBlob(node, {filter: filter, bgcolor: '#fefefe'})
-    .then(function(blob) {
-      saveAs(blob, "document-" + t.props.index + ".png"); 
-    });
 
-  }
+  
 
   render() {
 
@@ -496,8 +574,10 @@ class Sentence extends Component {
       return false;
     }
 
+   
+
     return (
-      <div className="sentence">
+      <div className="sentence-inner">
         { this.props.words.map((word, i) => 
           <Word key={i}
                 index={i}
@@ -513,7 +593,10 @@ class Sentence extends Component {
 
           />)
         }   
-        <div className="save-to-png" onClick={this.saveToPng.bind(this)} title="Click to download a .png file of this document"><i className="fa fa-download"></i></div>     
+        
+
+
+       
       </div>
     );
   }
@@ -889,8 +972,6 @@ class TaggingInterface extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      project_id: 'RtJp98vxk', // debug
-
       // Data (from the server)
       // The data in this object is only changed by calling the queryAPI method.
       data: {
@@ -909,6 +990,7 @@ class TaggingInterface extends Component {
       // Annotations array
       annotations: [],  // Stores the user's annotations.
       confidences: [],  // Stores the user's confidences.
+      comments:    [],  // Stores the comments (made by any user)
 
       // Selections
       selections: this.getEmptySelectionsArray(10),       // The selections is an array containing a sub-array for each document,
@@ -978,7 +1060,7 @@ class TaggingInterface extends Component {
   // When the user releases the mouse, remove all highlighting from words (i.e. the words in the selection).
   // If the user never selected a word to begin with (i.e. wordStartIndex < 0), clear all selections.
   windowMouseUp(e, words) {
-    if(e.target.classList.contains('page-input')) return;
+    if(e.target.classList.contains('page-input') || e.target.classList.contains('comment-input')) return;
 
     words.removeClass('highlighted');
     if(this.state.currentSelection.wordStartIndex < 0) {
@@ -1338,6 +1420,7 @@ class TaggingInterface extends Component {
               entityColourMap: this.initEntityColourMap(d.categoryHierarchy.children),
               confidences: this.initConfidencesArray(d.documentGroup),
               annotations: this.initAnnotationsArray(d.documentGroup, d.automaticAnnotations),
+              comments: d.comments,
               selections: this.getEmptySelectionsArray(d.documentGroup.length),
               mostRecentSelectionText: null,
               pageNumber: d.pageNumber,
@@ -1431,7 +1514,7 @@ class TaggingInterface extends Component {
       }
     }, () => {
 
-      fetch('http://localhost:3000/projects/' + this.state.project_id + '/tagging/submitAnnotations', fetchConfigPOST) // TODO: move localhost out
+      fetch('http://localhost:3000/projects/' + this.props.project_id + '/tagging/submitAnnotations', fetchConfigPOST) // TODO: move localhost out
       .then(response => response.text())
       .then((data) => {
         try { 
@@ -1905,6 +1988,7 @@ class TaggingInterface extends Component {
                     displayIndex={( (this.state.pageNumber - 1) * 10 ) + i + 1  }
                     words={doc}              
                     annotations={this.state.annotations[i]}  
+                    comments={this.state.comments[i]}
                     confidence={this.state.confidences[i]}
                     selections={this.state.selections[i]}
                     updateSelections={this.updateSelections.bind(this)}

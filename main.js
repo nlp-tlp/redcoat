@@ -277,6 +277,10 @@ app.get('/pageData', function(req, res, next) {
 app.all('*', homepageController.index);
 
 
+
+
+
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('The requested URL (' + req.path + ') was not found.');

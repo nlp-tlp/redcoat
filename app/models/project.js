@@ -5,6 +5,8 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var DocumentGroup = require('./document_group');
 var DocumentGroupAnnotation = './document_group_annotation';
+var Comment = require('./comment');
+
 var cf = require("./common/common_functions");
 var User = require("./user");
 var nanoid = require('nanoid');
@@ -796,6 +798,34 @@ ProjectSchema.methods.recommendDocgroupToUser = function(user, next) {
 }
 
 
+// Retrieve all comments on a particular docgroup, and arrange them in a list.
+ProjectSchema.methods.getDocgroupCommentsArray = function(docgroup, done) {
+  console.log("getting comments");
+  Comment.find({docgroup_id: docgroup._id}).lean().exec(function(err, comments) {
+
+    var commentsArray = new Array(cf.DOCUMENT_MAXCOUNT).fill(null);
+    for(var i = 0; i < cf.DOCUMENT_MAXCOUNT; i++) {
+      commentsArray[i] = new Array();
+    }
+    for(var i in comments) {
+
+      commentsArray[comments[i].document_index].push(comments[i]);
+    }
+
+    commentsArray[0].push({
+      author: "mstewart",
+      text: 'what is this?',
+      document_string: "rewire machine",
+      created_at: new Date(),
+      document_index: 0,
+    })
+
+    console.log("Comments: ", commentsArray)
+    done(err, commentsArray);
+  });
+}
+
+
 ProjectSchema.methods.modifyHierarchy = function(new_hierarchy, user, done) {
   var t = this;
   // If this project's category_hierarchy_permissions is set to no_modification and the user calling this method is not the creator,
@@ -1030,7 +1060,6 @@ ProjectSchema.methods.getAnnotationsChartData = function(done) {
       annotationsChartData[result._id.times_annotated] = result.count * cf.DOCUMENT_MAXCOUNT;
     }
 
-    console.log(annotationsChartData);
     done(annotationsChartData);
   });
 
@@ -1110,7 +1139,10 @@ ProjectSchema.methods.getActivityChartData = function(done) {
       // var month = s[1];
       // var day = s[2];
 
-      activityChartData.labels.push(result._id.created_at);
+      if(activityChartData.labels.indexOf(result._id.created_at) === -1) {
+        activityChartData.labels.push(result._id.created_at);
+      }
+      
 
       var user_id = results[result_idx]._id.user_id;
       if(!datasets.hasOwnProperty(user_id)) {
@@ -1120,8 +1152,12 @@ ProjectSchema.methods.getActivityChartData = function(done) {
 
     }
 
+    console.log("datasets:", datasets);
+
+    // TODO: sort this properly
     var user_ids = [];
     for(var user_id in datasets) {
+      console.log(user_id);
       activityChartData.datasets.push({
         label: user_id,
         data: datasets[user_id],
@@ -1145,13 +1181,23 @@ ProjectSchema.methods.getActivityChartData = function(done) {
     }
 
     var usernames = getUsernames(user_ids, new Array(), function(usernames) {
-      
-      for(var i in usernames) {
-        activityChartData.datasets[i].label = usernames[i];
-      }
-      console.log(activityChartData);
+    
 
-      done(activityChartData);
+    for(var i in usernames.reverse()) {
+      activityChartData.datasets[i].label = usernames[i];
+    }
+
+    function compareFn(a, b) {
+      if(a.label <= b.label) return -1;
+      else if(a.label > b.label) return 1;
+      else return 0;
+    }
+
+    // Sort to ensure colours are always the same
+    activityChartData.datasets = activityChartData.datasets.sort(compareFn);
+    console.log("Activity chart data:", activityChartData);
+
+    done(activityChartData);
 
 
 

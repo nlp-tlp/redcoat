@@ -454,10 +454,13 @@ body.taking-screenshot .save-to-png {
 	}
 
 
+	.document-wrapper {
+		box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
+	}
 	.document {
 		display: flex;
 		background: #fefefe;
-		box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
+		
 
 
 		&.header { // Emulates an extra bit of padding at the top
@@ -471,6 +474,142 @@ body.taking-screenshot .save-to-png {
 				padding: 0;
 			}
 			
+		}
+
+		&.document-underneath {
+			background: rgba(255, 255, 255, 0.6);
+			transition: background 0.2s ease;
+			&.open {
+				background: rgba(0, 0, 0, 0.05);
+			}
+
+			.bottom-buttons {
+				display: flex;
+				justify-content: flex-end;				
+				line-height: 100%;
+				padding: 10px 0;
+
+
+
+				> * {
+					font-size: 12px;
+					border-radius: 3px;
+					
+					
+					user-select: none;
+					background: #f3f3f3;
+					color: rgba(0, 0, 0, 0.3);
+					.inner {
+						display: flex;
+						align-items: center;
+						padding: 5px 7px;
+						box-sizing: border-box;
+						cursor: pointer;
+					}
+					
+					&:not(:last-child) {
+						margin-right: 6px;
+					}					
+					i {
+						font-size: 18px;
+					}
+				}
+			
+
+				.save-to-png {
+					color: rgba(0, 0, 0, 0.7);
+					
+							
+					&:active {
+						transform: translate(0, 1px);
+					}
+					&:hover {
+						background: $button-blue;
+						color: white;
+					}
+				}	
+				.open-comments-button {
+					&:hover {
+						background: $button-blue;
+						color: white;
+						.inner {
+							color: white;
+						}
+					}
+					span.inner {
+						
+						&:active {
+							transform: translate(0, 1px);
+						}
+					}
+					
+					position: relative;
+					line-height: 100%;
+					border-radius: 3px;
+
+					&.has-comment {
+						color: rgba(0, 0, 0, 0.7);
+					}
+					
+					i {
+
+						margin-right: 5px;
+					}					
+				}
+			}
+
+			.confidence-buttons {
+				transition: background 0.2s ease;
+			}
+			&.open .confidence-buttons {
+			}
+			.sentence {
+				padding: 0px 0;
+				padding-right: 10px;
+				
+
+			}
+			&.open .comments-wrapper {
+				display: block;
+			}
+			.comments-wrapper {
+				display: none;
+
+				background: #fefefe;
+				height: auto;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+				margin-bottom: 10px;
+
+				//box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
+				//z-index: 100;
+				padding: 0;
+				box-sizing: border-box;
+				overflow: auto;
+
+
+
+				.comments-header {
+					color: #222;
+					font-size: 14px;
+					font-weight: bold;
+					background: #ddd;
+					display: flex;
+					align-items: center;
+					padding: 10px 20px;
+					width: 100%;
+					box-sizing: border-box;
+				}
+				.comments-inner {
+					max-height: 300px;
+					overflow-y: scroll;
+				}
+			
+				.comment-box {
+					padding: 10px 20px;
+					margin-bottom: 0;
+				}
+			}
 		}
 
 		
@@ -521,39 +660,23 @@ body.taking-screenshot .save-to-png {
 				.save-to-png {
 					opacity: 1;
 				}
-			}
-			.save-to-png {
-				position: absolute;
-				top: -5px;
-				right: 9px;
-				font-size: 0.8em;
-				color: rgba(0, 0, 0, 0.3);
-				opacity: 0;
-				cursor: pointer;
-				padding: 5px;
-				&:hover {
-					color: rgba(0, 0, 0, 0.6);
-				}
-				&:active {
-					transform: translate(0, 1px);
-				}
-			}	
+			}			
 		}
 		.sentence-index {
 			color: #bbb;
 			pointer-events: none;
 			
-			text-align: right;
+			text-align: center;
 			
 			
 			
 			display: flex;
 			align-items: center;
+			min-width: 130px;
 			//padding-left: 80px;
 
 			.inner {
 				padding: 20px 50px;
-				padding-right: 20px;
 				font-size: 22px;
 				//border-right: 2px solid #ddd;
 				line-height: 100%;

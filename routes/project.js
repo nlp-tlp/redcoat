@@ -16,7 +16,11 @@ verifyUserOwnsProject = function(req, res, next) {
 }
 
 verifyUserInProject = function(req, res, next) {
+
+
 	Project.findById(req.params.id, function(err, proj) {
+
+		console.log(req.user._id, proj.user_ids.active)
 		//console.log(err, proj);
 		if(err || proj === null) { return res.send("Error: Project does not exist")}
 		if(!proj.projectHasUser(req.user._id)) return res.send("Error: user does not belong to project");
@@ -33,7 +37,7 @@ router.get('/', projectController.getProjects);
 
 
 
-router.get('/:id',         verifyUserOwnsProject, projectController.getProjectDetails);
+router.get('/:id',         verifyUserInProject, projectController.getProjectDetails);
 //router.get('/:id/tagging', verifyUserInProject, projectController.tagging);
 //router.get('/:id/tagging', verifyUserInProject, projectController.tagging);
 
