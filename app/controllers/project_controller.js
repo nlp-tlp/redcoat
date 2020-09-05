@@ -3,6 +3,7 @@ var logger = require('config/winston');
 const path = require('path');
 var appRoot = require('app-root-path');
 
+var User = require('app/models/user');
 var Project = require('app/models/project');
 var Comment = require('app/models/comment');
 var DocumentGroup = require('app/models/document_group')
@@ -320,18 +321,27 @@ module.exports.getDocumentGroup = function(req, res) {
 
             proj.getDocgroupCommentsArray(docgroup, function(err, comments) {
 
-              res.send({
-                  documentGroupId:        docgroup._id,
-                  documentGroup:          docgroup.documents,
-                  automaticAnnotations:   automaticAnnotations,
-                  comments:               comments,
-                  entityClasses:          proj.category_hierarchy,
-                  categoryHierarchy:      tree,
-                  annotatedDocGroups:     numAnnotatedDocGroups,
-                  pageNumber:             numAnnotatedDocGroups + 1, // numAnnotatedDocGroups + 1 is the latest page        
-                  projectName:            proj.project_name, 
-                  docGroupsPerUser:       docGroupsPerUser,
-                  username:               req.user.username,
+
+              User.findById({_id: proj.user_id}, function(err, user) {
+
+                res.send({
+                    documentGroupId:        docgroup._id,
+                    documentGroup:          docgroup.documents,
+                    automaticAnnotations:   automaticAnnotations,
+                    comments:               comments,
+                    entityClasses:          proj.category_hierarchy,
+                    categoryHierarchy:      tree,
+                    annotatedDocGroups:     numAnnotatedDocGroups,
+                    pageNumber:             numAnnotatedDocGroups + 1, // numAnnotatedDocGroups + 1 is the latest page        
+                    projectName:            proj.project_name, 
+                    docGroupsPerUser:       docGroupsPerUser,
+                    username:               req.user.username,
+
+                    projectTitle:           proj.project_name,
+                    projectAuthor:          user.username,
+
+                });
+
               });
             });            
           });
@@ -479,9 +489,23 @@ module.exports.getProjectDetails = function(req, res) {
   Project.findOne({ _id: id}, function(err, proj) {
 
     proj.getDetails(function(err, data) {
-      if(err) { return res.send("error") }
-      res.send(data);
-    })
+
+      proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, userDocsAnnotated) {
+        proj.getDocumentGroupsPerUser(function(err, userAnnotationsRequired) {  
+
+          if(err) { return res.send("error") }
+
+          data.dashboard.userDocsAnnotated = userDocsAnnotated;
+          data.dashboard.userAnnotationsRequired = Math.floor(userAnnotationsRequired);
+
+
+
+          
+          res.send(data);
+
+        });
+      });
+    });
 
 
     // proj.getAnnotationsTableData(function(err, annotations, annotationsAvailable) {

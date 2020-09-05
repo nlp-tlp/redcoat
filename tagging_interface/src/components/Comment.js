@@ -16,8 +16,9 @@ class Comment extends Component {
         </div>
         <div className="comment-right">
           <div className={"comment-author st"}>{this.props.author}<span className="comment-date st">{formatDate(this.props.date)}</span></div>
-          <div className="comment-text st st-block">{this.props.text}</div>
           {this.props.document && <blockquote className="comment-document st">{this.props.document}</blockquote>}
+          <div className="comment-text st st-block">{this.props.text}</div>
+          
         </div>
       </div>
     )

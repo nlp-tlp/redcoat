@@ -2,7 +2,7 @@ import React from 'react';
 import {Component} from 'react';
 import { Link } from 'react-router-dom'
 import formatDate  from '../functions/formatDate';
-
+import { PieChart } from 'react-minimal-pie-chart';
 
 // Config for all API fetch requests
 const fetchConfigGET = {
@@ -39,6 +39,8 @@ class ProjectListPage extends Component {
         projects: this.getDummyProjects(),
         numUserInvolvedIn: null,
         numCreatedByUser: null,       
+        numDocGroupsAnnotated: 0,
+        totalDocGroups: 1,
       },
       view: "All projects", // "All projects" or "Your projects"
       loading: true,
@@ -84,6 +86,7 @@ class ProjectListPage extends Component {
   // Query the API when this component is mounted.
   // Once done, set this.state.data to the returned projects, numUserInvolvedIn, and numCreatedByUser.
   componentWillMount() {
+    this.props.setProject(null, null); // Reset the current project in the sidenav
     fetch('http://localhost:3000/projects', fetchConfigGET) // TODO: move localhost out
       .then(response => response.text())
       .then((data) => {
@@ -118,6 +121,7 @@ class ProjectListPage extends Component {
 
 
   render() {
+    console.log(this.state.data);
     return (
       <div id="projects-table-wrapper">
 
@@ -132,7 +136,38 @@ class ProjectListPage extends Component {
           
             <div className="row" index={i}>
               <div className="col-name-desc">
-                <div className="circle-icon"><div className="inner">{ project.icon_name }</div></div>
+
+
+                <div className="projects-table-pie">
+                { this.state.loading && 
+                  <PieChart
+                    data={[
+                      { value: 0, color: "rgb(109, 201, 34)"},
+                      { value: 1, color: "rgba(0, 0, 0, 0)"}, // sneaky 
+                    ]}
+                    background={"#d5d5d5"}
+                    lineWidth={18}
+                    startAngle={270}
+                  />
+                  }
+                  { !this.state.loading && 
+                    <PieChart
+                    data={[
+                      { value: (project.numDocGroupsAnnotated), color: "rgb(109, 201, 34)"},
+                      { value: (project.totalDocGroups - project.numDocGroupsAnnotated), color: "rgba(0, 0, 0, 0)"}, // sneaky 
+                    ]}
+                    background={"#d5d5d5"}
+                    animate={true}
+                    animationDuration={500}
+                    lineWidth={18}
+                    startAngle={270}
+                  />
+                  }
+                </div>
+
+
+
+
                 <div className="name-desc-row">
                   <div className="project-name"><Link to={'/projects/' + project._id + '/dashboard'}>{ project.name}</Link></div>
                   {project.description && <div className="project-description">{ project.description }</div> }

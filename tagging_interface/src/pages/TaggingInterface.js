@@ -1462,6 +1462,10 @@ class TaggingInterface extends Component {
             }, () => { 
               console.log("Data:", this.state.data);
 
+              if(d.projectTitle && d.projectAuthor) {
+                this.props.setProject(d.projectTitle, d.projectAuthor)
+              }
+
               // Initialise keybinds and mouse events only on the first API call.
               if(firstLoad) {
                 this.initKeybinds();              
@@ -2022,6 +2026,8 @@ class TaggingInterface extends Component {
   render() {
     var taggingCompletePage = this.state.taggingCompletePage;
 
+    console.log(this.props.projectTitle);
+
     return (
         <div>            
           <div id="tagging-interface" className={(this.state.loading.querying ? "loading" : "") + (taggingCompletePage ? " tagging-complete-page" : "")}>
@@ -2076,13 +2082,14 @@ class TaggingInterface extends Component {
               </div>
             </div>
             <div id="tagging-menu">
+
               <div className="project-card">
-                <div className="circle-icon"><div className="inner"></div></div>
                 <div>
-                  <div className="project-name st " style={{'display': 'block'}}><Link to={"/projects/" + this.props.project_id + "/dashboard"}>{this.state.data.projectName}</Link></div>
-                  <div className="project-creator st">Created by <span className="creator-name">someone</span></div>
+                  <div className={"project-name" + (!this.props.projectTitle ? " st" : "")} style={{'display': 'block'}}><Link to={"/projects/" + this.props.project_id + "/dashboard"}>{this.props.projectTitle ? this.props.projectTitle : "xxxxxxxx"}</Link></div>
+                  <div className={"project-creator" + (!this.props.projectAuthor ? " st" : "")} style={{'display': 'block'}}>Created by <span className="creator-name">{this.props.projectAuthor ? this.props.projectAuthor : "xxxxxxxx"}</span></div>
                 </div>
               </div>
+
               <WikipediaSummary tokens={this.state.mostRecentSelectionText}/>
               <HotkeyInfo 
                 chain={this.state.hotkeyChain}

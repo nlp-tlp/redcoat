@@ -126,7 +126,21 @@ class App extends Component {
     this.state = {
       pageTitle: "Redcoat",
       username: null,
+
+      // Store the current project title and author so that they don't awkwardly reload between component changes
+      projectTitle: null,
+      projectAuthor: null,
+
+      setProject: this.setProject.bind(this),
     }
+  }
+
+  // Update the project title and author
+  setProject(title, author) {
+    this.setState({
+      projectTitle: title,
+      projectAuthor: author,
+    })
   }
 
   // When mounted, determine the logged in user.
@@ -179,9 +193,9 @@ class App extends Component {
           <Navbar username={this.state.username} />          
 
           <Switch>
-          <Route        path="/projects/:id/tagging"  render={(p) => <TaggingInterfaceTemplate {...this.state} pageComponent={<TaggingInterface project_id={p.match.params.id} />}/>} /> 
-          <Route        path="/projects/:id"          render={(p) => <ProjectViewTemplate {...this.state} pageTitle="Project View" pageComponent={ <ProjectView project_id={p.match.params.id}/> } />} />     
-          <Route        path="/projects"              render={( ) => <MainTemplate {...this.state} pageTitle="Projects" pageComponent={ <ProjectListPage/> } />} />     
+          <Route        path="/projects/:id/tagging"  render={(p) => <TaggingInterfaceTemplate {...this.state} pageComponent={<TaggingInterface projectTitle={this.state.projectTitle} projectAuthor={this.state.projectAuthor} setProject={this.setProject.bind(this)} project_id={p.match.params.id} />}/>} /> 
+          <Route        path="/projects/:id"          render={(p) => <ProjectViewTemplate {...this.state} pageTitle="Project View" pageComponent={ <ProjectView project_id={p.match.params.id} setProject={this.setProject.bind(this)}  projectTitle={this.state.projectTitle} projectAuthor={this.state.projectAuthor}/> } />} />     
+          <Route        path="/projects"              render={( ) => <MainTemplate {...this.state} pageTitle="Projects" pageComponent={ <ProjectListPage setProject={this.setProject.bind(this)}/> } />} />     
           <Route        path="/setup-project"         render={( ) => <MainTemplate {...this.state} pageTitle="Setup project" pageComponent={ <SetupProjectPage/> } />} />     
 
           <Route        path="/features"              render={( ) => <MainTemplate {...this.state} pageTitle="Features" pageComponent={ <FeaturesPage/> } />} />     

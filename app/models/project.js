@@ -1266,6 +1266,9 @@ ProjectSchema.methods.getDetails = function(done) {
 
         t.getAllCommentsArray(function(err, comments) {
 
+
+          
+
           console.log(comments);
 
           var data = {

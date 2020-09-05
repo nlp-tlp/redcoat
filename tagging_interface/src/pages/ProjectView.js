@@ -258,7 +258,7 @@ class ProjectDashboard extends Component {
           </div>
           </div>
 
-          <Link to={"/projects/" + this.props.project_id + "/tagging"} className="annotate-button"><i class="fa fa-pencil"></i>Annotate</Link>
+          <Link to={"/projects/" + this.props.project_id + "/tagging"} className="annotate-button"><i class="fa fa-pencil"></i>Annotate<div className="subtitle">{this.props.data.userDocsAnnotated}/{this.props.data.userAnnotationsRequired} complete</div></Link>
 
         </div>
 
@@ -373,7 +373,9 @@ class ProjectDashboard extends Component {
           <div className="inner">
             <h3>Comments</h3>
 
-            <div className="comments-wrapper">              
+            <div className={"comments-wrapper" + (this.props.data.comments.length === 0 ? " no-comments": "")}>       
+
+              { this.props.data.comments.length === 0 && <div className="no-comments">This project does not have any comments yet.</div>}       
 
               { this.props.data.comments.map((comment, i) => <Comment index={i} text={comment.text} date={comment.created_at} author={comment.author} document={comment.document_string} />) }
 
@@ -422,17 +424,16 @@ class ProjectViewSidenav extends Component {
     return (
       <nav id="project-view-sidenav">
         <div className="project-card">
-          <div className="circle-icon"><div className="inner"></div></div>
           <div>
-            <div className="project-name st " style={{'display': 'block'}}><Link to={"/projects/" + this.props.project_id + "/dashboard"}>{this.props.project_name}</Link></div>
-            <div className="project-creator st">Created by <span className="creator-name">{this.props.project_author}</span></div>
+            <div className={"project-name" + (!this.props.projectTitle ? " st" : "")} style={{'display': 'block'}}><Link to={"/projects/" + this.props.project_id + "/dashboard"}>{this.props.projectTitle ? this.props.projectTitle : "xxxxxxxx"}</Link></div>
+            <div className={"project-creator" + (!this.props.projectAuthor ? " st" : "")} style={{'display': 'block'}}>Created by <span className="creator-name">{this.props.projectAuthor ? this.props.projectAuthor : "xxxxxxxx"}</span></div>
           </div>
         </div>
 
         <ul className="sidenav-items">
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Dashboard" icon="bar-chart"/>
-          <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Annotations" icon="list-alt"/>
-          <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Category hierarchy" icon="tree"/>
+          <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Curation" icon="list-alt"/>
+          <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Category hierarchy" icon="sitemap"/>
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Invitations" icon="envelope"/>
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Settings" icon="wrench"/>
         </ul>
@@ -476,12 +477,12 @@ class ProjectView extends Component {
     this.state = {
       loading: true,
 
-      project_name: "????????",
-      project_author: "????????",
-
       data: {
 
         dashboard: {
+
+          userDocsAnnotated: 0,
+          userAnnotationsRequired: 0,
 
           numDocGroupsAnnotated: 999,
           totalDocGroups: 9999,
@@ -490,6 +491,8 @@ class ProjectView extends Component {
 
           avgTimePerDocument: 15,
 
+          // Note that the comments below are just placeholders. I should probably generate a function to make these automatically
+          // These will be skeleton screens on the comments div
           comments: [
             {
               author: "Mr Pingu",
@@ -508,6 +511,18 @@ class ProjectView extends Component {
               date: "1 Sept",
               text: "Not sure what a flange is",
               document: "look at flange more",
+            },
+            {
+              author: "Michael",
+              date: "1 Sept",
+              text: "I sure hope these never get rendered",
+              document: "???",
+            },
+            {
+              author: "Borat",
+              date: "1 Sept",
+              text: "very nice",
+              document: "???",
             }
           ],
         }        
@@ -532,20 +547,15 @@ class ProjectView extends Component {
 
           d.dashboard.activityChartData = setActivityChartStyles(d.dashboard.activityChartData);
 
-
+          console.log(d);
 
 
           t.setState({
             loading: false,
-
-            project_name: d.project_name,
-            project_author: d.project_author,
-
             data: d,
-
             
-          }, () => { console.log(this.state.data.dashboard.entityChartData)} );
-      }, 534);
+          }, () => { this.props.setProject(d.project_name, d.project_author); console.log(this.state.data.dashboard.entityChartData)} );
+      }, 555);
     });
 
 
@@ -564,8 +574,8 @@ class ProjectView extends Component {
         <div id="project-view" className={this.state.loading ? "loading" : ""}>
           <ProjectViewSidenav view={this.state.view}
                               project_id={this.props.project_id}
-                              project_name={this.state.project_name}
-                              project_author={this.state.project_author}
+                              projectTitle={this.props.projectTitle}
+                              projectAuthor={this.props.projectAuthor}
 
                                />
 
@@ -580,7 +590,7 @@ class ProjectView extends Component {
           <section className={"route-section" + (!this.state.loading ? " loaded" : "")}>
            <Switch location={location}>
               <Route path="/projects/:id/dashboard"           render={() => <ProjectDashboard loading={this.state.loading} data={this.state.data.dashboard} project_id={this.props.project_id} />} />     
-              <Route path="/projects/:id/annotations"         render={() => <EmptyThing {...this.state} />} />     
+              <Route path="/projects/:id/curation"            render={() => <EmptyThing {...this.state} />} />     
               <Route path="/projects/:id/category-hierarchy"  render={() => <EmptyThing {...this.state} />} />     
               <Route path="/projects/:id/invitations"         render={() => <EmptyThing {...this.state} />} />     
               <Route path="/projects/:id/settings"            render={() => <EmptyThing {...this.state} />} />   

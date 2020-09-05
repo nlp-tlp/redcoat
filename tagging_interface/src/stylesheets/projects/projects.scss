@@ -779,6 +779,11 @@
 	font-size: 16px;
 
 	
+	.projects-table-pie {
+		width: 50px;
+		height: 50px;
+		margin-right: 35px;
+	}
 
 	div.row {
 		display: flex;
@@ -935,11 +940,15 @@
 	padding: 25px 30px;
 	display: flex;
 	align-items: center;
-	justify-content: center;
 	.circle-icon {
 		margin-left: -25px;
 	}
+	.project-name {
+		font-size: 20px;
+		margin-bottom: 6px;
+	}
 	.project-creator {
+		font-size: 15px;
 		color: #999;
 		.creator-name {
 			color: #222;
@@ -1053,7 +1062,7 @@
 			margin-right: 60px;
 			margin-top: -15px;
 			display: block;
-			padding: 30px 20px;
+			padding: 25px 20px;
 			padding-right: 30px;
 			color: white;
 			text-decoration: none;
@@ -1073,6 +1082,13 @@
 			}
 			&:active {
 				transform: translate(0, 2px);
+			}
+
+			.subtitle {
+				font-weight: normal;
+				margin-top: 8px;
+				font-size: 16px;
+				color: rgba(255, 255, 255, 0.8);
 			}
 
 		}
@@ -1222,6 +1238,9 @@
 	background: #d3d3d3;
 	pointer-events: none;
 	color: rgba(0, 0, 0, 0);
+	.subtitle {
+		color: rgba(0, 0, 0, 0);
+	}
 
 
 }
@@ -1235,6 +1254,12 @@
 	padding-right: 30px;
 	height: calc(100% - 60px);
 	box-sizing: border-box;
+
+	&.no-comments {
+		color: #777;
+		overflow: auto;
+
+	}
 
 
 	.comment-box {
@@ -1267,6 +1292,10 @@
 
 			}
 			
+		}
+		blockquote.comment-document {
+			margin-bottom: 5px;
+			color: rgba(0, 0, 0, 0.8);
 		}
 
 		&:not(:last-child) {

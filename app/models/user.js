@@ -310,6 +310,9 @@ UserSchema.methods.getInvolvedProjectData = function(done) {
         created_at:   project.created_at,
         icon_name:    getIconName(project.project_name),
 
+        numDocGroupsAnnotated: project.completed_annotations * cf.DOCUMENT_MAXCOUNT,
+        totalDocGroups: Math.ceil(project.file_metadata["Number of documents"]) * project.overlap,
+
         userIsCreator: isCreatedByUser,
       });
     }

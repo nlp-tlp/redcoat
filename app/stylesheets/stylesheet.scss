@@ -548,9 +548,10 @@ blockquote {
 }
 
 
-:not(#tagging-interface).loading {
+.loading {
 	.st {
 		color: rgba(0, 0, 0, 0) !important;
+		pointer-events: none;
 
 		
 	}
