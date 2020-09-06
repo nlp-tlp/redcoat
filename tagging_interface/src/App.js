@@ -19,6 +19,7 @@ import ProjectView from './pages/ProjectView';
 import HomePage from './pages/HomePage';
 import Error404Page from './pages/Error404Page';
 import SetupProjectPage from './pages/SetupProjectPage';
+import UserProfilePage from './pages/UserProfilePage';
 
 import redcoatMan from './images/redcoat-1-grey.png'
 
@@ -132,6 +133,8 @@ class App extends Component {
       projectAuthor: null,
 
       setProject: this.setProject.bind(this),
+
+      user: null, // stores 'username' and 'profile icon'
     }
   }
 
@@ -141,6 +144,33 @@ class App extends Component {
       projectTitle: title,
       projectAuthor: author,
     })
+  }
+
+  getUserData() {
+    fetch('http://localhost:3000/userData', fetchConfigGET) // TODO: move localhost out
+    .then(response => response.text())
+    .then((data) => {
+      console.log(data);
+      var d = JSON.parse(data);
+      this.setState({
+        user: {
+          username: d.username,
+          profile_icon: d.profile_icon,
+        },
+        loading: false
+      })
+    });
+  }
+
+  // Update this component's user profile icon.
+  setUserProfileIcon(profileIcon) {
+    var user = this.state.user;
+    user.profile_icon = profileIcon;
+    console.log(profileIcon);
+    this.setState({
+      user: user,
+    })
+
   }
 
   // When mounted, determine the logged in user.
@@ -164,20 +194,9 @@ class App extends Component {
       loading: true,
 
     }, () => {
+      this.getUserData();
+      
 
-      window.setTimeout( () => {
-
-      fetch('http://localhost:3000/pageData', fetchConfigGET) // TODO: move localhost out
-      .then(response => response.text())
-      .then((data) => {
-        console.log(data);
-        var d = JSON.parse(data);
-        this.setState({
-          username: d.username,
-          loading: false
-        })
-      }); 
-    }, 1);
     });
   }
 
@@ -190,15 +209,16 @@ class App extends Component {
         <BrowserRouter>
 
           <ScrollToTop/>
-          <Navbar username={this.state.username} />          
+          <Navbar user={this.state.user} />          
 
           <Switch>
-          <Route        path="/projects/:id/tagging"  render={(p) => <TaggingInterfaceTemplate {...this.state} pageComponent={<TaggingInterface projectTitle={this.state.projectTitle} projectAuthor={this.state.projectAuthor} setProject={this.setProject.bind(this)} project_id={p.match.params.id} />}/>} /> 
+          <Route        path="/projects/:id/tagging"  render={(p) => <TaggingInterfaceTemplate {...this.state} pageComponent={<TaggingInterface projectTitle={this.state.projectTitle} projectAuthor={this.state.projectAuthor} setProject={this.setProject.bind(this)} project_id={p.match.params.id} user={this.state.user} />}/>} /> 
           <Route        path="/projects/:id"          render={(p) => <ProjectViewTemplate {...this.state} pageTitle="Project View" pageComponent={ <ProjectView project_id={p.match.params.id} setProject={this.setProject.bind(this)}  projectTitle={this.state.projectTitle} projectAuthor={this.state.projectAuthor}/> } />} />     
           <Route        path="/projects"              render={( ) => <MainTemplate {...this.state} pageTitle="Projects" pageComponent={ <ProjectListPage setProject={this.setProject.bind(this)}/> } />} />     
           <Route        path="/setup-project"         render={( ) => <MainTemplate {...this.state} pageTitle="Setup project" pageComponent={ <SetupProjectPage/> } />} />     
 
           <Route        path="/features"              render={( ) => <MainTemplate {...this.state} pageTitle="Features" pageComponent={ <FeaturesPage/> } />} />     
+          <Route        path="/profile"               render={( ) => <MainTemplate {...this.state} pageTitle="User Profile" pageComponent={ <UserProfilePage user={this.state.user} setUserProfileIcon={this.setUserProfileIcon.bind(this)}/> } />} />     
           <Route  exact path="/"                      render={( ) => <MainTemplate {...this.state} pageTitle="" pageComponent={ <HomePage/> } />} />
           <Route                                      render={( ) => <MainTemplate {...this.state} pageTitle="" pageComponent={ <Error404Page/> } />} /> />
         </Switch>

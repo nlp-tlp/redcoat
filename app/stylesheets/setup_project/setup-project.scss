@@ -409,6 +409,7 @@ select {
 	background: white;
 	cursor: pointer;
 }
+
 input:not([type="file"]):not([type=range]), textarea, select, button:not(.pagination-button) {
 	box-sizing: border-box;
 	width: 95%;

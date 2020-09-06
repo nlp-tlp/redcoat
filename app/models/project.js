@@ -799,33 +799,51 @@ ProjectSchema.methods.recommendDocgroupToUser = function(user, next) {
 
 
 
+// Add the user profiles (icons and colours) to the comments by querying by id.
+// I don't like recursive functions but it seemed like the easiest way ...
+function appendUserProfilesToComments(comments, next, i = 0) {
+  if(i === comments.length) {
+    return next(comments);
+  }
+  var comment = comments[i];
+  User.findById({_id: comment.user_id}, function(err, user) {
+    comment.user_profile_icon = user.profile_icon;
+    appendUserProfilesToComments(comments, next, i + 1);
+  });
+}
 
 // Retrieve all comments on a particular docgroup, and arrange them in a list.
 ProjectSchema.methods.getAllCommentsArray = function(done) {
   Comment.find({project_id: this._id}).sort('-created_at').lean().exec(function(err, comments) {
-    console.log(comments);
-    done(err, comments);
+    appendUserProfilesToComments(comments, function(comments) {
+      console.log(comments, "<<");
+      done(err, comments);
+    });
   });
 }
-
-
-
 
 // Retrieve all comments on a particular docgroup, and arrange them in a list.
 ProjectSchema.methods.getDocgroupCommentsArray = function(docgroup, done) {
   console.log("getting comments", docgroup._id);
   Comment.find({document_group_id: docgroup._id}).lean().exec(function(err, comments) {
 
-    console.log("comments query:", comments);
-
     var commentsArray = new Array(cf.DOCUMENT_MAXCOUNT).fill(null);
     for(var i = 0; i < cf.DOCUMENT_MAXCOUNT; i++) {
       commentsArray[i] = new Array();
     }
-    for(var i in comments) {
-      commentsArray[comments[i].document_index].push(comments[i]);
-    }
-    done(err, commentsArray);
+
+    appendUserProfilesToComments(comments, function(comments) {
+
+      for(var i in comments) {
+        commentsArray[comments[i].document_index].push(comments[i]);
+      }
+      done(err, commentsArray);
+
+    });
+
+
+
+    
   });
 }
 
@@ -1051,7 +1069,7 @@ ProjectSchema.methods.getAnnotationsChartData = function(done) {
     },
   ], function(err, results) {
 
-    console.log("RESULTS::", results);
+    //console.log("RESULTS::", results);
 
     
 
@@ -1135,7 +1153,7 @@ ProjectSchema.methods.getActivityChartData = function(done) {
     var datasets = {}
 
     for(var result_idx in results) {
-      console.log(results[result_idx]._id, results[result_idx].count);
+      //console.log(results[result_idx]._id, results[result_idx].count);
 
       var result = results[result_idx];
       // var s = result._id.created_at.split('-');
@@ -1228,6 +1246,50 @@ ProjectSchema.methods.getActivityChartData = function(done) {
 }
 
 
+// Get the average agreement over all annotations in this project.
+// Returns null if there is only one annotator per doc so far.
+ProjectSchema.methods.getAverageAgreement = function(done) {
+
+  var t = this;
+  var all_agreements = [];
+  DocumentGroup.find({project_id: t._id}, function(err, docgroups) {
+
+
+    for(var docgroup_id in docgroups) {
+      var docgroup = docgroups[docgroup_id];
+
+      var agreements = docgroup.annotator_agreements;
+
+      //console.log(docgroup);
+
+
+      for(var i in agreements) {
+        var agreement = agreements[i];
+        if(agreement) { // skip nulls
+          all_agreements.push(agreement);
+        }
+      }
+    }
+
+
+    //console.log(all_agreements);
+
+    if(all_agreements.length === 0) {
+        var avgAgreement = null;
+      } else {
+        var avgAgreement = all_agreements.reduce((a, b) => a + b, 0) / all_agreements.length;
+      }
+
+      console.log("Avg agreement:", avgAgreement);
+      done(avgAgreement);
+  });  
+}
+
+
+
+
+
+
 // Retrieve all the relevant details of this project so that they can be displayed in the project view.
 /*
   project_name: 
@@ -1259,64 +1321,122 @@ ProjectSchema.methods.getDetails = function(done) {
   // project["percent_complete"] = project["completed_annotations"] / project["annotations_required"] * 100;
 
 
-  t.getLabelCounts(function(entityCounts) {
-    t.getActivityChartData(function(activityChartData) {
+  t.getAverageAgreement(function(avgAgreement) {
 
-      t.getAnnotationsChartData(function(annotationsChartData) {
+    t.getLabelCounts(function(entityCounts) {
+      t.getActivityChartData(function(activityChartData) {
 
-        t.getAllCommentsArray(function(err, comments) {
+        t.getAnnotationsChartData(function(annotationsChartData) {
+
+          t.getAllCommentsArray(function(err, comments) {
 
 
-          
 
-          console.log(comments);
+            // test
 
-          var data = {
 
-            project_name: t.project_name,
-            project_author: t.author,
 
-            dashboard: {
-              numDocGroupsAnnotated: t.completed_annotations * cf.DOCUMENT_MAXCOUNT, // not going to be exact because some doc groups might not be max len
-              totalDocGroups: Math.ceil(t.file_metadata["Number of documents"]) * t.overlap,
+            
+            //////////////////// Test code
+            // Can unwind the docs this way to get the agreement for each doc
+            // and use it for the annotation curation interface
+            // This way they can be sorted properly, detached from any document group
 
-              avgAgreement: 0.5,
-              avgTimePerDocument: 15,
+            /*
+            var DocumentGroup = require('./document_group');
+            var d = DocumentGroup.aggregate([
+              { $match: { project_id: t._id} },
+              { $unwind: {
+                  path: "$documents",
+                  includeArrayIndex: 'index_in_docgroup',
+                }
 
-              comments: comments,
-
-              entityChartData: {
-
-                entityClasses: {
-                  labels: entityCounts.entities,
-                  datasets: [
+              },    
+              {
+                $project: {
+                  created_at:
                     {
-                      label: 'Mentions',
-                      data: entityCounts.counts,
-                    }
-                  ]
-                },
-
-                
+                      $dateToString:
+                      {format:"%Y-%m-%d", date:"$created_at"}
+                    },                 
+                  documents: 1,
+                  display_name: 1,
+                  times_annotated: 1,       
+                  index_in_docgroup: 1, 
+                  created_at: 1,        
+                  doc_idx: {
+                    $arrayElemAt: [ "$document_indexes", "$index_in_docgroup"]
+                  },
+                  annotator_agreement: {
+                    $arrayElemAt: [ "$annotator_agreements", "$index_in_docgroup"]
+                  }
+                }
               },
 
-              activityChartData: activityChartData,
+              {
+                $sort: {
+                  'times_annotated': 1,
+                  'annotator_agreement': 1,
+                }
+              },
+            ], function(err, results) {
 
-              annotationsChartData: annotationsChartData,
+            
+              //console.log("Documents:");
+              //console.log(results.slice(results.length - 50, results.length));
+            });
+            */
+            ////////////////////////////////
 
 
-            },   
-          };
 
-          var elapsed = new Date().getTime() - start;
 
-          console.log("... done (" + elapsed + "ms)")
-          return done(null, data);
+
+            var data = {
+              project_name: t.project_name,
+              project_author: t.author,
+
+              dashboard: {
+                numDocGroupsAnnotated: t.completed_annotations * cf.DOCUMENT_MAXCOUNT, // not going to be exact because some doc groups might not be max len
+                totalDocGroups: Math.ceil(t.file_metadata["Number of documents"]) * t.overlap,
+
+                avgAgreement: avgAgreement,
+                avgTimePerDocument: 15,
+
+                comments: comments,
+
+                entityChartData: {
+
+                  entityClasses: {
+                    labels: entityCounts.entities,
+                    datasets: [
+                      {
+                        label: 'Mentions',
+                        data: entityCounts.counts,
+                      }
+                    ]
+                  },
+
+                  
+                },
+
+                activityChartData: activityChartData,
+
+                annotationsChartData: annotationsChartData,
+
+
+              },   
+            };
+
+            var elapsed = new Date().getTime() - start;
+
+            console.log("... done (" + elapsed + "ms)")
+            return done(null, data);
+          });
         });
       });
     });
   });
-
 
 }
 

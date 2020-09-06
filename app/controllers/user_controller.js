@@ -210,3 +210,19 @@ exports.reset_password_submit = function(req, res, next) {
     })
   });
 }
+
+// Set the users profile icon foreground, background and icon.
+exports.setProfileIcon = function(req, res, next) {
+  var body = req.body;
+  req.user.profile_icon = {
+    foreground: req.body.foreground,
+    background: req.body.background,
+    icon: req.body.icon,
+  }
+  req.user.save(function(err, user) {
+    if(err) { console.log(err); return res.status(500).send(err) }
+    console.log(err, "ok")
+    res.send({"success": true, profile_icon: req.user.profile_icon })
+  });
+
+}

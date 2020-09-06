@@ -148,7 +148,7 @@ function setActivityChartStyles(activityChartData) {
   for(var i in activityChartData.datasets) {
     var colourIdx = parseInt(i) % chartColours.length;
     activityChartData.datasets[i] = Object.assign({}, activityChartData.datasets[i], {
-      fill: true,
+      fill: false,
       lineTension: 0.1,
       backgroundColor: chartColours[colourIdx],
       borderColor: chartColours[colourIdx],
@@ -199,7 +199,6 @@ class ProjectDashboard extends Component {
     
 
     //heatmapData = heatmapData.map(() => Math.random())
-
     return (
      
       <div id="project-dashboard" className={(this.props.loading ? "loading" : "")}>
@@ -249,8 +248,8 @@ class ProjectDashboard extends Component {
 
           </div>
           <div className="dashboard-item">
-            <div className="name">Avg. agreement</div>
-            <div className="value"><span class="st st-darker"> { this.props.data.avgAgreement * 100}% </span></div>
+            <div className="name">Avg. agreement<span className="information" title="Average agreement is only calculated for documents with more than one annotation."><i class="fa fa-info-circle"></i></span></div>
+            <div className="value"><span class="st st-darker"> { this.props.data.avgAgreement ? (Math.round(this.props.data.avgAgreement * 100) + "%") : "--"} </span></div>
           </div>
           <div className="dashboard-item">
             <div className="name">Avg. time per document</div>
@@ -377,7 +376,7 @@ class ProjectDashboard extends Component {
 
               { this.props.data.comments.length === 0 && <div className="no-comments">This project does not have any comments yet.</div>}       
 
-              { this.props.data.comments.map((comment, i) => <Comment index={i} text={comment.text} date={comment.created_at} author={comment.author} document={comment.document_string} />) }
+              { this.props.data.comments.map((comment, i) => <Comment index={i} {...comment} />) }
 
             </div>
           </div>
@@ -498,31 +497,56 @@ class ProjectView extends Component {
               author: "Mr Pingu",
               date: "4 Sept",
               text: "Noot noot! I don't know what this is",
-              document: "replace a/c converter cap",
+              document_string: "one two three four five six seven ",
+              user_profile_icon: {
+                foreground: "#eee",
+                background: "#eee",
+                icon: "fa-user",
+              }
             },
             {
               author: "Mrs Pingu",
               date: "3 Sept",
               text: "This doesn't make sense",
-              document: "fix 50 things on seal",
+              document_string: "one two three four five six seven one two three four five six seven one two three four five six seven ",
+              user_profile_icon: {
+                foreground: "#eee",
+                background: "#eee",
+                icon: "fa-user",
+              }
             },
             {
               author: "Michael",
               date: "1 Sept",
               text: "Not sure what a flange is",
-              document: "look at flange more",
+              document_string: "one two three four five six seven one two three four five six seven ",
+              user_profile_icon: {
+                foreground: "#eee",
+                background: "#eee",
+                icon: "fa-user",
+              }
             },
             {
               author: "Michael",
               date: "1 Sept",
               text: "I sure hope these never get rendered",
-              document: "???",
+              document_string: "one two three four five six seven ",
+              user_profile_icon: {
+                foreground: "#eee",
+                background: "#eee",
+                icon: "fa-user",
+              }
             },
             {
               author: "Borat",
               date: "1 Sept",
               text: "very nice",
-              document: "???",
+              document_string: "one two three four five six seven one two three four five six seven ",
+              user_profile_icon: {
+                foreground: "#eee",
+                background: "#eee",
+                icon: "fa-user",
+              }
             }
           ],
         }        

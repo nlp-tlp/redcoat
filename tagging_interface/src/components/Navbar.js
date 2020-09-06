@@ -8,6 +8,7 @@ const BASE_URL = "/"
 // The navbar, which appears at the top of the page.
 class Navbar extends Component {
   render() {
+
     return (
       <nav id="navbar">
         <div className="navbar-left">
@@ -16,7 +17,7 @@ class Navbar extends Component {
               <img src={logo}/> <span class="text">Redcoat</span>         
             </Link>
           </div>
-          { this.props.username && 
+          { this.props.user && 
             <div className="dropdown-menu">
               <button>Projects</button>
               <ul className="dropdown-menu-items">
@@ -32,10 +33,10 @@ class Navbar extends Component {
 
 
 
-          { this.props.username &&
+          { this.props.user &&
 
             <div className="dropdown-menu">
-              <button className="flex"><div className="circle-icon profile-icon small"></div><span>Logged in as {this.props.username}</span></button>
+              <button className="flex"><div className="circle-icon profile-icon small" style={{'background': this.props.user.profile_icon.background}}><i className={"profile-icon-i fa fa-" + this.props.user.profile_icon.icon} style={{'color': this.props.user.profile_icon.foreground}}></i></div><span>Logged in as {this.props.user.username}</span></button>
               <ul className="dropdown-menu-items">
                 <li><Link to={"" + BASE_URL + "profile"}>Profile</Link></li>
                 <li><Link to={"" + BASE_URL + "logout"}>Logout</Link></li>
@@ -43,7 +44,7 @@ class Navbar extends Component {
             </div>
           }
 
-          { !this.props.username && 
+          { !this.props.user && 
 
 
 

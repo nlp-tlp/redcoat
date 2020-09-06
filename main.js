@@ -172,7 +172,7 @@ app.use(function(req, res, next) {
   var debug = true;
   if (app.get('env') === 'development' && debug) {
 
-    User.findOne({username: "test"}, function(err, user) {      
+    User.findOne({username: "test2"}, function(err, user) {      
       req.login(user, function(err) {
         return proceed(req, res, next);
       });
@@ -268,9 +268,10 @@ for(var i in routes) {
 
 var homepageController = require("app/controllers/homepage_controller");
 
-app.get('/pageData', function(req, res, next) {
+app.get('/userData', function(req, res, next) {
   res.send({
-    username: req.user ? req.user.username : null
+    username: req.user ? req.user.username : null,
+    profile_icon: req.user ? req.user.profile_icon : null,
   });
 })
 

@@ -46,7 +46,9 @@ class FeaturesPage extends Component {
 
 			<h3>Attributions</h3>
 			<p>The pencil icon on the tagging interface was made by <a href="https://www.flaticon.com/authors/icongeek26" title="Icongeek26">Icongeek26</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>.</p>
+			<p>The Krippendorff Alpha agreement metric calculation was found on GitHub: <a href="https://github.com/tanbt/krippendorff-alpha">https://github.com/tanbt/krippendorff-alpha</a>.</p>
 		</article>
+
     )
   }
 }

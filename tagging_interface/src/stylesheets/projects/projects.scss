@@ -1058,40 +1058,7 @@
 		display: flex;
 		align-items: center;
 		padding: 0 15px;
-		.annotate-button {
-			margin-right: 60px;
-			margin-top: -15px;
-			display: block;
-			padding: 25px 20px;
-			padding-right: 30px;
-			color: white;
-			text-decoration: none;
-			background: $button-blue;
-			border-radius: 4px;
-			flex-grow: 1;
-			text-align: center;
-			min-width: 210px;
-			box-sizing: border-box;
-			box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
-			font-weight: 600;
-			i {
-				margin-right: 15px;
-			}
-			&:hover {
-				background: lighten($button-blue, 10);
-			}
-			&:active {
-				transform: translate(0, 2px);
-			}
-
-			.subtitle {
-				font-weight: normal;
-				margin-top: 8px;
-				font-size: 16px;
-				color: rgba(255, 255, 255, 0.8);
-			}
-
-		}
+		
 		
 		.dashboard-key-items {
 			margin-top: -10px;
@@ -1119,6 +1086,12 @@
 					position: absolute;
 					right: -40px;
 					top: 20%;
+				}
+
+
+				.information i {
+					margin-left: 8px;
+					color: #aaa;
 				}
 				.name {
 					color: #777;
@@ -1384,12 +1357,14 @@
 }
 
 
+
+
 .waffle-chart-container {
 	display: flex;
     -webkit-animation: fadein 1s; /* Safari, Chrome and Opera > 12.1 */
     -moz-animation: fadein 1s; /* Firefox < 16 */
     -ms-animation: fadein 1s; /* Internet Explorer */
-    -o-animation: fadein 1s; /* Opera < 12.1 */
+    -o-animation: fadein 1s; /* Opera < 12.1 */    
     animation: fadein 1s;
     margin: 0 auto;
 

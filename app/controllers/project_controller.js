@@ -29,8 +29,8 @@ var mongoose = require('mongoose');
 module.exports.getProjects = function(req, res) {
   console.log('hi')
   req.user.getInvolvedProjectData(function(err, data) {
-    console.log(err, data);
     if(err) return res.send(err);
+    console.log("HGELOHELHOELOH")
     res.send(data);
   });
 }
@@ -245,6 +245,7 @@ module.exports.getPreviouslyAnnotatedDocumentGroup = function(req, res) {
 
       var tree = txt2json(slash2txt(proj.category_hierarchy), proj.category_hierarchy)
 
+      var DocumentGroup = require('app/models/document_group');
       DocumentGroup.findById({_id: dga.document_group_id}, function(err, docgroup) {
         if(err) { return res.send("error: docgroup not found"); }
         dga.toMentionsJSON(function(err, mentionsJSON) {
@@ -254,6 +255,8 @@ module.exports.getPreviouslyAnnotatedDocumentGroup = function(req, res) {
           proj.getDocumentGroupsPerUser(function(err, docGroupsPerUser) {
             proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, numAnnotatedDocGroups) {
               proj.getDocgroupCommentsArray(docgroup, function(err, comments) {
+
+
 
                 res.send({
                   documentGroupId:            docgroup._id,
@@ -404,17 +407,21 @@ module.exports.submitAnnotations = function(req, res) {
           return res.send({error: err})
         }
 
-        // Update the document group's times_annotated field
-        if(newDGA) {
-          DocumentGroup.update({_id: documentGroupId}, { $inc: {times_annotated: 1 } }, function(err) {
-            if(err) return res.send("error");
-            logger.debug("Saved document group annotation " + dga._id)
+
+          // Update the document group's times_annotated field
+          if(newDGA) {
+            DocumentGroup.update({_id: documentGroupId}, { $inc: {times_annotated: 1 } }, function(err) {
+              if(err) return res.send("error");
+              logger.debug("Saved document group annotation " + dga._id)
+              res.send({success: true, documentGroupAnnotationId: dga._id});
+            });
+          } else {
+            logger.debug("Updated document group annotation " + dga._id);
             res.send({success: true, documentGroupAnnotationId: dga._id});
-          });
-        } else {
-          logger.debug("Updated document group annotation " + dga._id);
-          res.send({success: true, documentGroupAnnotationId: dga._id});
-        }            
+          }   
+
+
+                
          
       });
     });
@@ -491,12 +498,17 @@ module.exports.getProjectDetails = function(req, res) {
     proj.getDetails(function(err, data) {
 
       proj.getDocumentGroupsAnnotatedByUserCount(req.user, function(err, userDocsAnnotated) {
-        proj.getDocumentGroupsPerUser(function(err, userAnnotationsRequired) {  
+        proj.getDocumentGroupsPerUser(function(err, userAnnotationsRequired) { 
+
+
+
+
+
 
           if(err) { return res.send("error") }
 
-          data.dashboard.userDocsAnnotated = userDocsAnnotated;
-          data.dashboard.userAnnotationsRequired = Math.floor(userAnnotationsRequired);
+          data.dashboard.userDocsAnnotated = userDocsAnnotated * 10;
+          data.dashboard.userAnnotationsRequired = Math.floor(userAnnotationsRequired) * 10;
 
 
 
@@ -583,7 +595,16 @@ module.exports.submitComment = function(req, res) {
     comment.save(function(err, comment) {
       if(err) { console.log(err); return res.status(500).send({"error": "could not save comment"})}
       console.log("Comment saved OK", comment);
-      res.send({comment: comment});
+
+
+
+      var comment2 = JSON.parse(JSON.stringify(comment));
+      // Append the profile icon to the comment
+      comment2.user_profile_icon = req.user.profile_icon;
+
+      console.log("COMMENT:", comment2);
+
+      res.send({comment: comment2});
     })
   } catch(err) {
     res.status(500).send({"error": "could not save comment"})

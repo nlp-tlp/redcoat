@@ -495,6 +495,8 @@ class DocumentContainer extends Component {
 
   render() {
 
+
+
     return (
       <div className={"document-container" + (this.props.confidence ? " conf conf-" + this.props.confidence : "")}>
 
@@ -535,15 +537,17 @@ class DocumentContainer extends Component {
 
 
 
-              <div className="comments-wrapper">
-                <div className="comments-inner">
-                  <div className="comments-even-more-inner" ref={this.commentBoxRef}>
-                    { this.props.comments.map((comment, i) => <Comment index={i} text={comment.text} date={comment.created_at} author={comment.author} />) }
-                  </div>
-                  <CommentInput submitComment={this.submitComment.bind(this)}/>
+              { this.props.user && 
+                <div className="comments-wrapper">
+                  <div className="comments-inner">
+                    <div className="comments-even-more-inner" ref={this.commentBoxRef}>
+                      { this.props.comments.map((comment, i) => <Comment index={i} {...comment} hideDocumentString={true} />) }
+                    </div>
+                    <CommentInput user_profile_icon={this.props.user.profile_icon} submitComment={this.submitComment.bind(this)}/>
 
+                  </div>
                 </div>
-              </div>
+              }
             </div>
             <div className="confidence-buttons"></div>
 
@@ -2076,6 +2080,7 @@ class TaggingInterface extends Component {
                     entityColourMap={this.state.entityColourMap}
                     deleteTag={this.deleteTag.bind(this)}
                     submitComment={this.submitComment.bind(this)}
+                    user={this.props.user}
                   />
                   )}
 

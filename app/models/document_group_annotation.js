@@ -235,6 +235,7 @@ DocumentGroupAnnotationSchema.methods.updateProjectNumDocumentGroupAnnotations =
 DocumentGroupAnnotationSchema.methods.toMentionsJSON = function(done) {
 	var t = this;
 	
+  var DocumentGroup = require('./document_group');
 	DocumentGroup.findById({_id: this.document_group_id}, function(err, dg) {
 		if(err) return done(err);
 
@@ -340,12 +341,19 @@ DocumentGroupAnnotationSchema.pre('save', function(next) {
   });
 });
 
-DocumentGroupAnnotationSchema.post('save', function(obj) {
+DocumentGroupAnnotationSchema.post('save', function(next) {
   var t = this;
 
   // 1. Update the number of annotations of the project.
   t.updateProjectNumDocumentGroupAnnotations(function(err) {
-    
+
+    // 2. Update the agreement of this DGA's document group.
+    var DocumentGroup = require('./document_group');
+    DocumentGroup.findById({_id: t.document_group_id}, function(err, docgroup) {
+      docgroup.updateAgreement(function(err) {
+        // next();        
+      });
+    });    
   });
 })
 

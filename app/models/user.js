@@ -46,11 +46,22 @@ var RecentProject = new Schema({
   date: {
     type: Date,
     default: Date.now
-  }
+  },
 }, {
   _id: false,
   id: false
 });
+
+
+
+// A list of icon options from FontAwesome that the user can choose from
+const iconOptions = new Set([
+  "user", "anchor", "automobile", "asterisk", "bath", "battery", "binoculars", "bicycle", "bomb", "bullhorn", "child", "cubes", "female", "diamond", "cogs", "coffee", "fax", "flag", "fire-extinguisher", "flash", "fire", "male", "heart", "gift", "globe", "legal", "leaf", "microphone", "paw", "rocket", "magnet", "star", "space-shuttle", "trophy", "umbrella"
+]);
+
+var validateProfileIcon = function(icon) {
+  return iconOptions.has(icon);
+}
 
 
 // create a schema
@@ -96,6 +107,28 @@ var UserSchema = new Schema({
   },
 
 
+  // Let the user style their profile image and background colour
+  // Should ideally be replaced with the ability to upload a profile pic at some point...
+  profile_icon: {
+    foreground: {
+      type: String,
+      minlength: 4,
+      maxlength: 7,
+      default: "#aaa",
+    },
+    background: {
+      type: String,
+      minlength: 4,
+      maxlength: 7,
+      default: "#eee",
+    },
+    icon: {
+      type: String,
+      maxlength: 20,
+      default: "user",
+      validate: validateProfileIcon
+    }
+  },
 
   resetPasswordToken: String,
   resetPasswordExpires: Date,
@@ -108,6 +141,12 @@ var UserSchema = new Schema({
     updatedAt: "updated_at"
   }
 });
+
+
+
+
+
+
 
 UserSchema.plugin(passportLocalMongoose,
   {

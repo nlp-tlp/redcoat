@@ -24,4 +24,6 @@ router.post('/forgot_password', notLoggedIn, userController.forgot_password_subm
 router.get('/reset_password/:token', notLoggedIn, userController.reset_password);
 router.post('/reset_password/:token', notLoggedIn, userController.reset_password_submit);
 
+router.post('/set_profile_icon', userController.setProfileIcon);
+
 module.exports = router;
