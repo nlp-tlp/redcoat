@@ -11,6 +11,7 @@ import { defaults } from 'react-chartjs-2'
 import { Comment } from '../components/Comment';
 
 defaults.global.defaultFontFamily = 'Open Sans'
+defaults.global.animation.duration = 500;
 
 // Config for all API fetch requests
 const fetchConfigGET = {
@@ -173,17 +174,85 @@ function setActivityChartStyles(activityChartData) {
 }
 
 
+
+// hex to RGB code found here: https://convertingcolors.com/blog/article/convert_hex_to_rgb_with_javascript.html
+String.prototype.convertToRGB = function(){
+    if(this.length != 6){
+        throw "Only six-digit hex colors are allowed.";
+    }
+
+    var aRgbHex = this.match(/.{1,2}/g);
+    var aRgb = [
+        parseInt(aRgbHex[0], 16),
+        parseInt(aRgbHex[1], 16),
+        parseInt(aRgbHex[2], 16)
+    ];
+    return aRgb;
+}
+
+// Simple function to darken an RGB array.
+function darken(colourRGB, amount) {
+  return [Math.max(colourRGB[0] - amount, 0), Math.max(colourRGB[1] - amount, 0), Math.max(colourRGB[2] - amount, 0)]
+}
+
+
 // The project dashboard, which renders in the container to the right of the navigation.
 // Its data comes from props, not state (so that the dashboard doesn't need to be reloaded when switching between
 // pages in the Project view).
 class ProjectDashboard extends Component {
   constructor(props) {
     super(props);    
+    this.state = {
+      entityChartMulticolour: true,
+    }
   }
 
 
+  toggleEntityChartColours() {
+    this.setState({
+      entityChartMulticolour: !this.state.entityChartMulticolour
+    });
+  }
+
+  // Apply colouring to entityChartData if entityChartMulticolour is true.
+  getColouredData() {
+
+    const entityColours = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff"];
 
 
+    console.log(this.props.data.entityChartData.entityClasses, "<<")
+    var entityChartData = this.props.data.entityChartData;
+
+    entityChartData.entityClasses.datasets[0].borderWidth = 1;
+   
+    if(this.state.entityChartMulticolour) {
+
+      entityChartData.entityClasses.datasets[0].backgroundColor = [];
+      entityChartData.entityClasses.datasets[0].borderColor = [];
+      
+
+      for(var i in this.props.data.entityChartData.entityClasses.labels) {
+        var label = this.props.data.entityChartData.entityClasses.labels[i];
+        var colourIdx = this.props.data.entityChartData.colourIndexes[label];
+
+        console.log(colourIdx, label);
+        var colourHex = entityColours[colourIdx % entityColours.length];
+
+        console.log(colourHex);
+        var colourRGB = colourHex.slice(1, 7).convertToRGB();
+
+        entityChartData.entityClasses.datasets[0].backgroundColor.push('rgba(' + colourRGB[0] + ', ' + colourRGB[1] + ', ' + colourRGB[2] + ', 1)');
+
+        var colourRGBBorder = darken(colourRGB, 50);
+        entityChartData.entityClasses.datasets[0].borderColor.push('rgba(' + colourRGBBorder[0] + ', ' + colourRGBBorder[1] + ', ' + colourRGBBorder[2] + ', 1)');
+      }
+
+    } else {
+      entityChartData.entityClasses.datasets[0].backgroundColor = 'rgba(54, 162, 235, 0.6)';      
+      entityChartData.entityClasses.datasets[0].borderColor = 'rgba(54, 162, 235, 0.6)';      
+    }    
+    return entityChartData.entityClasses;
+  }
 
 
   render() {
@@ -196,6 +265,7 @@ class ProjectDashboard extends Component {
     // heatmapData = heatmapData.concat(h2);
     // heatmapData = heatmapData.concat(h3);
 
+    console.log(this.props.data.entityChartData);
     
 
     //heatmapData = heatmapData.map(() => Math.random())
@@ -272,14 +342,17 @@ class ProjectDashboard extends Component {
 
             <div className="dashboard-item col-100">
               <div className="inner">
-                <h3>Entity frequencies</h3>
+                <div className="dashboard-flex-header">
+                  <h3>Entity frequencies</h3>
+                  <div onClick={this.toggleEntityChartColours.bind(this)} className={"chart-option" + (this.state.entityChartMulticolour ? " active" : "")}><span className="checkbox"></span><span>Colour by class</span></div>
+                </div>
                 <div>
                   { this.props.loading && 
                     <div className="chart-placeholder"><i class="fa fa-cog fa-spin"></i>Loading...</div>
                   }
                   { !this.props.loading && 
                   <Bar
-                    data={this.props.data.entityChartData.entityClasses}
+                    data={this.getColouredData()}
                     height={230}
                     options={{
                       responsive: true,
@@ -566,8 +639,8 @@ class ProjectView extends Component {
         window.setTimeout(() => {
 
           // Add the chart styles here in the front-end
-          var entityChartData = Object.assign({}, d.dashboard.entityChartData.entityClasses.datasets[0], getEntityChartStyles())
-          d.dashboard.entityChartData.entityClasses.datasets[0] = entityChartData;
+          //var entityChartData = d.dashboard.entityChartData.entityClasses   //.datasets[0], getEntityChartStyles())
+          //d.dashboard.entityChartData.entityClasses.datasets[0] = entityChartData;
 
           d.dashboard.activityChartData = setActivityChartStyles(d.dashboard.activityChartData);
 

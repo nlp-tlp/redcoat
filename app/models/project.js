@@ -951,7 +951,7 @@ ProjectSchema.methods.modifyHierarchy = function(new_hierarchy, user, done) {
 // Retrieve the counts of every label in this project, based on the 'combined annotations' (i.e. the automatically compiled ones).
 // This is probably not very efficient.
 // These kind of functions make me wish this was python not js.......
-ProjectSchema.methods.getLabelCounts = function(done) {
+ProjectSchema.methods.getEntityChartData = function(done) {
   var t = this;
 
   var starty = new Date().getTime();
@@ -1038,7 +1038,54 @@ ProjectSchema.methods.getLabelCounts = function(done) {
       counts.push(sortedEntityCounts[i][1])
     }
 
-    done({entities: entities, counts: counts});
+
+    var colourIndexes = {}; // Figure out the colour indexes of each class in the hierarchy so they can be passed to the front end
+    var colourIdx = -1;
+    for(var i in t.category_hierarchy) {
+      var label = t.category_hierarchy[i];
+
+      if(label.indexOf('/') === -1) {
+        colourIdx++;
+      }
+
+      var split = label.split('/');
+      var truncatedLabel = split.length > 1 ? "/" : ""
+      truncatedLabel = truncatedLabel + split[split.length - 1];
+
+
+
+      colourIndexes[truncatedLabel] = colourIdx;
+    }
+
+
+
+
+    var entityChartData = {
+      colourIndexes: colourIndexes,
+      entityClasses: {
+        labels: entities,
+        datasets: [
+          {
+            label: 'Mentions',
+            data: counts, // Could set background colour according to entity class? Not sure if good practice tho
+
+            // backgroundColor: [              
+            //   "rgba(255, 99, 132, 0.2)",
+            //   "rgba(255, 159, 64, 0.2)",
+            //   "rgba(255, 205, 86, 0.2)",
+            //   "rgba(75, 192, 192, 0.2)",
+            //   "rgba(54, 162, 235, 0.2)",
+            //   "rgba(153, 102, 255, 0.2)",
+            //   "rgba(201, 203, 207, 0.2)"
+            // ],
+          }
+        ]
+      },      
+    }
+
+
+
+    done(entityChartData);
 
   });
 
@@ -1323,7 +1370,7 @@ ProjectSchema.methods.getDetails = function(done) {
 
   t.getAverageAgreement(function(avgAgreement) {
 
-    t.getLabelCounts(function(entityCounts) {
+    t.getEntityChartData(function(entityChartData) {
       t.getActivityChartData(function(activityChartData) {
 
         t.getAnnotationsChartData(function(annotationsChartData) {
@@ -1405,20 +1452,7 @@ ProjectSchema.methods.getDetails = function(done) {
 
                 comments: comments,
 
-                entityChartData: {
-
-                  entityClasses: {
-                    labels: entityCounts.entities,
-                    datasets: [
-                      {
-                        label: 'Mentions',
-                        data: entityCounts.counts,
-                      }
-                    ]
-                  },
-
-                  
-                },
+                entityChartData: entityChartData,
 
                 activityChartData: activityChartData,
 

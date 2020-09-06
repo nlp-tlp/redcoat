@@ -172,7 +172,7 @@ app.use(function(req, res, next) {
   var debug = true;
   if (app.get('env') === 'development' && debug) {
 
-    User.findOne({username: "test2"}, function(err, user) {      
+    User.findOne({username: "test"}, function(err, user) {      
       req.login(user, function(err) {
         return proceed(req, res, next);
       });

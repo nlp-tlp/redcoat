@@ -1074,6 +1074,9 @@
 				margin-right: 80px;
 				position: relative;
 
+
+
+
 				&.annotate-button {
 					background: $button-blue;
 					justify-self: flex-end;
@@ -1133,10 +1136,49 @@
 		.dashboard-item {
 			width: 100%;		
 			box-sizing: border-box;		
-			
-			
-			
 			padding: 15px;
+			
+			.dashboard-flex-header {
+				display: flex;
+				justify-content: space-between;
+				margin-bottom: 18px;
+				h3 {
+					margin-bottom: 0;
+				}
+				.chart-option {
+					display: flex;
+					align-content: center;
+					justify-self: flex-end;
+					font-size: 14px;
+					color: #777;
+					user-select: none;
+					cursor: pointer;
+					.checkbox {
+						width: 21px;
+						height: 21px;
+						border: 1px solid #ccc;
+						border-radius: 4px;
+						margin-right: 8px;
+						position: relative;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+					}
+					span {
+						display: block;
+					}
+					&.active .checkbox {
+						&:after {
+							font-family: FontAwesome;
+							color: #555;
+							content: "\f00c";
+
+						}
+					}
+				}
+			}
+			
+			
 			.inner {
 				border-radius: 4px;
 				background: #fefefe;

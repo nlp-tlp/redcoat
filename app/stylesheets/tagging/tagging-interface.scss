@@ -1545,6 +1545,7 @@ button.blue-button {
 		padding: 0 10px;
 		padding-left: 20px;
 		color: #555;
+		display: none;
 		span.chain {
 			display: inline-block;
 			min-width: 30px;
@@ -1559,7 +1560,7 @@ button.blue-button {
 		border-top: 1px solid #ddd;
 		border-bottom: 1px solid #ddd;
 		font-size: 0.8em;
-		margin-bottom: 20px;
+		margin-bottom: 0px;
 		background: #fefefe;	
 		padding-bottom: 0;	
 		padding-top: 0;
@@ -1609,7 +1610,7 @@ button.blue-button {
 		}
 		.summary {
 			color: #555;
-			min-height: 150px;
+			min-height: 100px;
 			.different {
 				color: $primary-blue;
 			}

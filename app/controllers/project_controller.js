@@ -597,9 +597,8 @@ module.exports.submitComment = function(req, res) {
       console.log("Comment saved OK", comment);
 
 
-
-      var comment2 = JSON.parse(JSON.stringify(comment));
       // Append the profile icon to the comment
+      var comment2 = JSON.parse(JSON.stringify(comment));
       comment2.user_profile_icon = req.user.profile_icon;
 
       console.log("COMMENT:", comment2);

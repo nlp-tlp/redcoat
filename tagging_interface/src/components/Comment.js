@@ -12,7 +12,6 @@ class Comment extends Component {
   }
 
   render() {
-    console.log(this.props);
     return (
       <div className="comment-box">
         <div className="comment-left">    
@@ -38,7 +37,6 @@ class CommentInput extends Component {
   }
 
   onSubmit(e) {
-    console.log(this.state.comment);
     e.preventDefault();
 
     this.props.submitComment(this.state.comment, () => {
@@ -66,7 +64,7 @@ class CommentInput extends Component {
           </div>
           <div className="comment-right margin-right">
             <div className="comment-text">
-              <textarea name="comment-input" className="comment-input" placeholder="Write a comment..." onChange={this.setComment.bind(this)} value={this.state.comment}></textarea>
+              <textarea name="comment-input" className="comment-input" placeholder="Write a comment..." onChange={this.setComment.bind(this)} value={this.state.comment} maxlength="200" ></textarea>
 
 
 
