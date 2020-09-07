@@ -103,6 +103,38 @@ var validateDocumentTokenLengthMin = function(arr, done) {
 };
 
 
+// Validate that no tokens in the document are of length 0.
+var validateTokensLengthMin = function(arr, done) {
+  for(var i = 0; i < arr.length; i++) {
+    if(arr[i].length == 0) {
+      msg = "Error at token \"" + arr[i] + "\": token must have length greater than 0.";
+      done(false, msg);
+      return;
+    }
+  }
+  done(true);
+};
+
+
+// Validate that no tokens in the document are of length 0.
+var validateTokensLengthMax = function(arr, done) {
+  for(var i = 0; i < arr.length; i++) {
+    if(arr[i].length > DOCUMENT_MAX_TOKEN_LENGTH) {
+      msg = "Error at token \"" + arr[i] + "\": all tokens in the document must be less than " + DOCUMENT_MAX_TOKEN_LENGTH + " characters long.";
+      done(false, msg);
+      return;
+    }
+  }
+  done(true);
+};
+
+
+
+
+
+
+
+
 // Validate that no tokens in the document are of length greater than DOCUMENT_MAX_TOKEN_LENGTH.
 var validateDocumentTokenLengthMax = function(arr, done) {
   for(var i = 0; i < arr.length; i++) {
@@ -360,6 +392,13 @@ documentValidation = [
   { validator: function(arr, done) { validateDocumentTokenCountMax( arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
 ]; 
 
+
+
+tokensValidation = [
+  { validator: function(arr, done) { validateTokensLengthMin(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+  { validator: function(arr, done) { validateTokensLengthMax(arr, function(result, msg) { done(result, msg); })}, isAsync: true, },
+]; 
+
 allDocumentValidation = [
   { validator: validateDocumentCountMin,       msg: 'Your file does not appear to contain any lines.'},
   { validator: validateDocumentTotalCountMax,  msg: 'Please ensure your file contains less than ' + DOCUMENT_TOTAL_MAXCOUNT + ' lines.' },
@@ -521,8 +560,19 @@ module.exports = {
 
 		documents: {
 	    type: [[String]],
-	    validate: documentValidation
+	    validate: documentValidation,      
 		},
+
+
+
+    tokens: {
+      type: [String],
+      validate: tokensValidation,
+      minlength: 1,
+      maxlength: DOCUMENT_MAX_TOKEN_COUNT,
+    },
+
+
 
     documents_no_validation: {
       type: [[String]],

@@ -8,7 +8,8 @@ var cf = require("./common/common_functions");
 
 var User = require("./user");
 var Project = require("./project");
-var Document = require("./document");
+var DocumentGroup = require("./document_group");
+
 
 var CommentSchema = new Schema({
   user_id: {
@@ -16,9 +17,9 @@ var CommentSchema = new Schema({
     ref: 'User',
     required: true
   },
-  document_id: {
+  document_group_id: {
     type: Schema.Types.ObjectId,
-    ref: 'Document',
+    ref: 'Document Group',
     required: true
   },
   project_id: {
@@ -36,11 +37,11 @@ var CommentSchema = new Schema({
     maxlength: cf.COMMENT_MAXLENGTH,
     required: true,
   },
-  // document_index: { // Index of the comment in the doc group
-  //   type: Number,
-  //   default: 0,
-  //   max: cf.DOCUMENT_MAXCOUNT,
-  // },
+  document_index: { // Index of the comment in the doc group
+    type: Number,
+    default: 0,
+    max: cf.DOCUMENT_MAXCOUNT,
+  },
   document_string: {
     type: String,
     maxlength: cf.DOCUMENT_MAX_TOKEN_LENGTH * DOCUMENT_MAX_TOKEN_COUNT,

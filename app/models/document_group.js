@@ -7,8 +7,6 @@ var sw = require('stopword');
 
 var cf = require("./common/common_functions.js")
 
-// Krippendorff alpha calculation, found on GitHub. License included in the same folder as the source code.
-var Krippendorff = require('../../public/javascripts/agreement_metrics/krippendorff/krippendorff.js');
 
 
 /* Schema */

@@ -3,11 +3,10 @@ var logger = require('config/winston');
 
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
-// var Document = require('./document_group');
-// var DocumentAnnotation = './document_group_annotation';
+var DocumentGroup = require('./document_group');
+var DocumentGroupAnnotation = './document_group_annotation';
 
 var Document = require('./document');
-var DocumentAnnotation = require('./document_annotation');
 
 
 var Comment = require('./comment');
@@ -88,7 +87,7 @@ var ProjectSchema = new Schema({
   //   default: [] 
   // },
 
-  // The number of completed document annotations of the project.
+  // The number of completed document group annotations of the project.
   completed_annotations: {
     type: Number,
     default: 0
@@ -115,6 +114,42 @@ ProjectSchema.methods.verifyAssociatedObjectsExist = cf.verifyAssociatedObjectsE
 
 /* Instance methods */
 
+// // Get the data to appear in the Projects table.
+// // user_id is the user calling the getTableData method, needed to determine whether the projects belong to the user or not.
+// ProjectSchema.statics.getTableData = function(p, user_id) {
+//   var project = p;
+//   project["owner"] = p.user_id.equals(user_id) ? "Your projects" : "Projects you've joined";
+//   project["num_annotators"] = p.user_ids.active.length;
+//   //var pc = Math.random() * 100;
+//   project["project_description"] = p["project_description"] ? p["project_description"] : "(no description)";
+//   project["_created_at"] = p.created_at,
+//   project["created_at"] = moment(p.created_at).format("DD/MM/YYYY [at] h:mm a");
+//   project["updated_at"] = moment(p.updated_at).format("DD/MM/YYYY [at] h:mm a");
+//   project["hierarchy_permissions"] = {"no_modification": "Annotators may not modify the category hierarchy.",
+//                                       "create_edit_only": "Annotators may add new categories to the hierarchy but may not delete or rename existing categories.",
+//                                       "full_permission": "Annotators may add, rename, and delete categories."}[p.category_hierarchy_permissions]
+//   project["annotations_required"] = Math.ceil(p.file_metadata["Number of documents"] / 10) * p.overlap;
+
+//   //console.log(p.project_title, p.completed_annotations, "<<>>")
+//   //project["completed_annotations"] = (p.completed_annotations || 0) / 10);
+
+//   //project["percent_complete"] = project["completed_annotations"] / (Math.ceil(project["annotations_required"]/10) * 10) * 100;
+//   project["percent_complete"] = project["completed_annotations"] / project["annotations_required"] * 100;
+  
+//   // DocumentGroupAnnotation = require('./document_group_annotation');
+//   // DocumentGroupAnnotation.count( {project_id: p._id, user_id: user_id }, function(err, count) {
+//   //   console.log(err, count)
+
+//   //   project["percent_complete_yours"] = count / project["annotations_required"] * 100;
+//   // });
+
+//   //project["percent_complete_yours"] = p.getDocumentGroupsAnnotatedByUserCount(user_id) / project["annotations_required"] * 100;
+
+//   return project;
+  
+ 
+// }
+
 // Return the total number of users (active or inactive) of this project.
 ProjectSchema.methods.getTotalUsers = function() {
   return this.user_ids.active.length + this.user_ids.inactive.length;
@@ -140,54 +175,57 @@ ProjectSchema.methods.getFrequentTokens = function(next) {
   return FrequentTokens.findOne({ _id: this.frequent_tokens }).exec(next);  
 }
 
-ProjectSchema.methods.getDocuments = function(next) {
-  return Document.find({ project_id: this._id }).exec(next);  
+ProjectSchema.methods.getDocumentGroups = function(next) {
+  return DocumentGroup.find({ project_id: this._id }).exec(next);  
 }
 
-ProjectSchema.methods.getNumDocuments = function(next) {
-  return Document.count({ project_id: this._id }).exec(next);  
+ProjectSchema.methods.getNumDocumentGroups = function(next) {
+  return DocumentGroup.count({ project_id: this._id }).exec(next);  
 }
 
-ProjectSchema.methods.getNumDocumentAnnotations = function(next) {
-  return DocumentAnnotation.count({ project_id: this._id }).exec(next);  
-}
-
-
-// Return the documents annotated by the user for this project.
-ProjectSchema.methods.getDocumentsAnnotatedByUser = function(user, next) {
-  return DocumentAnnotation.find( {project_id: this._id, user_id: user._id }).sort({created_at: 'asc'}).exec(next);
+ProjectSchema.methods.getNumDocumentGroupAnnotations = function(next) {
+  return DocumentGroupAnnotation.count({ project_id: this._id }).exec(next);  
 }
 
 
-// Return the number of documents annotated by the user for this project.
+// Return the document groups annotated by the user for this project.
+ProjectSchema.methods.getDocumentGroupsAnnotatedByUser = function(user, next) {
+  DocumentGroupAnnotation = require('./document_group_annotation');
+  return DocumentGroupAnnotation.find( {project_id: this._id, user_id: user._id }).sort({created_at: 'asc'}).exec(next);
+}
+
+
+// Return the number of document groups annotated by the user for this project.
+ProjectSchema.methods.getDocumentGroupsAnnotatedByUserCount = function(user, next) {
+  DocumentGroupAnnotation = require('./document_group_annotation');
+  return DocumentGroupAnnotation.count( {project_id: this._id, user_id: user._id }).exec(next);
+}
+
+// Return the number of *documents* (not documentGroups) annotated by the user for this project. More correct than the DocumentGroups method above.
 ProjectSchema.methods.getDocumentsAnnotatedByUserCount = function(user, next) {
-  return DocumentAnnotation.count( {project_id: this._id, user_id: user._id }).exec(next);
+  var t = this;
+  var DocumentGroupAnnotation = require('./document_group_annotation');
+  var DocumentGroup = require('./document_group');
+  var d = DocumentGroupAnnotation.aggregate([
+    { $match: { project_id: t._id, user_id: user._id} },
+    { $unwind: "$labels"},
+    {
+      $group: {
+        _id: "$project_id",
+        count: {
+          $sum: 1
+        }
+      }
+    }
+  ], function(err, results) {
+    //console.log(results, "<<<");
+    if(results.length > 0)
+      var count = results[0].count;
+    else
+      var count = 0;
+    return next(err, count);
+  });
 }
-
-// // Return the number of documents annotated by the user for this project.
-// ProjectSchema.methods.getDocumentsAnnotatedByUserCount = function(user, next) {
-//   var t = this;
-
-//   var d = DocumentAnnotation.aggregate([
-//     { $match: { project_id: t._id, user_id: user._id} },
-//     { $unwind: "$labels"},
-//     {
-//       $group: {
-//         _id: "$project_id",
-//         count: {
-//           $sum: 1
-//         }
-//       }
-//     }
-//   ], function(err, results) {
-//     //console.log(results, "<<<");
-//     if(results.length > 0)
-//       var count = results[0].count;
-//     else
-//       var count = 0;
-//     return next(err, count);
-//   });
-// }
 
 // Retrieve a list of all annotators of the project: the active, inactive, and declined users, as well as the pending invitations.
 // For the pending invitations, lookup the user account associated with them (if an account exists), otherwise fill the missing fields with empty strings.
@@ -289,55 +327,48 @@ ProjectSchema.methods.getInvitationsTableData = function(next) {
   });
 }
 
-
-
-
 // Retrieve the info of users associated with this project for display in the "Annotations" tab on the Project details page.
+ProjectSchema.methods.getAnnotationsTableData = function(next) {
+  var User = require('./user')
+  var t = this;
+  User.find({
+      '_id': { $in: t.user_ids.active}
+  }).select('username docgroups_annotated').lean().exec(function(err, users){
+      function getUserData(userData, annotationsAvailable, users, next) {
+        var u = users.pop()
+        //userData.push(u);
+        //userData['docgroups_annotated_count'] = u['docgroups_annotated'].length;
 
-
-// Uncomment this later
-
-// ProjectSchema.methods.getAnnotationsTableData = function(next) {
-//   var User = require('./user')
-//   var t = this;
-//   User.find({
-//       '_id': { $in: t.user_ids.active}
-//   }).select('username docgroups_annotated').lean().exec(function(err, users){
-//       function getUserData(userData, annotationsAvailable, users, next) {
-//         var u = users.pop()
-//         //userData.push(u);
-//         //userData['docgroups_annotated_count'] = u['docgroups_annotated'].length;
-
-//         User.findById(u._id, function(err, user) {
-//           t.getDocumentsAnnotatedByUserCount(user, function(err, count) {
-//             u['docgroups_annotated_count'] = u['docgroups_annotated'].length * 10 // TODO: Change this to not be hardcoded to 10;
-//             u['docgroups_annotated_this_project_count'] = count;
-//             if(count > annotationsAvailable) { annotationsAvailable = count };
-//             u['project_owner'] = false;
-//             if(u['_id'].equals(t.user_id)) {
-//               u['project_owner'] = true;
-//             }
-//             u['download_link'] = {'project_id': t._id, 'user_id': u['_id'], 'enough_annotations': u['docgroups_annotated_this_project_count'] > 0};
-//             delete u['docgroups_annotated'];
-//             userData.push(u);
+        User.findById(u._id, function(err, user) {
+          t.getDocumentsAnnotatedByUserCount(user, function(err, count) {
+            u['docgroups_annotated_count'] = u['docgroups_annotated'].length * 10 // TODO: Change this to not be hardcoded to 10;
+            u['docgroups_annotated_this_project_count'] = count;
+            if(count > annotationsAvailable) { annotationsAvailable = count };
+            u['project_owner'] = false;
+            if(u['_id'].equals(t.user_id)) {
+              u['project_owner'] = true;
+            }
+            u['download_link'] = {'project_id': t._id, 'user_id': u['_id'], 'enough_annotations': u['docgroups_annotated_this_project_count'] > 0};
+            delete u['docgroups_annotated'];
+            userData.push(u);
             
 
-//             if(users.length == 0) {
-//                next(err, userData, annotationsAvailable)
-//              } else {
-//               getUserData(userData, annotationsAvailable, users, next);
-//              }
-//           });
+            if(users.length == 0) {
+               next(err, userData, annotationsAvailable)
+             } else {
+              getUserData(userData, annotationsAvailable, users, next);
+             }
+          });
 
-//         });
-//       }
+        });
+      }
 
-//       getUserData([], 0, users, function(err, userData, annotationsAvailable) {
-//         next(err, userData, annotationsAvailable);
-//       });      
+      getUserData([], 0, users, function(err, userData, annotationsAvailable) {
+        next(err, userData, annotationsAvailable);
+      });      
      
-//   });
-// }
+  });
+}
 
 
 
@@ -350,9 +381,6 @@ ProjectSchema.methods.getInvitationsTableData = function(next) {
 //   labels: the labels corresponding to the document group
 //   document_group_display_name: The display name of the document group
 // }
-
-// Uncomment this later
-
 ProjectSchema.methods.getCombinedAnnotations = function(next) {
 
   // Javascript implementation of the 'zip' function.
@@ -384,9 +412,9 @@ ProjectSchema.methods.getCombinedAnnotations = function(next) {
   }
 
   var t = this;
-  //var Document = require('./document');
-  //var DocumentAnnotation = require('./document_group_annotation')
-  DocumentAnnotation.aggregate([
+  var DocumentGroup = require('./document_group');
+  var DocumentGroupAnnotation = require('./document_group_annotation')
+  DocumentGroupAnnotation.aggregate([
     {
       $match: {
         project_id: t._id
@@ -394,45 +422,65 @@ ProjectSchema.methods.getCombinedAnnotations = function(next) {
     },
     {
       $group: {
-        _id: "$document_id", document_annotations: { $push: "$$ROOT" }
+        _id: "$document_group_id", document_group_annotations: { $push: "$$ROOT" }
       }
     },
     {
       $project: {
         _id: 0,
-        document_id: { $arrayElemAt: ["$document_annotations.document_id", 0] },
-        labels: "$document_annotations.labels",
+        document_group_id: { $arrayElemAt: ["$document_group_annotations.document_group_id", 0] },
+        labels: "$document_group_annotations.labels"
       }
     },
     {
       $lookup: {
-        from: "documents",
-        localField: "document_id",
+        from: "documentgroups",
+        localField: "document_group_id",
         foreignField: "_id",
-        as: "document"
+        as: "document_group"
       }
     },
     {
        $project: {
          _id: 1,
-         document_id: 1,
-         annotations: "$document_annotations",
-         tokens: { $arrayElemAt: ["$document.tokens", 0] },
-         document_index: "$document.document_index",
+         annotations: "$document_group_annotations",
+         documents: { $arrayElemAt: ["$document_group.documents", 0] },
+         document_indexes: { $arrayElemAt: ["$document_group.document_indexes", 0] },
          all_labels: "$labels",
+         document_group_display_name: { $arrayElemAt: ["$document_group.display_name", 0] }
        }
      },
      
     ]).allowDiskUse(true)
-    .exec(function(err, document_annotations) {
-      //console.log(document_annotations[0])
-      //process.exit()
-
+    .exec(function(err, document_groups) {
+      //console.log(document_groups)
       if(err) return next(err);
-      next(null, document_annotations);
+      next(null, document_groups);
+
+      
+      // try {
+      //   for(var i in document_groups) {
+      //     var user_labels = document_groups[i].labels;
+      //     var final_labels = [];
+      //     var num_users = user_labels.length;
+      //     for(var j in user_labels[0]) { // j is doc index
+      //       var labels = user_labels[0][j];
+      //       var zipped_labels = [...zip( user_labels.map(function(x) { return x[j] })   )]
+      //       final_labels.push(new Array(zipped_labels.length));
+      //       for(k in zipped_labels) {
+      //         final_labels[j][k] = findMode(zipped_labels[k]);  // TODO: Adapt to multi-label
+      //       }
+      //     }
+      //     delete document_groups[i].labels;
+      //     document_groups[i].labels = final_labels;
+      //   }
+      // } catch(err) {
+      //   return next(err);
+      // }
+      // // console.log(document_groups)
+      // next(null, document_groups);
     });
 }
-
 
 
 // Retrieve all annotations of a user for this project. The data will be in JSON format:
@@ -442,14 +490,12 @@ ProjectSchema.methods.getCombinedAnnotations = function(next) {
 //   labels: the labels corresponding to the document group
 //   document_group_display_name: The display name of the document group
 // }
-
-// TODO: Fix this for single docs
 ProjectSchema.methods.getAnnotationsOfUserForProject = function(user, next) {
-  //DocumentAnnotation = require('./document_annotation')
-  //Document = require('./document_group')
+  DocumentGroupAnnotation = require('./document_group_annotation')
+  DocumentGroup = require('./document_group')
   var t = this;
 
-  DocumentAnnotation.aggregate([
+  DocumentGroupAnnotation.aggregate([
     {
       $match: {
         user_id: user._id,
@@ -458,7 +504,7 @@ ProjectSchema.methods.getAnnotationsOfUserForProject = function(user, next) {
     },
     {
       $lookup: {
-        from: "Documents",
+        from: "documentgroups",
         localField: "document_group_id",
         foreignField: "_id",
         as: "document_group"
@@ -487,6 +533,23 @@ ProjectSchema.methods.getAnnotationsOfUserForProject = function(user, next) {
 
 }
 
+// // Converts a json object to conll format.
+// // The JSON should be in the format of 'getAnnotationsOfUserForProject' above.
+// ProjectSchema.methods.json2conll = function(annotations, next) {
+//   conll_arr = [];
+//   for(var i in annotations) {
+//     for(var j in annotations[i]["documents"]) {
+//       for(var k in annotations[i]["documents"][j]) {
+//         conll_arr.push("" + annotations[i]["documents"][j][k] + " " + annotations[i]["labels"][j][k])
+//       }
+//       if(i < annotations.length - 1) {
+//         conll_arr.push("");    
+//       }
+//     }    
+//   }
+//   conll_str = conll_arr.join("\n")
+//   next(null, conll_str)
+// }
 
 // Return a JSON array of entity typing-formatted annotations.
 // The annotations JSON should be in the format of 'getAnnotationsOfUserForProject' above.
@@ -633,15 +696,14 @@ ProjectSchema.methods.getEntityTypingAnnotations = function(annotations,  next) 
   next(null, mentions);
 }
 
-
-
-// Update the number of document annotations for the project.
+// Update the number of document group annotations for the project.
 // This seems a lot faster than querying it every single time the project page is loaded.
-// This method is called whenever a DocumentAnnotation is saved.
-ProjectSchema.methods.updateNumDocumentAnnotations = function(next) {
+// This method is called whenever a DocumentGroupAnnotation is saved.
+ProjectSchema.methods.updateNumDocumentGroupAnnotations = function(next) {
+  DocumentGroupAnnotation = require('./document_group_annotation');
   var t = this;
 
-  t.getNumDocumentAnnotations(function(err, count) {
+  t.getNumDocumentGroupAnnotations(function(err, count) {
     if(err) { next(err); }
     t.completed_annotations = count;
     t.save(function(err) {
@@ -652,26 +714,27 @@ ProjectSchema.methods.updateNumDocumentAnnotations = function(next) {
 
 
 
-// Retrieve the number of documents each user must annotate for a project, based on the overlap, number of annotators, and number of document groups in the project.
-ProjectSchema.methods.getDocumentsPerUser = function(next) {
-  // Document count = total number of documents
-  // overlap: number of times each doc must be annotated
+// Retrieve the number of document groups each user must annotate for a project, based on the overlap, number of annotators, and number of document groups in the project.
+ProjectSchema.methods.getDocumentGroupsPerUser = function(next) {
+  // documentGroup count = total number of document groups
+  // overlap: number of times each group must be annotated
   // num users: number of users annotating
+  // ioa.html((1 / numAnnotators * v * 100).toFixed(2));
   var numAnnotators = this.user_ids.active.length;
   var overlap = this.overlap;
  
-  this.getNumDocuments(function(err, numDocs) {
-    var docsPerUser = 1.0 / numAnnotators * overlap * numDocs;
+  this.getNumDocumentGroups(function(err, numDocGroups) {
+    var docGroupsPerUser = 1.0 / numAnnotators * overlap * numDocGroups;
 
     //console.log("<<<<", docGroupsPerUser, numAnnotators, numDocGroups, "<<>>")
-    next(err, docsPerUser);
+    next(err, docGroupsPerUser);
   });
   
 }
 
-// Sorts the project's documents in ascending order of the number of times they have been annotated.
-ProjectSchema.methods.sortDocumentsByTimesAnnotated = function(next) {
-  return Document.find({ project_id: this._id }).sort('times_annotated').exec(next);
+// Sorts the project's document groups in ascending order of the number of times they have been annotated.
+ProjectSchema.methods.sortDocumentGroupsByTimesAnnotated = function(next) {
+  return DocumentGroup.find({ project_id: this._id }).sort('times_annotated').exec(next);
 }
 
 // Returns whether a particular user is the creator of a project.
@@ -692,52 +755,40 @@ ProjectSchema.methods.getUsers = function(next) {
   });
 }
 
-// Recommend a group of documents to a user. This is based on the documents that the user is yet to annotate.
-// Only documents that have been annotated less than N times will be recommended, where N = the "overlap" of the project.
-// Results are sorted based on the Document that was last recommended.
+// Recommend a document group to a user. This is based on the document groups that the user is yet to annotate.
+// Only document groups that have been annotated less than N times will be recommended, where N = the "overlap" of the project.
+// Results are sorted based on the documentGroup that was last recommended.
 ProjectSchema.methods.recommendDocgroupToUser = function(user, next) {
   var t = this;
   // All doc groups with this project id, where the times annotated is less than overlap, that the user hasn't already annotated
   var q = { $and: [{ project_id: t._id}, { times_annotated: { $lt: t.overlap } }, { _id: { $nin: user.docgroups_annotated }} ] };
 
 
-  Document.aggregate([
+  DocumentGroup.aggregate([
     { $match: q, },
     { $sort: {
         last_recommended: 1,
         //times_annotated: 1
       }
-    },
-    {
-      $limit: cf.DOCUMENT_MAXCOUNT,
-
     }
-  ], function(err, docs) {
+  ], function(err, docgroups) {
     //console.log(err, docgroups, "<<>>")
     if(err) return next(err);
-    if(docs.length == 0) { return next(new Error("No documents left")) } //TODO: fix this
-    //var docgroup = docgroups[0];
+    if(docgroups.length == 0) { return next(new Error("No document groups left")) } //TODO: fix this
+    var docgroup = docgroups[0];
 
-    var doc_ids = [];
-    var docgroup = [];
-    for(var i in docs) {
-      doc_ids.push(docs[i]._id);
-      docgroup.push(docs[i]);
-    }
-
-
-    Document.updateMany( {_id: { $in: docgroup._id }}, { last_recommended: Date.now() }, {}, function(err) {
+    DocumentGroup.update( {_id: docgroup._id }, { last_recommended: Date.now() }, {}, function(err) {
       return next(err, docgroup);
     })
     
   });
 
 
-  // Document.count(q, function(err, count) {
+  // DocumentGroup.count(q, function(err, count) {
   //   //console.log(count, "<<<<");
   //   //console.log(user.docgroups_annotated)
   //   var random = Math.random() * count; // skip over a random number of records. Much faster than using find() and then picking a random one.
-  //   Document.findOne(q).lean().skip(random).exec(function(err, docgroup) {
+  //   DocumentGroup.findOne(q).lean().skip(random).exec(function(err, docgroup) {
   //     if(err) return next(err);
   //     //if(docgroups.length == 0) {
   //     //  return next(null, null);
@@ -765,7 +816,7 @@ function appendUserProfilesToComments(comments, next, i = 0) {
   });
 }
 
-// Retrieve all comments on a particular project, and arrange them in a list.
+// Retrieve all comments on a particular docgroup, and arrange them in a list.
 ProjectSchema.methods.getAllCommentsArray = function(done) {
   Comment.find({project_id: this._id}).sort('-created_at').lean().exec(function(err, comments) {
     appendUserProfilesToComments(comments, function(comments) {
@@ -774,10 +825,7 @@ ProjectSchema.methods.getAllCommentsArray = function(done) {
   });
 }
 
-
-
 // Retrieve all comments on a particular docgroup, and arrange them in a list.
-// TODO: Fix this
 ProjectSchema.methods.getDocgroupCommentsArray = function(docgroup, done) {
   console.log("getting comments", docgroup._id);
   Comment.find({document_group_id: docgroup._id}).lean().exec(function(err, comments) {
@@ -795,12 +843,12 @@ ProjectSchema.methods.getDocgroupCommentsArray = function(docgroup, done) {
       done(err, commentsArray);
 
     });
+
+
+
+    
   });
 }
-
-
-
-
 
 
 ProjectSchema.methods.modifyHierarchy = function(new_hierarchy, user, done) {
@@ -810,6 +858,7 @@ ProjectSchema.methods.modifyHierarchy = function(new_hierarchy, user, done) {
   if(t.category_hierarchy_permissions === "no_modification" && !user._id.equals(t.user_id)) {
     return done(new Error("Category hierarchy may only be modified by owner as it is set to no_modification."))
   }
+
 
   try {
     var old_hierarchy = t.category_hierarchy;
@@ -846,24 +895,27 @@ ProjectSchema.methods.modifyHierarchy = function(new_hierarchy, user, done) {
     t.save(function(err, t) {
       if(err) return done(err);
 
-      // 4. Update every document annotation containing any of the labels that are no longer in the category hierarchy.
-      //var DocumentAnnotation = require('app/models/document_group_annotation');
+      // 4. Update every document group annotation containing any of the labels that are no longer in the category hierarchy.
+      //var DocumentGroupAnnotation = require('app/models/document_group_annotation');
+
 
       mongoose.connection.db.command({
-        update: "DocumentAnnotations",
+        update: "documentgroupannotations",
         updates: [
           {
-          //DocumentAnnotation.update(
+          //DocumentGroupAnnotation.update(
             q: { project_id: t._id, 
               labels: {
                 $elemMatch: {
-                  $in: missing_categories_prefixed                  
+                  $elemMatch: {
+                    $in: missing_categories_prefixed
+                  }
                 }
               }
             },
             u: {
               $set: {
-                "labels.$[label]": "O"
+                "labels.$[].$[label]": "O"
               }
             },
             arrayFilters: [ 
@@ -909,29 +961,23 @@ ProjectSchema.methods.getEntityChartData = function(done) {
   console.log("Getting combined anns...")
 
   t.getCombinedAnnotations(function(err, annotations) {
-
     if(err) return res.send(err);
 
     var elapsed = new Date().getTime() - starty;
     console.log("... done (" + elapsed + "ms)")
+
+
     
     var entityCounts = {}
+    
+    for(var docgroup_idx in annotations) {
 
-    //for(var doc_idx in annotations.all_labels[0]) { // Not sure why all labels is an array of length 1   
+      for(var doc_idx in annotations[docgroup_idx].all_labels[0]) { // Not sure why all labels is an array of length 1         
 
-    if(annotations.length === 0) {
-      return done(null);
-    }      
+        for(var token_idx in annotations[docgroup_idx].all_labels[0][doc_idx]) {
 
-    for(var doc_idx in annotations) {
-      for(var annotator_idx in annotations[doc_idx].all_labels) {
-
-
-        for(var token_idx in annotations[doc_idx].all_labels[annotator_idx]) {
-
-          var tokenAnnotation = annotations[doc_idx].all_labels[annotator_idx][token_idx];
+          var tokenAnnotation = annotations[docgroup_idx].all_labels[0][doc_idx][token_idx];
           var bioTag = tokenAnnotation[0];
-
 
           if(bioTag === "B-") {
             for(var label_idx in tokenAnnotation[1]) {
@@ -948,7 +994,28 @@ ProjectSchema.methods.getEntityChartData = function(done) {
         }
       }
     }
-    console.log(entityCounts, "<<<")
+
+
+    // Old code (for getting via mentions from getEntityTypingAnnotations)
+    // for(var doc_idx in et_annotations) {
+    //   var annotated_doc = et_annotations[doc_idx];
+    //   for(var mention_idx in annotated_doc.mentions) {
+    //     var mention = annotated_doc.mentions[mention_idx];
+    //     for(var label_idx in mention.labels) {
+    //       var label = mention.labels[label_idx];
+
+    //       var split = label.split('/');
+    //       var truncatedLabel = split.length > 1 ? "/" : ""
+    //       truncatedLabel = truncatedLabel + split[split.length - 1];
+
+    //       if(!entityCounts.hasOwnProperty(truncatedLabel)) {
+    //         entityCounts[truncatedLabel] = 0;
+    //       }
+    //       entityCounts[truncatedLabel]++;
+    //     }
+        
+    //   }
+    // }
 
     // Sort the labels by frequency and return the entity labels and counts as separate arrays.
     // This is 20 lines of js that could be done in 1 line of python :(
@@ -1032,10 +1099,10 @@ ProjectSchema.methods.getEntityChartData = function(done) {
 ProjectSchema.methods.getAnnotationsChartData = function(done) {
 
   var t = this;
-  //var Document = require('./document_group');
+  var DocumentGroup = require('./document_group');
 
 
-  var d = Document.aggregate([
+  var d = DocumentGroup.aggregate([
     { $match: { project_id: t._id} },
     {
       $group: {
@@ -1053,13 +1120,16 @@ ProjectSchema.methods.getAnnotationsChartData = function(done) {
   ], function(err, results) {
 
     //console.log("RESULTS::", results);
+
     
+
+
     if(results.length === 0) return done([]);
 
     var annotationsChartData = new Array(parseInt(results[0]._id.times_annotated)).fill(0);
     for(var i in results) {
       var result = results[i];
-      annotationsChartData[result._id.times_annotated] = result.count;
+      annotationsChartData[result._id.times_annotated] = result.count * cf.DOCUMENT_MAXCOUNT;
     }
 
     done(annotationsChartData);
@@ -1085,8 +1155,10 @@ ProjectSchema.methods.getActivityChartData = function(done) {
   //   }
 
   var t = this;
-  var d = DocumentAnnotation.aggregate([
+  var DocumentGroupAnnotation = require('./document_group_annotation');
+  var d = DocumentGroupAnnotation.aggregate([
     { $match: { project_id: t._id} },
+    { $unwind: "$labels"},    
     { $project:
       { created_at:
         {
@@ -1095,7 +1167,8 @@ ProjectSchema.methods.getActivityChartData = function(done) {
         }, 
         user_id: '$user_id',
       }
-    },    
+    },
+    
     {
       $group: {
         _id: { created_at: "$created_at", user_id: "$user_id" },
@@ -1119,105 +1192,138 @@ ProjectSchema.methods.getActivityChartData = function(done) {
     //   }
     // },
   ], function(err, results) {
-      if(results.length === 0) return done(null);
 
-      //console.log("RESULTS", results);
+    if(results.length === 0) return null;
 
-      var activityChartData = {
-        labels: [],
-        datasets: [],
-      };
-      var user_ids = [];
+    //console.log("RESULTS", results);
 
-      // var datasets = {}
+    var activityChartData = {
+      labels: [],
+      datasets: [],
+    };
+    var user_ids = [];
 
-
-      // Need to iterate over the results twice. One to get the labels (dates), another to put them into the datasets
-
-      //var end = new Date(results[0]._id.created_at);
-      var end = new Date();
-      var start = new Date(results[results.length - 1]._id.created_at);
+    // var datasets = {}
 
 
-      console.log("Start:", start)
-      console.log("End:", end)
+    // Need to iterate over the results twice. One to get the labels (dates), another to put them into the datasets
 
-      for(var d = start; d <= end; d.setDate(d.getDate() + 1)) {
-        activityChartData.labels.push(dateFormat(d, "mm-d-yy"));
+    //var end = new Date(results[0]._id.created_at);
+    var end = new Date();
+    var start = new Date(results[results.length - 1]._id.created_at);
+
+
+    console.log("Start:", start)
+    console.log("End:", end)
+
+    for(var d = start; d <= end; d.setDate(d.getDate() + 1)) {
+      activityChartData.labels.push(dateFormat(d, "mm-d-yy"));
+    }
+
+    // for(var result_idx in results) {
+    //   var result = results[result_idx];
+
+    //   console.log("R:", result);
+    //   // var s = result._id.created_at.split('-');
+    //   // var year = s[0];
+    //   // var month = s[1];
+    //   // var day = s[2];
+
+    //   if(activityChartData.labels.indexOf(result._id.created_at) === -1) {
+    //     activityChartData.labels.push(result._id.created_at);
+    //   }
+    // }
+
+    activityChartData.labels.reverse();
+
+    // for(var label_idx in activityChartData.labels) {
+    //   activityChartData.datasets.push(new Array(activityChartData.labels.length).fill(0));
+    // }
+
+
+
+    var datasets = {};
+
+    //console.log(activityChartData.labels);
+
+    for(var result_idx in results) {
+
+      var result = results[result_idx]
+
+      var user_id = results[result_idx]._id.user_id;
+      if(!datasets.hasOwnProperty(user_id)) {
+        datasets[user_id] = new Array(activityChartData.labels.length).fill(0);
+        user_ids.push(user_id);
       }
 
-      activityChartData.labels.reverse();
+      // console.log("R:", result);
 
-      var datasets = {};
+      // var result = results[result_idx];
+      // var user_id = results[result_idx]._id.user_id;
+      // if(!datasets.hasOwnProperty(user_id)) {
+      //   datasets[user_id] = [];
+      // }
 
-      //console.log(activityChartData.labels);
+      var label_idx = activityChartData.labels.indexOf(dateFormat(result._id.created_at, "mm-d-yy"))
 
-      for(var result_idx in results) {
-
-        var result = results[result_idx]
-
-        var user_id = results[result_idx]._id.user_id;
-        if(!datasets.hasOwnProperty(user_id)) {
-          datasets[user_id] = new Array(activityChartData.labels.length).fill(0);
-          user_ids.push(user_id);
-        }
-
-        var label_idx = activityChartData.labels.indexOf(dateFormat(result._id.created_at, "mm-d-yy"))
-
-        datasets[user_id][label_idx] = result.count;
-      }
+      datasets[user_id][label_idx] = result.count;
+    }
 
 
-      console.log("datasets:", datasets, datasets[user_ids[0]], datasets[user_ids[1]]);
+    console.log("datasets:", datasets, datasets[user_ids[0]], datasets[user_ids[1]]);
 
-      // TODO: sort this properly
-      var user_ids = [];
-      for(var user_id in datasets) {
-         console.log(user_id);
-         activityChartData.datasets.push({
-           label: user_id,
-           data: datasets[user_id],
-         })
-         user_ids.push(user_id);
-      }
+    // TODO: sort this properly
+    var user_ids = [];
+    for(var user_id in datasets) {
+       console.log(user_id);
+       activityChartData.datasets.push({
+         label: user_id,
+         data: datasets[user_id],
+       })
+       user_ids.push(user_id);
+    }
 
 
-      if(user_ids.length === 0) {
-        return done({})
-      }
+    if(user_ids.length === 0) {
+      return done({})
+    }
 
-      function getUsernames(objects, usernames, done) {
-          obj = objects.pop()
-          User.findById({_id: obj}, function(err, user) {
-            var username = user.username;
-            usernames.push(username);
-            if (objects.length > 0) getUsernames(objects, usernames, done);
-            else done(usernames);      
-          })       
-      }
+    function getUsernames(objects, usernames, done) {
+        obj = objects.pop()
+        User.findById({_id: obj}, function(err, user) {
+          var username = user.username;
+          usernames.push(username);
+          if (objects.length > 0) getUsernames(objects, usernames, done);
+          else done(usernames);      
+        })       
+    }
 
-      var usernames = getUsernames(user_ids, new Array(), function(usernames) {
-      
+    var usernames = getUsernames(user_ids, new Array(), function(usernames) {
+    
 
-      for(var i in usernames.reverse()) {
-        //console.log(i, activityChartData.datasets)
-        console.log(usernames[i], activityChartData.datasets[i])
-        activityChartData.datasets[i].label = usernames[i];
-      }
+    for(var i in usernames.reverse()) {
+      //console.log(i, activityChartData.datasets)
+      console.log(usernames[i], activityChartData.datasets[i])
+      activityChartData.datasets[i].label = usernames[i];
+    }
 
-      function compareFn(a, b) {
-        if(a.label <= b.label) return -1;
-        else if(a.label > b.label) return 1;
-        else return 0;
-      }
+    function compareFn(a, b) {
+      if(a.label <= b.label) return -1;
+      else if(a.label > b.label) return 1;
+      else return 0;
+    }
 
-      // Sort to ensure colours are always the same
-      activityChartData.datasets = activityChartData.datasets.sort(compareFn);
-      console.log("Activity chart data:", activityChartData);
+    // Sort to ensure colours are always the same
+    activityChartData.datasets = activityChartData.datasets.sort(compareFn);
+    console.log("Activity chart data:", activityChartData);
 
-      done(activityChartData);
+    done(activityChartData);
 
-    });   
+
+
+    });
+
+    
 
     
     // //console.log(results, "<<<");
@@ -1229,6 +1335,12 @@ ProjectSchema.methods.getActivityChartData = function(done) {
   });
 
 
+
+
+
+ 
+
+
 }
 
 
@@ -1238,13 +1350,23 @@ ProjectSchema.methods.getAverageAgreement = function(done) {
 
   var t = this;
   var all_agreements = [];
-  Document.find({project_id: t._id}, function(err, docs) {
+  DocumentGroup.find({project_id: t._id}, function(err, docgroups) {
 
-    for(var doc_id in docs) {
-      var doc = docs[doc_id];
 
-      var agreement = doc.annotator_agreement;
-      if(agreement) all_agreements.push(agreement); // skip nulls
+    for(var docgroup_id in docgroups) {
+      var docgroup = docgroups[docgroup_id];
+
+      var agreements = docgroup.annotator_agreements;
+
+      //console.log(docgroup);
+
+
+      for(var i in agreements) {
+        var agreement = agreements[i];
+        if(agreement) { // skip nulls
+          all_agreements.push(agreement);
+        }
+      }
     }
 
 
@@ -1286,201 +1408,122 @@ ProjectSchema.methods.getDetails = function(done) {
   var start = new Date().getTime();
   console.log("Retrieving project details...")
 
+  
 
-  t.getNumDocumentAnnotations(function(err, numDocumentAnnotations) {
-    t.getAverageAgreement(function(avgAgreement) {
-      t.getEntityChartData(function(entityChartData) {
-        t.getActivityChartData(function(activityChartData) {
-          t.getAnnotationsChartData(function(annotationsChartData) {
-            t.getAllCommentsArray(function(err, comments) {
+  //   project["annotations_required"] = Math.ceil(p.file_metadata["Number of documents"] / 10) * p.overlap;
 
+  // //console.log(p.project_title, p.completed_annotations, "<<>>")
+  // //project["completed_annotations"] = (p.completed_annotations || 0) / 10);
 
-
-              // test
+  // //project["percent_complete"] = project["completed_annotations"] / (Math.ceil(project["annotations_required"]/10) * 10) * 100;
+  // project["percent_complete"] = project["completed_annotations"] / project["annotations_required"] * 100;
 
 
+  t.getAverageAgreement(function(avgAgreement) {
 
-              
-              //////////////////// Test code
-              // Can unwind the docs this way to get the agreement for each doc
-              // and use it for the annotation curation interface
-              // This way they can be sorted properly, detached from any document group
+    t.getEntityChartData(function(entityChartData) {
+      t.getActivityChartData(function(activityChartData) {
 
-              /*
-              var Document = require('./document_group');
-              var d = Document.aggregate([
-                { $match: { project_id: t._id} },
-                { $unwind: {
-                    path: "$documents",
-                    includeArrayIndex: 'index_in_docgroup',
+        t.getAnnotationsChartData(function(annotationsChartData) {
+
+          t.getAllCommentsArray(function(err, comments) {
+
+
+
+            // test
+
+
+
+            
+            //////////////////// Test code
+            // Can unwind the docs this way to get the agreement for each doc
+            // and use it for the annotation curation interface
+            // This way they can be sorted properly, detached from any document group
+
+            /*
+            var DocumentGroup = require('./document_group');
+            var d = DocumentGroup.aggregate([
+              { $match: { project_id: t._id} },
+              { $unwind: {
+                  path: "$documents",
+                  includeArrayIndex: 'index_in_docgroup',
+                }
+
+              },    
+              {
+                $project: {
+                  created_at:
+                    {
+                      $dateToString:
+                      {format:"%Y-%m-%d", date:"$created_at"}
+                    },                 
+                  documents: 1,
+                  display_name: 1,
+                  times_annotated: 1,       
+                  index_in_docgroup: 1, 
+                  created_at: 1,        
+                  doc_idx: {
+                    $arrayElemAt: [ "$document_indexes", "$index_in_docgroup"]
+                  },
+                  annotator_agreement: {
+                    $arrayElemAt: [ "$annotator_agreements", "$index_in_docgroup"]
                   }
+                }
+              },
 
-                },    
-                {
-                  $project: {
-                    created_at:
-                      {
-                        $dateToString:
-                        {format:"%Y-%m-%d", date:"$created_at"}
-                      },                 
-                    documents: 1,
-                    display_name: 1,
-                    times_annotated: 1,       
-                    index_in_docgroup: 1, 
-                    created_at: 1,        
-                    doc_idx: {
-                      $arrayElemAt: [ "$document_indexes", "$index_in_docgroup"]
-                    },
-                    annotator_agreement: {
-                      $arrayElemAt: [ "$annotator_agreements", "$index_in_docgroup"]
-                    }
-                  }
-                },
+              {
+                $sort: {
+                  'times_annotated': 1,
+                  'annotator_agreement': 1,
+                }
+              },
+            ], function(err, results) {
 
-                {
-                  $sort: {
-                    'times_annotated': 1,
-                    'annotator_agreement': 1,
-                  }
-                },
-              ], function(err, results) {
-
-              
-                //console.log("Documents:");
-                //console.log(results.slice(results.length - 50, results.length));
-              });
-              */
-              ////////////////////////////////
-
-
-
-
-
-              var data = {
-                project_name: t.project_name,
-                project_author: t.author,
-
-                dashboard: {
-                  numDocGroupsAnnotated: numDocumentAnnotations,
-                  totalDocGroups: Math.ceil(t.file_metadata["Number of documents"]) * t.overlap,
-
-                  avgAgreement: avgAgreement,
-                  avgTimePerDocument: 15,
-
-                  comments: comments,
-
-                  entityChartData: entityChartData,
-
-                  activityChartData: activityChartData,
-
-                  annotationsChartData: annotationsChartData,
-
-
-                },   
-              };
-
-              var elapsed = new Date().getTime() - start;
-
-              console.log("... done (" + elapsed + "ms)")
-              return done(null, data);
+            
+              //console.log("Documents:");
+              //console.log(results.slice(results.length - 50, results.length));
             });
+            */
+            ////////////////////////////////
+
+
+
+
+
+            var data = {
+              project_name: t.project_name,
+              project_author: t.author,
+
+              dashboard: {
+                numDocGroupsAnnotated: t.completed_annotations * cf.DOCUMENT_MAXCOUNT, // not going to be exact because some doc groups might not be max len
+                totalDocGroups: Math.ceil(t.file_metadata["Number of documents"]) * t.overlap,
+
+                avgAgreement: avgAgreement,
+                avgTimePerDocument: 15,
+
+                comments: comments,
+
+                entityChartData: entityChartData,
+
+                activityChartData: activityChartData,
+
+                annotationsChartData: annotationsChartData,
+
+
+              },   
+            };
+
+            var elapsed = new Date().getTime() - start;
+
+            console.log("... done (" + elapsed + "ms)")
+            return done(null, data);
           });
         });
       });
     });
   });
+
 }
-
-
-// Get some basic details about a specific user's projects.
-// Returns {projects: { id: <_id>, name: "<name>", description: "<project_description">, total_users: <total users> },
-// numCreatedByUser: the number of projects created by this user
-// numUserInvolvedIn: the number of projects this user is involved in
-ProjectSchema.statics.getInvolvedProjectData = function(user, done) {
-
-  var t = this;
-
-  // Get the total users of a project (active + inactive).
-  // Not defined on Project model because there's no way to call it with a lean() query.
-  function getTotalUsers(project) {
-    return project.user_ids.active.length + project.user_ids.inactive.length
-  }
-
-  // Get an abbreviated name for this project, to appear in the icon next to it
-  // Might take this out as project icon names aren't that exciting
-  function getIconName(project_name) {
-    var splitName = project_name.split(" ");
-    var iconName = '';
-    if(splitName.length > 2) {
-      iconName = splitName[0][0] + splitName[1][0];
-    } else {
-      if(splitName[0].length > 1) {
-        iconName = splitName[0].slice(0, 2);
-      } else {
-        iconName = splitName[0];
-      }      
-    }
-    return iconName.toUpperCase();
-  }
-  
-  Project.find( { "user_ids.active": { $elemMatch : { $eq : user._id } } } ).sort('-created_at').exec(function(err, projects) {
-    //Project.find( { user_id: this.id } ).sort('-created_at').lean().exec(function(err, projects) {
-    if(err) return done(err);
-
-    var returnedProjects = [];
-    var numCreatedByUser = 0;
-    var numUserInvolvedIn = 0;
-
-
-    for(var project_idx in projects) {
-      var project = projects[project_idx];
-
-      var isCreatedByUser = user._id.equals(project.user_id);
-      if(isCreatedByUser) numCreatedByUser++;
-
-      returnedProjects.push({
-
-        _id: project._id,
-        name: project.project_name,
-        description: project.project_description,
-        total_users:  getTotalUsers(project),
-        creator:      t.username,
-        created_at:   project.created_at,
-        icon_name:    getIconName(project.project_name),
-        totalDocGroups: Math.ceil(project.file_metadata["Number of documents"]) * project.overlap,
-        userIsCreator: isCreatedByUser,
-      });
-    }
-
-    // Append the number of times each project was annotated.
-    // Only possible via recursive fn because we need to query DocumentAnnotations for every single project
-    function appendDocsAnnotated(returnedProjects, projects, i, next) {
-      if(i >= projects.length) return next(returnedProjects);
-      var p = projects[i];
-      p.getNumDocumentAnnotations(function(err, numDocumentAnnotations) {
-        returnedProjects[i].numDocGroupsAnnotated = numDocumentAnnotations;
-        i = i + 1;
-        appendDocsAnnotated(returnedProjects, projects, i, next);
-      });
-    }
-
-
-
-    appendDocsAnnotated(returnedProjects, projects, 0, function(returnedProjects) {
-      done(null, {projects: returnedProjects, numCreatedByUser: numCreatedByUser, numUserInvolvedIn: projects.length });
-    });    
-  });
-}
-
-
-
-
-
-
-
-
-
-
 
 /* Middleware */
 
@@ -1512,7 +1555,8 @@ ProjectSchema.pre('save', function(next) {
 // Cascade delete for project, so all associated document groups are deleted when a project is deleted.
 ProjectSchema.pre('remove', function(next) {
   var t = this;
-  t.cascadeDelete(Document, {project_id: t._id}, next);
+  var DocumentGroup = require('./document_group')
+  t.cascadeDelete(DocumentGroup, {project_id: t._id}, next);
 });
 
 

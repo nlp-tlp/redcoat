@@ -260,6 +260,8 @@ class ProjectDashboard extends Component {
       entityChartData.entityClasses.datasets[0].backgroundColor = 'rgba(54, 162, 235, 0.6)';      
       entityChartData.entityClasses.datasets[0].borderColor = 'rgba(54, 162, 235, 0.6)';      
     }    
+
+    
     return entityChartData.entityClasses;
   }
 
@@ -268,6 +270,9 @@ class ProjectDashboard extends Component {
   processActivityChartData() {
 
     // Transform datasets into cumulative datasets.
+    // This is probably far more complicated than it needs to be and could be significantly refactored.
+    // Turns out chartjs has a 'redraw' prop that would solve all the issues I was having, so all this weird code is probably unnecessary...
+    // Same goes for getColouredData.
     function getCumulative(datasets) {
       var cumulativeDatasets = [];
       for(var i = 0; i < datasets.length; i++) {
@@ -276,11 +281,10 @@ class ProjectDashboard extends Component {
         var cumulativeDataset = {label: label, data: new Array(datasets[i].data.length).fill(0)};
 
         var c = 0;
-        for(var j = 0; j < datasets[i].data.length; j++) {
+        for(var j = datasets[i].data.length - 1; j >= 0; j--) {
           c += datasets[i].data[j];
           cumulativeDataset.data[j] = c;
         }
-        cumulativeDataset.data.reverse();
         console.log(cumulativeDataset, ">>");
         cumulativeDatasets.push(cumulativeDataset);
       }
@@ -307,6 +311,7 @@ class ProjectDashboard extends Component {
 
   render() {
 
+
     // var heatmapData = new Array(198).fill(3);
     // var h1 = new Array(200).fill(2)
     // var h2 = new Array(200).fill(1)
@@ -314,9 +319,6 @@ class ProjectDashboard extends Component {
     // heatmapData = heatmapData.concat(h1);
     // heatmapData = heatmapData.concat(h2);
     // heatmapData = heatmapData.concat(h3);
-
-    console.log(this.props.data.activityChartData);
-    
 
     //heatmapData = heatmapData.map(() => Math.random())
     return (
@@ -394,13 +396,14 @@ class ProjectDashboard extends Component {
               <div className="inner">
                 <div className="dashboard-flex-header">
                   <h3>Entity frequencies</h3>
-                  <div onClick={this.toggleEntityChartColours.bind(this)} className={"chart-option" + (this.state.entityChartMulticolour ? " active" : "")}><span className="checkbox"></span><span>Colour by class</span></div>
+                  { this.props.data.entityChartData && <div onClick={this.toggleEntityChartColours.bind(this)} className={"chart-option" + (this.state.entityChartMulticolour ? " active" : "")}><span className="checkbox"></span><span>Colour by class</span></div> }
                 </div>
                 <div>
                   { this.props.loading && 
                     <div className="chart-placeholder"><i class="fa fa-cog fa-spin"></i>Loading...</div>
                   }
-                  { !this.props.loading && 
+                  { !this.props.loading && !this.props.data.entityChartData && <div className="chart-placeholder chart-not-available">This project does not have any annotations yet.</div>}
+                  { !this.props.loading && this.props.data.entityChartData &&
                   <Bar
                     data={this.getColouredData()}
                     height={230}
@@ -435,15 +438,16 @@ class ProjectDashboard extends Component {
               <div className="inner">
                 <div className="dashboard-flex-header">
                   <h3>Activity</h3>
-                  <div onClick={this.toggleActivityChartCumulative.bind(this)} className={"chart-option" + (this.state.activityChartCumulative ? " active" : "")}><span className="checkbox"></span><span>Cumulative</span></div>
+                  { this.props.data.activityChartData && <div onClick={this.toggleActivityChartCumulative.bind(this)} className={"chart-option" + (this.state.activityChartCumulative ? " active" : "")}><span className="checkbox"></span><span>Cumulative</span></div> }
                 </div>
                 <div>
                   { this.props.loading && 
                     <div className="chart-placeholder"><i class="fa fa-cog fa-spin"></i>Loading...</div>
                   }
-                  { !this.props.loading && 
+                  { !this.props.loading && !this.props.data.activityChartData && <div className="chart-placeholder chart-not-available">This project does not have any activity yet.</div>}
+                  { !this.props.loading &&  this.props.data.activityChartData &&
                   <Line
-                    data={this.processActivityChartData()}
+                    data={() => this.processActivityChartData()}
                     height={230}
                     redraw
                     options={{
@@ -696,7 +700,7 @@ class ProjectView extends Component {
           //var entityChartData = d.dashboard.entityChartData.entityClasses   //.datasets[0], getEntityChartStyles())
           //d.dashboard.entityChartData.entityClasses.datasets[0] = entityChartData;
 
-          d.dashboard.activityChartData = setActivityChartStyles(d.dashboard.activityChartData);
+          if(d.dashboard.activityChartData) d.dashboard.activityChartData = setActivityChartStyles(d.dashboard.activityChartData);
 
           console.log(d);
 
