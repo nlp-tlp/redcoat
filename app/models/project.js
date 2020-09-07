@@ -14,7 +14,7 @@ var FrequentTokens = require('./frequent_tokens');
 
 var moment = require('moment');
 
-
+var dateFormat = require('dateformat')
 //USERS_PER_PROJECT_MAXCOUNT = cf.USERS_PER_PROJECT_MAXCOUNT;
 
 
@@ -816,7 +816,6 @@ function appendUserProfilesToComments(comments, next, i = 0) {
 ProjectSchema.methods.getAllCommentsArray = function(done) {
   Comment.find({project_id: this._id}).sort('-created_at').lean().exec(function(err, comments) {
     appendUserProfilesToComments(comments, function(comments) {
-      console.log(comments, "<<");
       done(err, comments);
     });
   });
@@ -1190,48 +1189,93 @@ ProjectSchema.methods.getActivityChartData = function(done) {
     // },
   ], function(err, results) {
 
+    if(results.length === 0) return null;
+
     //console.log("RESULTS", results);
 
     var activityChartData = {
       labels: [],
       datasets: [],
     };
+    var user_ids = [];
 
-    var datasets = {}
+    // var datasets = {}
+
+
+    // Need to iterate over the results twice. One to get the labels (dates), another to put them into the datasets
+
+    var end = new Date(results[0]._id.created_at);
+    var start = new Date(results[results.length - 1]._id.created_at);
+
+
+    console.log("Start:", start)
+    console.log("End:", end)
+
+    for(var d = start; d <= end; d.setDate(d.getDate() + 1)) {
+      activityChartData.labels.push(dateFormat(d, "mm-d-yy"));
+    }
+
+    // for(var result_idx in results) {
+    //   var result = results[result_idx];
+
+    //   console.log("R:", result);
+    //   // var s = result._id.created_at.split('-');
+    //   // var year = s[0];
+    //   // var month = s[1];
+    //   // var day = s[2];
+
+    //   if(activityChartData.labels.indexOf(result._id.created_at) === -1) {
+    //     activityChartData.labels.push(result._id.created_at);
+    //   }
+    // }
+
+    activityChartData.labels.reverse();
+
+    // for(var label_idx in activityChartData.labels) {
+    //   activityChartData.datasets.push(new Array(activityChartData.labels.length).fill(0));
+    // }
+
+
+
+    var datasets = {};
+
+    //console.log(activityChartData.labels);
 
     for(var result_idx in results) {
-      //console.log(results[result_idx]._id, results[result_idx].count);
 
-      var result = results[result_idx];
-      // var s = result._id.created_at.split('-');
-      // var year = s[0];
-      // var month = s[1];
-      // var day = s[2];
-
-      if(activityChartData.labels.indexOf(result._id.created_at) === -1) {
-        activityChartData.labels.push(result._id.created_at);
-      }
-      
+      var result = results[result_idx]
 
       var user_id = results[result_idx]._id.user_id;
       if(!datasets.hasOwnProperty(user_id)) {
-        datasets[user_id] = [];
+        datasets[user_id] = new Array(activityChartData.labels.length).fill(0);
+        user_ids.push(user_id);
       }
-      datasets[user_id].push(result.count);
 
+      // console.log("R:", result);
+
+      // var result = results[result_idx];
+      // var user_id = results[result_idx]._id.user_id;
+      // if(!datasets.hasOwnProperty(user_id)) {
+      //   datasets[user_id] = [];
+      // }
+
+      var label_idx = activityChartData.labels.indexOf(dateFormat(result._id.created_at, "mm-d-yy"))
+
+      datasets[user_id][label_idx] = result.count;
     }
 
-    console.log("datasets:", datasets);
+
+    console.log("datasets:", datasets, datasets[user_ids[0]], datasets[user_ids[1]]);
 
     // TODO: sort this properly
     var user_ids = [];
     for(var user_id in datasets) {
-      console.log(user_id);
-      activityChartData.datasets.push({
-        label: user_id,
-        data: datasets[user_id],
-      })
-      user_ids.push(user_id);
+       console.log(user_id);
+       activityChartData.datasets.push({
+         label: user_id,
+         data: datasets[user_id],
+       })
+       user_ids.push(user_id);
     }
 
 
@@ -1253,6 +1297,8 @@ ProjectSchema.methods.getActivityChartData = function(done) {
     
 
     for(var i in usernames.reverse()) {
+      //console.log(i, activityChartData.datasets)
+      console.log(usernames[i], activityChartData.datasets[i])
       activityChartData.datasets[i].label = usernames[i];
     }
 
@@ -1265,6 +1311,8 @@ ProjectSchema.methods.getActivityChartData = function(done) {
     // Sort to ensure colours are always the same
     activityChartData.datasets = activityChartData.datasets.sort(compareFn);
     console.log("Activity chart data:", activityChartData);
+    console.log("Activity chart datasets 0:", activityChartData.datasets[0].data);
+    console.log("Activity chart datasets 1:", activityChartData.datasets[1].data);
 
     done(activityChartData);
 

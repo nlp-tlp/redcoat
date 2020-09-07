@@ -10,6 +10,8 @@ import { defaults } from 'react-chartjs-2'
 
 import { Comment } from '../components/Comment';
 
+import _ from 'underscore';
+
 defaults.global.defaultFontFamily = 'Open Sans'
 defaults.global.animation.duration = 500;
 
@@ -203,7 +205,8 @@ class ProjectDashboard extends Component {
   constructor(props) {
     super(props);    
     this.state = {
-      entityChartMulticolour: true,
+      entityChartMulticolour: false,
+      activityChartCumulative: false,
     }
   }
 
@@ -211,6 +214,12 @@ class ProjectDashboard extends Component {
   toggleEntityChartColours() {
     this.setState({
       entityChartMulticolour: !this.state.entityChartMulticolour
+    });
+  }
+
+  toggleActivityChartCumulative() {
+    this.setState({
+      activityChartCumulative: !this.state.activityChartCumulative
     });
   }
 
@@ -255,6 +264,47 @@ class ProjectDashboard extends Component {
   }
 
 
+  // Process the activity chart data depending on whether cumulative has been checked.
+  processActivityChartData() {
+
+    // Transform datasets into cumulative datasets.
+    function getCumulative(datasets) {
+      var cumulativeDatasets = [];
+      for(var i = 0; i < datasets.length; i++) {
+
+        var label = datasets[i].label;
+        var cumulativeDataset = {label: label, data: new Array(datasets[i].data.length).fill(0)};
+
+        var c = 0;
+        for(var j = 0; j < datasets[i].data.length; j++) {
+          c += datasets[i].data[j];
+          cumulativeDataset.data[j] = c;
+        }
+        cumulativeDataset.data.reverse();
+        console.log(cumulativeDataset, ">>");
+        cumulativeDatasets.push(cumulativeDataset);
+      }
+      return cumulativeDatasets;
+    }
+
+    var activityChartDatasets = Object.assign({}, this.props.data.activityChartData.datasets);
+
+    if(this.state.activityChartCumulative) {
+      console.log(this.props.data.activityChartData, "<<");
+
+      var cumulativeData = getCumulative(this.props.data.activityChartData.datasets);
+
+      var cumulative = setActivityChartStyles({
+        labels: Object.assign([], this.props.data.activityChartData.labels),
+        datasets: cumulativeData,
+      })
+      return cumulative;
+    }
+
+    return this.props.data.activityChartData;
+  }
+
+
   render() {
 
     // var heatmapData = new Array(198).fill(3);
@@ -265,7 +315,7 @@ class ProjectDashboard extends Component {
     // heatmapData = heatmapData.concat(h2);
     // heatmapData = heatmapData.concat(h3);
 
-    console.log(this.props.data.entityChartData);
+    console.log(this.props.data.activityChartData);
     
 
     //heatmapData = heatmapData.map(() => Math.random())
@@ -383,15 +433,19 @@ class ProjectDashboard extends Component {
 
             <div className="dashboard-item col-60">
               <div className="inner">
-                <h3>Activity</h3>
+                <div className="dashboard-flex-header">
+                  <h3>Activity</h3>
+                  <div onClick={this.toggleActivityChartCumulative.bind(this)} className={"chart-option" + (this.state.activityChartCumulative ? " active" : "")}><span className="checkbox"></span><span>Cumulative</span></div>
+                </div>
                 <div>
                   { this.props.loading && 
                     <div className="chart-placeholder"><i class="fa fa-cog fa-spin"></i>Loading...</div>
                   }
                   { !this.props.loading && 
                   <Line
-                    data={this.props.data.activityChartData}
+                    data={this.processActivityChartData()}
                     height={230}
+                    redraw
                     options={{
                       responsive: true,
                       maintainAspectRatio: false,
