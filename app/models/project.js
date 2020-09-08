@@ -1033,13 +1033,12 @@ ProjectSchema.methods.getEntityChartData = function(done) {
 
 
 // Returns a list for the annotationsChart on the dashboard.
-ProjectSchema.methods.getAnnotationsChartData = function(done) {
+ProjectSchema.methods.getAnnotationsChartData = async function(done) {
 
   var t = this;
   //var Document = require('./document_group');
 
-
-  var d = Document.aggregate([
+  var results = await Document.aggregate([
     { $match: { project_id: t._id} },
     {
       $group: {
@@ -1054,42 +1053,28 @@ ProjectSchema.methods.getAnnotationsChartData = function(done) {
         '_id.times_annotated': -1,
       }
     },
-  ], function(err, results) {
+  ]);
 
-    //console.log("RESULTS::", results);
-    
-    if(results.length === 0) return done([]);
+  //console.log("RESULTS::", results);
+  
+  if(results.length === 0) return Promise.resolve([]);
 
-    var annotationsChartData = new Array(parseInt(results[0]._id.times_annotated)).fill(0);
-    for(var i in results) {
-      var result = results[i];
-      annotationsChartData[result._id.times_annotated] = result.count;
-    }
+  var annotationsChartData = new Array(parseInt(results[0]._id.times_annotated)).fill(0);
+  for(var i in results) {
+    var result = results[i];
+    annotationsChartData[result._id.times_annotated] = result.count;
+  }
 
-    done(annotationsChartData);
-  });
+  return Promise.resolve(annotationsChartData);
+
 
 }
 
 // Retrieve the activity chart data for this project.
-ProjectSchema.methods.getActivityChartData = function(done) {
-  // var activityChartData = 
-  //   {
-  //     labels: [new Date(2020, 9, 1), new Date(2020, 9, 2), new Date(2020, 9, 3), new Date(2020, 9, 4), new Date(2020, 9, 7)],
-  //     datasets: [
-  //       {
-  //         label: 'michael',
-  //         data: [3, 59, 80, 81, 56],          
-  //       },
-  //       {
-  //         label: 'pingu',
-  //         data: [35, 79, 50, 71, 66],          
-  //       }
-  //     ]
-  //   }
+ProjectSchema.methods.getActivityChartData = async function() {
 
   var t = this;
-  var d = DocumentAnnotation.aggregate([
+  var results = await DocumentAnnotation.aggregate([
     { $match: { project_id: t._id} },
     { $project:
       { created_at:
@@ -1122,106 +1107,96 @@ ProjectSchema.methods.getActivityChartData = function(done) {
     //     }
     //   }
     // },
-  ], function(err, results) {
-      if(results.length === 0) return done(null);
+    ])
+    if(results.length === 0) return Promise.resolve(null);
 
-      //console.log("RESULTS", results);
+    //console.log("RESULTS", results);
 
-      var activityChartData = {
-        labels: [],
-        datasets: [],
-      };
-      var user_ids = [];
+    var activityChartData = {
+      labels: [],
+      datasets: [],
+    };
+    var user_ids = [];
 
-      // var datasets = {}
+    // var datasets = {}
+
+    // Need to iterate over the results twice. One to get the labels (dates), another to put them into the datasets
+
+    //var end = new Date(results[0]._id.created_at);
+    var end = new Date();
+    var start = new Date(results[results.length - 1]._id.created_at);
 
 
-      // Need to iterate over the results twice. One to get the labels (dates), another to put them into the datasets
+    console.log("Start:", start)
+    console.log("End:", end)
 
-      //var end = new Date(results[0]._id.created_at);
-      var end = new Date();
-      var start = new Date(results[results.length - 1]._id.created_at);
+    for(var d = start; d <= end; d.setDate(d.getDate() + 1)) {
+      activityChartData.labels.push(dateFormat(d, "mm-d-yy"));
+    }
 
+    activityChartData.labels.reverse();
 
-      console.log("Start:", start)
-      console.log("End:", end)
+    var datasets = {};
 
-      for(var d = start; d <= end; d.setDate(d.getDate() + 1)) {
-        activityChartData.labels.push(dateFormat(d, "mm-d-yy"));
+    //console.log(activityChartData.labels);
+
+    for(var result_idx in results) {
+
+      var result = results[result_idx]
+
+      var user_id = results[result_idx]._id.user_id;
+      if(!datasets.hasOwnProperty(user_id)) {
+        datasets[user_id] = new Array(activityChartData.labels.length).fill(0);
+        user_ids.push(user_id);
       }
 
-      activityChartData.labels.reverse();
+      var label_idx = activityChartData.labels.indexOf(dateFormat(result._id.created_at, "mm-d-yy"))
 
-      var datasets = {};
+      datasets[user_id][label_idx] = result.count;
+    }
 
-      //console.log(activityChartData.labels);
+    console.log("datasets:", datasets, datasets[user_ids[0]], datasets[user_ids[1]]);
 
-      for(var result_idx in results) {
+    // TODO: sort this properly
+    var user_ids = [];
+    for(var user_id in datasets) {
+       console.log(user_id);
+       activityChartData.datasets.push({
+         label: user_id,
+         data: datasets[user_id],
+       })
+       user_ids.push(user_id);
+    }
 
-        var result = results[result_idx]
+    if(user_ids.length === 0) {
+      return Promise.resolve({});
+    }
 
-        var user_id = results[result_idx]._id.user_id;
-        if(!datasets.hasOwnProperty(user_id)) {
-          datasets[user_id] = new Array(activityChartData.labels.length).fill(0);
-          user_ids.push(user_id);
-        }
+    var usernames = [];
+    for(var i in user_ids) {
+      var user = await User.findById({_id: user_ids[i]});
+      var username = user.username;
+      usernames.push(username);
+    }  
 
-        var label_idx = activityChartData.labels.indexOf(dateFormat(result._id.created_at, "mm-d-yy"))
+    for(var i in usernames) {
+      //console.log(i, activityChartData.datasets)
+      console.log(usernames[i], activityChartData.datasets[i])
+      activityChartData.datasets[i].label = usernames[i];
+    }
 
-        datasets[user_id][label_idx] = result.count;
-      }
+    function compareFn(a, b) {
+      if(a.label <= b.label) return -1;
+      else if(a.label > b.label) return 1;
+      else return 0;
+    }
 
+    // Sort to ensure colours are always the same
+    activityChartData.datasets = activityChartData.datasets.sort(compareFn);
+    console.log("Activity chart data:", activityChartData);
 
-      console.log("datasets:", datasets, datasets[user_ids[0]], datasets[user_ids[1]]);
+    return Promise.resolve(activityChartData);
 
-      // TODO: sort this properly
-      var user_ids = [];
-      for(var user_id in datasets) {
-         console.log(user_id);
-         activityChartData.datasets.push({
-           label: user_id,
-           data: datasets[user_id],
-         })
-         user_ids.push(user_id);
-      }
-
-
-      if(user_ids.length === 0) {
-        return done({})
-      }
-
-      function getUsernames(objects, usernames, done) {
-          obj = objects.pop()
-          User.findById({_id: obj}, function(err, user) {
-            var username = user.username;
-            usernames.push(username);
-            if (objects.length > 0) getUsernames(objects, usernames, done);
-            else done(usernames);      
-          })       
-      }
-
-      var usernames = getUsernames(user_ids, new Array(), function(usernames) {
-      
-
-      for(var i in usernames.reverse()) {
-        //console.log(i, activityChartData.datasets)
-        console.log(usernames[i], activityChartData.datasets[i])
-        activityChartData.datasets[i].label = usernames[i];
-      }
-
-      function compareFn(a, b) {
-        if(a.label <= b.label) return -1;
-        else if(a.label > b.label) return 1;
-        else return 0;
-      }
-
-      // Sort to ensure colours are always the same
-      activityChartData.datasets = activityChartData.datasets.sort(compareFn);
-      console.log("Activity chart data:", activityChartData);
-
-      done(activityChartData);
-
-    });   
 
     
     // //console.log(results, "<<<");
@@ -1230,7 +1205,7 @@ ProjectSchema.methods.getActivityChartData = function(done) {
     // else
     //   var count = 0;
     // return next(err, count);
-  });
+
 
 
 }
@@ -1238,31 +1213,32 @@ ProjectSchema.methods.getActivityChartData = function(done) {
 
 // Get the average agreement over all annotations in this project.
 // Returns null if there is only one annotator per doc so far.
-ProjectSchema.methods.getAverageAgreement = function(done) {
+ProjectSchema.methods.getAverageAgreement = async function() {
 
   var t = this;
   var all_agreements = [];
-  Document.find({project_id: t._id}, function(err, docs) {
 
-    for(var doc_id in docs) {
-      var doc = docs[doc_id];
+  var docs = await Document.find({project_id: t._id})
 
-      var agreement = doc.annotator_agreement;
-      if(agreement) all_agreements.push(agreement); // skip nulls
-    }
+  for(var doc_id in docs) {
+    var doc = docs[doc_id];
+
+    var agreement = doc.annotator_agreement;
+    if(agreement) all_agreements.push(agreement); // skip nulls
+  }
 
 
-    //console.log(all_agreements);
+  //console.log(all_agreements);
 
-    if(all_agreements.length === 0) {
-        var avgAgreement = null;
-      } else {
-        var avgAgreement = all_agreements.reduce((a, b) => a + b, 0) / all_agreements.length;
-      }
+  if(all_agreements.length === 0) {
+    var avgAgreement = null;
+  } else {
+    var avgAgreement = all_agreements.reduce((a, b) => a + b, 0) / all_agreements.length;
+  }
 
-      console.log("Avg agreement:", avgAgreement);
-      done(avgAgreement);
-  });  
+  console.log("Avg agreement:", avgAgreement);
+  return Promise.resolve(avgAgreement);
+
 }
 
 
@@ -1282,7 +1258,12 @@ ProjectSchema.methods.getAverageAgreement = function(done) {
   annotations: ??
 */
 
-ProjectSchema.methods.getDetails = function(done) {
+function test(done) {
+  var a = 5;
+  done(5);
+}
+
+ProjectSchema.methods.getDetails = async function(done) {
 
   var t = this;
 
@@ -1291,12 +1272,27 @@ ProjectSchema.methods.getDetails = function(done) {
   console.log("Retrieving project details...")
 
 
-  t.getNumDocumentAnnotations(function(err, numDocumentAnnotations) {
-    t.getAverageAgreement(function(avgAgreement) {
-      t.getEntityChartData(function(entityChartData) {
-        t.getActivityChartData(function(activityChartData) {
-          t.getAnnotationsChartData(function(annotationsChartData) {
-            t.getAllCommentsArray(function(err, comments) {
+
+  var numDocumentAnnotations  = await t.getNumDocumentAnnotations(); // returns err ??
+  var avgAgreement            = await t.getAverageAgreement();
+  
+  var activityChartData       = await t.getActivityChartData();
+
+
+
+  var annotationsChartData    = await t.getAnnotationsChartData();
+
+
+  t.getEntityChartData(function(entityChartData) {
+    t.getAllCommentsArray(function(err, comments) {
+
+
+
+
+  
+
+
+            //t.getAllCommentsArray(function(err, comments) {
 
 
 
@@ -1360,39 +1356,36 @@ ProjectSchema.methods.getDetails = function(done) {
 
 
 
-              var data = {
-                project_name: t.project_name,
-                project_author: t.author,
+      var data = {
+        project_name: t.project_name,
+        project_author: t.author,
 
-                dashboard: {
-                  numDocGroupsAnnotated: numDocumentAnnotations,
-                  totalDocGroups: Math.ceil(t.file_metadata["Number of documents"]) * t.overlap,
+        dashboard: {
+          numDocGroupsAnnotated: numDocumentAnnotations,
+          totalDocGroups: Math.ceil(t.file_metadata["Number of documents"]) * t.overlap,
 
-                  avgAgreement: avgAgreement,
-                  avgTimePerDocument: 15,
+          avgAgreement: avgAgreement,
+          avgTimePerDocument: 15,
 
-                  comments: comments,
+          comments: comments,
 
-                  entityChartData: entityChartData,
+          entityChartData: entityChartData,
 
-                  activityChartData: activityChartData,
+          activityChartData: activityChartData,
 
-                  annotationsChartData: annotationsChartData,
+          annotationsChartData: annotationsChartData,
 
 
-                },   
-              };
+        },   
+      };
 
-              var elapsed = new Date().getTime() - start;
+      var elapsed = new Date().getTime() - start;
 
-              console.log("... done (" + elapsed + "ms)")
-              return done(null, data);
-            });
-          });
-        });
-      });
-    });
-  });
+      console.log("... done (" + elapsed + "ms)")
+      return done(null, data);
+    })
+  })
+
 }
 
 
@@ -1400,7 +1393,7 @@ ProjectSchema.methods.getDetails = function(done) {
 // Returns {projects: { id: <_id>, name: "<name>", description: "<project_description">, total_users: <total users> },
 // numCreatedByUser: the number of projects created by this user
 // numUserInvolvedIn: the number of projects this user is involved in
-ProjectSchema.statics.getInvolvedProjectData = function(user, done) {
+ProjectSchema.statics.getInvolvedProjectData = async function(user) {
 
   var t = this;
 
@@ -1427,53 +1420,68 @@ ProjectSchema.statics.getInvolvedProjectData = function(user, done) {
     return iconName.toUpperCase();
   }
   
-  Project.find( { "user_ids.active": { $elemMatch : { $eq : user._id } } } ).sort('-created_at').exec(function(err, projects) {
-    //Project.find( { user_id: this.id } ).sort('-created_at').lean().exec(function(err, projects) {
-    if(err) return done(err);
 
-    var returnedProjects = [];
-    var numCreatedByUser = 0;
-    var numUserInvolvedIn = 0;
+  try {
+    var projects = await Project.find( { "user_ids.active": { $elemMatch : { $eq : user._id } } } ).sort('-created_at').exec()
+  } catch(err) {
+    return Promise.reject("Could not search projects")
+  }
+
+  var returnedProjects = [];
+  var numCreatedByUser = 0;
+  var numUserInvolvedIn = 0;
+
+  for(var project_idx in projects) {
+    var project = projects[project_idx];
+
+    var isCreatedByUser = user._id.equals(project.user_id);
+    if(isCreatedByUser) numCreatedByUser++;
+
+    returnedProjects.push({
+
+      _id: project._id,
+      name: project.project_name,
+      description: project.project_description,
+      total_users:  getTotalUsers(project),
+      creator:      user.username,
+      created_at:   project.created_at,
+      icon_name:    getIconName(project.project_name),
+      totalDocGroups: Math.ceil(project.file_metadata["Number of documents"]) * project.overlap,
+      userIsCreator: isCreatedByUser,
+    });
+  }
+
+  // Append the number of times each project was annotated.
+  // Only possible via recursive fn because we need to query DocumentAnnotations for every single project
+  // async function appendDocsAnnotated(returnedProjects, projects, i) {
+  //   console.log(returnedProjects, "<<<");
+  //   if(i >= projects.length) return Promise.resolve(returnedProjects);
+  //   var p = projects[i];
+
+  //   return new Promise((resolve) => p.getNumDocumentAnnotations(async function(numDocumentAnnotations) {
+  //     returnedProjects[i].numDocGroupsAnnotated = numDocumentAnnotations;
+  //     i = i + 1;
+  //     return await appendDocsAnnotated(returnedProjects, projects, i);    
+  //   }));    
+  // }
+
+  for(var i in returnedProjects) {
+    var numDocumentAnnotations = await projects[i].getNumDocumentAnnotations();
+    returnedProjects[i].numDocGroupsAnnotated = numDocumentAnnotations;
+  }
 
 
-    for(var project_idx in projects) {
-      var project = projects[project_idx];
 
-      var isCreatedByUser = user._id.equals(project.user_id);
-      if(isCreatedByUser) numCreatedByUser++;
+  return Promise.resolve({projects: returnedProjects, numCreatedByUser: numCreatedByUser, numUserInvolvedIn: projects.length });
+ 
 
-      returnedProjects.push({
+  //return Promise.resolve(returnedProjects);
 
-        _id: project._id,
-        name: project.project_name,
-        description: project.project_description,
-        total_users:  getTotalUsers(project),
-        creator:      t.username,
-        created_at:   project.created_at,
-        icon_name:    getIconName(project.project_name),
-        totalDocGroups: Math.ceil(project.file_metadata["Number of documents"]) * project.overlap,
-        userIsCreator: isCreatedByUser,
-      });
-    }
-
-    // Append the number of times each project was annotated.
-    // Only possible via recursive fn because we need to query DocumentAnnotations for every single project
-    function appendDocsAnnotated(returnedProjects, projects, i, next) {
-      if(i >= projects.length) return next(returnedProjects);
-      var p = projects[i];
-      p.getNumDocumentAnnotations(function(err, numDocumentAnnotations) {
-        returnedProjects[i].numDocGroupsAnnotated = numDocumentAnnotations;
-        i = i + 1;
-        appendDocsAnnotated(returnedProjects, projects, i, next);
-      });
-    }
-
-
-
-    appendDocsAnnotated(returnedProjects, projects, 0, function(returnedProjects) {
-      done(null, {projects: returnedProjects, numCreatedByUser: numCreatedByUser, numUserInvolvedIn: projects.length });
-    });    
-  });
+  // return Promise.resolve(
+  //   )
+  // appendDocsAnnotated(returnedProjects, projects, 0, function(returnedProjects) {
+  //   return Promise.resolve(null, {projects: returnedProjects, numCreatedByUser: numCreatedByUser, numUserInvolvedIn: projects.length });
+  // });
 }
 
 

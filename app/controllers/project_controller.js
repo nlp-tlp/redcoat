@@ -36,13 +36,16 @@ var mongoose = require('mongoose');
 
 
 // GET (AJAX): Return some basic details of the projects that this user is involved in.
-module.exports.getProjects = function(req, res) {
+module.exports.getProjects = async function(req, res) {
   try {
-  Project.getInvolvedProjectData(req.user, function(err, data) {
-    if(err) return res.send(err);
+    var data = await Project.getInvolvedProjectData(req.user);
+    console.log('data:', data);
     res.send(data);
-  });
-} catch(err) { console.log(err); }
+  } catch(err) {
+    res.send(err);
+    logger.error(err);
+  }     
+
 }
 
 // // GET (AJAX): A function that returns all the projects of a user.
@@ -593,8 +596,8 @@ module.exports.getProjectDetails = function(req, res) {
 }
 
 
-
-module.exports.submitComment = function(req, res) {
+// Attempting to learn async await properly with this one
+module.exports.submitComment = async function(req, res) {
 
   console.log("Submitting comment...");
 
@@ -606,33 +609,40 @@ module.exports.submitComment = function(req, res) {
 
     var project_id = req.params.id;
 
-    Document.findById({_id: document_id}, function(err, doc) {
-      if(err) return res.status(500).send(err);
-      var comment = new Comment({
-        author: req.user.username,
-        user_id: req.user._id,
-        project_id: project_id,
-        document_id: document_id,
-        text: text,
-        document_string: doc.document_string,
-      });        
+    var doc = await Document.findById({_id: document_id});
 
-      comment.save(function(err, comment) {
-        if(err) { console.log(err); return res.status(500).send({"error": "could not save comment"})}
-        console.log("Comment saved OK", comment);
+    // Document.findById({_id: document_id}, function(err, doc) {
+    //   if(err) return res.status(500).send(err);
+    var comment = new Comment({
+      author: req.user.username,
+      user_id: req.user._id,
+      project_id: project_id,
+      document_id: document_id,
+      text: text,
+      document_string: doc.document_string,
+    });        
+
+    try {
+      var comment = await comment.save();
+    } catch (err) {
+      res.status(500).send(err);
+    }
+
+    // comment.save(function(err, comment) {
+    //if(err) { console.log(err); return res.status(500).send({"error": "could not save comment"})}
+    console.log("Comment saved OK", comment);
 
 
-        // Append the profile icon to the comment
-        // Have to do this after saving (and not saved in Comment itself) because the user profile could change
-        var comment_with_profile = JSON.parse(JSON.stringify(comment));
-        comment_with_profile.user_profile_icon = req.user.profile_icon;
+    // Append the profile icon to the comment
+    // Have to do this after saving (and not saved in Comment itself) because the user profile could change
+    var comment_with_profile = JSON.parse(JSON.stringify(comment));
+    comment_with_profile.user_profile_icon = req.user.profile_icon;
 
-        console.log("COMMENT:", comment_with_profile);
+    console.log("COMMENT:", comment_with_profile);
 
-        res.send({comment: comment_with_profile});
-      })
-
-    })
+    res.send({comment: comment_with_profile});
+    // })
+    
   } catch(err) {
     res.status(500).send({"error": "could not save comment"})
   }
