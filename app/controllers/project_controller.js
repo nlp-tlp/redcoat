@@ -255,13 +255,15 @@ module.exports.getPreviouslyAnnotatedDocumentGroup = function(req, res) {
             ///proj.getDocgroupCommentsArray(docgroup, function(err, comments) {
 
             var documents = [];
+            var documents_2 = []; // terrible, need ordered docs for the getCommentsArray. this all needs major refactoring
             var document_ids = [];
             for(var i = 0; i < doc_pairs.length; i++) {
               documents.push(doc_pairs[i][1].tokens);
+              documents_2.push(doc_pairs[i][1]);
               document_ids.push(doc_pairs[i][1]._id);
             }
 
-            Project.getCommentsArray(docObjs, function(err, comments) {
+            Project.getCommentsArray(documents_2, function(err, comments) {
 
               var tree = txt2json(slash2txt(proj.category_hierarchy), proj.category_hierarchy)
 
@@ -406,10 +408,6 @@ module.exports.submitAnnotations = function(req, res) {
 
   // If this is an existing DocumentAnnotation, find the corresponding record and proceed to save it and send its details to the user
   if(documentAnnotationIds) {
-
-
-    // console.log("AI:", documentAnnotationIds);
-
     var documentIndexes = {};
     for(var i in documentAnnotationIds) {
       documentIndexes[documentAnnotationIds[i]] = i;
@@ -417,17 +415,6 @@ module.exports.submitAnnotations = function(req, res) {
 
     DocumentAnnotation.find({_id: { $in: documentAnnotationIds } }, function(err, documentAnnotations) {
       if(err) { return res.send("error"); }
-
-      // Sort back to original index order
-      // function compareFn(a, b) {
-      //   var di_a = documentIndexes[a._id];
-      //   var di_b = documentIndexes[b._id];
-      //   if(di_a < di_b) return -1;
-      //   if(di_a > di_b) return 1;
-      //   return 0;
-      // }
-
-      // documentAnnotations = documentAnnotations.sort(compareFn);
 
       var orderedDocumentAnnotations = new Array(documentIndexes.length).fill(null);
 
