@@ -254,7 +254,7 @@ module.exports.getPreviouslyAnnotatedDocumentGroup = function(req, res) {
         }
 
         proj.getDocumentsPerUser(function(err, docsPerUser) {
-          proj.getDocumentsAnnotatedByUserCount(req.user, function(err, numAnnotatedDocs) {
+          proj.getDocumentsAnnotatedByUserCount(req.user, async function(err, numAnnotatedDocs) {
             ///proj.getDocgroupCommentsArray(docgroup, function(err, comments) {
 
             var documents = [];
@@ -266,28 +266,29 @@ module.exports.getPreviouslyAnnotatedDocumentGroup = function(req, res) {
               document_ids.push(doc_pairs[i][1]._id);
             }
 
-            Project.getCommentsArray(documents_2, function(err, comments) {
+            var comments = await Project.getCommentsArray(documents_2);
 
-              var tree = txt2json(slash2txt(proj.category_hierarchy), proj.category_hierarchy)
+            console.log(comments);
 
-              res.send({
-                documents:              documents,
-                documentIds:            document_ids,
-                documentAnnotationIds:  documentAnnotationIds,
+            var tree = txt2json(slash2txt(proj.category_hierarchy), proj.category_hierarchy)
 
-                automaticAnnotations:   mentionsJSON,
-                comments:               comments,
+            res.send({
+              documents:              documents,
+              documentIds:            document_ids,
+              documentAnnotationIds:  documentAnnotationIds,
 
-                entityClasses:          proj.category_hierarchy,
-                categoryHierarchy:      tree,
+              automaticAnnotations:   mentionsJSON,
+              comments:               comments,
 
-                pageNumber:             pageNumber, // numAnnotatedDocGroups + 1 is the latest page        
-                totalPagesAvailable:    Math.ceil(numAnnotatedDocs / docsPerPage),
-                totalPages:             Math.ceil(docsPerUser / docsPerPage),
+              entityClasses:          proj.category_hierarchy,
+              categoryHierarchy:      tree,
 
-                projectName:            proj.project_name,     
-                lastModified:           das[0].updated_at,
-              });
+              pageNumber:             pageNumber, // numAnnotatedDocGroups + 1 is the latest page        
+              totalPagesAvailable:    Math.ceil(numAnnotatedDocs / docsPerPage),
+              totalPages:             Math.ceil(docsPerUser / docsPerPage),
+
+              projectName:            proj.project_name,     
+              lastModified:           das[0].updated_at,
             });
           });
         });
@@ -339,34 +340,34 @@ module.exports.getDocumentGroup = function(req, res) {
             var automaticAnnotations = null;
           }
           
-          proj.getDocumentsPerUser(function(err, docsPerUser) {   
-              Project.getCommentsArray(docObjs, function(err, comments) {
-                User.findById({_id: proj.user_id}, function(err, user) {
+          proj.getDocumentsPerUser(async function(err, docsPerUser) {   
+            var comments = await Project.getCommentsArray(docObjs)
+              User.findById({_id: proj.user_id}, function(err, user) {
 
-                  res.send({
+                res.send({
 
-                      documents:              documents,
-                      documentIds:            document_ids,
-                      documentAnnotationIds:  null,
+                    documents:              documents,
+                    documentIds:            document_ids,
+                    documentAnnotationIds:  null,
 
-                      automaticAnnotations:   automaticAnnotations,
-                      comments:               comments,
+                    automaticAnnotations:   automaticAnnotations,
+                    comments:               comments,
 
-                      categoryHierarchy:      tree,
-                      
-                      pageNumber:             Math.ceil(numAnnotatedDocs / docsPerPage) + 1, // numAnnotatedDocGroups + 1 is the latest page        
-                      totalPagesAvailable:    Math.ceil(numAnnotatedDocs / docsPerPage),
-                      totalPages:             Math.ceil(docsPerUser / docsPerPage),
+                    categoryHierarchy:      tree,
+                    
+                    pageNumber:             Math.ceil(numAnnotatedDocs / docsPerPage) + 1, // numAnnotatedDocGroups + 1 is the latest page        
+                    totalPagesAvailable:    Math.ceil(numAnnotatedDocs / docsPerPage),
+                    totalPages:             Math.ceil(docsPerUser / docsPerPage),
 
-                      projectTitle:           proj.project_name,
-                      projectAuthor:          user.username,
-
-                  });
+                    projectTitle:           proj.project_name,
+                    projectAuthor:          user.username,
 
                 });
+
               });
+            });
             //});            
-          });
+       
         }  
       });
     });

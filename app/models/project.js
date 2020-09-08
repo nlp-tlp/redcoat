@@ -353,7 +353,7 @@ ProjectSchema.methods.getInvitationsTableData = function(next) {
 
 // Uncomment this later
 
-ProjectSchema.methods.getCombinedAnnotations = function(next) {
+ProjectSchema.methods.getCombinedAnnotations = async function(next) {
 
   // Javascript implementation of the 'zip' function.
   // https://gist.github.com/jonschlinkert/2c5e5cd8c3a561616e8572dd95ae15e3
@@ -386,7 +386,7 @@ ProjectSchema.methods.getCombinedAnnotations = function(next) {
   var t = this;
   //var Document = require('./document');
   //var DocumentAnnotation = require('./document_group_annotation')
-  DocumentAnnotation.aggregate([
+  var result = await DocumentAnnotation.aggregate([
     {
       $match: {
         project_id: t._id
@@ -424,13 +424,9 @@ ProjectSchema.methods.getCombinedAnnotations = function(next) {
      },
      
     ]).allowDiskUse(true)
-    .exec(function(err, document_annotations) {
-      //console.log(document_annotations[0])
-      //process.exit()
+    
+    return Promise.resolve(result);
 
-      if(err) return next(err);
-      next(null, document_annotations);
-    });
 }
 
 
@@ -757,25 +753,35 @@ ProjectSchema.methods.recommendDocsToUser = function(user, numDocs, next) {
 // I don't like recursive functions but it seemed like the easiest way ...
 //
 // Comments must be 'lean' when queried before this function
-function appendUserProfilesToComments(comments, next, i = 0) {
-  if(i === comments.length) {
-    return next(comments);
-  }
-  var comment = comments[i];
-  User.findById({_id: comment.user_id}, function(err, user) {
-    comment.user_profile_icon = user.profile_icon;
+// function appendUserProfilesToComments(comments, next, i = 0) {
+//   if(i === comments.length) {
+//     return next(comments);
+//   }
+//   var comment = comments[i];
+//   User.findById({_id: comment.user_id}, function(err, user) {
+//     comment.user_profile_icon = user.profile_icon;
 
-    appendUserProfilesToComments(comments, next, i + 1);
-  });
+//     appendUserProfilesToComments(comments, next, i + 1);
+//   });
+// }
+
+
+async function appendUserProfilesToComments(comments) {
+  for(var i in comments) {
+    var user = await User.findById({_id: comments[i].user_id});
+    comments[i].user_profile_icon = user.profile_icon;
+  }
+  return Promise.resolve(comments);
 }
 
+
 // Retrieve all comments on a particular project, and arrange them in a list.
-ProjectSchema.methods.getAllCommentsArray = function(done) {
-  Comment.find({project_id: this._id}).sort('-created_at').lean().exec(function(err, comments) {
-    appendUserProfilesToComments(comments, function(comments) {
-      done(err, comments);
-    });
-  });
+ProjectSchema.methods.getAllCommentsArray = async function(done) {
+
+  var comments = await Comment.find({project_id: this._id}).sort('-created_at').lean();
+  comments = await appendUserProfilesToComments(comments);
+
+  return Promise.resolve(comments);
 }
 
 
@@ -906,128 +912,125 @@ ProjectSchema.methods.modifyHierarchy = function(new_hierarchy, user, done) {
 // Retrieve the counts of every label in this project, based on the 'combined annotations' (i.e. the automatically compiled ones).
 // This is probably not very efficient.
 // These kind of functions make me wish this was python not js.......
-ProjectSchema.methods.getEntityChartData = function(done) {
+ProjectSchema.methods.getEntityChartData = async function(done) {
   var t = this;
 
   var starty = new Date().getTime();
   console.log("Getting combined anns...")
 
-  t.getCombinedAnnotations(function(err, annotations) {
+  var annotations = await t.getCombinedAnnotations()
 
-    if(err) return res.send(err);
+  var elapsed = new Date().getTime() - starty;
+  console.log("... done (" + elapsed + "ms)")
+  
+  var entityCounts = {}
 
-    var elapsed = new Date().getTime() - starty;
-    console.log("... done (" + elapsed + "ms)")
-    
-    var entityCounts = {}
+  //for(var doc_idx in annotations.all_labels[0]) { // Not sure why all labels is an array of length 1   
 
-    //for(var doc_idx in annotations.all_labels[0]) { // Not sure why all labels is an array of length 1   
+  if(annotations.length === 0) {
+    return Promise.resolve(null);
+  }      
 
-    if(annotations.length === 0) {
-      return done(null);
-    }      
-
-    for(var doc_idx in annotations) {
-      for(var annotator_idx in annotations[doc_idx].all_labels) {
+  for(var doc_idx in annotations) {
+    for(var annotator_idx in annotations[doc_idx].all_labels) {
 
 
-        for(var token_idx in annotations[doc_idx].all_labels[annotator_idx]) {
+      for(var token_idx in annotations[doc_idx].all_labels[annotator_idx]) {
 
-          var tokenAnnotation = annotations[doc_idx].all_labels[annotator_idx][token_idx];
-          var bioTag = tokenAnnotation[0];
+        var tokenAnnotation = annotations[doc_idx].all_labels[annotator_idx][token_idx];
+        var bioTag = tokenAnnotation[0];
 
 
-          if(bioTag === "B-") {
-            for(var label_idx in tokenAnnotation[1]) {
-              var label = tokenAnnotation[1][label_idx];
-              var split = label.split('/');
-              var truncatedLabel = split.length > 1 ? "/" : ""
-              truncatedLabel = truncatedLabel + split[split.length - 1];
-              if(!entityCounts.hasOwnProperty(truncatedLabel)) {
-                entityCounts[truncatedLabel] = 0;
-              }
-              entityCounts[truncatedLabel]++;
+        if(bioTag === "B-") {
+          for(var label_idx in tokenAnnotation[1]) {
+            var label = tokenAnnotation[1][label_idx];
+            var split = label.split('/');
+            var truncatedLabel = split.length > 1 ? "/" : ""
+            truncatedLabel = truncatedLabel + split[split.length - 1];
+            if(!entityCounts.hasOwnProperty(truncatedLabel)) {
+              entityCounts[truncatedLabel] = 0;
             }
+            entityCounts[truncatedLabel]++;
           }
         }
       }
     }
-    console.log(entityCounts, "<<<")
+  }
+  console.log(entityCounts, "<<<")
 
-    // Sort the labels by frequency and return the entity labels and counts as separate arrays.
-    // This is 20 lines of js that could be done in 1 line of python :(
-    sortedEntityCounts = [];
-    for(var i in entityCounts) {
-      sortedEntityCounts.push([i, entityCounts[i]]);
-    }
-    console.log(sortedEntityCounts);
+  // Sort the labels by frequency and return the entity labels and counts as separate arrays.
+  // This is 20 lines of js that could be done in 1 line of python :(
+  sortedEntityCounts = [];
+  for(var i in entityCounts) {
+    sortedEntityCounts.push([i, entityCounts[i]]);
+  }
+  console.log(sortedEntityCounts);
 
-    function compareFn(x, y) {
-      if(x[1] < y[1]) return 1;
-      if(x[1] > y[1]) return -1;
-      return 0;
-    }
+  function compareFn(x, y) {
+    if(x[1] < y[1]) return 1;
+    if(x[1] > y[1]) return -1;
+    return 0;
+  }
 
-    sortedEntityCounts.sort(compareFn);
+  sortedEntityCounts.sort(compareFn);
 
-    entities = [];
-    counts   = [];
+  entities = [];
+  counts   = [];
 
-    for(var i in sortedEntityCounts) {
-      entities.push(sortedEntityCounts[i][0])
-      counts.push(sortedEntityCounts[i][1])
-    }
-
-
-    var colourIndexes = {}; // Figure out the colour indexes of each class in the hierarchy so they can be passed to the front end
-    var colourIdx = -1;
-    for(var i in t.category_hierarchy) {
-      var label = t.category_hierarchy[i];
-
-      if(label.indexOf('/') === -1) {
-        colourIdx++;
-      }
-
-      var split = label.split('/');
-      var truncatedLabel = split.length > 1 ? "/" : ""
-      truncatedLabel = truncatedLabel + split[split.length - 1];
+  for(var i in sortedEntityCounts) {
+    entities.push(sortedEntityCounts[i][0])
+    counts.push(sortedEntityCounts[i][1])
+  }
 
 
+  var colourIndexes = {}; // Figure out the colour indexes of each class in the hierarchy so they can be passed to the front end
+  var colourIdx = -1;
+  for(var i in t.category_hierarchy) {
+    var label = t.category_hierarchy[i];
 
-      colourIndexes[truncatedLabel] = colourIdx;
+    if(label.indexOf('/') === -1) {
+      colourIdx++;
     }
 
+    var split = label.split('/');
+    var truncatedLabel = split.length > 1 ? "/" : ""
+    truncatedLabel = truncatedLabel + split[split.length - 1];
 
 
 
-    var entityChartData = {
-      colourIndexes: colourIndexes,
-      entityClasses: {
-        labels: entities,
-        datasets: [
-          {
-            label: 'Mentions',
-            data: counts, // Could set background colour according to entity class? Not sure if good practice tho
-
-            // backgroundColor: [              
-            //   "rgba(255, 99, 132, 0.2)",
-            //   "rgba(255, 159, 64, 0.2)",
-            //   "rgba(255, 205, 86, 0.2)",
-            //   "rgba(75, 192, 192, 0.2)",
-            //   "rgba(54, 162, 235, 0.2)",
-            //   "rgba(153, 102, 255, 0.2)",
-            //   "rgba(201, 203, 207, 0.2)"
-            // ],
-          }
-        ]
-      },      
-    }
+    colourIndexes[truncatedLabel] = colourIdx;
+  }
 
 
 
-    done(entityChartData);
 
-  });
+  var entityChartData = {
+    colourIndexes: colourIndexes,
+    entityClasses: {
+      labels: entities,
+      datasets: [
+        {
+          label: 'Mentions',
+          data: counts, // Could set background colour according to entity class? Not sure if good practice tho
+
+          // backgroundColor: [              
+          //   "rgba(255, 99, 132, 0.2)",
+          //   "rgba(255, 159, 64, 0.2)",
+          //   "rgba(255, 205, 86, 0.2)",
+          //   "rgba(75, 192, 192, 0.2)",
+          //   "rgba(54, 162, 235, 0.2)",
+          //   "rgba(153, 102, 255, 0.2)",
+          //   "rgba(201, 203, 207, 0.2)"
+          // ],
+        }
+      ]
+    },      
+  }
+
+
+
+  return Promise.resolve(entityChartData);
+
 
 }
 
@@ -1196,8 +1199,6 @@ ProjectSchema.methods.getActivityChartData = async function() {
     console.log("Activity chart data:", activityChartData);
 
     return Promise.resolve(activityChartData);
-
-
     
     // //console.log(results, "<<<");
     // if(results.length > 0)
@@ -1271,20 +1272,13 @@ ProjectSchema.methods.getDetails = async function(done) {
   var start = new Date().getTime();
   console.log("Retrieving project details...")
 
-
-
   var numDocumentAnnotations  = await t.getNumDocumentAnnotations(); // returns err ??
-  var avgAgreement            = await t.getAverageAgreement();
-  
+  var avgAgreement            = await t.getAverageAgreement();  
   var activityChartData       = await t.getActivityChartData();
-
-
-
   var annotationsChartData    = await t.getAnnotationsChartData();
 
-
-  t.getEntityChartData(function(entityChartData) {
-    t.getAllCommentsArray(function(err, comments) {
+  var entityChartData = await t.getEntityChartData()
+  var comments = await t.getAllCommentsArray();
 
 
 
@@ -1356,36 +1350,33 @@ ProjectSchema.methods.getDetails = async function(done) {
 
 
 
-      var data = {
-        project_name: t.project_name,
-        project_author: t.author,
+    var data = {
+      project_name: t.project_name,
+      project_author: t.author,
 
-        dashboard: {
-          numDocGroupsAnnotated: numDocumentAnnotations,
-          totalDocGroups: Math.ceil(t.file_metadata["Number of documents"]) * t.overlap,
+      dashboard: {
+        numDocGroupsAnnotated: numDocumentAnnotations,
+        totalDocGroups: Math.ceil(t.file_metadata["Number of documents"]) * t.overlap,
 
-          avgAgreement: avgAgreement,
-          avgTimePerDocument: 15,
+        avgAgreement: avgAgreement,
+        avgTimePerDocument: 15,
 
-          comments: comments,
+        comments: comments,
 
-          entityChartData: entityChartData,
+        entityChartData: entityChartData,
 
-          activityChartData: activityChartData,
+        activityChartData: activityChartData,
 
-          annotationsChartData: annotationsChartData,
+        annotationsChartData: annotationsChartData,
 
 
-        },   
-      };
+      },   
+    };
 
-      var elapsed = new Date().getTime() - start;
+    var elapsed = new Date().getTime() - start;
 
-      console.log("... done (" + elapsed + "ms)")
-      return done(null, data);
-    })
-  })
-
+    console.log("... done (" + elapsed + "ms)")
+    return done(null, data);
 }
 
 
@@ -1486,29 +1477,15 @@ ProjectSchema.statics.getInvolvedProjectData = async function(user) {
 
 
 // Retrieve an array of comments for each document in a group of documents.
-ProjectSchema.statics.getCommentsArray = function(documents, next) {
+ProjectSchema.statics.getCommentsArray = async function(documents, next) {
 
-  function getComments(documents, all_comments, next) {
-    if(documents.length === 0) {
-      return next(all_comments);
-    }
-
-    var doc = documents.pop();
-    Comment.find({document_id: doc._id}).sort('-created_at').lean().exec(function(err, comments){
-      appendUserProfilesToComments(comments, function(comments_with_profiles) {
-        all_comments.push(comments_with_profiles);
-        return getComments(documents, all_comments, next);
-      });
-    });
+  var all_comments = [];
+  for(var i in documents) {
+    var comments = await Comment.find({document_id: documents[i]._id}).sort('created_at').lean();
+    comments = await appendUserProfilesToComments(comments);
+    all_comments.push(comments);
   }
-
- 
-  getComments(documents.reverse(), new Array(), function(comments) {
-    next(null, comments);
-
-  }) 
-
-
+  return Promise.resolve(all_comments);
 }
 
 
