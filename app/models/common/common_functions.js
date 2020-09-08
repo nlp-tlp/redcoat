@@ -14,6 +14,8 @@ DOCUMENT_MAX_TOKEN_LENGTH  = 1000;
 DOCUMENT_MAX_TOKEN_COUNT   = 100000;
 ABBREVIATION_MAXLENGTH     = 20;
 
+MAX_DOC_GROUP_SIZE         = 100; // The max number of docs that can be requested by a user at a time
+
 COMMENT_MAXLENGTH = 200;
 
 PROJECT_NAME_MAXLENGTH 				= 100;
@@ -429,6 +431,8 @@ module.exports = {
 	PROJECT_DESCRIPTION_MAXLENGTH : PROJECT_DESCRIPTION_MAXLENGTH, // Max length of a project description.
 	USERS_PER_PROJECT_MAXCOUNT      : USERS_PER_PROJECT_MAXCOUNT, // Max number of users per project.
 	PROJECTS_PER_USER_MAXCOUNT      : PROJECTS_PER_USER_MAXCOUNT, // Max number of projects per user.
+
+  MAX_DOC_GROUP_SIZE            : MAX_DOC_GROUP_SIZE, // Max number of docs that can be requested by a user at once.
 
   DOCUMENT_GROUP_DISPLAY_NAME_WORDCOUNT: DOCUMENT_GROUP_DISPLAY_NAME_WORDCOUNT, // Number of words in a document group display name.
 

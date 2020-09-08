@@ -695,7 +695,7 @@ ProjectSchema.methods.getUsers = function(next) {
 // Recommend a group of documents to a user. This is based on the documents that the user is yet to annotate.
 // Only documents that have been annotated less than N times will be recommended, where N = the "overlap" of the project.
 // Results are sorted based on the Document that was last recommended.
-ProjectSchema.methods.recommendDocgroupToUser = function(user, next) {
+ProjectSchema.methods.recommendDocsToUser = function(user, numDocs, next) {
   var t = this;
   // All doc groups with this project id, where the times annotated is less than overlap, that the user hasn't already annotated
   var q = { $and: [{ project_id: t._id}, { times_annotated: { $lt: t.overlap } }, { _id: { $nin: user.docgroups_annotated }} ] };
@@ -709,7 +709,7 @@ ProjectSchema.methods.recommendDocgroupToUser = function(user, next) {
       }
     },
     {
-      $limit: cf.DOCUMENT_MAXCOUNT,
+      $limit: Math.min(cf.MAX_DOC_GROUP_SIZE, numDocs),
 
     }
   ], function(err, docs) {
@@ -726,7 +726,8 @@ ProjectSchema.methods.recommendDocgroupToUser = function(user, next) {
     }
 
 
-    Document.updateMany( {_id: { $in: docgroup._id }}, { last_recommended: Date.now() }, {}, function(err) {
+    Document.updateMany( {_id: { $in: doc_ids }}, { last_recommended: Date.now() }, {}, function(err) {
+      console.log(err);
       return next(err, docgroup);
     })
     
@@ -754,6 +755,8 @@ ProjectSchema.methods.recommendDocgroupToUser = function(user, next) {
 
 // Add the user profiles (icons and colours) to the comments by querying by id.
 // I don't like recursive functions but it seemed like the easiest way ...
+//
+// Comments must be 'lean' when queried before this function
 function appendUserProfilesToComments(comments, next, i = 0) {
   if(i === comments.length) {
     return next(comments);
@@ -761,6 +764,7 @@ function appendUserProfilesToComments(comments, next, i = 0) {
   var comment = comments[i];
   User.findById({_id: comment.user_id}, function(err, user) {
     comment.user_profile_icon = user.profile_icon;
+
     appendUserProfilesToComments(comments, next, i + 1);
   });
 }
@@ -777,26 +781,26 @@ ProjectSchema.methods.getAllCommentsArray = function(done) {
 
 
 // Retrieve all comments on a particular docgroup, and arrange them in a list.
-// TODO: Fix this
-ProjectSchema.methods.getDocgroupCommentsArray = function(docgroup, done) {
-  console.log("getting comments", docgroup._id);
-  Comment.find({document_group_id: docgroup._id}).lean().exec(function(err, comments) {
+// // TODO: Fix this
+// ProjectSchema.methods.getDocgroupCommentsArray = function(docgroup, done) {
+//   console.log("getting comments", docgroup._id);
+//   Comment.find({document_group_id: docgroup._id}).lean().exec(function(err, comments) {
 
-    var commentsArray = new Array(cf.DOCUMENT_MAXCOUNT).fill(null);
-    for(var i = 0; i < cf.DOCUMENT_MAXCOUNT; i++) {
-      commentsArray[i] = new Array();
-    }
+//     var commentsArray = new Array(cf.DOCUMENT_MAXCOUNT).fill(null);
+//     for(var i = 0; i < cf.DOCUMENT_MAXCOUNT; i++) {
+//       commentsArray[i] = new Array();
+//     }
 
-    appendUserProfilesToComments(comments, function(comments) {
+//     appendUserProfilesToComments(comments, function(comments) {
 
-      for(var i in comments) {
-        commentsArray[comments[i].document_index].push(comments[i]);
-      }
-      done(err, commentsArray);
+//       for(var i in comments) {
+//         commentsArray[comments[i].document_index].push(comments[i]);
+//       }
+//       done(err, commentsArray);
 
-    });
-  });
-}
+//     });
+//   });
+// }
 
 
 
@@ -1473,6 +1477,31 @@ ProjectSchema.statics.getInvolvedProjectData = function(user, done) {
 }
 
 
+// Retrieve an array of comments for each document in a group of documents.
+ProjectSchema.statics.getCommentsArray = function(documents, next) {
+
+  function getComments(documents, all_comments, next) {
+    if(documents.length === 0) {
+      return next(all_comments);
+    }
+
+    var doc = documents.pop();
+    Comment.find({document_id: doc._id}).sort('-created_at').lean().exec(function(err, comments){
+      appendUserProfilesToComments(comments, function(comments_with_profiles) {
+        all_comments.push(comments_with_profiles);
+        return getComments(documents, all_comments, next);
+      });
+    });
+  }
+
+ 
+  getComments(documents.reverse(), new Array(), function(comments) {
+    next(null, comments);
+
+  }) 
+
+
+}
 
 
 

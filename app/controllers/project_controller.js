@@ -63,12 +63,12 @@ module.exports.getProjects = function(req, res) {
 
 // Automatically tag all tokens on the screen that appear in the dictionary.
 // Returns an array of [{ mentions: [] }, { mentions: [] }] (one mentions array per document)
-function runDictionaryTagging(Document, dictionary) {
+function runDictionaryTagging(documentGroup, dictionary) {
   // Build the automatic annotations based on the groupData.
   var automaticAnnotations = [];
 
-  for(var doc_id = 0; doc_id < Document.length; doc_id++) {
-    var doc = Document[doc_id];
+  for(var doc_id = 0; doc_id < documentGroup.length; doc_id++) {
+    var doc = documentGroup[doc_id];
     var mentions = [];
       //console.log(doc)
 
@@ -187,48 +187,101 @@ module.exports.getPreviouslyAnnotatedDocumentGroup = function(req, res) {
     return res.send("Error: Page number must be >= 1");
   }
 
+  try {
+    var docsPerPage = parseInt(req.query.perPage);
+  } catch(err) {
+    var docsPerPage = 5;
+  }
+
+
+
   Project.findOne({ _id: id }, function(err, proj) {
     if(err) { return res.send("error"); }
 
-    proj.getDocumentsAnnotatedByUser(req.user, function(err, annotatedDocGroups) {
+    proj.getDocumentsAnnotatedByUser(req.user, function(err, annotatedDocs) {
+
+      console.log(err, 'hello')
       if(err) { return res.send("error"); }
 
-      if(pageNumber > annotatedDocGroups.length) {
+      console.log(pageNumber, docsPerPage, pageNumber * docsPerPage)
+      console.log(annotatedDocs.length);
+
+
+      if(((pageNumber - 1) * docsPerPage) > annotatedDocs.length) {
+         console.log('hellsso')
         return res.send("Error: Page number must be lower than number of doc groups annotated so far");
       }
 
-      var dga = annotatedDocGroups[pageNumber - 1];
 
-      var tree = txt2json(slash2txt(proj.category_hierarchy), proj.category_hierarchy)
 
-      var Document = require('app/models/document_group');
-      Document.findById({_id: dga.document_group_id}, function(err, docgroup) {
+      var das = annotatedDocs.slice((pageNumber - 1) * docsPerPage, pageNumber * docsPerPage  );
+
+      // TODO: This should be refactored into a mongo aggregation query, joining with Document on document_group_id,
+      // rather than this abomination
+      var da_ids = {};
+      var doc_pair_ids = {};
+      var doc_pairs = [];
+      var documentAnnotationIds = [];
+      var documentIds = [];
+      for(var i = 0; i < das.length; i++) {
+        da_ids[das[i].document_id] = das[i]._id;
+
+        doc_pair_ids[das[i].document_id] = i;
+        doc_pairs.push([das[i], null]);
+
+        documentAnnotationIds.push(das[i]._id);
+        documentIds.push(das[i].document_id)
+      }
+
+      // Find all Documents that are in the documentIds array sent by the client.
+      // Sort them according to doc pair index and convert each document annotation into JSON
+      // via the mentionsJSONSync function, which takes the document as an argument
+      Document.find({_id: {$in: documentIds}}, function(err, docObjs) {
         if(err) { return res.send("error: docgroup not found"); }
-        dga.toMentionsJSON(function(err, mentionsJSON) {
-          if(err) { return res.send(err); }
 
+        for(var i = 0; i < docObjs.length; i++) {
+          var doc_pair_idx = doc_pair_ids[ docObjs[i]._id ];
+          doc_pairs[doc_pair_idx][1] = docObjs[i];
+        }
 
-          proj.getDocumentsPerUser(function(err, docGroupsPerUser) {
-            proj.getDocumentsAnnotatedByUserCount(req.user, function(err, numAnnotatedDocGroups) {
-              proj.getDocgroupCommentsArray(docgroup, function(err, comments) {
+        var mentionsJSON = [];
 
+        for(var i = 0; i < doc_pairs.length; i++) {
+          mentionsJSON.push(das[i].toMentionsJSONSync(doc_pairs[i][1]));
+        }
 
+        proj.getDocumentsPerUser(function(err, docsPerUser) {
+          proj.getDocumentsAnnotatedByUserCount(req.user, function(err, numAnnotatedDocs) {
+            ///proj.getDocgroupCommentsArray(docgroup, function(err, comments) {
 
-                res.send({
-                  DocumentId:            docgroup._id,
-                  Document:              docgroup.documents,
-                  DocumentAnnotationId:  dga._id,
-                  automaticAnnotations:       mentionsJSON,
-                  comments:                   comments,
-                  entityClasses:              proj.category_hierarchy,
-                  categoryHierarchy:          tree,
-                  annotatedDocGroups:         numAnnotatedDocGroups,
-                  pageNumber:                 pageNumber,
-                  projectName:                proj.project_name,     
-                  lastModified:               dga.updated_at,
-                  docGroupsPerUser:           docGroupsPerUser,
-                  username:                   req.user.username,
-                });
+            var documents = [];
+            var document_ids = [];
+            for(var i = 0; i < doc_pairs.length; i++) {
+              documents.push(doc_pairs[i][1].tokens);
+              document_ids.push(doc_pairs[i][1]._id);
+            }
+
+            Project.getCommentsArray(docObjs, function(err, comments) {
+
+              var tree = txt2json(slash2txt(proj.category_hierarchy), proj.category_hierarchy)
+
+              res.send({
+                documents:              documents,
+                documentIds:            document_ids,
+                documentAnnotationIds:  documentAnnotationIds,
+
+                automaticAnnotations:   mentionsJSON,
+                comments:               comments,
+
+                entityClasses:          proj.category_hierarchy,
+                categoryHierarchy:      tree,
+
+                pageNumber:             pageNumber, // numAnnotatedDocGroups + 1 is the latest page        
+                totalPagesAvailable:    Math.ceil(numAnnotatedDocs / docsPerPage),
+                totalPages:             Math.ceil(docsPerUser / docsPerPage),
+
+                projectName:            proj.project_name,     
+                lastModified:           das[0].updated_at,
               });
             });
           });
@@ -245,64 +298,69 @@ module.exports.getDocumentGroup = function(req, res) {
     if(err) {
       res.send("error");
     }
-    console.log("PROJECT", proj._id)
-    console.log("USER", req.user.username)
 
-    proj.getDocumentsAnnotatedByUserCount(req.user, function(err, numAnnotatedDocGroups) {
-      proj.recommendDocgroupToUser(req.user, function(err, docgroup) {
-        //console.log(err, docgroup)
+    try {
+      var docsPerPage = parseInt(req.query.perPage);
+    } catch(err) {
+      var docsPerPage = 5;
+    }
 
-        console.log(err);
+    proj.getDocumentsAnnotatedByUserCount(req.user, function(err, numAnnotatedDocs) {
+      proj.recommendDocsToUser(req.user, docsPerPage, function(err, docObjs) {
+
+        var documents = [];
+        var document_ids = [];
+        for(var i = 0; i < docObjs.length; i++) {
+          documents.push(docObjs[i].tokens);
+          document_ids.push(docObjs[i]._id);
+        }
+
         if(err) {
           if(err.message == "No document groups left") {
             return res.send({
               tagging_complete: true,
-              annotatedDocGroups: numAnnotatedDocGroups,
+              annotatedDocGroups: numAnnotatedDocs,
               projectName: proj.project_name,
             });
           }
           return res.send("error");
         } else {     
 
-          logger.debug("Sending doc group id: " + docgroup._id)
-
           var tree = txt2json(slash2txt(proj.category_hierarchy), proj.category_hierarchy)
-          //console.log("tree:", tree);
 
           if(proj.automatic_tagging_dictionary) {
-            var automaticAnnotations = runDictionaryTagging(docgroup.documents, proj.automatic_tagging_dictionary)
+            var automaticAnnotations = runDictionaryTagging(documents, proj.automatic_tagging_dictionary)
           } else {
             var automaticAnnotations = null;
           }
-
           
-          proj.getDocumentsPerUser(function(err, docGroupsPerUser) {   
+          proj.getDocumentsPerUser(function(err, docsPerUser) {   
+              Project.getCommentsArray(docObjs, function(err, comments) {
+                User.findById({_id: proj.user_id}, function(err, user) {
 
-            proj.getDocgroupCommentsArray(docgroup, function(err, comments) {
+                  res.send({
 
+                      documents:              documents,
+                      documentIds:            document_ids,
+                      documentAnnotationIds:  null,
 
-              User.findById({_id: proj.user_id}, function(err, user) {
+                      automaticAnnotations:   automaticAnnotations,
+                      comments:               comments,
 
-                res.send({
-                    DocumentId:        docgroup._id,
-                    Document:          docgroup.documents,
-                    automaticAnnotations:   automaticAnnotations,
-                    comments:               comments,
-                    entityClasses:          proj.category_hierarchy,
-                    categoryHierarchy:      tree,
-                    annotatedDocGroups:     numAnnotatedDocGroups,
-                    pageNumber:             numAnnotatedDocGroups + 1, // numAnnotatedDocGroups + 1 is the latest page        
-                    projectName:            proj.project_name, 
-                    docGroupsPerUser:       docGroupsPerUser,
-                    username:               req.user.username,
+                      categoryHierarchy:      tree,
+                      
+                      pageNumber:             Math.ceil(numAnnotatedDocs / docsPerPage) + 1, // numAnnotatedDocGroups + 1 is the latest page        
+                      totalPagesAvailable:    Math.ceil(numAnnotatedDocs / docsPerPage),
+                      totalPages:             Math.ceil(docsPerUser / docsPerPage),
 
-                    projectTitle:           proj.project_name,
-                    projectAuthor:          user.username,
+                      projectTitle:           proj.project_name,
+                      projectAuthor:          user.username,
+
+                  });
 
                 });
-
               });
-            });            
+            //});            
           });
         }  
       });
@@ -312,69 +370,143 @@ module.exports.getDocumentGroup = function(req, res) {
 
 
 
+// Saves many objects at once.
+// objects: The array of objects to save.
+// error_function: The function to call on the errors that arise from saving.
+// done: The callback function to call when complete.
+function saveMany(objects, saved_objs, error_function, done) {
+  obj = objects.pop()
+
+  //console.log("Saving ", obj);
+  obj.save(function(err, saved_obj) {
+    if(err) return error_function(err);
+    saved_objs.push(saved_obj);
+    if (objects.length > 0) saveMany(objects, saved_objs, error_function, done)
+    else done(saved_objs)            
+  })       
+}
+
+
+
+
+
 // POST (AJAX): Submit the annotations of the user for the current document group.
 // 
 module.exports.submitAnnotations = function(req, res) {
-  var User = require('app/models/user');
-  var DocumentId = req.body.DocumentId;
+
+  var documentIds = req.body.documentIds;
+  var documentAnnotationIds = req.body.documentAnnotationIds;
   var userId = req.user._id;
+  
+
   var projectId = req.params.id;
   var labels = req.body.labels;
 
-  var DocumentAnnotationId = req.body.DocumentAnnotationId; // if null, this document group annotation is new
+  //var DocumentAnnotationId = req.body.DocumentAnnotationId; // if null, this document group annotation is new
 
   // If this is an existing DocumentAnnotation, find the corresponding record and proceed to save it and send its details to the user
-  if(DocumentAnnotationId) {  
-    DocumentAnnotation.findById({_id: DocumentAnnotationId}, function(err, DocumentAnnotation) {
-      if(err) { return res.send("error"); }
-      //console.log("DGA:", DocumentAnnotation);
-      DocumentAnnotation.labels = labels;
+  if(documentAnnotationIds) {
 
-      proceed(req, res, DocumentAnnotation, false);
+
+    // console.log("AI:", documentAnnotationIds);
+
+    var documentIndexes = {};
+    for(var i in documentAnnotationIds) {
+      documentIndexes[documentAnnotationIds[i]] = i;
+    }
+
+    DocumentAnnotation.find({_id: { $in: documentAnnotationIds } }, function(err, documentAnnotations) {
+      if(err) { return res.send("error"); }
+
+      // Sort back to original index order
+      // function compareFn(a, b) {
+      //   var di_a = documentIndexes[a._id];
+      //   var di_b = documentIndexes[b._id];
+      //   if(di_a < di_b) return -1;
+      //   if(di_a > di_b) return 1;
+      //   return 0;
+      // }
+
+      // documentAnnotations = documentAnnotations.sort(compareFn);
+
+      var orderedDocumentAnnotations = new Array(documentIndexes.length).fill(null);
+
+      // Update the labels
+      for(var i in documentAnnotations) {
+
+        var idx = documentIndexes[documentAnnotations[i]._id];
+
+        orderedDocumentAnnotations[idx] = documentAnnotations[i];
+        orderedDocumentAnnotations[idx].labels = labels[i];
+
+      }
+
+      proceed(req, res, orderedDocumentAnnotations, false);
     });
+
 
   // If this a brand new document group annotation, create a new object to save to the database.
   } else {
-    var DocumentAnnotation = new DocumentAnnotation({
-      user_id: userId,
-      document_group_id: DocumentId,
-      labels: labels,
-    });
-    proceed(req, res, DocumentAnnotation, true);
+
+    var documentAnnotations = [];
+    for(var i in documentIds) {
+      var documentAnnotation = new DocumentAnnotation({
+        user_id: userId,
+        document_id: documentIds[i],
+        labels: labels[i],
+      });   
+
+      
+
+      documentAnnotations.push(documentAnnotation);
+    }    
+
+    proceed(req, res, documentAnnotations, true);
   }
 
 
+  function errorFunction(err) {
+    logger.error(err);
+    logger.error(err.stack);
+    return res.send({error: err})
+
+  }
+
   // Awkward having another function here but it seems to be the best way to keep the code the same for both conditions above.
-  function proceed(req, res, DocumentAnnotation, newDGA) {
+  function proceed(req, res, documentAnnotations, newDGA) {
 
-    DocumentAnnotation.save(function(err, dga) {
+    saveMany(documentAnnotations.reverse(), new Array(), errorFunction, function(document_annotations) {
 
-      if(err) {
-        logger.error(err.stack);
-        return res.send({error: err})
+      var documentAnnotationIds = new Array();
+      for(var i in document_annotations) {
+        documentAnnotationIds.push(document_annotations[i]._id);
       }
 
-      //console.log("Saved");
-      
+      //console.log("saved doc anns:", document_annotations[0].labels);
+
+      //console.log("Saved");      
+
       // Add the docgroup to the user's docgroups_annotated array.
-      User.findByIdAndUpdate(userId, { $addToSet: { 'docgroups_annotated': DocumentId }}, function(err) {
+      User.findByIdAndUpdate(userId, { $addToSet: { 'docgroups_annotated': documentIds }}, function(err) {
         if(err) {
           logger.error(err.stack);
           return res.send({error: err})
         }
 
+        //console.log("updated users anns")
 
-          // Update the document group's times_annotated field
-          if(newDGA) {
-            Document.update({_id: DocumentId}, { $inc: {times_annotated: 1 } }, function(err) {
-              if(err) return res.send("error");
-              logger.debug("Saved document group annotation " + dga._id)
-              res.send({success: true, DocumentAnnotationId: dga._id});
-            });
-          } else {
-            logger.debug("Updated document group annotation " + dga._id);
-            res.send({success: true, DocumentAnnotationId: dga._id});
-          }   
+
+        // Update the document group's times_annotated field
+        if(newDGA) {
+          Document.update({_id: { $in: documentIds } }, { $inc: {times_annotated: 1 } }, function(err) {
+            if(err) return res.send("error");
+            logger.debug("Saved document annotation " + documentAnnotationIds)
+            res.send({success: true, documentAnnotationIds: documentAnnotationIds});
+          });
+        } else {
+          logger.debug("Updated document annotations " + documentAnnotationIds);
+          res.send({success: true, documentAnnotationIds: documentAnnotationIds});
+        }   
 
 
                 
@@ -481,39 +613,43 @@ module.exports.submitComment = function(req, res) {
 
   try {
 
-    var document_index = req.body.documentIndex;
-    var document_group_id = req.body.DocumentId;
+    var document_id = req.body.documentId;
     var document_string = req.body.documentString;
     var text = req.body.text;
 
     var project_id = req.params.id;
 
-    var comment = new Comment({
-      author: req.user.username,
-      user_id: req.user._id,
-      project_id: project_id,
-      document_group_id: document_group_id,
-      document_index: document_index,
-      text: text,
-      document_string: document_string,
+    Document.findById({_id: document_id}, function(err, doc) {
+      if(err) return res.status(500).send(err);
+      var comment = new Comment({
+        author: req.user.username,
+        user_id: req.user._id,
+        project_id: project_id,
+        document_id: document_id,
+        text: text,
+        document_string: doc.document_string,
+      });        
 
-    });  
-    comment.save(function(err, comment) {
-      if(err) { console.log(err); return res.status(500).send({"error": "could not save comment"})}
-      console.log("Comment saved OK", comment);
+      comment.save(function(err, comment) {
+        if(err) { console.log(err); return res.status(500).send({"error": "could not save comment"})}
+        console.log("Comment saved OK", comment);
 
 
-      // Append the profile icon to the comment
-      var comment2 = JSON.parse(JSON.stringify(comment));
-      comment2.user_profile_icon = req.user.profile_icon;
+        // Append the profile icon to the comment
+        // Have to do this after saving (and not saved in Comment itself) because the user profile could change
+        var comment_with_profile = JSON.parse(JSON.stringify(comment));
+        comment_with_profile.user_profile_icon = req.user.profile_icon;
 
-      console.log("COMMENT:", comment2);
+        console.log("COMMENT:", comment_with_profile);
 
-      res.send({comment: comment2});
+        res.send({comment: comment_with_profile});
+      })
+
     })
   } catch(err) {
     res.status(500).send({"error": "could not save comment"})
   }
+
 }
 
 

@@ -30,10 +30,10 @@ var DocumentSchema = new Schema({
     type: Number,
     default: 0,
   },
-  display_name: {
-    type: String,
-    default: "UnnamedGroup"
-  },
+  // display_name: {
+  //   type: String,
+  //   default: "UnnamedGroup"
+  // },
   last_recommended: { // Keeps track of the time the document was last recommended, in order to aid sorting
     type: Date,
     default: Date.now
@@ -41,6 +41,12 @@ var DocumentSchema = new Schema({
 
   document_index: {
     type: Number,
+  },
+
+  // Keep a string version of the document so that it can be easily searched.
+  document_string: {
+    type: String,
+    maxlength: cf.DOCUMENT_MAX_TOKEN_LENGTH * DOCUMENT_MAX_TOKEN_COUNT,
   },
 
 }, {
@@ -64,6 +70,13 @@ DocumentSchema.methods.getAnnotations = function(done) {
     if(err) done(err, null);
     else return done(null, doc_anns);
   })
+}
+
+
+// Update the document string of this document to match its tokens.
+DocumentSchema.methods.setDocumentString = function(next) {
+  this.document_string = this.tokens.join(' ');
+  next();
 }
 
 
@@ -107,7 +120,7 @@ DocumentSchema.methods.updateAgreement = function(next) {
 
         for(token_idx in doc) {
 
-          var bioTagAndLabels = dgas[j].labels[i][token_idx];
+          var bioTagAndLabels = dgas[j].labels[token_idx];
 
           //console.log("Token idx:", token_idx, "Labels:", bioTagAndLabels);
 
@@ -175,10 +188,11 @@ DocumentSchema.methods.updateAgreement = function(next) {
     console.log("New agreement score:", t.annotator_agreement)
     t.markModified('annotator_agreement');
     t.save(function(err, dg) {
-      console.log(dg.annotator_agreement, "<<<<")
-      console.log(dg, "<<<<")
-      console.log("error:", err);
+      //console.log(dg.annotator_agreement, "<<<<")
+      //console.log(dg, "<<<<")
+      //console.log("error:", err);
       //next(err);
+      next(err);
     });
 
     //next();
@@ -197,9 +211,14 @@ DocumentSchema.pre('save', function(next) {
   // 1. Verify associated exists
   var Project = require('./project')
   t.verifyAssociatedExists(Project, this.project_id, function(err) {
-
     if(err) { next(err); return; }
-    next(err);
+    // If this is new, save the document_string (which is a string representation of the tokens list).
+    //if (t.isNew) {
+      t.setDocumentString(next);
+    //}
+
+    //if(err) { next(err); return; }
+    //next(err);
   })
 });
 

@@ -104,7 +104,7 @@ body.tagging-interface-body {
 	max-width: 100%;
 	min-height: 25vh;
 	margin-left: 370px;
-	background: #eee;
+	background: #e9e9e9;
 
 }
 #sentence-tagging {
@@ -427,7 +427,7 @@ body.taking-screenshot .save-to-png {
 		padding-top: 5px;
 		padding-bottom: 5px;
 		margin-bottom: -10px;
-		background: #eee;
+		background: #e9e9e9;
 		font-size: 0.9em;
 		.document {
 			box-shadow: none;
@@ -465,7 +465,7 @@ body.taking-screenshot .save-to-png {
 
 
 		&.header { // Emulates an extra bit of padding at the top
-			background: #eee;
+			background: none;
 			font-weight: bold;
 			font-size: 0.9em;
 			text-align: center;

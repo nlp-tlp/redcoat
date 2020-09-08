@@ -13,7 +13,6 @@ var DocumentGroupAnnotation = require('../document_group_annotation');
 
 
 
-
 DocumentGroup.find({}, function(err, docgroups) {
 	console.log(docgroups.length);
 
@@ -83,6 +82,26 @@ DocumentGroup.find({}, function(err, docgroups) {
 				if(err) { console.log(err); }
 				console.log("Inserted", singleDAs.length, "document annotations.");
 
+
+				// Forcefully save each one to ensure they validate, and so that the document strings get added
+				Document.find({}, function(err, docs) {
+					function saveDocs(docs, next) {
+						if(docs.length === 0) next();
+						var d = docs.pop();
+
+						d.save(function(err, savedDoc) {
+							if(err) console.log(err);
+							console.log(savedDoc.document_string, docs.length);
+							saveDocs(docs, next);
+						})
+					}
+					saveDocs(docs, function() {
+						console.log('done');
+						process.exit();
+					})
+				});
+
+
 				process.exit();
 			});
 
@@ -93,6 +112,6 @@ DocumentGroup.find({}, function(err, docgroups) {
 
 
 	
-})
+// })
 
 

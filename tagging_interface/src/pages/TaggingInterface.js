@@ -1000,23 +1000,36 @@ class TaggingInterface extends Component {
     this.state = {
       // Data (from the server)
       // The data in this object is only changed by calling the queryAPI method.
-      data: {
-        documentGroup: [],
-        categoryHierarchy: {'children': []},
-        pageNumber: -1,
-        annotatedDocGroups: -1,
-        username: "",
-      },
+      // data: {
+      //   documentGroup: [],
+      //   documentIds:   [],
+      //   categoryHierarchy: {'children': []},
+      //   pageNumber: -1,
+      //   annotatedDocGroups: -1,
+      //   username: "",
+      // },
 
       documentGroupAnnotationId: null, // The ID of the document group annotation object related to the document group the user is currently
                                        // looking at. Will be null if the doc group has not been annotated by the user yet.
                                        // Will be set when querying the API (for a previously annotated document group) or when
                                        // submitting the annotations of a document group via submitAnnotations().
 
-      // Annotations array
+
+      documents:   [],    // Stores the current documents
+      documentIds: [],    // Stores the Mongo IDs of the current documents,
+
+      documentAnnotationIds: [],    // Stores the Mongo IDs of the current document annotations (if they exist already)
+
+      categoryHierarchy: {'children': []},  // Stores the category hierarchy
+
+
+
       annotations: [],  // Stores the user's annotations.
       confidences: [],  // Stores the user's confidences.
       comments:    [],  // Stores the comments (made by any user)
+
+
+      
 
       // Selections
       selections: this.getEmptySelectionsArray(10),       // The selections is an array containing a sub-array for each document,
@@ -1095,7 +1108,7 @@ class TaggingInterface extends Component {
     }
     if(!e.target.classList.contains('word-inner')) { // Ensure that the user is not hovering over a word            
       var sentenceIndex = this.state.currentSelection.sentenceIndex;
-      this.updateSelections(sentenceIndex, this.state.data.documentGroup[sentenceIndex].length - 1, 'up');
+      this.updateSelections(sentenceIndex, this.state.documents[sentenceIndex].length - 1, 'up');
     } 
   }
 
@@ -1289,6 +1302,9 @@ class TaggingInterface extends Component {
   // This could be either the dictionary-based annotations or the annotations that the user has previously entered.
   initAnnotationsArray(documents, automaticAnnotations) {
 
+    console.log(documents, "<");
+    console.log(automaticAnnotations, "<");
+
     var annotations = new Array(documents.length);
     for(var doc_idx in documents) {
       annotations[doc_idx] = new Array(documents[doc_idx].length);
@@ -1299,9 +1315,12 @@ class TaggingInterface extends Component {
 
     if(!automaticAnnotations) return annotations;
 
+    //console.log(this.state.documents, "<")
+
     // Load annotations from the automaticAnnotations array if present.
     for(var doc_idx in automaticAnnotations) {
       for(var mention_idx in automaticAnnotations[doc_idx]['mentions']) {
+
 
         var mention = automaticAnnotations[doc_idx]['mentions'][mention_idx];
         var start = mention['start'];
@@ -1312,6 +1331,8 @@ class TaggingInterface extends Component {
 
           for(var k = start; k < end; k++) {
             var bioTag = k === start ? 'B' : "I";
+
+            console.log(annotations[doc_idx], k, automaticAnnotations[doc_idx]['mentions'])
             annotations[doc_idx][k].addLabel(bioTag, label, documents[doc_idx].slice(start, end).join(' '), start, end - 1)
           }
         }
@@ -1368,7 +1389,12 @@ class TaggingInterface extends Component {
   loadNextPage() {
     if(this.state.loading.querying) return; // Don't load new page if currently loading
     var nextPageNumber = this.state.pageNumber + 1;
+
+    console.log("HINHINH", this.state.pageNumber, this.state.totalPagesAvailable)
+
     if(nextPageNumber === (this.state.totalPagesAvailable)) {
+
+
       this.queryAPI(false);
     } else {
       this.queryAPI(false, nextPageNumber);
@@ -1392,11 +1418,13 @@ class TaggingInterface extends Component {
   /* API calls */
 
   queryAPI(firstLoad, pageNumber) {
-    var route = 'getDocumentGroup';
+    var route;
 
     // If this function was called with a pageNumber, load a specific documentGroupAnnotation.
     if(pageNumber) {
-      route = 'getPreviouslyAnnotatedDocumentGroup?pageNumber=' + pageNumber;
+      route = 'getPreviouslyAnnotatedDocumentGroup?pageNumber=' + pageNumber + "&perPage=20";
+    } else {
+      route = 'getDocumentGroup?perPage=20';
     }
 
     this.setState({
@@ -1430,14 +1458,14 @@ class TaggingInterface extends Component {
                 querying: false,
                 saving: false,
               },
-              data: {
-                username: d.username,
-                projectName: d.projectName,
-                documentGroup: [],
-                categoryHierarchy: {'children': []},
-                pageNumber: -1,
-                annotatedDocGroups: -1,
-              },
+              // data: {
+              //   username: d.username,
+              //   documentGroup: [],
+              //   categoryHierarchy: {'children': []},
+              //   pageNumber: -1,
+              //   annotatedDocGroups: -1,
+              // },
+              // TODO: Fix this
             })
             return;
           } 
@@ -1446,16 +1474,30 @@ class TaggingInterface extends Component {
           this.setState(
             {
               data: d,
+              
+              documents:   d.documents,
+              documentIds: d.documentIds,
+
+              documentAnnotationIds: d.documentAnnotationIds ? d.documentAnnotationIds : null, // Will only be present when querying existing annotations
+
+              confidences: this.initConfidencesArray(d.documents),
+              annotations: this.initAnnotationsArray(d.documents, d.automaticAnnotations),
+              comments:    d.comments,
+
+              categoryHierarchy: d.categoryHierarchy,
+
               entityColourMap: this.initEntityColourMap(d.categoryHierarchy.children),
-              confidences: this.initConfidencesArray(d.documentGroup),
-              annotations: this.initAnnotationsArray(d.documentGroup, d.automaticAnnotations),
-              comments: d.comments,
-              selections: this.getEmptySelectionsArray(d.documentGroup.length),
+              
+              selections: this.getEmptySelectionsArray(d.documents.length),
               mostRecentSelectionText: null,
+
               pageNumber: d.pageNumber,
-              totalPagesAvailable: d.annotatedDocGroups + 1,
+              totalPages: d.totalPages,
+              totalPagesAvailable: d.totalPagesAvailable + 1,
+
               docGroupLastModified: d.lastModified,
               documentGroupAnnotationId: d.documentGroupAnnotationId, // Will be null if this doc group has not yet been annotated
+
               changesMade: false,
               recentlySaved: false,
               loading: {
@@ -1464,16 +1506,17 @@ class TaggingInterface extends Component {
               },     
               taggingCompletePage: false,         
             }, () => { 
-              console.log("Data:", this.state.data);
 
               if(d.projectTitle && d.projectAuthor) {
                 this.props.setProject(d.projectTitle, d.projectAuthor)
               }
 
+              console.log(this.state.totalPagesAvailable)
+
               // Initialise keybinds and mouse events only on the first API call.
               if(firstLoad) {
                 this.initKeybinds();              
-                this.initHotkeyMap(this.state.data.categoryHierarchy.children);   
+                this.initHotkeyMap(this.state.categoryHierarchy.children);   
               }
 
               this.initMouseEvents();
@@ -1534,8 +1577,8 @@ class TaggingInterface extends Component {
       },
       dataType: "json",
       body: JSON.stringify({
-        documentGroupId: this.state.data.documentGroupId,
-        documentGroupAnnotationId: this.state.documentGroupAnnotationId,
+        documentIds: this.state.documentIds,
+        documentAnnotationIds: this.state.documentAnnotationIds,
         labels: annotationsJSON
       }),  
     };
@@ -1555,7 +1598,9 @@ class TaggingInterface extends Component {
 
           console.log(d);
 
-          var documentGroupAnnotationId = d.documentGroupAnnotationId;
+          var documentAnnotationIds = d.documentAnnotationIds;
+
+
           console.log("Submitted annotations OK");
 
           // If the user is on the last page (i.e. the 'current group'), add one to the totalPages array so that the user can
@@ -1576,10 +1621,13 @@ class TaggingInterface extends Component {
 
           this.setState({
              docGroupLastModified: Date.now(),
-             totalPagesAvailable: newTotalPagesAvailable,
+
+             totalPagesAvailable: newTotalPagesAvailable,       
+
+             documentAnnotationIds: documentAnnotationIds,
+
              changesMade: false,
              recentlySaved: true,
-             documentGroupAnnotationId: documentGroupAnnotationId,
              loading: {
               querying: false,
               saving: false
@@ -1590,7 +1638,6 @@ class TaggingInterface extends Component {
           alert(data);
         }
         
-        //this.queryAPI(this.state.data.pageNumber + 1);
       });
     });
   }
@@ -1666,12 +1713,12 @@ class TaggingInterface extends Component {
           }
         } else if (direction === "right") {
           if(!this.state.holdingShift) { // If shift *is* being held down, this won't happen (the wordStartIndex won't change).
-            selection.wordStartIndex = Math.min(this.state.data.documentGroup[i].length - 1, selection.wordEndIndex + 1);
+            selection.wordStartIndex = Math.min(this.state.documents[i].length - 1, selection.wordEndIndex + 1);
           }
-          selection.wordEndIndex   = Math.min(this.state.data.documentGroup[i].length - 1, selection.wordEndIndex + 1);
+          selection.wordEndIndex   = Math.min(this.state.documents[i].length - 1, selection.wordEndIndex + 1);
         }
 
-        mostRecentSelectionText = this.state.data.documentGroup[i].slice(selection.wordStartIndex, selection.wordEndIndex + 1).join(' ');
+        mostRecentSelectionText = this.state.documents[i].slice(selection.wordStartIndex, selection.wordEndIndex + 1).join(' ');
       }
     }
     this.setState({
@@ -1683,7 +1730,7 @@ class TaggingInterface extends Component {
   // Get an empty selections array whose length is the number of docs in the current documentGroup.
   getEmptySelectionsArray(numDocs) {
     if(!numDocs) {
-      var numDocs = this.state.data.documentGroup.length;
+      var numDocs = this.state.documents.length;
     }
     var selections = new Array(numDocs);
     for(var i = 0; i < selections.length; i++) {
@@ -1702,7 +1749,7 @@ class TaggingInterface extends Component {
     });
     this.setState({
       selections: selections,
-      mostRecentSelectionText: this.state.data.documentGroup[0][0],
+      mostRecentSelectionText: this.state.documents[0][0],
     });
   }
 
@@ -1769,7 +1816,7 @@ class TaggingInterface extends Component {
         wordStartIndex: wordStartIndex,
         wordEndIndex: wordEndIndex
       });
-      var mostRecentSelectionText = this.state.data.documentGroup[sentenceIndex].slice(wordStartIndex, wordEndIndex + 1).join(' ');
+      var mostRecentSelectionText = this.state.documents[sentenceIndex].slice(wordStartIndex, wordEndIndex + 1).join(' ');
 
       clearWindowSelection(); // Remove the default browser selection highlighty thing.
     }    
@@ -1792,7 +1839,7 @@ class TaggingInterface extends Component {
   applyTag(entityClass) {    
     //console.log("Applying tag:", entityClass);
     var selections = this.state.selections;
-    var documents = this.state.data.documentGroup;
+    var documents = this.state.documents;
     var annotations = this.state.annotations;
 
     for(var doc_idx in selections) {
@@ -1965,9 +2012,7 @@ class TaggingInterface extends Component {
       dataType: "json",
       body: JSON.stringify({
         text: message,
-        documentGroupId: this.state.data.documentGroupId,
-        documentIndex: documentIndex,
-        documentString: this.state.data.documentGroup[documentIndex].join(' '),
+        documentId: this.state.documentIds[documentIndex],
       }),  
     };
 
@@ -2002,7 +2047,7 @@ class TaggingInterface extends Component {
   // TODO: Make it do something
   captureEvent(eventAction, sentenceIndex, spanStart, spanEnd, entityClass) {
 
-    var tokenString = this.state.data.documentGroup[sentenceIndex].slice(spanStart, spanEnd + 1).join(' ')
+    var tokenString = this.state.documents[sentenceIndex].slice(spanStart, spanEnd + 1).join(' ')
 
     var event = {
       "action": eventAction,
@@ -2030,7 +2075,7 @@ class TaggingInterface extends Component {
   render() {
     var taggingCompletePage = this.state.taggingCompletePage;
 
-    console.log(this.props.projectTitle);
+    console.log(this.state.documents);
 
     return (
         <div>            
@@ -2049,7 +2094,7 @@ class TaggingInterface extends Component {
                 <ControlBar
                   showingProgressBar = {this.state.showingProgressBar}
                   pageNumber = {this.state.pageNumber}
-                  totalPages = {this.state.data.docGroupsPerUser}
+                  totalPages = {this.state.totalPages}
                   totalPagesAvailable = {this.state.totalPagesAvailable}
                   lastModified={this.state.docGroupLastModified}
                   recentlySaved={this.state.recentlySaved}
@@ -2065,7 +2110,7 @@ class TaggingInterface extends Component {
 
                 <DocumentContainerHeader/>
                     
-                { this.state.data.documentGroup.map((doc, i) => 
+                { this.state.documents.map((doc, i) => 
                   <DocumentContainer
                     key={i}
                     index={ i }
@@ -2102,7 +2147,7 @@ class TaggingInterface extends Component {
               />            
               
               <CategoryHierarchy
-                items={this.state.data.categoryHierarchy.children}
+                items={this.state.categoryHierarchy.children}
                 hotkeyMap={this.state.hotkeyMap}
                 hotkeyChain={this.state.hotkeyChain.join('')}
                 initHotkeyMap={this.initHotkeyMap.bind(this)}

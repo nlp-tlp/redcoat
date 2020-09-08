@@ -68,17 +68,17 @@ DocumentAnnotationSchema.methods.verifyLabelsAreValid = function(done) {
 
   // Verify that the number annotations = number of documents, and that the number
   // of labels is the same as the number of tokens in the corresponding document.
-  // function verifyLabelTokenCountsSame(t, doc) {
-  //   if(doc.documents.length != t.labels.length) {
-  //     return new Error("Annotated documents must contain same number of annotations as document group.");
-  //   }
-  //   for(var i = 0; i < doc.documents.length; i++) {
-  //     if(doc.documents[i].length != t.labels[i].length) {
-  //       return new Error("Annotated document #" + i + " must be the same length as corresponding document.")
-  //     }
-  //   }
-  //   return null; // no error
-  // }
+  function verifyLabelTokenCountsSame(t, doc) {
+    if(doc.tokens.length != t.labels.length) {
+      return new Error("Annotated documents must contain same number of annotations as document group.");
+    }
+    
+    if(doc.tokens.length != t.labels.length) {
+      return new Error("Annotated document #" + i + " must be the same length as corresponding document.")
+    }
+    
+    return null; // no error
+  }
 
   // Ensure the label markers are valid, i.e. are strictly either "B-", "I-", or "".
   function verifyLabelMarkersValid(t) {
@@ -254,6 +254,64 @@ DocumentAnnotationSchema.methods.toMentionsJSON = function(done) {
 
 
 
+// Same as above but takes doc as an argument instead of querying
+DocumentAnnotationSchema.methods.toMentionsJSONSync = function(doc, done) {
+  var t = this;
+  var documentJSON = [];
+
+  var tokens = doc.tokens;
+  var annotations = t.labels;
+  var currentMention = null;
+  var mentions = [];
+
+  for(var token_idx in tokens) {
+    var token_idx = parseInt(token_idx);
+
+    var token = tokens[token_idx];
+    var bioTagAndLabels = annotations[token_idx];
+
+    if(currentMention) {
+      currentMention.end = token_idx;
+    }       
+
+    if(bioTagAndLabels.length === 1) {  // [""] is effectively an "O", i.e. this token is not part of a mention
+      var bioTag = null;
+      var labels = null;
+
+      if(currentMention) {
+        mentions.push(currentMention);
+        currentMention = null;
+      }
+      
+    } else {
+      var bioTag = bioTagAndLabels[0];
+      var labels = bioTagAndLabels[1];
+      if(bioTag === "B-") {
+        if(currentMention) {
+          mentions.push(currentMention);
+        }
+        currentMention = { start: token_idx, end: null, labels: labels }
+
+      } else if (bioTag === "I-") {
+        // No need to do anything
+      }
+    }
+    if(token_idx === (tokens.length - 1)) {
+      if(currentMention) {
+        currentMention.end = token_idx + 1;
+        mentions.push(currentMention);
+      }         
+    }
+  }
+
+  documentJSON = {
+    tokens: tokens,
+    mentions: mentions
+  }
+
+  return documentJSON;
+}
+
 /* Middleware */
 
 DocumentAnnotationSchema.pre('save', function(next) {
@@ -290,17 +348,16 @@ DocumentAnnotationSchema.pre('save', function(next) {
   });
 });
 
-DocumentAnnotationSchema.post('save', function(next) {
+DocumentAnnotationSchema.post('save', function() {
   var t = this;
 
   // 1. Update the number of annotations of the project.
   t.updateProjectNumDocumentAnnotations(function(err) {
 
     // 2. Update the agreement of this DGA's document group.
-    var Document = require('./document');
     Document.findById({_id: t.document_id}, function(err, doc) {
       doc.updateAgreement(function(err) {
-        // next();        
+
       });
     });    
   });
