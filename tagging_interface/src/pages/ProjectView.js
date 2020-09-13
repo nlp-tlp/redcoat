@@ -56,7 +56,7 @@ class WaffleChart extends Component {
     var maxValue = this.props.data.length - 1;
 
     var total = this.props.data.reduce((a, b) => a + b, 0);
-    var ratio = 100 / total;
+    var ratio = Math.min(100, total) / total;
 
     var tooltips = [];
 

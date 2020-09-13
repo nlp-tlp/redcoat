@@ -46,7 +46,8 @@ router.get('/:id',         verifyUserInProject, projectController.getProjectDeta
 
 
 router.get('/:id/tagging/getDocumentGroup', verifyUserInProject, projectController.getDocumentGroup);
-router.get('/:id/tagging/getPreviouslyAnnotatedDocumentGroup', verifyUserInProject, projectController.getPreviouslyAnnotatedDocumentGroup);
+//router.get('/:id/tagging/getDocumentGroup', verifyUserInProject, projectController.getDocumentGroup);
+//router.get('/:id/tagging/getPreviouslyAnnotatedDocumentGroup', verifyUserInProject, projectController.getDocumentGroup2);
 
 router.post('/:id/tagging/modify_hierarchy', verifyUserInProject, projectController.modifyHierarchy);
 

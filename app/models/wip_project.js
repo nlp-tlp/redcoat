@@ -6,8 +6,12 @@ var Schema = mongoose.Schema;
 var cf = require("./common/common_functions")
 //var WipDocumentGroup = require('./wip_document_group')
 var Project = require("./project")
-var DocumentGroup = require("./document_group")
-var FrequentTokens = require("./frequent_tokens")
+
+
+//var DocumentGroup = require("./document_group")
+//var FrequentTokens = require("./frequent_tokens")
+
+
 var ProjectInvitation = require("./project_invitation")
 var natural = require('natural');
 var tokenizer = new natural.TreebankWordTokenizer();

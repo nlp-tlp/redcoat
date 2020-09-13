@@ -254,12 +254,11 @@ DocumentAnnotationSchema.methods.toMentionsJSON = function(done) {
 
 
 
-// Same as above but takes doc as an argument instead of querying
-DocumentAnnotationSchema.methods.toMentionsJSONSync = function(doc, done) {
-  var t = this;
+// Same as above but takes document.tokens as an argument instead of querying
+DocumentAnnotationSchema.statics.toMentionsJSON = function(documentAnnotation, tokens, done) {
+  var t = documentAnnotation;
   var documentJSON = [];
 
-  var tokens = doc.tokens;
   var annotations = t.labels;
   var currentMention = null;
   var mentions = [];

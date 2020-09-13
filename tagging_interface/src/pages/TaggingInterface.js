@@ -237,7 +237,7 @@ class CategoryHierarchy extends Component {
     var openedItems = this.state.openedItems;
 
     return (
-      <div id="category-hierarchy-tree">
+      <div id="category-hierarchy-tree" className={this.props.visible ? "" : "hidden"}>
         <DragDropContext onDragEnd={this.onDragEnd}>
           <Droppable droppableId="droppable">
             {(provided, snapshot) => (
@@ -1422,10 +1422,12 @@ class TaggingInterface extends Component {
 
     // If this function was called with a pageNumber, load a specific documentGroupAnnotation.
     if(pageNumber) {
-      route = 'getPreviouslyAnnotatedDocumentGroup?pageNumber=' + pageNumber + "&perPage=20";
+      //route = 'getPreviouslyAnnotatedDocumentGroup?pageNumber=' + pageNumber + "&perPage=20";
+      route = 'getDocumentGroup?pageNumber=' + pageNumber + '&perPage=20';
     } else {
-      route = 'getDocumentGroup?perPage=20';
+      route = 'getDocumentGroup?pageNumber=latest&perPage=20';
     }
+
 
     this.setState({
       loading: {
@@ -1437,6 +1439,7 @@ class TaggingInterface extends Component {
       fetch('http://localhost:3000/projects/' + this.props.project_id + '/tagging/' + route, fetchConfigGET) // TODO: move localhost out
         .then(response => response.text())
         .then((data) => {
+          console.log("data:", data);
           try { 
             var d = JSON.parse(data);
           } catch(err) {
@@ -1449,8 +1452,11 @@ class TaggingInterface extends Component {
             console.log(d);
             this.setState({
               taggingCompletePage: true,
-              totalPagesAvailable: d.annotatedDocGroups + 1,
-              pageNumber: d.annotatedDocGroups + 1,
+
+              pageNumber: d.pageNumber,
+              totalPages: d.totalPages,
+              totalPagesAvailable: d.totalPagesAvailable + 1,
+
               changesMade: false,
               recentlySaved: false,
 
@@ -1466,13 +1472,14 @@ class TaggingInterface extends Component {
               //   annotatedDocGroups: -1,
               // },
               // TODO: Fix this
-            })
+            }, () => {console.log(this.state)})
             return;
           } 
 
           
           this.setState(
             {
+
               data: d,
               
               documents:   d.documents,
@@ -2075,7 +2082,7 @@ class TaggingInterface extends Component {
   render() {
     var taggingCompletePage = this.state.taggingCompletePage;
 
-    console.log(this.state.documents);
+    console.log(this.state.documents, taggingCompletePage);
 
     return (
         <div>            
@@ -2151,7 +2158,8 @@ class TaggingInterface extends Component {
                 hotkeyMap={this.state.hotkeyMap}
                 hotkeyChain={this.state.hotkeyChain.join('')}
                 initHotkeyMap={this.initHotkeyMap.bind(this)}
-                applyTag={this.applyTag.bind(this)}              
+                applyTag={this.applyTag.bind(this)}        
+                visible={!taggingCompletePage}      
               />
             </div>      
           </div>

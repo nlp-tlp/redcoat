@@ -1667,6 +1667,9 @@ button.blue-button {
 	&.tall {
 		height: 80vh;
 	}
+	&.hidden {
+		display: none;
+	}
 }
 #category-hierarchy-tree-no-results {
 	display: none;

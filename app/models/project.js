@@ -8,14 +8,12 @@ var Schema = mongoose.Schema;
 
 var Document = require('./document');
 var DocumentAnnotation = require('./document_annotation');
-
-
 var Comment = require('./comment');
+var User = require("./user");
+
 
 var cf = require("./common/common_functions");
-var User = require("./user");
 var nanoid = require('nanoid');
-var FrequentTokens = require('./frequent_tokens');
 
 var moment = require('moment');
 
@@ -158,10 +156,50 @@ ProjectSchema.methods.getDocumentsAnnotatedByUser = function(user, next) {
   return DocumentAnnotation.find( {project_id: this._id, user_id: user._id }).sort({created_at: 'asc'}).exec(next);
 }
 
+// Return the documents annotated by the user for this project.
+ProjectSchema.methods.getDocumentsAnnotatedByUser2 = async function(user, next) {
+  var t = this;
+
+  var documentsAndAnnotations = await DocumentAnnotation.aggregate([
+    { $match: { project_id: t._id, user_id: user._id} },
+    {
+      $lookup: {
+        from: "documents",
+        localField: "document_id",
+        foreignField: "_id",
+        as: "document",
+      }
+    },
+    { 
+      $sort: {
+        created_at: 1,
+      }
+    }
+  ]);
+
+  var documentIds = [];
+  var documentTokens = [];
+  var documentAnnotations = [];
+
+  for(var i in documentsAndAnnotations) {
+    var doc = documentsAndAnnotations[i].document.pop();
+    documentTokens.push(doc.tokens);
+    documentIds.push(doc._id);
+    delete documentsAndAnnotations[i].document;
+    documentAnnotations.push(documentsAndAnnotations[i]);
+  }
+
+  return Promise.resolve({
+    documentIds: documentIds,
+    documentTokens: documentTokens,
+    documentAnnotations: documentAnnotations
+  });
+}
+
 
 // Return the number of documents annotated by the user for this project.
 ProjectSchema.methods.getDocumentsAnnotatedByUserCount = function(user, next) {
-  return DocumentAnnotation.count( {project_id: this._id, user_id: user._id }).exec(next);
+  return Promise.resolve(DocumentAnnotation.count( {project_id: this._id, user_id: user._id }));
 }
 
 // // Return the number of documents annotated by the user for this project.
@@ -649,20 +687,17 @@ ProjectSchema.methods.updateNumDocumentAnnotations = function(next) {
 
 
 // Retrieve the number of documents each user must annotate for a project, based on the overlap, number of annotators, and number of document groups in the project.
-ProjectSchema.methods.getDocumentsPerUser = function(next) {
+ProjectSchema.methods.getDocumentsPerUser = async function() {
   // Document count = total number of documents
   // overlap: number of times each doc must be annotated
   // num users: number of users annotating
   var numAnnotators = this.user_ids.active.length;
   var overlap = this.overlap;
  
-  this.getNumDocuments(function(err, numDocs) {
-    var docsPerUser = 1.0 / numAnnotators * overlap * numDocs;
+  var numDocs = await this.getNumDocuments();
+  var docsPerUser = 1.0 / numAnnotators * overlap * numDocs;
 
-    //console.log("<<<<", docGroupsPerUser, numAnnotators, numDocGroups, "<<>>")
-    next(err, docsPerUser);
-  });
-  
+  return Promise.resolve(docsPerUser);  
 }
 
 // Sorts the project's documents in ascending order of the number of times they have been annotated.
@@ -691,13 +726,13 @@ ProjectSchema.methods.getUsers = function(next) {
 // Recommend a group of documents to a user. This is based on the documents that the user is yet to annotate.
 // Only documents that have been annotated less than N times will be recommended, where N = the "overlap" of the project.
 // Results are sorted based on the Document that was last recommended.
-ProjectSchema.methods.recommendDocsToUser = function(user, numDocs, next) {
+ProjectSchema.methods.recommendDocsToUser = async function(user, numDocs) {
   var t = this;
   // All doc groups with this project id, where the times annotated is less than overlap, that the user hasn't already annotated
   var q = { $and: [{ project_id: t._id}, { times_annotated: { $lt: t.overlap } }, { _id: { $nin: user.docgroups_annotated }} ] };
 
 
-  Document.aggregate([
+  var docs = await Document.aggregate([
     { $match: q, },
     { $sort: {
         last_recommended: 1,
@@ -708,26 +743,25 @@ ProjectSchema.methods.recommendDocsToUser = function(user, numDocs, next) {
       $limit: Math.min(cf.MAX_DOC_GROUP_SIZE, numDocs),
 
     }
-  ], function(err, docs) {
-    //console.log(err, docgroups, "<<>>")
-    if(err) return next(err);
-    if(docs.length == 0) { return next(new Error("No documents left")) } //TODO: fix this
-    //var docgroup = docgroups[0];
-
-    var doc_ids = [];
-    var docgroup = [];
-    for(var i in docs) {
-      doc_ids.push(docs[i]._id);
-      docgroup.push(docs[i]);
-    }
+  ]);
 
 
-    Document.updateMany( {_id: { $in: doc_ids }}, { last_recommended: Date.now() }, {}, function(err) {
-      console.log(err);
-      return next(err, docgroup);
-    })
+  //console.log(err, docgroups, "<<>>")
+  if(docs.length == 0) { return Promise.reject(new Error("No documents left")) } //TODO: fix this
+  //var docgroup = docgroups[0];
+
+  var doc_ids = [];
+  var docgroup = [];
+  for(var i in docs) {
+    doc_ids.push(docs[i]._id);
+    docgroup.push(docs[i]);
+  }
+
+
+  await Document.updateMany( {_id: { $in: doc_ids }}, { last_recommended: Date.now() }, {});
+  return Promise.resolve(docgroup);
     
-  });
+  
 
 
   // Document.count(q, function(err, count) {
@@ -1259,10 +1293,7 @@ ProjectSchema.methods.getAverageAgreement = async function() {
   annotations: ??
 */
 
-function test(done) {
-  var a = 5;
-  done(5);
-}
+
 
 ProjectSchema.methods.getDetails = async function(done) {
 
@@ -1279,21 +1310,7 @@ ProjectSchema.methods.getDetails = async function(done) {
 
   var entityChartData = await t.getEntityChartData()
   var comments = await t.getAllCommentsArray();
-
-
-
-
-  
-
-
-            //t.getAllCommentsArray(function(err, comments) {
-
-
-
-              // test
-
-
-
+ 
               
               //////////////////// Test code
               // Can unwind the docs this way to get the agreement for each doc
@@ -1376,7 +1393,8 @@ ProjectSchema.methods.getDetails = async function(done) {
     var elapsed = new Date().getTime() - start;
 
     console.log("... done (" + elapsed + "ms)")
-    return done(null, data);
+    console.log('pingu')
+    return Promise.resolve(data);
 }
 
 
@@ -1476,12 +1494,12 @@ ProjectSchema.statics.getInvolvedProjectData = async function(user) {
 }
 
 
-// Retrieve an array of comments for each document in a group of documents.
-ProjectSchema.statics.getCommentsArray = async function(documents, next) {
+// Retrieve an array of comments for each document in a group of document ids.
+ProjectSchema.statics.getCommentsArray = async function(documentIds, next) {
 
   var all_comments = [];
-  for(var i in documents) {
-    var comments = await Comment.find({document_id: documents[i]._id}).sort('created_at').lean();
+  for(var i in documentIds) {
+    var comments = await Comment.find({document_id: documentIds[i]}).sort('created_at').lean();
     comments = await appendUserProfilesToComments(comments);
     all_comments.push(comments);
   }
@@ -1514,7 +1532,7 @@ ProjectSchema.pre('save', function(next) {
   }
 
   // 1. Validate admin exists
-  var User = require('./user')
+  //var User = require('./user')
   t.verifyAssociatedExists(User, t.user_id, function(err) {
     if(err) { next(err); return; }
 

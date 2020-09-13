@@ -48,3 +48,37 @@ FrequentTokensSchema.methods.addToken = function(token, category) {
 var FrequentTokens = mongoose.model('FrequentTokens', FrequentTokensSchema);
 
 module.exports = FrequentTokens;
+
+
+
+
+
+
+
+/*              
+
+automatic_labeller_id: ...
+
+token_str: "hydraulic air fan" 
+
+ngram_size: 3,
+
+
+times_labeled: 8,           // Have to retroactively go back when a new ngram is created to check whether it has been labeled or not labeled previously
+times_not_labeled: 2,
+times_seen: 10,
+
+confidence: 0.8,
+
+labels: [
+  [ ["Item"], 6 ],
+  [ ["Item", "Location"], 2]
+]
+document_annotation_ids: [                        // use this to retroactively go back
+  (array of ids in which this ngram occurs)
+]
+
+
+
+
+*/
