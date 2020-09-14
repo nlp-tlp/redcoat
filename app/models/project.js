@@ -197,6 +197,7 @@ ProjectSchema.methods.getDocumentsAnnotatedByUser = async function(user, searchT
         //     }         
         // },
         "created_at": 1,
+        "updated_at": 1,
       }
     },
     { 
@@ -208,7 +209,7 @@ ProjectSchema.methods.getDocumentsAnnotatedByUser = async function(user, searchT
 
   var documentsAndAnnotations = await DocumentAnnotation.aggregate(query);
 
-  console.log(documentsAndAnnotations);
+  //console.log(documentsAndAnnotations);
 
   var documentIds         = new Array();
   var documentAnnotationIds = new Array();
@@ -233,11 +234,17 @@ ProjectSchema.methods.getDocumentsAnnotatedByUser = async function(user, searchT
     documentLabels.push(doc.labels);
   }
 
+  var lastModified = null;
+  if(documentsAndAnnotations.length > 0) {
+    lastModified = documentsAndAnnotations[0].updated_at
+  }
+
   return Promise.resolve({
     documentIds: documentIds,
     documentAnnotationIds: documentAnnotationIds,
     documentTokens: documentTokens,
-    documentLabels: documentLabels
+    documentLabels: documentLabels,
+    lastModified: lastModified,
   });
 }
 

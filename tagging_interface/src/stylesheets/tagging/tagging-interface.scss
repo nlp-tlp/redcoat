@@ -173,15 +173,33 @@ body.taking-screenshot .save-to-png {
 		min-width: 220px;
 	}
 
-	input {
-		
+	.docs-per-page-select-container {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		flex-direction: row;
+		label {
+			word-wrap: nowrap;
+			display: block;
+			font-size: 14px;
+			min-width: 70px;
+		}
+		select {
+			width: 60px;
+			padding: 3px 5px;
+		}
+	}
+
+	input, select {
+		text-align: center;
 		border-radius: 4px;
 		font-size: 15px;
 		padding: 5px 15px;
 		padding-top: 4px;
 		line-height: inherit; 
 		box-sizing: border-box;
-		&:focus {
+		outline: none;
+		&:focus, &:active {
 			border: 2px solid $button-blue;
 		}
 		&.error {
@@ -198,6 +216,7 @@ body.taking-screenshot .save-to-png {
 		padding-right: 12px;
 		width: 140px;
 	}
+
 	.search-container.active > * {
 		background: rgba($button-blue, 0.15);		
 		border-color: rgba($button-blue, 0.3);		
@@ -250,6 +269,14 @@ body.taking-screenshot .save-to-png {
 	.current-page-container {
 		font-size: 0.9em;
 		position: relative;
+		min-width: 300px;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		.docs-per-page-select-container {
+			margin-left: 30px;
+		}
 		span.group-name {
 			display: block;
 			transition: padding-bottom 0.3s ease;

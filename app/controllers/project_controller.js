@@ -117,7 +117,8 @@ module.exports.getDocumentGroup = async function(req, res) {
 
 
 
-  var project = await Project.findById({ _id: id });  
+  var project = await Project.findById({ _id: id });
+  var lastModified = null;  
 
   // If pageNumber is latest, recommend a group of docs to the user.
   // Send an error message if there are no doc groups left.
@@ -166,6 +167,7 @@ module.exports.getDocumentGroup = async function(req, res) {
     var documentTokens        = documentsAndAnnotations.documentTokens;
     var documentAnnotations   = documentsAndAnnotations.documentLabels;
     var documentAnnotationIds = documentsAndAnnotations.documentAnnotationIds;
+    var lastModified          = documentsAndAnnotations.lastModified;
 
     var docsInSearchQuery     = documentIds.length;
 
@@ -207,8 +209,6 @@ module.exports.getDocumentGroup = async function(req, res) {
   var categoryHierarchy   = ch.txt2json(ch.slash2txt(project.category_hierarchy), project.category_hierarchy);
 
   var projectAuthor = await User.findById({ _id: project.user_id });
-
-  var lastModified = documentAnnotations ? (documentAnnotations.length > 0 ? documentAnnotations[0].updated_at : null) : null;
 
   var totalPagesAvailable = Math.ceil(docsAnnotatedByUser / docsPerPage) + 1;
 

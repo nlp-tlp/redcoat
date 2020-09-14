@@ -1072,6 +1072,8 @@ class TaggingInterface extends Component {
 
       searchTerm: null, // Whether the user is currently searching for docs
 
+      docsPerPage: 10, // The number of docs per page, can be changed by the user
+
       taggingCompletePage: false, // Set to true when the user is on the 'tagging complete' page.
 
     }    
@@ -1429,8 +1431,23 @@ class TaggingInterface extends Component {
         this.queryAPI(false);
       }
       
-    });
-   
+    });   
+  }
+
+  setDocsPerPage(e) {
+
+    var docsPerPage = e.target.value;
+    console.log(e);
+
+    this.setState({
+      docsPerPage: docsPerPage
+    }, () => {
+      if(this.state.searchTerm) {
+        this.queryAPI(false, 1);
+      } else {
+        this.queryAPI(false);
+      }
+    })
   }
 
   /* API calls */
@@ -1443,9 +1460,9 @@ class TaggingInterface extends Component {
     // If this function was called with a pageNumber, load a specific documentGroupAnnotation.
     if(pageNumber) {
       //route = 'getPreviouslyAnnotatedDocumentGroup?pageNumber=' + pageNumber + "&perPage=20";
-      route = 'getDocumentGroup?pageNumber=' + pageNumber + '&perPage=20';
+      route = 'getDocumentGroup?pageNumber=' + pageNumber + '&perPage=' + this.state.docsPerPage;
     } else {
-      route = 'getDocumentGroup?pageNumber=latest&perPage=20';
+      route = 'getDocumentGroup?pageNumber=latest&perPage=' + this.state.docsPerPage;
     }
     if(searchTerm) {
       route += "&searchTerm=" + searchTerm;
@@ -1631,7 +1648,7 @@ class TaggingInterface extends Component {
 
           // If the user is on the last page (i.e. the 'current group'), add one to the totalPages array so that the user can
           // click 'Next' to go to the latest doc group.
-          if(this.state.pageNumber === this.state.totalPagesAvailable) {
+          if(this.state.pageNumber === this.state.totalPagesAvailable && !this.state.searchTerm) {
             var newTotalPagesAvailable = this.state.totalPagesAvailable + 1;
             this.setState({
               showingProgressBar: true,
@@ -2129,12 +2146,14 @@ class TaggingInterface extends Component {
                   querying={this.state.loading.querying}
                   saving={this.state.loading.saving}
                   inSearchMode={this.state.searchTerm}
+                  docsPerPage={this.state.docsPerPage}
 
                   searchDocuments={this.searchDocuments.bind(this)}
                   submitAnnotations={this.submitAnnotations.bind(this)}
                   loadPreviousPage={this.loadPreviousPage.bind(this)}
                   loadNextPage={this.loadNextPage.bind(this)}
                   goToPage={this.goToPage.bind(this)}
+                  setDocsPerPage={this.setDocsPerPage.bind(this)}
                 />
 
                 <DocumentContainerHeader/>
@@ -2397,6 +2416,10 @@ class ControlBar extends Component {
 
     var lastModified = this.props.changesMade ? (this.props.saving ? "" : "Changes not saved") : (this.props.lastModified ? "Saved on " + formatDate(this.props.lastModified) : "");
 
+    console.log(lastModified);
+
+    var pageNumberOptions = [1, 3, 5, 10, 15, 20];
+
     return (
       <div id="pagination">
         <div className="page-button-container previous-page">
@@ -2413,8 +2436,19 @@ class ControlBar extends Component {
             totalPagesAvailable={this.props.totalPagesAvailable}
             totalPages={this.props.totalPages}
           />
+
+
+          <div className="docs-per-page-select-container">
+            <label>Per page:</label>
+            <select className="docs-per-page-select" onChange={this.props.setDocsPerPage} >
+              {pageNumberOptions.map((p, index) => 
+                <option value={p} selected={p === this.props.docsPerPage}>{p}</option>
+              )}
+            </select>
+          </div>
         </div>
         <div className="group-last-modified">{lastModified }</div>
+
         <div className="page-button-container "><SaveButton changesMade={this.props.changesMade} recentlySaved={this.props.recentlySaved} saving={this.props.saving} submitAnnotations={this.props.submitAnnotations}  /></div>
         <div className="page-button-container next-page">
           <button className={(latestGroup  ? " disabled" : (this.props.querying ? "loading" : ""))}  onClick={this.props.loadNextPage}>Next<i className="fa fa-chevron-right"></i></button>
