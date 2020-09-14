@@ -2170,7 +2170,7 @@ a#untag-tokens {
 
 #category-hierarchy-tree.display-only ul li span.category-name,
 #category-hierarchy-tree.display-only ul li span.description {
-	cursor: default;
+	cursor: auto;
 
 }
 #category-hierarchy-tree.display-only > ul {
@@ -2179,6 +2179,7 @@ a#untag-tokens {
 }
 #category-hierarchy-tree.display-only ul li {
 	color: #111 !important;
+	user-select: auto;
 	span.inner-container {
 		span.category-name, span.description {
 		padding-top: 10px;
@@ -2187,7 +2188,7 @@ a#untag-tokens {
 		}
 	}
 	span.open-button {
-		margin-top: 11px;
+		margin-top: 9px;
 	}
 	&.header-row {
 		font-weight: bold;
@@ -2208,7 +2209,7 @@ a#untag-tokens {
 	box-sizing: border-box;
 	> ul:not(.dragging) span.open-button:hover {
 		background: white;
-		border: 2px solid #222;
+		border: 2px solid rgba(0, 0, 0, 0.15);
 	}
 	> ul:not(.dragging) li:hover span.drag-handle {
 		opacity: 1;

@@ -230,7 +230,7 @@ class CategoryHierarchy extends Component {
                 ref={provided.innerRef}
 
               >
-                {this.props.displayOnly && <li className="header-row"><span className="inner-container"><span className="category-name">Category</span><span className="description">Description</span></span></li>}
+                {this.props.displayOnly && <li className="header-row"><span className="inner-container"><span className="category-name">Entity Class</span><span className="description">Description</span></span></li>}
                 {items.map((item, index) => (
                   <Category 
                             key={index}

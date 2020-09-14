@@ -7,6 +7,7 @@ var sw = require('stopword');
 
 var cf = require("./common/common_functions.js")
 
+var _ = require('underscore');
 
 /* Schema */
 var DocumentSchema = new Schema({
@@ -80,6 +81,133 @@ DocumentSchema.methods.setDocumentString = function(next) {
 }
 
 
+// Calculate agreement score using Michael's jaccard based method.
+function calculateAgreement(tokens, labels) {
+
+  function mean(arr) {
+    return arr.reduce((a, b) => a + b) / arr.length;
+  }
+
+  // Calculate the label-level scores by calculating the jaccard index between the labels of each token, across each annotator with every
+  // other annotator.
+  function calculateLabelScore(tokens, labels) {
+
+    // Initialise labelSets, an array like [ [ set(annotator 1's labels for token 1), set(annotator 2's labels for token 1) ...], ...  ]
+    labelSets = new Array(tokens.length).fill(null) // [ [ set(annotator 1's labels for token 1)   ]  ]
+    for(var token_idx in tokens) {
+      labelSets[token_idx] = new Array();
+    }
+
+    for(var annotator_idx in labels) {
+      for(var token_idx in tokens) {
+        labelSets[token_idx][annotator_idx] = new Set();
+      }      
+    }
+
+    // Build the label sets array. Kind of like zip in python I guess
+    for(var annotator_idx in labels) {      
+      for(var token_idx in labels[annotator_idx]) {        
+
+        var bioTagAndLabels = labels[annotator_idx][token_idx];
+
+        var bioTag       = bioTagAndLabels[0];
+        if(bioTagAndLabels.length === 1) continue;
+        var labelClasses = bioTagAndLabels[1];
+
+        for(var label of labelClasses) {
+          labelSets[token_idx][annotator_idx].add(label)
+        }        
+      }
+    }
+
+    // Calculate the token-level jaccard scores  
+    var jaccard_scores = new Array();
+    for(var token_idx in labelSets) {
+
+      var token_jaccard_scores = new Array();
+
+      for(var i = 0; i < labelSets[token_idx].length; i++) {
+
+        var myLabels = labelSets[token_idx][i];
+        for(var j = i + 1; j < labelSets[token_idx].length; j++) {
+          var theirLabels = labelSets[token_idx][j];
+
+          var union = _.union(Array.from(myLabels), Array.from(theirLabels));
+          var intersect = _.intersection(Array.from(myLabels), Array.from(theirLabels));
+
+          var jaccard_index = union.length === 0 ? 0 : intersect.length / union.length;                 
+          token_jaccard_scores.push(jaccard_index);
+        }
+
+      }
+      jaccard_scores.push(mean(token_jaccard_scores));
+    }
+    console.log(jaccard_scores);
+    return mean(jaccard_scores);    
+  }
+
+  // Calculate the span score by calculating the jaccard index of each the spans (regardless of label) across annotators.
+  function calculateSpanScore(tokens, labels) {
+
+    var DocumentAnnotation = require('./document_annotation');
+
+    mentions = new Array(labels.length);
+    for(var i in labels) {
+      mentions[i] = new Array();
+    }
+
+    for(var annotator_idx in labels) {
+      var mentionsJSON = DocumentAnnotation.toMentionsJSON(labels[annotator_idx], tokens);
+      for(var m of mentionsJSON.mentions) {
+        var s = m.start;
+        var e = m.end;
+        mentions[annotator_idx].push(s + "_" + e);
+      }      
+    }
+    //console.log("Mentions:\n", mentions)
+
+    var jaccard_scores = new Array();
+    for(var i = 0; i < mentions.length - 1; i++) {
+      
+      var myMentions = mentions[i];
+      
+      for(var j = i + 1; j < mentions.length; j++) {
+        var theirMentions = mentions[j];
+        var union = _.union(Array.from(myMentions), Array.from(theirMentions));
+        var intersect = _.intersection(Array.from(myMentions), Array.from(theirMentions));
+        
+        var jaccard_index = union.length === 0 ? 0 : intersect.length / union.length;     
+
+        //console.log(myMentions, theirMentions, jaccard_index)            
+        jaccard_scores.push(jaccard_index);
+      }
+    }
+
+    return mean(jaccard_scores);
+  }
+
+  labelScore = calculateLabelScore(tokens, labels);
+  spanScore  = calculateSpanScore(tokens, labels);
+  
+  finalScore = (labelScore + spanScore) / 2;
+  console.log("Label score:", labelScore);
+  console.log("Span  score:", spanScore);
+  console.log("Final score:", finalScore);
+
+  return finalScore;
+
+
+}
+
+
+// tokens = ['grease', 'pump', 'not', 'working']
+// labels = [
+//   [ ["B-", ["Item"]], ["B-", ["Item", "Location"]], ["B-", ["Observation"]], ["I-", ["Observation"]] ],
+//   [ ["B-", ["Item"]], ["I-", ["Item"]], ["B-", ["Observation"]], ["I-", ["Observation"]] ],
+//   [ ["B-", ["Item"]], ["B-", ["Item"]], ["B-", ["Observation"]], ["I-", ["Observation"]] ],
+// ]
+// calculateAgreement(tokens, labels);
+
 
 // Update the annotator agreements for each document in this document group.
 // This method will be called whenever a DocumentAnnotation of this document is saved.
@@ -101,102 +229,118 @@ DocumentSchema.methods.updateAgreement = function(next) {
     } else {
     // Otherwise, calculate the agreement score 
 
-      console.log("=====================================")
-      console.log("Calculating agreement");
-
-      var doc = t.tokens;
-
-      var all_document_labels = []; // All labels across each annotator for this document
-
-      var reliabilityData = {}; // { token: [annotator_1_class, annotator_2_class ...]}
-
-      for(token_idx in doc) {
-        reliabilityData[token_idx] = new Array();
+      var labels = new Array();
+      for(var i in dgas) {
+        labels.push(dgas[i].labels);
       }
 
-
-      for(var j in dgas) { // each dga is a document annotation, e.g. one per annotator
-        var dga = dgas[j];
-
-        for(token_idx in doc) {
-
-          var bioTagAndLabels = dgas[j].labels[token_idx];
-
-          //console.log("Token idx:", token_idx, "Labels:", bioTagAndLabels);
-
-          if(bioTagAndLabels.length === 1) { 
-            var labels = new Set();
-          } else {
-            var labels = new Set(bioTagAndLabels[1]); // Only score using the first tag for now, need a better metric!
-          }
-
-          reliabilityData[token_idx].push(labels);  
-
-        }
-      }        
-
-      //console.log(reliabilityData);
-
-      var kValue = 0.5;
+      var agreementValue = calculateAgreement(t.tokens, labels);
+      t.annotator_agreement = agreementValue;
+      t.markModified('annotator_agreement');
+      t.save(function(err, dg) {
+        next(err);     
+      });
+    }
+  });
 
 
-      var jaccardIndexes = [];
-      for(token_idx in reliabilityData) {
 
-        // Calculate union and intersect
-        var union = new Set();
-        var intersect = new Set();
+  //   //   console.log("=====================================")
+  //   //   console.log("Calculating agreement");
 
-        // Get union
-        for(var annotator_idx in reliabilityData[token_idx]) {
-          var arr = Array.from(reliabilityData[token_idx][annotator_idx]);
-          for(var label_idx in arr) {
-            union.add(arr[label_idx]);              
-          }            
-        }
+  //   //   var doc = t.tokens;
+
+  //   //   var all_document_labels = []; // All labels across each annotator for this document
+
+  //   //   var reliabilityData = {}; // { token: [annotator_1_class, annotator_2_class ...]}
+
+  //   //   for(token_idx in doc) {
+  //   //     reliabilityData[token_idx] = new Array();
+  //   //   }
+
+
+  //   //   for(var j in dgas) { // each dga is a document annotation, e.g. one per annotator
+  //   //     var dga = dgas[j];
+
+  //   //     for(token_idx in doc) {
+
+  //   //       var bioTagAndLabels = dgas[j].labels[token_idx];
+
+  //   //       //console.log("Token idx:", token_idx, "Labels:", bioTagAndLabels);
+
+  //   //       if(bioTagAndLabels.length === 1) { 
+  //   //         var labels = new Set();
+  //   //       } else {
+  //   //         var labels = new Set(bioTagAndLabels[1]); // Only score using the first tag for now, need a better metric!
+  //   //       }
+
+  //   //       reliabilityData[token_idx].push(labels);  
+
+  //   //     }
+  //   //   }        
+
+  //   //   //console.log(reliabilityData);
+
+  //   //   var kValue = 0.5;
+
+
+  //   //   var jaccardIndexes = [];
+  //   //   for(token_idx in reliabilityData) {
+
+  //   //     // Calculate union and intersect
+  //   //     var union = new Set();
+  //   //     var intersect = new Set();
+
+  //   //     // Get union
+  //   //     for(var annotator_idx in reliabilityData[token_idx]) {
+  //   //       var arr = Array.from(reliabilityData[token_idx][annotator_idx]);
+  //   //       for(var label_idx in arr) {
+  //   //         union.add(arr[label_idx]);              
+  //   //       }            
+  //   //     }
 
        
-        // Convert reliability data from an array of sets into an array of arrays so that the intersect can be calculated
-        // (which is silly but it seems like the only way to do it in JS)
-        var reliabilityDataArr = [];
-        for(var ix in reliabilityData[token_idx]) {
-          reliabilityDataArr.push(Array.from(reliabilityData[token_idx][ix]))
-        }
-        var arr = reliabilityDataArr;
-        var intersect = arr[0].filter(v => arr.slice(1).every(a => a.includes(v)));
+  //   //     // Convert reliability data from an array of sets into an array of arrays so that the intersect can be calculated
+  //   //     // (which is silly but it seems like the only way to do it in JS)
+  //   //     var reliabilityDataArr = [];
+  //   //     for(var ix in reliabilityData[token_idx]) {
+  //   //       reliabilityDataArr.push(Array.from(reliabilityData[token_idx][ix]))
+  //   //     }
+  //   //     var arr = reliabilityDataArr;
+  //   //     var intersect = arr[0].filter(v => arr.slice(1).every(a => a.includes(v)));
 
 
-        console.log("Labels:", reliabilityDataArr)
-        console.log("Intersect:", intersect);
-        console.log("Union:", union);
+  //   //     console.log("Labels:", reliabilityDataArr)
+  //   //     console.log("Intersect:", intersect);
+  //   //     console.log("Union:", union);
 
-        var jaccardIndex = union.size === 0 ? 0 : intersect.length / union.size; 
+  //   //     var jaccardIndex = union.size === 0 ? 0 : intersect.length / union.size; 
 
-        console.log("Jaccard index:", jaccardIndex, "\n")               
-        jaccardIndexes.push(jaccardIndex);
-      }
+  //   //     console.log("Jaccard index:", jaccardIndex, "\n")               
+  //   //     jaccardIndexes.push(jaccardIndex);
+  //   //   }
 
 
-      var agreementValue = jaccardIndexes.reduce((a, b) => a + b, 0) / jaccardIndexes.length;
-      console.log("Agreement value:", agreementValue, "\n");
+  //   //   var agreementValue = jaccardIndexes.reduce((a, b) => a + b, 0) / jaccardIndexes.length;
+  //   //   console.log("Agreement value:", agreementValue, "\n");
 
-      t.annotator_agreement = agreementValue;
+  //   //   t.annotator_agreement = agreementValue;
 
-    } 
+  //   // } 
   
 
-    console.log("New agreement score:", t.annotator_agreement)
-    t.markModified('annotator_agreement');
-    t.save(function(err, dg) {
-      //console.log(dg.annotator_agreement, "<<<<")
-      //console.log(dg, "<<<<")
-      //console.log("error:", err);
-      //next(err);
-      next(err);
-    });
+  //   console.log("New agreement score:", t.annotator_agreement)
+  //   t.markModified('annotator_agreement');
+  //   t.save(function(err, dg) {
+  //     //console.log(dg.annotator_agreement, "<<<<")
+  //     //console.log(dg, "<<<<")
+  //     //console.log("error:", err);
+  //     //next(err);
+  //     next(err);
+  //   });
 
-    //next();
-  })
+  //   //next();
+  // })
 
 
 

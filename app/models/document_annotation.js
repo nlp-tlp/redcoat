@@ -255,7 +255,7 @@ DocumentAnnotationSchema.methods.updateProjectNumDocumentAnnotations = function(
 
 
 // Same as above but takes document.tokens as an argument instead of querying
-DocumentAnnotationSchema.statics.toMentionsJSON = function(labels_array, tokens, done) {
+DocumentAnnotationSchema.statics.toMentionsJSON = function(labels_array, tokens) {
   var documentJSON = [];
 
   var currentMention = null;

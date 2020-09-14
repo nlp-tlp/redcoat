@@ -565,7 +565,7 @@ class ProjectViewSidenav extends Component {
         <ul className="sidenav-items">
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Dashboard" icon="bar-chart"/>
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Curation" icon="list-alt"/>
-          <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Category hierarchy" icon="sitemap"/>
+          <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Entity Hierarchy" icon="sitemap"/>
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Invitations" icon="envelope"/>
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Settings" icon="wrench"/>
         </ul>
@@ -663,7 +663,7 @@ class CategoryHierarchyPage extends Component {
     return ( 
       <main className="project-page">
 
-        <h2>Category Hierarchy</h2>
+        <h2>Entity Hierarchy</h2>
 
         <div className="wrapper">
           { this.props.loading && generateEmptyTable() }
@@ -863,7 +863,7 @@ class ProjectView extends Component {
            <Switch location={location}>
               <Route path="/projects/:id/dashboard"           render={() => <ProjectDashboard loading={this.state.loading} data={this.state.data.dashboard} project_id={this.props.project_id} />} />     
               <Route path="/projects/:id/curation"            render={() => <EmptyThing {...this.state} />} />     
-              <Route path="/projects/:id/category-hierarchy"  render={() => <CategoryHierarchyPage loading={this.state.loading} data={this.state.data.categoryHierarchy} colourIndexes={this.state.data.dashboard.entityChartData ? this.state.data.dashboard.entityChartData.colourIndexes : null} />} />     
+              <Route path="/projects/:id/entity-hierarchy"  render={() => <CategoryHierarchyPage loading={this.state.loading} data={this.state.data.categoryHierarchy} colourIndexes={this.state.data.dashboard.entityChartData ? this.state.data.dashboard.entityChartData.colourIndexes : null} />} />     
               <Route path="/projects/:id/invitations"         render={() => <EmptyThing {...this.state} />} />     
               <Route path="/projects/:id/settings"            render={() => <EmptyThing {...this.state} />} />   
               <Route             render={() => <Error404Page />} />   
