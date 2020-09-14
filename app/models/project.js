@@ -162,6 +162,8 @@ ProjectSchema.methods.getNumDocumentAnnotations = function(next) {
 ProjectSchema.methods.getDocumentsAnnotatedByUser = async function(user, searchTerm) {
   var t = this;
 
+  searchTerm = searchTerm.toLowerCase();
+
   var query = [
     { $match: { project_id: t._id, user_id: user._id} },
     {
@@ -216,17 +218,14 @@ ProjectSchema.methods.getDocumentsAnnotatedByUser = async function(user, searchT
 
   var documentTokens      = new Array();
   var documentLabels = new Array();
-  
 
+  var searchHighlighting = new Array();
+  
   for(var doc of documentsAndAnnotations) {
     if(searchTerm) {
-
       var doc_string = doc.tokens.join(' ');
-      if(doc_string.indexOf(searchTerm) === -1) continue;      
+      if(doc_string.toLowerCase().indexOf(searchTerm) === -1) continue;         
     }
-
-
-
 
     documentIds.push(doc.document_id);
     documentAnnotationIds.push(doc._id);

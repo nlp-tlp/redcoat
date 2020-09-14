@@ -118,7 +118,9 @@ module.exports.getDocumentGroup = async function(req, res) {
 
 
   var project = await Project.findById({ _id: id });
+  var docsAnnotatedByUser = await project.getDocumentsAnnotatedByUserCount(user);
   var lastModified = null;  
+  var searchHighlighting = null;  
 
   // If pageNumber is latest, recommend a group of docs to the user.
   // Send an error message if there are no doc groups left.
@@ -167,6 +169,7 @@ module.exports.getDocumentGroup = async function(req, res) {
     var documentTokens        = documentsAndAnnotations.documentTokens;
     var documentAnnotations   = documentsAndAnnotations.documentLabels;
     var documentAnnotationIds = documentsAndAnnotations.documentAnnotationIds;
+    var searchHighlighting    = documentsAndAnnotations.searchHighlighting;
     var lastModified          = documentsAndAnnotations.lastModified;
 
     var docsInSearchQuery     = documentIds.length;
@@ -205,7 +208,7 @@ module.exports.getDocumentGroup = async function(req, res) {
   var comments = await Project.getCommentsArray(documentIds);
 
   var docsPerUser         = await project.getDocumentsPerUser();
-  var docsAnnotatedByUser = await project.getDocumentsAnnotatedByUserCount(user);
+  
   var categoryHierarchy   = ch.txt2json(ch.slash2txt(project.category_hierarchy), project.category_hierarchy);
 
   var projectAuthor = await User.findById({ _id: project.user_id });
@@ -224,6 +227,7 @@ module.exports.getDocumentGroup = async function(req, res) {
     documentAnnotationIds:  documentAnnotationIds,
 
     automaticAnnotations:   automaticAnnotations,
+
     comments:               comments,
 
     categoryHierarchy:      categoryHierarchy,
@@ -239,6 +243,7 @@ module.exports.getDocumentGroup = async function(req, res) {
   }
 
   console.log(response);
+  console.log(response.searchHighlighting);
 
   res.send(response);
 }

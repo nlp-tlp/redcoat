@@ -5,7 +5,7 @@ import {Component} from 'react';
 import $ from 'jquery';
 import { findDOMNode } from 'react-dom';
 import { Link } from 'react-router-dom'
-
+import ReactHtmlParser from 'react-html-parser';
 
 //const ReactDragListView = require('react-drag-listview');
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
@@ -297,6 +297,10 @@ class Label extends Component {
   }
 }
 
+
+
+
+
 // A single word (or token) in the tagging interface.
 class Word extends Component {
   constructor(props) {
@@ -332,6 +336,26 @@ class Word extends Component {
     // }
   }
 
+  getHighlightedWord() {
+    var text = this.props.text;
+    var highlighting = this.props.highlighting;
+
+    var output = '';
+
+    for(var i = 0; i < text.length; i++) {
+      if(i === highlighting[0]) {
+        output += '<span class="search-highlight">'
+      }
+      output += text[i];
+      if(i === highlighting[1]) {
+        output += '</span>'
+      }
+    }
+
+    console.log(output);
+    return ReactHtmlParser(output);
+  }
+
   render() {
 
     var hasLabel = this.props.entityClasses.length > 0;
@@ -347,15 +371,21 @@ class Word extends Component {
       var labels = '';
     }
 
-    var wordColourClass = (hasLabel ? (" tag-" + getColourIdx(this.props.entityClasses[0], this.props.entityColourMap)) : "")
+    var text = this.props.text;
+    if(this.props.highlighting) {
+      text = this.getHighlightedWord();
+    }
 
+    var wordColourClass = (hasLabel ? (" tag-" + getColourIdx(this.props.entityClasses[0], this.props.entityColourMap)) : "")
+    console.log(this.props.text, this.props.highlighting)
     return (
       <span className={"word" + (this.props.selected ? " selected" : "") + tagClass}>
 
-        <span className={"word-inner" + wordColourClass} ref={this.wordInnerRef}
+        <span className={"word-inner" + wordColourClass + (this.props.highlighting ? " search-highlight" : "") } ref={this.wordInnerRef}
               onMouseUp=  {() => this.props.updateSelections(this.props.index, 'up')}
               onMouseDown={() => this.props.updateSelections(this.props.index, 'down')}>
-          {this.props.text}
+
+          {text}
         </span>
         {labels}
         
@@ -598,7 +628,7 @@ class Sentence extends Component {
       return false;
     }
 
-   
+    console.log(this.props.annotations);
 
     return (
       <div className="sentence-inner">
@@ -613,6 +643,7 @@ class Sentence extends Component {
                 updateSelections={this.updateSelections.bind(this)}
                 entityColourMap={this.props.entityColourMap}
                 deleteTag={this.deleteTag.bind(this)}
+                highlighting={this.props.annotations[i].highlighting}
 
 
           />)
@@ -714,6 +745,7 @@ class Annotation {
     this.token = token;
     this.tokenIndex = tokenIndex;
     this.bioTag = "O";    
+    this.highlighting = null;
   }
 
   // Adds the specified entityClass to this annotation.
@@ -827,6 +859,11 @@ class Annotation {
 
   setSpanEndIdx(spanEndIdx) {
     this.spanEndIdx = spanEndIdx;
+  }
+
+  // Set the highlighting array (for search mode).
+  setHighlighting(startIdx, endIdx) {
+    this.highlighting = [startIdx, endIdx];
   }
 
   // Prints this annotation nicely to the console (for debugging).
@@ -1302,7 +1339,16 @@ class TaggingInterface extends Component {
   // Sets up an array to store the annotations with the same length as docGroup.
   // Prepopulate the annotations array with the automaticAnnotations if available (after converting them to BIO).
   // This could be either the dictionary-based annotations or the annotations that the user has previously entered.
+  //
+  // Can be called with 'searchHighlighting', which dictates the [start_index, end_index] of each word that are highlighted
+  // according to the search term
   initAnnotationsArray(documents, automaticAnnotations) {
+
+
+    if(this.state.searchTerm) {
+      var searchTerm = this.state.searchTerm;
+      var searchTermArray = searchTerm.split(' ');
+    }
 
     //console.log(documents, "<");
     //console.log(automaticAnnotations, "<");
@@ -1310,9 +1356,27 @@ class TaggingInterface extends Component {
     var annotations = new Array(documents.length);
     for(var doc_idx in documents) {
       annotations[doc_idx] = new Array(documents[doc_idx].length);
+
+
+      var searchIdx = 0;
       for(var token_idx in documents[doc_idx]) {
         annotations[doc_idx][token_idx] = new Annotation(documents[doc_idx][token_idx], parseInt(token_idx));
+
+        // If a search term is present (i.e. user is in search mode), adjust the highlighting of the annotation
+        // so that it displays the searched portion of the token differently        
+        if(searchTerm) {
+          var token = documents[doc_idx][token_idx];
+          var foundIdx = token.indexOf(searchTermArray[searchIdx]);
+          if(foundIdx >= 0) {
+            annotations[doc_idx][token_idx].setHighlighting(foundIdx, foundIdx + searchTermArray[searchIdx].length - 1);
+            searchIdx++;
+          } else {
+            searchIdx = 0;
+          }        
+        }
       }
+
+      
     }
 
     if(!automaticAnnotations) return annotations;
@@ -1336,6 +1400,8 @@ class TaggingInterface extends Component {
 
             //console.log(annotations[doc_idx], k, automaticAnnotations[doc_idx]['mentions'])
             annotations[doc_idx][k].addLabel(bioTag, label, documents[doc_idx].slice(start, end).join(' '), start, end - 1)
+
+
           }
         }
       }        
@@ -1437,16 +1503,23 @@ class TaggingInterface extends Component {
   setDocsPerPage(e) {
 
     var docsPerPage = e.target.value;
-    console.log(e);
+    var pageNumber = this.state.pageNumber;
+    var prevDocsPerPage = this.state.docsPerPage;
+
+    // Load the page roughly resembling the position the user is currently in by doing some maths on the page number
+    var newPageNumber = Math.min(this.state.totalPagesAvailable + 1, Math.floor(pageNumber / docsPerPage * prevDocsPerPage));
+    if(newPageNumber === this.state.totalPagesAvailable + 1) {
+      newPageNumber = null;
+    }
 
     this.setState({
-      docsPerPage: docsPerPage
+      docsPerPage: docsPerPage,
     }, () => {
-      if(this.state.searchTerm) {
-        this.queryAPI(false, 1);
-      } else {
-        this.queryAPI(false);
-      }
+      //if(this.state.searchTerm) {
+      this.queryAPI(false, newPageNumber);
+      //} else {
+      //  this.queryAPI(false, newPageNumber);
+      //}
     })
   }
 
@@ -1514,6 +1587,7 @@ class TaggingInterface extends Component {
               // },
               // TODO: Fix this
             })
+            console.log(d)
             return;
           } 
 
@@ -1529,7 +1603,8 @@ class TaggingInterface extends Component {
               documentAnnotationIds: d.documentAnnotationIds ? d.documentAnnotationIds : null, // Will only be present when querying existing annotations
 
               confidences: this.initConfidencesArray(d.documents),
-              annotations: this.initAnnotationsArray(d.documents, d.automaticAnnotations),
+              annotations: this.initAnnotationsArray(d.documents, d.automaticAnnotations, d.searchHighlighting),
+
               comments:    d.comments,
 
               categoryHierarchy: d.categoryHierarchy,
@@ -2177,7 +2252,7 @@ class TaggingInterface extends Component {
                   />
                   )}
                   {
-                    (!this.state.loading.querying && this.state.documents.length === 0) && <div className="loading-message no-results-found">No results found.</div>
+                    (!this.state.loading.querying && this.state.documents.length === 0 && !this.state.taggingCompletePage) && <div className="loading-message no-results-found">No results found.</div>
 
 
                   }
@@ -2395,7 +2470,7 @@ class ControlBar extends Component {
   render() {
 
     var groupName = (
-      <span className={"group-name" + (this.props.showingProgressBar ? " progress-bar-underneath" : "")}>
+      <span className={"group-name"}>
         <span>Page <b>
           <form onSubmit={this.goToPage.bind(this)}>
           <input 
@@ -2416,8 +2491,6 @@ class ControlBar extends Component {
 
     var lastModified = this.props.changesMade ? (this.props.saving ? "" : "Changes not saved") : (this.props.lastModified ? "Saved on " + formatDate(this.props.lastModified) : "");
 
-    console.log(lastModified);
-
     var pageNumberOptions = [1, 3, 5, 10, 15, 20];
 
     return (
@@ -2429,15 +2502,8 @@ class ControlBar extends Component {
         <div className="filler-left">
           <DocumentSearchBar inSearchMode={this.props.inSearchMode} searchDocuments={this.props.searchDocuments} />
         </div>
-        <div className="current-page-container">
+        <div className={"current-page-container" + (this.props.showingProgressBar ? " progress-bar-underneath" : "")}>
           { groupName }
-          <ProgressBar 
-            show={this.props.showingProgressBar}
-            totalPagesAvailable={this.props.totalPagesAvailable}
-            totalPages={this.props.totalPages}
-          />
-
-
           <div className="docs-per-page-select-container">
             <label>Per page:</label>
             <select className="docs-per-page-select" onChange={(e) => {this.props.setDocsPerPage(e); $(e.target).blur()}} >
@@ -2446,6 +2512,11 @@ class ControlBar extends Component {
               )}
             </select>
           </div>
+          <ProgressBar 
+            show={this.props.showingProgressBar}
+            totalPagesAvailable={this.props.totalPagesAvailable}
+            totalPages={this.props.totalPages}
+          />
         </div>
         <div className="group-last-modified">{lastModified }</div>
 
