@@ -162,7 +162,7 @@ ProjectSchema.methods.getNumDocumentAnnotations = function(next) {
 ProjectSchema.methods.getDocumentsAnnotatedByUser = async function(user, searchTerm) {
   var t = this;
 
-  searchTerm = searchTerm.toLowerCase();
+  if(searchTerm) searchTerm = searchTerm.toLowerCase();
 
   var query = [
     { $match: { project_id: t._id, user_id: user._id} },

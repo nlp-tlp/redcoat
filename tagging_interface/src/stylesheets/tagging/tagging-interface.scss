@@ -971,8 +971,8 @@ body.taking-screenshot .save-to-png {
 				content: " ";
 				position: absolute;
 				top: 7px;
-				left: 0;
-				width: 100%;
+				left: -1px;
+				width: calc(100% + 2px);
 				height: 24px;
 				background: rgba($button-blue, 0.15);
 
