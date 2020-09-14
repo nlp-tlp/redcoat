@@ -138,14 +138,22 @@ function calculateAgreement(tokens, labels) {
           var union = _.union(Array.from(myLabels), Array.from(theirLabels));
           var intersect = _.intersection(Array.from(myLabels), Array.from(theirLabels));
 
-          var jaccard_index = union.length === 0 ? 0 : intersect.length / union.length;                 
-          token_jaccard_scores.push(jaccard_index);
+          console.log(union, intersect);
+          if(union.length > 0) {
+            var jaccard_index = intersect.length / union.length;
+            token_jaccard_scores.push(jaccard_index);
+          }
         }
+        console.log('--')
 
       }
-      jaccard_scores.push(mean(token_jaccard_scores));
+      if(token_jaccard_scores.length > 0) {
+        jaccard_scores.push(mean(token_jaccard_scores));
+      }
+      
     }
-    return mean(jaccard_scores);    
+    console.log(jaccard_scores);
+    return jaccard_scores.length > 0 ? mean(jaccard_scores) : 1.0; // If jaccard scores is empty, there were no labels i.e. complete agreement    
   }
 
   // Calculate the span score by calculating the jaccard index of each the spans (regardless of label) across annotators.
@@ -192,7 +200,15 @@ function calculateAgreement(tokens, labels) {
   spanScore  = calculateSpanScore(tokens, labels);
   
   finalScore = (labelScore + spanScore) / 2;
-  console.log("Label score:", labelScore.toFixed(2), "Span  score:", spanScore.toFixed(2), "Final score:", finalScore.toFixed(2), "\n");
+
+  console.log(labels);
+  for(var annotator_idx in labels) {
+
+    console.log("Annotator " + (parseInt(annotator_idx) + 1) + ":", getNicelyFormattedLabels(tokens, labels[annotator_idx]));
+  }
+  
+
+  console.log("Label / span / final score:", labelScore.toFixed(2), spanScore.toFixed(2), finalScore.toFixed(2), "\n");
 
   return finalScore;
 
@@ -202,9 +218,9 @@ function calculateAgreement(tokens, labels) {
 
 // tokens = ['grease', 'pump', 'not', 'working']
 // labels = [
-//   [ ["B-", ["Item"]], ["B-", ["Item", "Location"]], ["B-", ["Observation"]], ["I-", ["Observation"]] ],
-//   [ ["B-", ["Item"]], ["I-", ["Item"]], ["B-", ["Observation"]], ["I-", ["Observation"]] ],
-//   [ ["B-", ["Item"]], ["B-", ["Item"]], ["B-", ["Observation"]], ["I-", ["Observation"]] ],
+//   [ ["B-", ["act"]],  ["B-", ["d"]], ["B-", ["Observation"]], ["I-", ["Observation"]] ],
+//   [ ["B-", ["Item"]], [""], ["B-", ["Observation"]], ["I-", ["Observation"]] ],
+//   [ ["B-", ["Item"]], [""], ["B-", ["Observation"]], ["I-", ["Observation"]] ],
 // ]
 // calculateAgreement(tokens, labels);
 
@@ -266,7 +282,7 @@ DocumentSchema.methods.updateAgreement = function(next) {
       for(var i in dgas) {
         labels.push(dgas[i].labels);
 
-        console.log(dgas[i].user_id.toString().slice(0, 4), ":", getNicelyFormattedLabels(t.tokens, dgas[i].labels));
+        
       }
 
       var agreementValue = calculateAgreement(t.tokens, labels);
