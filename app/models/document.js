@@ -82,6 +82,9 @@ DocumentSchema.methods.setDocumentString = function(next) {
 
 
 // Calculate agreement score using Michael's jaccard based method.
+// Has two components: labelScore, i.e. how closely each annotator's labels align (regardless of spans), and
+// spanScore, i.e. how closely each annotator's spans align (regardless of labels).
+// I bet I could do this in like 20 lines in python :'(
 function calculateAgreement(tokens, labels) {
 
   function mean(arr) {
@@ -142,7 +145,6 @@ function calculateAgreement(tokens, labels) {
       }
       jaccard_scores.push(mean(token_jaccard_scores));
     }
-    console.log(jaccard_scores);
     return mean(jaccard_scores);    
   }
 
@@ -190,9 +192,7 @@ function calculateAgreement(tokens, labels) {
   spanScore  = calculateSpanScore(tokens, labels);
   
   finalScore = (labelScore + spanScore) / 2;
-  console.log("Label score:", labelScore);
-  console.log("Span  score:", spanScore);
-  console.log("Final score:", finalScore);
+  console.log("Label score:", labelScore.toFixed(2), "Span  score:", spanScore.toFixed(2), "Final score:", finalScore.toFixed(2), "\n");
 
   return finalScore;
 
@@ -209,13 +209,46 @@ function calculateAgreement(tokens, labels) {
 // calculateAgreement(tokens, labels);
 
 
+function getNicelyFormattedLabels(tokens, labels) {
+  var s = '';
+  var currentLabels = '';
+  for(var i in tokens) {
+    var token = tokens[i];
+    if(labels[i].length === 1) {
+
+      if(currentLabels) {
+        s += ": (" + "\x1b[36m" + currentLabels + "\x1b[0m" + ")] "
+        currentLabels = '';
+      }
+
+      s += token + " ";
+      continue;
+    }
+    if(labels[i][0] === "B-") {
+      if(currentLabels) {
+        s += ": (" + "\x1b[36m" + currentLabels + "\x1b[0m" + ")] "
+        currentLabels = '';
+      }
+      s += "["
+      currentLabels = labels[i][1].join(', ');
+    }
+    s += token + " ";
+    if((parseInt(i) === tokens.length - 1) && currentLabels) {
+      s += ": (" + "\x1b[36m" + currentLabels + "\x1b[0m" + ")] "
+    }
+
+  }
+  return s;
+}
+
+
 // Update the annotator agreements for each document in this document group.
 // This method will be called whenever a DocumentAnnotation of this document is saved.
 DocumentSchema.methods.updateAgreement = function(next) {
 
   var t = this;
 
-  console.log("Updating agreement for doc", t._id);  
+  logger.info("Updating agreement for doc \"" + t.tokens.join(' ') + "\"");  
 
   var DocumentAnnotation = require('./document_annotation');
   DocumentAnnotation.find({document_id: t._id}, function(err, dgas) {
@@ -232,6 +265,8 @@ DocumentSchema.methods.updateAgreement = function(next) {
       var labels = new Array();
       for(var i in dgas) {
         labels.push(dgas[i].labels);
+
+        console.log(dgas[i].user_id.toString().slice(0, 4), ":", getNicelyFormattedLabels(t.tokens, dgas[i].labels));
       }
 
       var agreementValue = calculateAgreement(t.tokens, labels);
