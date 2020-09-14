@@ -146,6 +146,7 @@ body.taking-screenshot .save-to-png {
 	height: $navbar-height;
 	font-size: 0.7em;
 	user-select: none;
+	
 
 
 	box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
@@ -191,7 +192,6 @@ body.taking-screenshot .save-to-png {
 	}
 
 	input, select {
-		text-align: center;
 		border-radius: 4px;
 		font-size: 15px;
 		padding: 5px 15px;
@@ -267,7 +267,7 @@ body.taking-screenshot .save-to-png {
 	}
 
 	.current-page-container {
-		font-size: 0.9em;
+		font-size: 15px;
 		position: relative;
 		min-width: 300px;
 		display: flex;

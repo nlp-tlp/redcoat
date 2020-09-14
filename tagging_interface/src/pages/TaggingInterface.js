@@ -2440,7 +2440,7 @@ class ControlBar extends Component {
 
           <div className="docs-per-page-select-container">
             <label>Per page:</label>
-            <select className="docs-per-page-select" onChange={this.props.setDocsPerPage} >
+            <select className="docs-per-page-select" onChange={(e) => {this.props.setDocsPerPage(e); $(e.target).blur()}} >
               {pageNumberOptions.map((p, index) => 
                 <option value={p} selected={p === this.props.docsPerPage}>{p}</option>
               )}
@@ -2449,8 +2449,8 @@ class ControlBar extends Component {
         </div>
         <div className="group-last-modified">{lastModified }</div>
 
-        <div className="page-button-container "><SaveButton changesMade={this.props.changesMade} recentlySaved={this.props.recentlySaved} saving={this.props.saving} submitAnnotations={this.props.submitAnnotations}  /></div>
-        <div className="page-button-container next-page">
+        <div className="page-button-container " ><SaveButton changesMade={this.props.changesMade} recentlySaved={this.props.recentlySaved} saving={this.props.saving} submitAnnotations={this.props.submitAnnotations}  /></div>
+        <div className="page-button-container next-page" title={latestGroup && !this.props.inSearchMode ? "Finish annotating this page to move on to the next page." : ""}>
           <button className={(latestGroup  ? " disabled" : (this.props.querying ? "loading" : ""))}  onClick={this.props.loadNextPage}>Next<i className="fa fa-chevron-right"></i></button>
         </div>              
       </div>
