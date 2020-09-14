@@ -407,6 +407,8 @@ module.exports.getProjectDetails = async function(req, res) {
 
   data.dashboard.userDocsAnnotated = numDocsAnnotatedByUser;
   data.dashboard.userAnnotationsRequired = Math.floor(userAnnotationsRequired);
+
+  data.categoryHierarchy = ch.txt2json(ch.slash2txt(proj.category_hierarchy), proj.category_hierarchy);
   res.send(data);
 }
 

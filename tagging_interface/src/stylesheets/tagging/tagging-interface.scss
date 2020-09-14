@@ -18,10 +18,13 @@
 	.jstree > ul > li.color-#{$i} { border-left: 3px solid nth($colors, $i); }
 	.jstree li.color-#{$i} a:hover  { background: nth($colors, $i); }
 	.jstree li.color-#{$i} a.jstree-clicked  { background: nth($colors, $i); }
-	#category-hierarchy-tree > ul > li.color-#{$i} { border-left: 3px solid nth($colors, $i); }
-	#category-hierarchy-tree > ul:not(.dragging) > li.color-#{$i} .inner-container:hover { background: nth($colors, $i); }
-	#category-hierarchy-tree > ul:not(.dragging) > li.color-#{$i} span.category-name:hover { background: nth($colors, $i); }
-	#category-hierarchy-tree > ul:not(.dragging) > li.color-#{$i} span.category-name.hotkey-active:after { 
+
+	#category-hierarchy-tree:not(.display-only) > ul > li.color-#{$i} { border-left: 4px solid darken(nth($colors, $i), 3); }
+	#category-hierarchy-tree.display-only > ul > li.color-#{$i} { border-left: 8px solid darken(nth($colors, $i), 3); }
+
+	#category-hierarchy-tree:not(.display-only) > ul:not(.dragging) > li.color-#{$i} .inner-container:hover { background: nth($colors, $i); }
+	#category-hierarchy-tree:not(.display-only) > ul:not(.dragging) > li.color-#{$i} span.category-name:hover { background: nth($colors, $i); }
+	#category-hierarchy-tree:not(.display-only) > ul:not(.dragging) > li.color-#{$i} span.category-name.hotkey-active:after { 
 		//transition: background-position 0.25s;
 		border-color: darken(nth($colors, $i), 26); 
 		background: nth($colors, $i);
@@ -1800,6 +1803,7 @@ button.blue-button {
 	&.hidden {
 		display: none;
 	}
+
 }
 #category-hierarchy-tree-no-results {
 	display: none;
@@ -2164,6 +2168,40 @@ a#untag-tokens {
 
 
 
+#category-hierarchy-tree.display-only ul li span.category-name,
+#category-hierarchy-tree.display-only ul li span.description {
+	cursor: default;
+
+}
+#category-hierarchy-tree.display-only > ul {
+	padding-left: 0;
+
+}
+#category-hierarchy-tree.display-only ul li {
+	color: #111 !important;
+	span.inner-container {
+		span.category-name, span.description {
+		padding-top: 10px;
+		padding-bottom: 10px;
+		width: 50%;
+		}
+	}
+	span.open-button {
+		margin-top: 11px;
+	}
+	&.header-row {
+		font-weight: bold;
+		padding-left: 10px;
+	}
+}
+#category-hierarchy-tree.display-only > ul > li:nth-child(even) {
+	background: #f3f3f3;
+}
+#category-hierarchy-tree.display-only {
+	//max-height: 70vh;
+	overflow-y: auto;
+	padding-right: 0;
+}
 
 #category-hierarchy-tree {
 	width: 100%;
@@ -2217,7 +2255,7 @@ a#untag-tokens {
 				}
 			}
 
-			span.category-name {
+			span.category-name, span.description {
 
 				cursor: pointer;
 				width: auto;

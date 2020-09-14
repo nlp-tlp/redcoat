@@ -1440,6 +1440,9 @@ ProjectSchema.methods.getDetails = async function(done) {
 
 
       },   
+      // categoryHierarchy: {
+      //   categories: t.category_hierarchy,
+      // }
     };
 
     var elapsed = new Date().getTime() - start;

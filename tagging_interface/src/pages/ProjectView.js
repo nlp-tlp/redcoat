@@ -10,6 +10,8 @@ import { defaults } from 'react-chartjs-2'
 
 import { Comment } from '../components/Comment';
 
+import CategoryHierarchy from '../components/CategoryHierarchy';
+
 import _ from 'underscore';
 
 defaults.global.defaultFontFamily = 'Open Sans'
@@ -601,6 +603,118 @@ class EmptyThing extends Component {
   }
 }
 
+
+
+
+
+function generateEmptyTable() {
+  var n = 15;
+  var arr = new Array(n).fill(0);
+  
+
+  function stringOfRandomLength(minlen, maxlen) {
+    var s = '';
+    for(var i = 0; i < minlen + Math.floor(Math.random() * maxlen); i++) {
+      s += 'x';
+    }
+    return s;
+  }
+
+  return (
+    <table className="category-hierarchy-table">
+      <tbody>
+       { arr.map((x, i) => 
+        <tr> 
+          <td><span className="inner"><span className="st">{stringOfRandomLength(30, 70)}</span></span></td>
+          <td><span className="inner"><span className="st">{stringOfRandomLength(30, 70)}</span></span></td>
+        </tr>
+      ) }
+    </tbody>
+  </table>
+  )  
+}
+
+
+function getColourIndex(row, colourIndexes) {
+  var s = row.split('/');
+  var base_class = s.length > 1 ? s[0] : s;
+  return colourIndexes[base_class] + 1
+}
+
+function getRowName(row) {
+  var s = row.split('/');
+  var rowName = s.length > 1 ? s[s.length - 1] : s;
+  var spacing = '';
+  for(var i = 1; i < s.length; i++) {
+    spacing += " - ";
+  }
+  return spacing + rowName;
+}
+
+class CategoryHierarchyPage extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+
+
+  render() {
+    console.log(this.props.data, this.props.loading, 'xxx');
+    return ( 
+      <main className="project-page">
+
+        <h2>Category Hierarchy</h2>
+
+        <div className="wrapper">
+          { this.props.loading && generateEmptyTable() }
+
+
+          { ! this.props.loading &&  <CategoryHierarchy
+              items={this.props.data.children}                         
+              visible={true}   
+              draggable={false}
+              displayOnly={true}  
+          
+
+          />
+          }
+          
+        </div>
+
+       
+
+
+
+      </main>
+    )
+  }
+}
+
+
+/*  <div className="wrapper">
+          <div className="inner">
+            <table className="category-hierarchy-table">
+              <thead>
+                <tr>
+                  <th><span className="inner">Category</span></th>
+                  <th><span className="inner">Description</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                { this.props.loading && generateEmptyRows(15) }
+                { this.props.data && this.props.data.categories.map((row, index) => 
+                  <tr>
+                    <td className={"color-" + getColourIndex(row, this.props.colourIndexes)}><span className="inner">{getRowName(row)}</span></td>
+                    <td><span className="inner">(none)</span></td>
+                  </tr>
+                )}
+              </tbody>
+
+            </table>
+          </div>
+        </div>
+*/
+
 class ProjectView extends Component {
   constructor(props) {
     super(props);
@@ -620,6 +734,8 @@ class ProjectView extends Component {
           avgAgreement: 0.5,
 
           avgTimePerDocument: 15,
+
+          
 
           // Note that the comments below are just placeholders. I should probably generate a function to make these automatically
           // These will be skeleton screens on the comments div
@@ -680,7 +796,8 @@ class ProjectView extends Component {
               }
             }
           ],
-        }        
+        } ,
+        categoryHierarchy: { children: [] },      
       }   
     }
   }
@@ -746,7 +863,7 @@ class ProjectView extends Component {
            <Switch location={location}>
               <Route path="/projects/:id/dashboard"           render={() => <ProjectDashboard loading={this.state.loading} data={this.state.data.dashboard} project_id={this.props.project_id} />} />     
               <Route path="/projects/:id/curation"            render={() => <EmptyThing {...this.state} />} />     
-              <Route path="/projects/:id/category-hierarchy"  render={() => <EmptyThing {...this.state} />} />     
+              <Route path="/projects/:id/category-hierarchy"  render={() => <CategoryHierarchyPage loading={this.state.loading} data={this.state.data.categoryHierarchy} colourIndexes={this.state.data.dashboard.entityChartData ? this.state.data.dashboard.entityChartData.colourIndexes : null} />} />     
               <Route path="/projects/:id/invitations"         render={() => <EmptyThing {...this.state} />} />     
               <Route path="/projects/:id/settings"            render={() => <EmptyThing {...this.state} />} />   
               <Route             render={() => <Error404Page />} />   

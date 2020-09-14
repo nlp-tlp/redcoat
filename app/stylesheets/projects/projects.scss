@@ -926,13 +926,60 @@
 #project-view {
 	margin-top: 54px;
 	display: flex;
-	height: calc(100vh - 54px);
+	min-height: calc(100vh - 54px);
+	justify-content: stretch;
+	align-items: stretch;
 	//margin-top: $navbar-height;
 	main {
-		margin-top: 40px;
+		margin-top: 00px;
 		min-height: 80vh;
+		padding: 10px;
+		box-sizing: border-box;
+		h2 {
+			margin-top: 0;
+		}
+
+		.wrapper {
+			box-sizing: border-box;
+			background: #fefefe;
+			border-radius: 4px;
+			box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
+			.inner {
+
+			} 
+		}
+		table {
+			border-spacing:0;
+
+			width: 100%;
+			border-collapse: collapse;
+			tr:nth-child(odd) td {
+				background: #f2f2f2;
+			}
+			th, td {
+				padding: 0;
+				border: 0;
+				box-sizing: border-box;
+				border-collapse: collapse;
+				.inner {
+					padding: 5px 15px;
+					display: block;
+
+				}
+				
+			}
+			tr td:nth-child(1) {
+				width: 50%;
+			}
+
+
+		}
 	}
 }
+@for $i from 1 through 12 {
+	.category-hierarchy-table tr td.color-#{$i} span.inner { border-left: 8px solid nth($colors, $i); }
+}
+
 
 .project-card {
 	font-size: 16px;
@@ -971,7 +1018,6 @@
 	min-width: 370px;
 	background: #fefefe;
 	box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
-	height: 100%;
 	font-size: 16px;
 
 	.go-back {
