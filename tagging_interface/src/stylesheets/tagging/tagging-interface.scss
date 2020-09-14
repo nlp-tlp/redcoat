@@ -893,6 +893,9 @@ body.taking-screenshot .save-to-png {
 		}
 	}
 }
+#sentence-tagging .no-results-found {
+
+}
 #sentence-tagging .sentence .word, #sentence-tagging .sentence .punctuation {
 	background: none;	
 	position: relative;
@@ -1561,6 +1564,7 @@ button.blue-button {
 		font-size: 32px;
 		color: #777;
 		z-index: 10000;		
+		user-select: none;
 		i {
 			margin-right: 20px;
 		}

@@ -1390,7 +1390,7 @@ class TaggingInterface extends Component {
     if(this.state.loading.querying) return; // Don't load new page if currently loading
     var nextPageNumber = this.state.pageNumber + 1;
 
-    if(nextPageNumber === (this.state.totalPagesAvailable)) {
+    if(nextPageNumber === (this.state.totalPagesAvailable)  && !this.state.searchTerm) {
       this.queryAPI(false);
     } else {
       this.queryAPI(false, nextPageNumber);
@@ -1400,9 +1400,13 @@ class TaggingInterface extends Component {
   goToPage(pageNumber) {
     if(this.state.loading.querying) return; // Don't load new page if currently loading
     
-    
+    console.log(pageNumber);
+    if(this.state.searchTerm) {
+      this.queryAPI(false, pageNumber);
+      return;
+    }
 
-    if(pageNumber === (this.state.totalPagesAvailable)) {
+    if(pageNumber === this.state.totalPagesAvailable) {
       this.queryAPI(false);
     } else {
       this.queryAPI(false, pageNumber);
@@ -1765,13 +1769,14 @@ class TaggingInterface extends Component {
   // (called when a new group is loaded).
   selectFirstWord() {
     var selections = this.state.selections;
+    if(selections.length === 0) return;
     selections[0].push({
       wordStartIndex: 0,
       wordEndIndex: 0
     });
     this.setState({
       selections: selections,
-      mostRecentSelectionText: this.state.documents[0][0],
+      mostRecentSelectionText: this.state.documents.length > 0 ? this.state.documents[0][0] : "",
     });
   }
 
@@ -2152,6 +2157,11 @@ class TaggingInterface extends Component {
                     user={this.props.user}
                   />
                   )}
+                  {
+                    (!this.state.loading.querying && this.state.documents.length === 0) && <div className="loading-message no-results-found">No results found.</div>
+
+
+                  }
 
               </div>
             </div>
@@ -2243,7 +2253,7 @@ class DocumentSearchBar extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      value: null,
+      value: '',
     }
     this.inputRef = React.createRef();
   }  
@@ -2251,7 +2261,7 @@ class DocumentSearchBar extends Component {
   updateValue(e) {
     var value = e.target.value;
     if(value.trim().length === 0) {
-      value = null;
+      value = '';
     }
     this.setState({
       value: value,
@@ -2263,12 +2273,12 @@ class DocumentSearchBar extends Component {
 
     this.props.searchDocuments(this.state.value);
 
-    this.setState({
-      value: null,
-    }, () => {
+    // this.setState({
+    //   value: null,
+    // }, () => {
       var ele = $(this.inputRef.current);
       ele.blur();
-    });
+    // });
 
     e.preventDefault();
     return null;
@@ -2323,7 +2333,7 @@ class ControlBar extends Component {
 
 
 
-    if(!Number.isInteger(this.state.pageNumber)) {
+    if(this.state.pageNumber !== parseInt(this.state.pageNumber).toString()) {
       this.setState({
         pageNumber: this.props.totalPagesAvailable,
       }, () => { this.props.goToPage(this.state.pageNumber)});

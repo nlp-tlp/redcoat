@@ -214,7 +214,7 @@ module.exports.getDocumentGroup = async function(req, res) {
 
   var totalPages = Math.ceil(docsPerUser / docsPerPage);
   if(searchTerm) {
-    totalPagesAvailable = Math.ceil(docsInSearchQuery / docsPerPage);
+    totalPagesAvailable = Math.floor(docsInSearchQuery / docsPerPage) + 1;
     totalPages = totalPagesAvailable;
   }
 
