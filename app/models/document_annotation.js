@@ -188,86 +188,86 @@ DocumentAnnotationSchema.methods.updateProjectNumDocumentAnnotations = function(
 // Then the output of this function would be:
 //
 // { tokens: ['sump', 'pump'], mentions: [{start: 0, end: 2, labels: ["Item"]}]}
-DocumentAnnotationSchema.methods.toMentionsJSON = function(done) {
-	var t = this;
+// DocumentAnnotationSchema.methods.toMentionsJSON = function(done) {
+// 	var t = this;
 	
-  var Document = require('./document');
-	Document.findById({_id: this.document_id}, function(err, doc) {
-		if(err) return done(err);
+//   var Document = require('./document');
+// 	Document.findById({_id: this.document_id}, function(err, doc) {
+// 		if(err) return done(err);
 
-		var documentJSON = [];
+// 		var documentJSON = [];
 
-		var tokens = doc.tokens;
-		var annotations = t.labels;
-		var currentMention = null;
-		var mentions = [];
+// 		var tokens = doc.tokens;
+// 		var annotations = t.labels;
+// 		var currentMention = null;
+// 		var mentions = [];
 
-		for(var token_idx in tokens) {
-			var token_idx = parseInt(token_idx);
+// 		for(var token_idx in tokens) {
+// 			var token_idx = parseInt(token_idx);
 
-			var token = tokens[token_idx];
-			var bioTagAndLabels = annotations[token_idx];
+// 			var token = tokens[token_idx];
+// 			var bioTagAndLabels = annotations[token_idx];
 
-			if(currentMention) {
-				currentMention.end = token_idx;
-			}				
+// 			if(currentMention) {
+// 				currentMention.end = token_idx;
+// 			}				
 
-			if(bioTagAndLabels.length === 1) {	// [""] is effectively an "O", i.e. this token is not part of a mention
-				var bioTag = null;
-				var labels = null;
+// 			if(bioTagAndLabels.length === 1) {	// [""] is effectively an "O", i.e. this token is not part of a mention
+// 				var bioTag = null;
+// 				var labels = null;
 
-				if(currentMention) {
-					mentions.push(currentMention);
-					currentMention = null;
-				}
+// 				if(currentMention) {
+// 					mentions.push(currentMention);
+// 					currentMention = null;
+// 				}
 				
-			} else {
-				var bioTag = bioTagAndLabels[0];
-				var labels = bioTagAndLabels[1];
-				if(bioTag === "B-") {
-					if(currentMention) {
-						mentions.push(currentMention);
-					}
-					currentMention = { start: token_idx, end: null, labels: labels }
+// 			} else {
+// 				var bioTag = bioTagAndLabels[0];
+// 				var labels = bioTagAndLabels[1];
+// 				if(bioTag === "B-") {
+// 					if(currentMention) {
+// 						mentions.push(currentMention);
+// 					}
+// 					currentMention = { start: token_idx, end: null, labels: labels }
 
-				} else if (bioTag === "I-") {
-					// No need to do anything
-				}
-			}
-			if(token_idx === (tokens.length - 1)) {
-				if(currentMention) {
-					currentMention.end = token_idx + 1;
-					mentions.push(currentMention);
-				}					
-			}
-		}
+// 				} else if (bioTag === "I-") {
+// 					// No need to do anything
+// 				}
+// 			}
+// 			if(token_idx === (tokens.length - 1)) {
+// 				if(currentMention) {
+// 					currentMention.end = token_idx + 1;
+// 					mentions.push(currentMention);
+// 				}					
+// 			}
+// 		}
 
-	documentJSON = {
-		tokens: tokens,
-		mentions: mentions
-	}
+// 	documentJSON = {
+// 		tokens: tokens,
+// 		mentions: mentions
+// 	}
 	
 	
-	return done(null, documentJSON);
-});
-}
+// 	return done(null, documentJSON);
+// });
+// }
 
 
 
 // Same as above but takes document.tokens as an argument instead of querying
-DocumentAnnotationSchema.statics.toMentionsJSON = function(documentAnnotation, tokens, done) {
-  var t = documentAnnotation;
+DocumentAnnotationSchema.statics.toMentionsJSON = function(labels_array, tokens, done) {
   var documentJSON = [];
 
-  var annotations = t.labels;
   var currentMention = null;
   var mentions = [];
+
 
   for(var token_idx in tokens) {
     var token_idx = parseInt(token_idx);
 
     var token = tokens[token_idx];
-    var bioTagAndLabels = annotations[token_idx];
+    var bioTagAndLabels = labels_array[token_idx];
+
 
     if(currentMention) {
       currentMention.end = token_idx;

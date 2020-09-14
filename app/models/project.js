@@ -152,15 +152,17 @@ ProjectSchema.methods.getNumDocumentAnnotations = function(next) {
 
 
 // Return the documents annotated by the user for this project.
-ProjectSchema.methods.getDocumentsAnnotatedByUser = function(user, next) {
-  return DocumentAnnotation.find( {project_id: this._id, user_id: user._id }).sort({created_at: 'asc'}).exec(next);
-}
+// ProjectSchema.methods.getDocumentsAnnotatedByUser_old = function(user, next) {
+//   return DocumentAnnotation.find( {project_id: this._id, user_id: user._id }).sort({created_at: 'asc'}).exec(next);
+// }
 
 // Return the documents annotated by the user for this project.
-ProjectSchema.methods.getDocumentsAnnotatedByUser2 = async function(user, next) {
+// Returns documentIds, documentTokens, and documentAnnotations.
+// Search term can be null or a specific term, in which case the documents returned will be only docs containing that term.
+ProjectSchema.methods.getDocumentsAnnotatedByUser = async function(user, searchTerm) {
   var t = this;
 
-  var documentsAndAnnotations = await DocumentAnnotation.aggregate([
+  var query = [
     { $match: { project_id: t._id, user_id: user._id} },
     {
       $lookup: {
@@ -170,29 +172,72 @@ ProjectSchema.methods.getDocumentsAnnotatedByUser2 = async function(user, next) 
         as: "document",
       }
     },
+    {
+      $unwind: "$document"
+    },
+    {
+      $project: {
+        "_id": 1,
+        "document_id": "$document._id",
+        "labels": 1,
+        tokens: "$document.tokens",
+        // document_string: { 
+        //   '$reduce': {
+        //     input: '$document.tokens',
+        //     initialValue: '',
+        //     'in': {
+        //       '$concat': [
+        //         '$$value',
+        //          {
+        //           '$cond': [
+        //             {'$eq': ['$$value', '']}, '', ' ']},
+        //           '$$this'                  
+        //           ]
+        //         }             
+        //     }         
+        // },
+        "created_at": 1,
+      }
+    },
     { 
       $sort: {
         created_at: 1,
       }
     }
-  ]);
+  ]
 
-  var documentIds = [];
-  var documentTokens = [];
-  var documentAnnotations = [];
+  var documentsAndAnnotations = await DocumentAnnotation.aggregate(query);
 
-  for(var i in documentsAndAnnotations) {
-    var doc = documentsAndAnnotations[i].document.pop();
+  console.log(documentsAndAnnotations);
+
+  var documentIds         = new Array();
+  var documentAnnotationIds = new Array();
+
+  var documentTokens      = new Array();
+  var documentLabels = new Array();
+  
+
+  for(var doc of documentsAndAnnotations) {
+    if(searchTerm) {
+
+      var doc_string = doc.tokens.join(' ');
+      if(doc_string.indexOf(searchTerm) === -1) continue;      
+    }
+
+
+
+
+    documentIds.push(doc.document_id);
+    documentAnnotationIds.push(doc._id);
     documentTokens.push(doc.tokens);
-    documentIds.push(doc._id);
-    delete documentsAndAnnotations[i].document;
-    documentAnnotations.push(documentsAndAnnotations[i]);
+    documentLabels.push(doc.labels);
   }
 
   return Promise.resolve({
     documentIds: documentIds,
+    documentAnnotationIds: documentAnnotationIds,
     documentTokens: documentTokens,
-    documentAnnotations: documentAnnotations
+    documentLabels: documentLabels
   });
 }
 
@@ -800,6 +845,7 @@ ProjectSchema.methods.recommendDocsToUser = async function(user, numDocs) {
 // }
 
 
+// Add the user profiles (icons and colours) to the comments by querying by id.
 async function appendUserProfilesToComments(comments) {
   for(var i in comments) {
     var user = await User.findById({_id: comments[i].user_id});

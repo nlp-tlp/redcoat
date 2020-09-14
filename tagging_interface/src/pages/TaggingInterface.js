@@ -469,8 +469,6 @@ class DocumentContainer extends Component {
     var t = this;
     var node = this.sentenceRef.current;
 
-    console.log(node);
-
     function filter(node) {
       if(node.classList) {
         return !node.classList.contains('sentence-index') && !node.classList.contains('confidence-buttons');
@@ -1072,6 +1070,8 @@ class TaggingInterface extends Component {
       },
       showingProgressBar: false, // Whether the progress bar is currently visible
 
+      searchTerm: null, // Whether the user is currently searching for docs
+
       taggingCompletePage: false, // Set to true when the user is on the 'tagging complete' page.
 
     }    
@@ -1097,13 +1097,13 @@ class TaggingInterface extends Component {
   }
 
   // When the user releases the mouse, remove all highlighting from words (i.e. the words in the selection).
-  // If the user never selected a word to begin with (i.e. wordStartIndex < 0), clear all selections.
+  // If the user never selected a word to begin with (i.e. wordStartIndex < 0), don't do anything.
   windowMouseUp(e, words) {
-    if(e.target.classList.contains('page-input') || e.target.classList.contains('comment-input')) return;
+    if(e.target.classList.contains('page-input') || e.target.classList.contains('comment-input') || e.target.classList.contains('search-bar')) return;
 
     words.removeClass('highlighted');
     if(this.state.currentSelection.wordStartIndex < 0) {
-      clearWindowSelection();
+      //clearWindowSelection();
       return;
     }
     if(!e.target.classList.contains('word-inner')) { // Ensure that the user is not hovering over a word            
@@ -1302,8 +1302,8 @@ class TaggingInterface extends Component {
   // This could be either the dictionary-based annotations or the annotations that the user has previously entered.
   initAnnotationsArray(documents, automaticAnnotations) {
 
-    console.log(documents, "<");
-    console.log(automaticAnnotations, "<");
+    //console.log(documents, "<");
+    //console.log(automaticAnnotations, "<");
 
     var annotations = new Array(documents.length);
     for(var doc_idx in documents) {
@@ -1332,7 +1332,7 @@ class TaggingInterface extends Component {
           for(var k = start; k < end; k++) {
             var bioTag = k === start ? 'B' : "I";
 
-            console.log(annotations[doc_idx], k, automaticAnnotations[doc_idx]['mentions'])
+            //console.log(annotations[doc_idx], k, automaticAnnotations[doc_idx]['mentions'])
             annotations[doc_idx][k].addLabel(bioTag, label, documents[doc_idx].slice(start, end).join(' '), start, end - 1)
           }
         }
@@ -1390,11 +1390,7 @@ class TaggingInterface extends Component {
     if(this.state.loading.querying) return; // Don't load new page if currently loading
     var nextPageNumber = this.state.pageNumber + 1;
 
-    console.log("HINHINH", this.state.pageNumber, this.state.totalPagesAvailable)
-
     if(nextPageNumber === (this.state.totalPagesAvailable)) {
-
-
       this.queryAPI(false);
     } else {
       this.queryAPI(false, nextPageNumber);
@@ -1403,6 +1399,9 @@ class TaggingInterface extends Component {
 
   goToPage(pageNumber) {
     if(this.state.loading.querying) return; // Don't load new page if currently loading
+    
+    
+
     if(pageNumber === (this.state.totalPagesAvailable)) {
       this.queryAPI(false);
     } else {
@@ -1415,10 +1414,27 @@ class TaggingInterface extends Component {
     this.queryAPI(false, this.state.pageNumber - 1);
   }
 
+  // Search all documents for a specific search term.
+  searchDocuments(searchTerm) {
+    this.setState({
+      searchTerm: searchTerm 
+    }, () => {
+      if(searchTerm) {
+        this.queryAPI(false, 1);
+      } else {
+        this.queryAPI(false);
+      }
+      
+    });
+   
+  }
+
   /* API calls */
 
   queryAPI(firstLoad, pageNumber) {
+
     var route;
+    var searchTerm = this.state.searchTerm;
 
     // If this function was called with a pageNumber, load a specific documentGroupAnnotation.
     if(pageNumber) {
@@ -1427,6 +1443,10 @@ class TaggingInterface extends Component {
     } else {
       route = 'getDocumentGroup?pageNumber=latest&perPage=20';
     }
+    if(searchTerm) {
+      route += "&searchTerm=" + searchTerm;
+    }
+
 
 
     this.setState({
@@ -1439,7 +1459,7 @@ class TaggingInterface extends Component {
       fetch('http://localhost:3000/projects/' + this.props.project_id + '/tagging/' + route, fetchConfigGET) // TODO: move localhost out
         .then(response => response.text())
         .then((data) => {
-          console.log("data:", data);
+          //console.log("data:", data);
           try { 
             var d = JSON.parse(data);
           } catch(err) {
@@ -1449,7 +1469,7 @@ class TaggingInterface extends Component {
 
 
           if(d.tagging_complete) {
-            console.log(d);
+            //console.log(d);
             this.setState({
               taggingCompletePage: true,
 
@@ -1472,7 +1492,7 @@ class TaggingInterface extends Component {
               //   annotatedDocGroups: -1,
               // },
               // TODO: Fix this
-            }, () => {console.log(this.state)})
+            })
             return;
           } 
 
@@ -1500,7 +1520,7 @@ class TaggingInterface extends Component {
 
               pageNumber: d.pageNumber,
               totalPages: d.totalPages,
-              totalPagesAvailable: d.totalPagesAvailable + 1,
+              totalPagesAvailable: d.totalPagesAvailable,
 
               docGroupLastModified: d.lastModified,
               documentGroupAnnotationId: d.documentGroupAnnotationId, // Will be null if this doc group has not yet been annotated
@@ -1517,8 +1537,6 @@ class TaggingInterface extends Component {
               if(d.projectTitle && d.projectAuthor) {
                 this.props.setProject(d.projectTitle, d.projectAuthor)
               }
-
-              console.log(this.state.totalPagesAvailable)
 
               // Initialise keybinds and mouse events only on the first API call.
               if(firstLoad) {
@@ -1603,10 +1621,7 @@ class TaggingInterface extends Component {
         try { 
           var d = JSON.parse(data);
 
-          console.log(d);
-
           var documentAnnotationIds = d.documentAnnotationIds;
-
 
           console.log("Submitted annotations OK");
 
@@ -2082,7 +2097,7 @@ class TaggingInterface extends Component {
   render() {
     var taggingCompletePage = this.state.taggingCompletePage;
 
-    console.log(this.state.documents, taggingCompletePage);
+    //console.log(this.state.documents, taggingCompletePage);
 
     return (
         <div>            
@@ -2108,7 +2123,9 @@ class TaggingInterface extends Component {
                   changesMade={this.state.changesMade}
                   querying={this.state.loading.querying}
                   saving={this.state.loading.saving}
+                  inSearchMode={this.state.searchTerm}
 
+                  searchDocuments={this.searchDocuments.bind(this)}
                   submitAnnotations={this.submitAnnotations.bind(this)}
                   loadPreviousPage={this.loadPreviousPage.bind(this)}
                   loadNextPage={this.loadNextPage.bind(this)}
@@ -2216,6 +2233,60 @@ class ProgressBar extends Component {
   }
 }
 
+
+
+
+
+
+// The search bar that appears in the control bar, for searching through previously annotated docs.
+class DocumentSearchBar extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      value: null,
+    }
+    this.inputRef = React.createRef();
+  }  
+
+  updateValue(e) {
+    var value = e.target.value;
+    if(value.trim().length === 0) {
+      value = null;
+    }
+    this.setState({
+      value: value,
+    });
+  }
+
+  submit(e) {
+    
+
+    this.props.searchDocuments(this.state.value);
+
+    this.setState({
+      value: null,
+    }, () => {
+      var ele = $(this.inputRef.current);
+      ele.blur();
+    });
+
+    e.preventDefault();
+    return null;
+  }
+
+
+  render() {
+    return (
+      <form className={"search-container" + (this.props.inSearchMode ? " active" : "")} onSubmit={this.submit.bind(this)} >
+        <input ref={this.inputRef} className="search-bar" id="document-search-bar" placeholder="Search..." value={this.state.value} onChange={(e) => this.updateValue(e)} ></input><button className="search-button"><i class="fa fa-search"></i></button>
+      </form>
+    )
+  }
+}
+
+
+
+
 // The 'control bar', which appears at the top of the interface (with page numbers, group number etc).
 class ControlBar extends Component {
 
@@ -2246,6 +2317,16 @@ class ControlBar extends Component {
     this.clearPageNumberInput();
     if(this.state.pageNumber === '') {
       this.setState({ pageNumber: this.props.pageNumber })
+      e.preventDefault();
+      return null;
+    }
+
+
+
+    if(!Number.isInteger(this.state.pageNumber)) {
+      this.setState({
+        pageNumber: this.props.totalPagesAvailable,
+      }, () => { this.props.goToPage(this.state.pageNumber)});
       e.preventDefault();
       return null;
     }
@@ -2286,7 +2367,7 @@ class ControlBar extends Component {
 
     var groupName = (
       <span className={"group-name" + (this.props.showingProgressBar ? " progress-bar-underneath" : "")}>
-        <span>Group <b>
+        <span>Page <b>
           <form onSubmit={this.goToPage.bind(this)}>
           <input 
                  id="page-input"
@@ -2312,7 +2393,9 @@ class ControlBar extends Component {
           <button className={(this.props.pageNumber === 1 ? " disabled" : (this.props.querying ? "loading" : ""))} onClick={this.props.loadPreviousPage}><i className="fa fa-chevron-left"></i>Prev
           </button>
         </div>
-        <div className="filler-left"></div>
+        <div className="filler-left">
+          <DocumentSearchBar inSearchMode={this.props.inSearchMode} searchDocuments={this.props.searchDocuments} />
+        </div>
         <div className="current-page-container">
           { groupName }
           <ProgressBar 
@@ -2330,6 +2413,7 @@ class ControlBar extends Component {
     )
   }
 }
+
 
 class TaggingCompletePage extends Component {
 

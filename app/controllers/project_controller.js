@@ -13,49 +13,22 @@ var DocumentAnnotation = require('app/models/document_annotation')
 
 var ProjectInvitation = require('app/models/project_invitation')
 
+var ch = require('./helpers/category_hierarchy_helpers')
+
 var mongoose = require('mongoose');
 
 /* GET Actions */
-
-// GET: The project dashboard. Renders the projects page that lists all the projects of a user.
-// Doesn't actually send any projects - that's done by 'getProjects', via AJAX.
-// module.exports.index = function(req, res) {
-//   req.user.getProjects(function(err, projects) {
-//     if(err) return res.send(err);
-//     res.render('projects', { title: "Projects" })
-//   });  
-// }
-
-
 
 // GET (AJAX): Return some basic details of the projects that this user is involved in.
 module.exports.getProjects = async function(req, res) {
   try {
     var data = await Project.getInvolvedProjectData(req.user);
-    console.log('data:', data);
     res.send(data);
   } catch(err) {
     res.send(err);
     logger.error(err);
-  }     
-
+  }
 }
-
-// // GET (AJAX): A function that returns all the projects of a user.
-// // This should be called via AJAX to populate the projects table.
-// module.exports.getProjects = function(req, res) {
-//   req.user.getProjectsTableData(function(err, projects) {
-//     if(err) return res.send(err);
-//     res.send({projects: projects});
-//   });
-// }
-
-
-
-
-
-
-/* Miscellaneous controller actions (which should probably be in a separate file) */
 
 // Automatically tag all tokens on the screen that appear in the dictionary.
 // Returns an array of [{ mentions: [] }, { mentions: [] }] (one mentions array per document)
@@ -66,7 +39,6 @@ function runDictionaryTagging(documentGroup, dictionary) {
   for(var doc_id = 0; doc_id < documentGroup.length; doc_id++) {
     var doc = documentGroup[doc_id];
     var mentions = [];
-      //console.log(doc)
 
     labeledTokens = new Array(doc.length);
     for(var x = i; x < labeledTokens.length; x++) {
@@ -108,63 +80,6 @@ function runDictionaryTagging(documentGroup, dictionary) {
 
 
 
-// TODO : Move these utility functions elsewhere
-
-// Remove empty children from the JSON data.
-function removeEmptyChildren(obj) {
-  if(obj["children"].length == 0) {
-    delete obj["children"];
-  } else {
-    for(var k in obj["children"]) {
-      removeEmptyChildren(obj["children"][k]);
-    }
-  }
-}
-
-function slash2txt(slash) {
-  var txt = [];
-  for(var i = 0; i < slash.length; i++) {
-    txt.push(slash[i].replace(/[^\/]*\//g, ' ')); // Replace any forwardslashes+text with a space.
-  }
-  return txt.join("\n");
-}
-
-function txt2json(text, slash) {
-  var fieldname = "name";
-
-  var lines = text.split('\n');  
-  var depth = 0; // Current indentation
-  var root = {
-    "children": []
-  };
-  root["" + fieldname] = "entity";
-  var parents = [];
-  var node = root;
-  var colorId = -1;
-  for(var i = 0; i < lines.length; i++) {
-    var cleanLine = lines[i].trim()//replace(/\s/g, "");
-    var newDepth  = lines[i].search(/\S/) + 1;
-    if(newDepth == 1) colorId++;
-    if(newDepth < depth) {
-      parents = parents.slice(0, newDepth);      
-    } else if (newDepth == depth + 1) {      
-      parents.push(node);
-    } else if(newDepth > depth + 1){
-      return new Error("Unparsable tree.");
-    }
-    depth = newDepth;
-    node = {"id": i, "children": [], "colorId": colorId};
-    node[fieldname] = cleanLine;
-    node['full_name'] = slash[i];
-    if(parents.length > 0) {
-      parents[parents.length-1]["children"].push(node);
-    }
-  }
-  removeEmptyChildren(root); // Remove 'children' properties of all nodes without children
-  return root;
-}
-
-
 // Parse a page number provided by the client.
 function parsePageNumber(pageNumber) {
   if(pageNumber === "latest") return "latest";
@@ -193,17 +108,16 @@ module.exports.getDocumentGroup = async function(req, res) {
   try {
     var pageNumber  = parsePageNumber(req.query.pageNumber);  
     var docsPerPage = parseDocsPerPage(req.query.perPage);
+    if(req.query.searchTerm) {
+      var searchTerm = req.query.searchTerm;
+    }
   } catch(err) {
     return res.send(err);
   }
 
-  var project = await Project.findById({ _id: id });
 
-  var docsPerUser         = await project.getDocumentsPerUser();
-  var docsAnnotatedByUser = await project.getDocumentsAnnotatedByUserCount(user);
-  var tree = txt2json(slash2txt(project.category_hierarchy), project.category_hierarchy)
 
-  console.log(pageNumber, docsPerPage);
+  var project = await Project.findById({ _id: id });  
 
   // If pageNumber is latest, recommend a group of docs to the user.
   // Send an error message if there are no doc groups left.
@@ -220,9 +134,7 @@ module.exports.getDocumentGroup = async function(req, res) {
         documentTokens.push(d.tokens);
       }
     } catch(err) {
-      console.log(err, err.message);
       if(err.message === "No documents left") {
-        console.log("BINBINB")
         return res.send({
           tagging_complete: true,
 
@@ -236,37 +148,50 @@ module.exports.getDocumentGroup = async function(req, res) {
       return res.send("error");
     }
     
-    var automaticAnnotations = runDictionaryTagging(documentTokens, project.automatic_tagging_dictionary);
+    if(project.automatic_tagging_dictionary) {
+      var automaticAnnotations = runDictionaryTagging(documentTokens, project.automatic_tagging_dictionary);
+    } else {
+      var automaticAnnotations = [];
+    }
+    
 
   }
   else {
     // Retrieve the documents in this project that have already been annotated by the user
-    var documentsAndAnnotations = await project.getDocumentsAnnotatedByUser2(user);
+    var documentsAndAnnotations = await project.getDocumentsAnnotatedByUser(user, searchTerm);
 
-    var documentIds         = documentsAndAnnotations.documentIds;
-    var documentTokens      = documentsAndAnnotations.documentTokens;
-    var documentAnnotations = documentsAndAnnotations.documentAnnotations;
 
+    
+    var documentIds           = documentsAndAnnotations.documentIds;
+    var documentTokens        = documentsAndAnnotations.documentTokens;
+    var documentAnnotations   = documentsAndAnnotations.documentLabels;
+    var documentAnnotationIds = documentsAndAnnotations.documentAnnotationIds;
+
+    var docsInSearchQuery     = documentIds.length;
+
+    if(documentIds.length === 0) {
+
+    }
 
     // If page number is too high, set it to 'latest'.
     if(((pageNumber - 1) * docsPerPage) > documentAnnotations.length) pageNumber = documentAnnotations.length;
 
-    console.log(pageNumber);
-
     // Slice each object according to the pageNumber.
-    documentIds              = documentIds.slice((pageNumber - 1) * docsPerPage, pageNumber * docsPerPage  );
-    documentTokens           = documentTokens.slice((pageNumber - 1) * docsPerPage, pageNumber * docsPerPage  );
-    documentAnnotations      = documentAnnotations.slice((pageNumber - 1) * docsPerPage, pageNumber * docsPerPage  );
+    var start = (pageNumber - 1) * docsPerPage;
+    var end   = pageNumber * docsPerPage;
 
+    documentIds              = documentIds.slice(start, end);
+    documentTokens           = documentTokens.slice(start, end);
+    documentAnnotations      = documentAnnotations.slice(start, end);
+    documentAnnotationIds    = documentAnnotationIds.slice(start, end);
 
-    console.log(pageNumber, documentIds);
     // Get an array of documentAnnotationIds.
-    var documentAnnotationIds = new Array();
-    for(var i in documentAnnotations) {
-      documentAnnotationIds.push(documentAnnotations[i]._id);
-    }
+    // var documentAnnotationIds = new Array();
+    // for(var i in documentAnnotations) {
+    //   documentAnnotationIds.push(documentAnnotations[i]._id);
+    // }
 
-    // Convert each (document, documentAnnotation) into a mention JSON to pre-populate the labels
+    // Convert each (documentAnnotation, document tokens) into a mention JSON to pre-populate the labels
     var automaticAnnotations = [];
     for(var i = 0; i < documentAnnotations.length; i++) {
       automaticAnnotations.push(DocumentAnnotation.toMentionsJSON(documentAnnotations[i], documentTokens[i]));
@@ -277,7 +202,21 @@ module.exports.getDocumentGroup = async function(req, res) {
   // Grab the comments from each document via getCommentsArray.
   var comments = await Project.getCommentsArray(documentIds);
 
+  var docsPerUser         = await project.getDocumentsPerUser();
+  var docsAnnotatedByUser = await project.getDocumentsAnnotatedByUserCount(user);
+  var categoryHierarchy   = ch.txt2json(ch.slash2txt(project.category_hierarchy), project.category_hierarchy);
+
   var projectAuthor = await User.findById({ _id: project.user_id });
+
+  var lastModified = documentAnnotations ? (documentAnnotations.length > 0 ? documentAnnotations[0].updated_at : null) : null;
+
+  var totalPagesAvailable = Math.ceil(docsAnnotatedByUser / docsPerPage) + 1;
+
+  var totalPages = Math.ceil(docsPerUser / docsPerPage);
+  if(searchTerm) {
+    totalPagesAvailable = Math.ceil(docsInSearchQuery / docsPerPage);
+    totalPages = totalPagesAvailable;
+  }
 
   var response = {
     documents:              documentTokens,
@@ -287,60 +226,25 @@ module.exports.getDocumentGroup = async function(req, res) {
     automaticAnnotations:   automaticAnnotations,
     comments:               comments,
 
-    categoryHierarchy:      tree,
+    categoryHierarchy:      categoryHierarchy,
     
     pageNumber:             (pageNumber === "latest" ? Math.ceil(docsAnnotatedByUser / docsPerPage) + 1 : pageNumber), // numAnnotatedDocGroups + 1 is the latest page        
-    totalPagesAvailable:    Math.ceil(docsAnnotatedByUser / docsPerPage),
-    totalPages:             Math.ceil(docsPerUser / docsPerPage),
+    totalPagesAvailable:    totalPagesAvailable,
+    totalPages:             totalPages,
 
     projectTitle:           project.project_name,
     projectAuthor:          projectAuthor.username,
 
-    lastModified:           (documentAnnotations ? documentAnnotations[0].updated_at : null),
+    lastModified:           lastModified,
   }
 
   console.log(response);
 
   res.send(response);
-
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Saves many objects at once.
-// objects: The array of objects to save.
-// error_function: The function to call on the errors that arise from saving.
-// done: The callback function to call when complete.
-function saveMany(objects, saved_objs, error_function, done) {
-  obj = objects.pop()
-
-  //console.log("Saving ", obj);
-  obj.save(function(err, saved_obj) {
-    if(err) return error_function(err);
-    saved_objs.push(saved_obj);
-    if (objects.length > 0) saveMany(objects, saved_objs, error_function, done)
-    else done(saved_objs)            
-  })       
-}
-
-
-
 
 
 // POST (AJAX): Submit the annotations of the user for the current document group.
-// 
 module.exports.submitAnnotations = async function(req, res) {
 
   var documentIds = req.body.documentIds;
@@ -426,6 +330,7 @@ module.exports.submitAnnotations = async function(req, res) {
 
 
 // GET: Download the annotations of the user. Sends the user a file.
+// TODO: This needs to be refactored and probably doesn't work atm
 module.exports.downloadAnnotationsOfUser = function(req, res) {
   var User = require('app/models/user')
   var proj_id = req.params.id;
@@ -461,6 +366,7 @@ module.exports.downloadAnnotationsOfUser = function(req, res) {
 
 // GET: Download all combined annotations of all users for this project.
 // Sends the user a file.
+// TODO: This also needs to be refactored and probs doesn't work atm
 module.exports.downloadCombinedAnnotations = function(req, res) {
   var proj_id = req.params.id;
   Project.findById(proj_id, function(err, proj) {
@@ -496,9 +402,7 @@ module.exports.getProjectDetails = async function(req, res) {
 
   data.dashboard.userDocsAnnotated = numDocsAnnotatedByUser;
   data.dashboard.userAnnotationsRequired = Math.floor(userAnnotationsRequired);
-
   res.send(data);
-
 }
 
 
@@ -534,10 +438,7 @@ module.exports.submitComment = async function(req, res) {
       res.status(500).send(err);
     }
 
-    // comment.save(function(err, comment) {
-    //if(err) { console.log(err); return res.status(500).send({"error": "could not save comment"})}
     console.log("Comment saved OK", comment);
-
 
     // Append the profile icon to the comment
     // Have to do this after saving (and not saved in Comment itself) because the user profile could change
@@ -574,10 +475,8 @@ module.exports.modifyHierarchy = function(req, res) {
 
 
 
-
-
-
 // POST: Accept an invitation.
+// TODO: Refactor using async await and connect it up to the interface again
 module.exports.acceptInvitation = function(req, res) {
   var invitation_id = req.params.id;
 
@@ -592,6 +491,7 @@ module.exports.acceptInvitation = function(req, res) {
 }
 
 // POST: Decline an invitation.
+// TODO: Refactor using async await and connect it up to the interface again
 module.exports.declineInvitation = function(req, res) {
   var invitation_id = req.params.id;
   // TODO: Verify user is same as user_email in ProjectInvitation object
