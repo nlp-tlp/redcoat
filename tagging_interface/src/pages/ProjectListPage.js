@@ -177,7 +177,8 @@ class ProjectListPage extends Component {
               <div className="col-date">
                 <span className="project-created-at">Created on {formatDate(project.created_at)}</span>
               </div>
-              <div className="col-users">
+              <div className="col-stats">
+                <span className="project-total-comments"><i class="fa fa-comment"></i> <span className="comment-count">{project.total_comments}</span></span>
                 <span className="project-total-users"><i class="fa fa-user"></i> <span className="user-count">{project.total_users}</span></span>
               </div>
             </div>      

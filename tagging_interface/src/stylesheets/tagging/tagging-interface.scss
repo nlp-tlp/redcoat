@@ -423,9 +423,7 @@ body.taking-screenshot .save-to-png {
 	}
 }
 
-#tagging-interface {
-	display: flex;
-}
+
 .tagging-complete-page {
 	#sentence-tagging {
 		min-height: 0px;
@@ -1607,6 +1605,7 @@ button.blue-button {
 // }
 
 #tagging-interface {
+	display: flex;
 	&.loading {
 		#sentence-tagging .document-container //, #tagging-menu, #pagination > *
 	 	{
@@ -1743,7 +1742,7 @@ button.blue-button {
 		}
 		.summary {
 			color: #555;
-			min-height: 100px;
+			min-height: 120px;
 			.different {
 				color: $primary-blue;
 			}

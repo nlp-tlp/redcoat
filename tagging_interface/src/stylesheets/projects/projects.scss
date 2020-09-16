@@ -853,13 +853,15 @@
 			text-align: left;
 			padding: 0 30px;
 		}
-		.col-users {
+		.col-stats {
 			text-align: center;
-			width: 50px;
+			font-size: 14px;
 			
-			
+			span:not(:last-child) {
+				margin-right: 16px;
+			}
 			i {
-				margin-right: 4px;
+				margin-right: 2px;
 				font-size: 0.9em;
 				transform: translate(0, -1px);
 			}
@@ -965,7 +967,6 @@
 				border-collapse: collapse;
 				.inner {
 					padding: 10px 15px;
-					display: block;
 
 				}
 				
@@ -974,13 +975,26 @@
 				width: 50%;
 			}
 
+			.inner {
+				display: flex;
+				flex-direction: row;
+				align-items: center;
+			}
+			.row-divider {
+				border-left: 12px solid darken($primary-red, 12);
+				background: #dedede;
+				font-weight: bold;
+		
+			}
+
 
 		}
 	}
 }
 @for $i from 1 through 12 {
-	.category-hierarchy-table tr td.color-#{$i} span.inner { border-left: 8px solid nth($colors, $i); }
+	.project-page-table tr td.color-#{$i} span.inner { border-left: 8px solid nth($colors, $i); }
 }
+
 
 
 .project-card {

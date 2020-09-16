@@ -3,6 +3,8 @@ import { Link, Switch, Route, withRouter } from "react-router-dom";
 import {Component} from 'react';
 import logo from '../favicon.png'
 
+import ProfileIcon from './ProfileIcon';
+
 const BASE_URL = "/"
 
 // The navbar, which appears at the top of the page.
@@ -36,7 +38,7 @@ class Navbar extends Component {
           { this.props.user &&
 
             <div className="dropdown-menu">
-              <button className="flex"><div className="circle-icon profile-icon small" style={{'background': this.props.user.profile_icon.background}}><i className={"profile-icon-i fa fa-" + this.props.user.profile_icon.icon} style={{'color': this.props.user.profile_icon.foreground}}></i></div><span>Logged in as {this.props.user.username}</span></button>
+              <button className="flex"><ProfileIcon user={this.props.user}/><span>Logged in as {this.props.user.username}</span></button>
               <ul className="dropdown-menu-items">
                 <li><Link to={"" + BASE_URL + "profile"}>Profile</Link></li>
                 <li><Link to={"" + BASE_URL + "logout"}>Logout</Link></li>

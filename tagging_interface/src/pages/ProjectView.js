@@ -10,7 +10,8 @@ import { defaults } from 'react-chartjs-2'
 
 import { Comment } from '../components/Comment';
 
-import CategoryHierarchy from '../components/CategoryHierarchy';
+import CategoryHierarchyPage from '../pages/CategoryHierarchyPage';
+import InvitationsPage from '../pages/InvitationsPage';
 
 import _ from 'underscore';
 
@@ -564,7 +565,7 @@ class ProjectViewSidenav extends Component {
 
         <ul className="sidenav-items">
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Dashboard" icon="bar-chart"/>
-          <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Curation" icon="list-alt"/>
+          <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Annotations" icon="list-alt"/>
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Entity Hierarchy" icon="sitemap"/>
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Invitations" icon="envelope"/>
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Settings" icon="wrench"/>
@@ -607,88 +608,7 @@ class EmptyThing extends Component {
 
 
 
-function generateEmptyTable() {
-  var n = 15;
-  var arr = new Array(n).fill(0);
-  
 
-  function stringOfRandomLength(minlen, maxlen) {
-    var s = '';
-    for(var i = 0; i < minlen + Math.floor(Math.random() * maxlen); i++) {
-      s += 'x';
-    }
-    return s;
-  }
-
-  return (
-    <table className="category-hierarchy-table">
-      <tbody>
-       { arr.map((x, i) => 
-        <tr> 
-          <td><span className="inner"><span className="st">{stringOfRandomLength(30, 70)}</span></span></td>
-          <td><span className="inner"><span className="st">{stringOfRandomLength(30, 70)}</span></span></td>
-        </tr>
-      ) }
-    </tbody>
-  </table>
-  )  
-}
-
-
-function getColourIndex(row, colourIndexes) {
-  var s = row.split('/');
-  var base_class = s.length > 1 ? s[0] : s;
-  return colourIndexes[base_class] + 1
-}
-
-function getRowName(row) {
-  var s = row.split('/');
-  var rowName = s.length > 1 ? s[s.length - 1] : s;
-  var spacing = '';
-  for(var i = 1; i < s.length; i++) {
-    spacing += " - ";
-  }
-  return spacing + rowName;
-}
-
-class CategoryHierarchyPage extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-
-
-  render() {
-    console.log(this.props.data, this.props.loading, 'xxx');
-    return ( 
-      <main className="project-page">
-
-        <h2>Entity Hierarchy</h2>
-
-        <div className="wrapper">
-          { this.props.loading && generateEmptyTable() }
-
-
-          { ! this.props.loading &&  <CategoryHierarchy
-              items={this.props.data.children}                         
-              visible={true}   
-              draggable={false}
-              displayOnly={true}  
-          
-
-          />
-          }
-          
-        </div>
-
-       
-
-
-
-      </main>
-    )
-  }
-}
 
 
 /*  <div className="wrapper">
@@ -862,9 +782,9 @@ class ProjectView extends Component {
           <section className={"route-section" + (!this.state.loading ? " loaded" : "")}>
            <Switch location={location}>
               <Route path="/projects/:id/dashboard"           render={() => <ProjectDashboard loading={this.state.loading} data={this.state.data.dashboard} project_id={this.props.project_id} />} />     
-              <Route path="/projects/:id/curation"            render={() => <EmptyThing {...this.state} />} />     
+              <Route path="/projects/:id/annotations"            render={() => <EmptyThing {...this.state} />} />     
               <Route path="/projects/:id/entity-hierarchy"  render={() => <CategoryHierarchyPage loading={this.state.loading} data={this.state.data.categoryHierarchy} colourIndexes={this.state.data.dashboard.entityChartData ? this.state.data.dashboard.entityChartData.colourIndexes : null} />} />     
-              <Route path="/projects/:id/invitations"         render={() => <EmptyThing {...this.state} />} />     
+              <Route path="/projects/:id/invitations"         render={() => <InvitationsPage data={this.state.data.invitationsTable ? this.state.data.invitationsTable : {}} loading={this.state.loading} />} />     
               <Route path="/projects/:id/settings"            render={() => <EmptyThing {...this.state} />} />   
               <Route             render={() => <Error404Page />} />   
             </Switch>
