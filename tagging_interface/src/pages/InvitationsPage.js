@@ -82,7 +82,7 @@ class InvitationsPage extends Component {
     return ( 
       <main className="project-page">
 
-        <h2>Invitations</h2>
+        <h2>Annotators</h2>
 
         <div className="wrapper">
           { this.props.loading && generateEmptyTable() }

@@ -853,13 +853,15 @@
 			text-align: left;
 			padding: 0 30px;
 		}
-		.col-users {
+		.col-stats {
 			text-align: center;
-			width: 50px;
+			font-size: 14px;
 			
-			
+			span:not(:last-child) {
+				margin-right: 16px;
+			}
 			i {
-				margin-right: 4px;
+				margin-right: 2px;
 				font-size: 0.9em;
 				transform: translate(0, -1px);
 			}
@@ -965,7 +967,6 @@
 				border-collapse: collapse;
 				.inner {
 					padding: 10px 15px;
-					display: block;
 
 				}
 				
@@ -974,13 +975,26 @@
 				width: 50%;
 			}
 
+			.inner {
+				display: flex;
+				flex-direction: row;
+				align-items: center;
+			}
+			.row-divider {
+				border-left: 12px solid darken($primary-red, 12);
+				background: #dedede;
+				font-weight: bold;
+		
+			}
+
 
 		}
 	}
 }
 @for $i from 1 through 12 {
-	.category-hierarchy-table tr td.color-#{$i} span.inner { border-left: 8px solid nth($colors, $i); }
+	.project-page-table tr td.color-#{$i} span.inner { border-left: 8px solid nth($colors, $i); }
 }
+
 
 
 .project-card {
@@ -1055,12 +1069,45 @@
 			box-sizing: border-box;
 			border-left: 3px solid rgba(0, 0, 0, 0);
 			
+			&.submenu-header {
+				&.active {
+					background: #f7f7f7;
+					ul { 
+						font-weight: normal;
+						color: #555;
+					}
+
+				}
+				> ul {
+					background: #fafafa;
+					&:not(.open) {
+						display: none;
+					}
+				}
+				> ul li a {
+					padding-left: 50px;
+					box-sizing: border-box;
+					&:hover {
+						padding-left: 60px;
+					}
+				}
+				> ul li.active {
+					border-left: none;
+					a {
+						color: #222;
+						font-weight: bold;
+					}
+				}
+			}
 
 			&.active {
 				font-weight: bold;
 				background: #eee;
 				border-left: 3px solid $primary-red;
 				color: #222;
+				a {
+					color: #222;
+				}
 			}
 			i {
 				min-width: 20px;
@@ -1073,7 +1120,7 @@
 				cursor: pointer;
 				color: #555;
 				text-decoration: none;
-				transition: padding 0.1s ease;
+				transition: padding 0.05s ease;
 				&:hover {
 					background: #ebebeb;
 					padding-left: 40px;

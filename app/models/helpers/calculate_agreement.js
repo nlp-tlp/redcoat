@@ -4,7 +4,6 @@ var _ = require('underscore');
 // Calculate agreement score using Michael's jaccard based method.
 // Has two components: labelScore, i.e. how closely each annotator's labels align (regardless of spans), and
 // spanScore, i.e. how closely each annotator's spans align (regardless of labels).
-// I bet I could do this in like 20 lines in python :'(
 module.exports = function(tokens, labels) {
 
   function mean(arr) {

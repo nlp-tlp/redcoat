@@ -280,13 +280,12 @@ ProjectSchema.methods.getDocumentsAnnotatedByUserCount = function(user, next) {
 
 // Retrieve a list of all annotators of the project: the active, inactive, and declined users, as well as the pending invitations.
 // For the pending invitations, lookup the user account associated with them (if an account exists), otherwise fill the missing fields with empty strings.
-ProjectSchema.methods.getInvitationsTableData = function(next) {
+ProjectSchema.methods.getInvitationsTableData = async function(next) {
 
 
-  var User = require('./user');
   var t = this;
 
-  User.aggregate([
+  var project_users = await User.aggregate([
     { 
       $facet: {
         "active_users": [
@@ -295,6 +294,7 @@ ProjectSchema.methods.getInvitationsTableData = function(next) {
             username: 1,
             email: 1,
             _id: 1,
+            profile_icon: 1,
             }
           },
           { $addFields: {
@@ -307,6 +307,7 @@ ProjectSchema.methods.getInvitationsTableData = function(next) {
             username: 1,
             email: 1,
             _id: 1,
+            profile_icon: 1,
             }
           },
           { $addFields: {
@@ -319,6 +320,7 @@ ProjectSchema.methods.getInvitationsTableData = function(next) {
             username: 1,
             email: 1,
             _id: 1,
+            profile_icon: 1,
             }
           },
           { $addFields: {
@@ -328,54 +330,61 @@ ProjectSchema.methods.getInvitationsTableData = function(next) {
         ]
       }
     },
-    { $project: { users: { $setUnion: ['$active_users','$inactive_users','$declined_users']}}},
-    { $unwind: '$users'},
-    { $replaceRoot: { newRoot: "$users" } }
-  ], function(err, project_users) {
+    //{ $project: { users: { $setUnion: ['$active_users','$inactive_users','$declined_users']}}},
+    //{ $unwind: '$users'},
+    //{ $replaceRoot: { newRoot: "$users" } },
+
+  ]);
+
+
     //console.log(err, project_users); // TODO: add 'last_active'?
-    var ProjectInvitation = require('./project_invitation');
+  var ProjectInvitation = require('./project_invitation');
     // Also obtain all pending invitations and map them to the original user accounts, if they exist, otherwise simply return the email addresses.
-    ProjectInvitation.aggregate([
-      { $match: { project_id: t._id } },
-      {
-        $lookup: {
-          from: "users",
-          localField: "user_email",
-          foreignField: "email",
-          as: "user"
-        }
-      },
-      {
-        $project: {
-          _id: "$user._id",
-          username: "$user.username",
-          email: "$user_email",
-        }
-      },
-      {
-        $unwind: {
-          path: "$username",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $unwind: {
-          path: "$_id",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      { $addFields: {
-          status: "Pending invitations"
-        }
+  var pending_users = await ProjectInvitation.aggregate([
+    { $match: { project_id: t._id } },
+    {
+      $lookup: {
+        from: "users",
+        localField: "user_email",
+        foreignField: "email",
+        as: "user"
       }
-    ], function(err, pending_users) {
-      //console.log("project", project_users)
-      //console.log("pending", pending_users)
-      var all_users = project_users.concat(pending_users)
-      //console.log(",,,,,,,,,,,,,,,,,,,", all_users)
-      next(err, all_users); 
-    });
-  });
+    },
+    {
+      $project: {
+        _id: "$user._id",
+        username: "$user.username",
+        email: "$user_email",
+        profile_icon: 1,
+      }
+    },
+    {
+      $unwind: {
+        path: "$username",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $unwind: {
+        path: "$_id",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    { $addFields: {
+        status: "Pending invitations"
+      }
+    }
+  ]);
+
+
+    //console.log("project", project_users)
+    //console.log("pending", pending_users)
+  var all_users = project_users
+  all_users[0].pending_invitations = pending_users
+  console.log(",,,,,,,,,,,,,,,,,,,", all_users[0])
+  return Promise.resolve(all_users[0]);
+
+
 }
 
 
@@ -1418,6 +1427,7 @@ ProjectSchema.methods.getDetails = async function(done) {
 
 
 
+    var invitationsTableData = await t.getInvitationsTableData();
 
     var data = {
       project_name: t.project_name,
@@ -1440,6 +1450,8 @@ ProjectSchema.methods.getDetails = async function(done) {
 
 
       },   
+
+      invitationsTable: invitationsTableData,
       // categoryHierarchy: {
       //   categories: t.category_hierarchy,
       // }
@@ -1496,6 +1508,9 @@ ProjectSchema.statics.getInvolvedProjectData = async function(user) {
   var numUserInvolvedIn = 0;
 
   for(var project_idx in projects) {
+
+    var total_comments = await Comment.count({project_id: projects[project_idx]._id});
+
     var project = projects[project_idx];
 
     var isCreatedByUser = user._id.equals(project.user_id);
@@ -1507,6 +1522,7 @@ ProjectSchema.statics.getInvolvedProjectData = async function(user) {
       name: project.project_name,
       description: project.project_description,
       total_users:  getTotalUsers(project),
+      total_comments: total_comments,
       creator:      user.username,
       created_at:   project.created_at,
       icon_name:    getIconName(project.project_name),

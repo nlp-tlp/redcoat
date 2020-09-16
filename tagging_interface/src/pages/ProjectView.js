@@ -552,7 +552,10 @@ class ProjectViewSidenav extends Component {
     */
 
     var currentLocation = window.location.pathname;
-    var view = currentLocation.split('/')[currentLocation.split('/').length - 1];
+
+
+    var view = currentLocation.split('/').slice(3, currentLocation.split('/').length);
+    console.log(view);
 
     return (
       <nav id="project-view-sidenav">
@@ -565,9 +568,11 @@ class ProjectViewSidenav extends Component {
 
         <ul className="sidenav-items">
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Dashboard" icon="bar-chart"/>
-          <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Annotations" icon="list-alt"/>
-          <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Entity Hierarchy" icon="sitemap"/>
-          <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Invitations" icon="envelope"/>
+          <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Entity Hierarchy" icon="sitemap"/>  
+
+          <ProjectViewSidenavSubmenu project_id={this.props.project_id} view={view} name="Annotations" menuItems={ [{name: "Curation", icon: "gavel"}, { name: "Download", icon: "download" }] } icon="list-alt"/>
+
+          <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Annotators" icon="users"/>
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Settings" icon="wrench"/>
         </ul>
 
@@ -575,6 +580,37 @@ class ProjectViewSidenav extends Component {
     )
   }
 }
+//           <ProjectViewSidenavSubmenu project_id={this.props.project_id} view={view} name="Annotations" menuItems={ [{name: "Curation", icon: "list-alt"}, { name: "Download", icon: "download" }] }icon="list-alt"/>
+
+
+class ProjectViewSidenavSubmenu extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+
+
+  render() {
+
+    var pathName = this.props.name.replace(" ", "-").toLowerCase();
+
+    console.log(this.props.view, pathName)
+
+
+
+    var firstChildPathName = this.props.menuItems[0].name.replace(" ", "-").toLowerCase();
+    var open = this.props.view[0] === pathName;
+    return (
+      <li className={"submenu-header" + (this.props.view[0] === pathName ? " active" : "")}>
+        <Link to={"/projects/" + this.props.project_id + "/" + pathName +"/" + firstChildPathName} ><i className={"fa fa-" + this.props.icon}></i>{ this.props.name }</Link>
+        <ul className={"submenu" + (open ? " open" : "")}>
+        {this.props.menuItems.map((item, index) => <ProjectViewSidenavButton project_id={this.props.project_id} view={this.props.view} name={item.name} parentPath={pathName} icon={item.icon}/>)}
+        </ul>
+      </li>
+    )
+  }
+}
+
 
 class ProjectViewSidenavButton extends Component {
   constructor(props) {
@@ -583,8 +619,9 @@ class ProjectViewSidenavButton extends Component {
 
   render() {
     var pathName = this.props.name.replace(" ", "-").toLowerCase();
+    if(this.props.parentPath) pathName = this.props.parentPath + "/" + pathName;
     return (
-      <li className={this.props.view === pathName ? "active" : ""}>
+      <li className={this.props.view.join('/') === pathName ? "active" : ""}>
         <Link to={"/projects/" + this.props.project_id + "/" + pathName}>
         <i className={"fa fa-" + this.props.icon}></i>{ this.props.name }
         </Link>
@@ -782,9 +819,10 @@ class ProjectView extends Component {
           <section className={"route-section" + (!this.state.loading ? " loaded" : "")}>
            <Switch location={location}>
               <Route path="/projects/:id/dashboard"           render={() => <ProjectDashboard loading={this.state.loading} data={this.state.data.dashboard} project_id={this.props.project_id} />} />     
-              <Route path="/projects/:id/annotations"            render={() => <EmptyThing {...this.state} />} />     
+              <Route path="/projects/:id/annotations/curation"            render={() => <EmptyThing {...this.state} />} />     
+              <Route path="/projects/:id/annotations/download"            render={() => <EmptyThing {...this.state} />} />     
               <Route path="/projects/:id/entity-hierarchy"  render={() => <CategoryHierarchyPage loading={this.state.loading} data={this.state.data.categoryHierarchy} colourIndexes={this.state.data.dashboard.entityChartData ? this.state.data.dashboard.entityChartData.colourIndexes : null} />} />     
-              <Route path="/projects/:id/invitations"         render={() => <InvitationsPage data={this.state.data.invitationsTable ? this.state.data.invitationsTable : {}} loading={this.state.loading} />} />     
+              <Route path="/projects/:id/annotators"         render={() => <InvitationsPage data={this.state.data.invitationsTable ? this.state.data.invitationsTable : {}} loading={this.state.loading} />} />     
               <Route path="/projects/:id/settings"            render={() => <EmptyThing {...this.state} />} />   
               <Route             render={() => <Error404Page />} />   
             </Switch>
