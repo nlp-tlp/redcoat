@@ -38,6 +38,8 @@ class CurationInterface extends Component {
 
 			userHasAnnotated: [],
 
+			annotatorAgreement: null,
+
 			pageNumber: 1,
 			totalPages: 1,
 			recentlySaved: false,
@@ -111,6 +113,8 @@ class CurationInterface extends Component {
       			users: d.users,
 
       			userHasAnnotated: userHasAnnotated,
+
+      			annotatorAgreement: d.annotatorAgreement,
 
       			entityColourMap: this.initEntityColourMap(d.categoryHierarchy.children),
 
@@ -269,16 +273,22 @@ class CurationInterface extends Component {
                   	<div className="curation-interface-inner">
                   		<div className="document-window" id="sentence-tagging">
 
+                  			
+                  			  <div className="agreement-score">
+                  			  <span className="name">Agreement:</span>
+                  			  	{ this.state.annotatorAgreement && <span className="value">{(this.state.annotatorAgreement * 100).toFixed(2)}%</span>}
+                  			  	{ !this.state.annotatorAgreement && <span className="value na">N/A</span>}
+                  			  </div>
+
                   			{
 		          			this.state.annotations.map((annotations, index) => 
 		          				<CurationDocumentContainer
-		          					user={this.state.users[index]}
+		          					user={this.state.users[index] || null}
 		          					index={index}
 		          					tokens={this.state.tokens}
 		          					annotations={this.state.annotations[index]}
 		          					entityColourMap={this.state.entityColourMap}
 				                	displayOnly={true}
-				                	userHasAnnotated={this.state.userHasAnnotated[index]}
 		          				/>
 		          			)}
 
@@ -290,9 +300,11 @@ class CurationInterface extends Component {
 				            	{ this.props.user && 
 
 				            	<div className="comments-inner">
-				            		<h3>Comments {this.state.comments.length > 0 && "(" + this.state.comments.length + ")"}</h3>
 
-				            		
+
+				            		<h3 className={this.state.comments.length === 0 ? "hidden" : ""}>Comments {this.state.comments.length > 0 && "(" + this.state.comments.length + ")"}</h3>
+
+				            		{this.state.comments.length === 0 && <div className="no-comments-yet">No comments yet.</div>}
 				                	<div className="comments-even-more-inner" ref={this.commentBoxRef}>
 				                  	{ this.state.comments.map((comment, i) => <Comment index={i} {...comment} hideDocumentString={true} />) }
 				                	</div>
@@ -327,9 +339,9 @@ class CurationDocumentContainer extends Component {
 		return (
 			<div className="document-container">
           		<div className="document-wrapper">
-	          		<div className={"curation-document" + (this.props.userHasAnnotated ? "" : " not-yet-annotated")}>
+	          		<div className={"curation-document" + (this.props.user ? "" : " not-yet-annotated")}>
 	          			<div className="user-row">
-	          				<ProfileIcon user={this.props.user}/><span className="username">{this.props.user.username}</span>
+	          				<ProfileIcon user={this.props.user}/><span className="username">{this.props.user && this.props.user.username}</span> 
 
 	          			</div>
 		          		<div className="sentence display-only">		          		

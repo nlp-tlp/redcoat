@@ -3,6 +3,37 @@
 	align-items: stretch;
 	justify-content: stretch;
 	height: 100%;
+
+	div.agreement-score {
+		font-size: 20px;
+		margin-top: -20px;
+		margin-bottom: 15px;
+		padding: 0 60px;
+		text-align: center;
+		text-align: center;
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+		.name {
+			color: #777;
+			font-size: 16px;
+			margin-right: 15px;
+		}
+		.value {
+			font-size: 40px;
+			font-weight: 600;
+			color: #222;
+			&.na {
+				color: #777;
+			}
+		}
+	
+
+	}
+
+
 }
 
 .document-window {
@@ -14,6 +45,24 @@
 	margin-top: 50px;
 }
 .comments-pane {
+	.hidden {
+		visibility: hidden;
+	}
+	position: relative;
+	.no-comments-yet {		
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		pointer-events: none;
+		color: rgba(0, 0, 0, 0.4);
+		position: absolute;
+		width: calc(100% - 20px);
+
+		top: 280px;
+		
+
+	}
+
 	width: 600px;
 	background: #ccc;
 	box-shadow: inset 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
@@ -84,19 +133,27 @@
 				color: white;
 			}
 			&.not-yet-annotated {
+				.user-row {
+					background: rgba(0, 0, 0, 0.25);
+					.profile-icon {
+						background: none;
+						visibility: hidden;
+						
+					}
+				}
 				.sentence .word { opacity: 0.2; }
 				.sentence:after {
 					position: absolute;
 					top: 0;
 					left: 0;
 					width: 100%;
-					font-size: 24px;
+					font-size: 20px;
 					content: "Not yet annotated";
 					display: flex;
 					align-items: center;
 					justify-content: center;
 					height: 100%;
-					color: rgba(0, 0, 0, 0.5);
+					color: rgba(0, 0, 0, 0.6);
 				}
 			}
 			.sentence {
@@ -108,6 +165,17 @@
 					padding: 10px 8px;
 					height: auto;	
 
+					.search-highlight {
+						
+						
+						&:before {
+						
+							top: 0px;
+			
+
+						}
+		
+					}
 				}
 
 				.word {

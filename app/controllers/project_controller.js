@@ -296,23 +296,24 @@ module.exports.getCurationDocument = async function(req, res) {
     var totalPagesAvailable = curationDoc.totalDocuments;
     var tokens = doc.tokens;
     var documentId = doc._id;
+    var users = curationDoc.users;
 
-    var orderedDocumentAnnotations = new Array(activeUserIds.length).fill(null);
-    for(var d of documentAnnotations) {
-      orderedDocumentAnnotations[activeUserIdIndexes[d.user_id]] = d;
-    }
-    documentAnnotations = orderedDocumentAnnotations;
+    //var orderedDocumentAnnotations = new Array(activeUserIds.length).fill(null);
+    //for(var d of documentAnnotations) {
+    //  orderedDocumentAnnotations[activeUserIdIndexes[d.user_id]] = d;
+    //}
+    //documentAnnotations = orderedDocumentAnnotations;
 
 
     var automaticAnnotations = [];
     for(var i = 0; i < documentAnnotations.length; i++) {
-
-      if(!documentAnnotations[i]) {
-        automaticAnnotations.push(null);
-      } else {
-        automaticAnnotations.push(DocumentAnnotation.toMentionsJSON(documentAnnotations[i].labels, tokens));
-      }      
+      automaticAnnotations.push(DocumentAnnotation.toMentionsJSON(documentAnnotations[i].labels, tokens));          
     }
+    for(var i = automaticAnnotations.length; i < project.overlap; i++) {
+      automaticAnnotations.push(null);
+    }
+
+    var annotatorAgreement = doc.annotator_agreement;
 
 
     var comments = await doc.getComments();
@@ -322,6 +323,7 @@ module.exports.getCurationDocument = async function(req, res) {
 
 
   } catch(err) {
+    logger.error(err);
     if(err.message === "No documents") {
       logger.error("no docs")
     } else {
@@ -329,7 +331,7 @@ module.exports.getCurationDocument = async function(req, res) {
     }
   }
 
-  console.log(automaticAnnotations)
+  console.log(automaticAnnotations, annotatorAgreement)
 
   var categoryHierarchy   = ch.txt2json(ch.slash2txt(project.category_hierarchy), project.category_hierarchy);
 
@@ -337,8 +339,10 @@ module.exports.getCurationDocument = async function(req, res) {
     documentId: documentId || null,
     tokens: tokens || null,
     annotations: automaticAnnotations || null,
-    users: activeUsers,
+    users: users || null,
     comments: comments || null,
+
+    annotatorAgreement: annotatorAgreement || null,
 
     categoryHierarchy: categoryHierarchy,
 

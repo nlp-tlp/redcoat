@@ -170,9 +170,15 @@ ProjectSchema.methods.getCurationDocument = async function(activeUsers, pageNumb
   var doc = documents[pageNumber - 1];
   console.log("doc:", doc);
 
-  var documentAnnotations = await DocumentAnnotation.find({document_id: doc._id});
+  var documentAnnotations = await DocumentAnnotation.find({document_id: doc._id}).sort({user_id: "asc"});
 
-  return {doc: doc, documentAnnotations: documentAnnotations, totalDocuments: documents.length};
+  var users = new Array();
+  for(var d of documentAnnotations) {
+    var user = await User.findOne({_id: d.user_id}).select({username: 1, profile_icon: 1}).lean().exec();
+    users.push(user);
+  }
+
+  return {doc: doc, documentAnnotations: documentAnnotations, totalDocuments: documents.length, users: users};
 }
 
 
