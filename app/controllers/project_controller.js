@@ -276,20 +276,20 @@ module.exports.getCurationDocument = async function(req, res) {
   console.log(pageNumber, sortBy, searchTerm);
   var project = await Project.findById({ _id: id });
 
-  var activeUsers = await project.getActiveUsers();
-  var activeUserIds = new Array();
-  var activeUserIdIndexes = {};
-  for(var u of activeUsers) {
-    activeUserIdIndexes[u._id] = activeUserIds.length;
-    activeUserIds.push(u._id);
-  }
+  // var activeUsers = await project.getActiveUsers();
+  // var activeUserIds = new Array();
+  // var activeUserIdIndexes = {};
+  // for(var u of activeUsers) {
+  //   activeUserIdIndexes[u._id] = activeUserIds.length;
+  //   activeUserIds.push(u._id);
+  // }
 
-  console.log("Active users:", activeUsers);
-  console.log("IDs:", activeUserIds);
+  //console.log("Active users:", activeUsers);
+  //console.log("IDs:", activeUserIds);
 
 
   try {
-    var curationDoc = await project.getCurationDocument(activeUsers, pageNumber, sortBy, searchTerm);
+    var curationDoc = await project.getCurationDocument(pageNumber, sortBy, searchTerm);
 
     var doc = curationDoc.doc;
     var documentAnnotations = curationDoc.documentAnnotations;
@@ -297,6 +297,9 @@ module.exports.getCurationDocument = async function(req, res) {
     var tokens = doc.tokens;
     var documentId = doc._id;
     var users = curationDoc.users;
+    var saveTimes = curationDoc.saveTimes;
+
+    console.log("DOC:", doc);
 
     //var orderedDocumentAnnotations = new Array(activeUserIds.length).fill(null);
     //for(var d of documentAnnotations) {
@@ -318,8 +321,8 @@ module.exports.getCurationDocument = async function(req, res) {
 
     var comments = await doc.getComments();
 
-    console.log("Curation document:", curationDoc);
-    console.log("Comments:", comments);
+    //console.log("Curation document:", curationDoc);
+    //console.log("Comments:", comments);
 
 
   } catch(err) {
@@ -331,7 +334,7 @@ module.exports.getCurationDocument = async function(req, res) {
     }
   }
 
-  console.log(automaticAnnotations, annotatorAgreement)
+  //console.log(automaticAnnotations, annotatorAgreement)
 
   var categoryHierarchy   = ch.txt2json(ch.slash2txt(project.category_hierarchy), project.category_hierarchy);
 
@@ -342,6 +345,8 @@ module.exports.getCurationDocument = async function(req, res) {
     users: users || null,
     comments: comments || null,
 
+    saveTimes: saveTimes || null,
+
     annotatorAgreement: annotatorAgreement || null,
 
     categoryHierarchy: categoryHierarchy,
@@ -350,6 +355,7 @@ module.exports.getCurationDocument = async function(req, res) {
     totalPages: totalPagesAvailable || 1,    
   }
 
+  //console.log(response)
   res.send(response);
 
 }
@@ -428,9 +434,15 @@ module.exports.submitAnnotations = async function(req, res) {
   // Add all docgroups to the user's docgroups_annotated array.
   await User.findByIdAndUpdate(userId, { $addToSet: { 'docgroups_annotated': documentIds }});
 
+
+  // Update each document group's times_annotated field
+  for(var documentId of documentIds) {
+    var numDas = await DocumentAnnotation.count({document_id: documentId})
+    await Document.update({_id: documentId }, { $set: {times_annotated: numDas } });
+  }
+
   // If this is a new document group, update the document group's times_annotated field
   if(newDGA) {
-    await Document.update({_id: { $in: documentIds } }, { $inc: {times_annotated: 1 } });
     logger.debug("Saved document annotation " + documentAnnotationIds);
   } else {    
     logger.debug("Updated document annotations " + documentAnnotationIds);

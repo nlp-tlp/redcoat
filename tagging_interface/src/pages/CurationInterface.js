@@ -13,6 +13,8 @@ import ProfileIcon from '../components/ProfileIcon';
 
 import {Word, Sentence} from '../components/tagging_interface/documentComponents';
 
+import formatDate  from '../functions/formatDate';
+
 
 
 // Config for all API fetch requests
@@ -110,7 +112,9 @@ class CurationInterface extends Component {
 
       			annotations: initAnnotationsArray([d.tokens], d.annotations, this.state.searchTerm, true), //fix
       			comments: d.comments,
+
       			users: d.users,
+      			saveTimes: d.saveTimes,
 
       			userHasAnnotated: userHasAnnotated,
 
@@ -252,7 +256,7 @@ class CurationInterface extends Component {
 
 	                  showSortBy={true}
                   	  sortBy={this.state.sortBy}
-                  	  sortByOptions={["Annotations", "Creation date", "Agreement"]}
+                  	  sortByOptions={["Annotations", "Agreement"]}
                   	  setSortBy={this.setSortBy.bind(this)}
 
 
@@ -289,6 +293,7 @@ class CurationInterface extends Component {
 		          					annotations={this.state.annotations[index]}
 		          					entityColourMap={this.state.entityColourMap}
 				                	displayOnly={true}
+				                	saveTime={this.state.saveTimes[index] || null}
 		          				/>
 		          			)}
 
@@ -342,7 +347,7 @@ class CurationDocumentContainer extends Component {
 	          		<div className={"curation-document" + (this.props.user ? "" : " not-yet-annotated")}>
 	          			<div className="user-row">
 	          				<ProfileIcon user={this.props.user}/><span className="username">{this.props.user && this.props.user.username}</span> 
-
+	          				<div className="save-time">Saved on {formatDate(this.props.saveTime)}</div>
 	          			</div>
 		          		<div className="sentence display-only">		          		
 

@@ -138,21 +138,27 @@ ProjectSchema.methods.getActiveUsers = async function() {
 
 // Retrieve a list of documents and a list of annotations (for each document),
 // optionally order by sortBy and search based on searchTerm.
-ProjectSchema.methods.getCurationDocument = async function(activeUsers, pageNumber, sortBy, searchTerm) {
+ProjectSchema.methods.getCurationDocument = async function(pageNumber, sortBy, searchTerm) {
 
   var t = this;
 
   var sortObj; 
   var sortOrder = 'desc';
 
-  if(sortBy === "Annotations")        sortObj = {times_annotated: sortOrder};
-  else if(sortBy === "Creation date") sortObj = {updatedAt: sortOrder};
-  else if(sortBy === "Agreement")     sortObj = {annotator_agreement: sortOrder};
+  if(sortBy === "Annotations")        sortObj = {times_annotated: sortOrder, annotator_agreement: sortOrder};
+  //else if(sortBy === "Creation date") sortObj = {updatedAt: sortOrder};
+  else if(sortBy === "Agreement")     sortObj = {annotator_agreement: sortOrder, times_annotated: sortOrder};
 
   
-  console.log(sortObj);
+  /*var documents = await Document.aggregate([
+    { $match: {project_id: t._id} }])//.sort(sortObj);
+
+  console.log("DOC1:", documents[0], "<DOC")*/
+
   var documents = await Document.find({project_id: t._id}).sort(sortObj);
 
+
+  try {
   if(searchTerm) {
     var relevantDocuments = new Array();
     for(var doc of documents) {
@@ -164,21 +170,25 @@ ProjectSchema.methods.getCurationDocument = async function(activeUsers, pageNumb
     documents = relevantDocuments;
   }
 
+
   if(documents.length === 0) { return Promise.reject(new Error("No documents"))}
   if(pageNumber > documents.length) return Promise.reject(new Error("Page number exceeds number of documents"));
 
   var doc = documents[pageNumber - 1];
-  console.log("doc:", doc);
 
   var documentAnnotations = await DocumentAnnotation.find({document_id: doc._id}).sort({user_id: "asc"});
 
   var users = new Array();
+
+  var saveTimes = new Array();
   for(var d of documentAnnotations) {
     var user = await User.findOne({_id: d.user_id}).select({username: 1, profile_icon: 1}).lean().exec();
     users.push(user);
+    saveTimes.push(d.updated_at);
   }
-
-  return {doc: doc, documentAnnotations: documentAnnotations, totalDocuments: documents.length, users: users};
+  var response = {doc: doc, documentAnnotations: documentAnnotations, totalDocuments: documents.length, users: users, saveTimes: saveTimes}
+  return response;
+} catch(err) { console.log(err)}
 }
 
 

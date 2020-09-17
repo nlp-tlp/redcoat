@@ -238,7 +238,7 @@ class ControlBar extends Component {
             <label>Sort by:</label>
             <select className="docs-per-page-select sort-by" onChange={(e) => {this.props.setSortBy(e); $(e.target).blur()}} >
               {this.props.sortByOptions.map((p, index) => 
-                <option value={p} selected={p === this.props.sortBy}>{p}</option>
+                <option value={p} selected={p === this.props.sortBy}>{p === "Annotations" ? "# Annotations" : p}</option>
               )}
             </select>
           </div> }
