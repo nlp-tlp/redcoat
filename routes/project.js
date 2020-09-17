@@ -46,6 +46,8 @@ router.get('/:id',         verifyUserInProject, projectController.getProjectDeta
 
 
 router.get('/:id/tagging/getDocumentGroup', verifyUserInProject, projectController.getDocumentGroup);
+
+router.get('/:id/curation', verifyUserInProject, projectController.getCurationDocument);
 //router.get('/:id/tagging/getDocumentGroup', verifyUserInProject, projectController.getDocumentGroup);
 //router.get('/:id/tagging/getPreviouslyAnnotatedDocumentGroup', verifyUserInProject, projectController.getDocumentGroup2);
 

@@ -97,6 +97,12 @@ function parseDocsPerPage(docsPerPage) {
   return docsPerPage;
 }
 
+// Parse the sortBy provided by the client.
+function parseSortBy(sortBy) {
+  if(sortBy !== "Annotations" && sortBy !== "Creation date" && sortBy !== "Agreement") return "Annotations";  
+  return sortBy;
+}
+
 
 // Refactored getDocumentGroup function, which sends a document group to the client.
 module.exports.getDocumentGroup = async function(req, res) {
@@ -242,10 +248,106 @@ module.exports.getDocumentGroup = async function(req, res) {
     lastModified:           lastModified,
   }
 
-  console.log(response);
-  console.log(response.searchHighlighting);
+  //console.log(response);
+  //console.log(response.searchHighlighting);
 
   res.send(response);
+}
+
+
+
+// Return a list of document annotations for a document in the curation interface.
+module.exports.getCurationDocument = async function(req, res) {
+
+  var id = req.params.id;
+  var user = req.user;
+
+  // Attempt to parse the page number and docsPerPage.
+  try {
+    var pageNumber  = parsePageNumber(req.query.pageNumber);  
+    var sortBy = parseSortBy(req.query.sortBy);
+    if(req.query.searchTerm) {
+      var searchTerm = req.query.searchTerm;
+    }
+  } catch(err) {
+    return res.send(err);
+  }
+
+  console.log(pageNumber, sortBy, searchTerm);
+  var project = await Project.findById({ _id: id });
+
+  var activeUsers = await project.getActiveUsers();
+  var activeUserIds = new Array();
+  var activeUserIdIndexes = {};
+  for(var u of activeUsers) {
+    activeUserIdIndexes[u._id] = activeUserIds.length;
+    activeUserIds.push(u._id);
+  }
+
+  console.log("Active users:", activeUsers);
+  console.log("IDs:", activeUserIds);
+
+
+  try {
+    var curationDoc = await project.getCurationDocument(activeUsers, pageNumber, sortBy, searchTerm);
+
+    var doc = curationDoc.doc;
+    var documentAnnotations = curationDoc.documentAnnotations;
+    var totalPagesAvailable = curationDoc.totalDocuments;
+    var tokens = doc.tokens;
+    var documentId = doc._id;
+
+    var orderedDocumentAnnotations = new Array(activeUserIds.length).fill(null);
+    for(var d of documentAnnotations) {
+      orderedDocumentAnnotations[activeUserIdIndexes[d.user_id]] = d;
+    }
+    documentAnnotations = orderedDocumentAnnotations;
+
+
+    var automaticAnnotations = [];
+    for(var i = 0; i < documentAnnotations.length; i++) {
+
+      if(!documentAnnotations[i]) {
+        automaticAnnotations.push(null);
+      } else {
+        automaticAnnotations.push(DocumentAnnotation.toMentionsJSON(documentAnnotations[i].labels, tokens));
+      }      
+    }
+
+
+    var comments = await doc.getComments();
+
+    console.log("Curation document:", curationDoc);
+    console.log("Comments:", comments);
+
+
+  } catch(err) {
+    if(err.message === "No documents") {
+      logger.error("no docs")
+    } else {
+
+    }
+  }
+
+  console.log(automaticAnnotations)
+
+  var categoryHierarchy   = ch.txt2json(ch.slash2txt(project.category_hierarchy), project.category_hierarchy);
+
+  var response = {
+    documentId: documentId || null,
+    tokens: tokens || null,
+    annotations: automaticAnnotations || null,
+    users: activeUsers,
+    comments: comments || null,
+
+    categoryHierarchy: categoryHierarchy,
+
+    pageNumber: pageNumber || 1,
+    totalPages: totalPagesAvailable || 1,    
+  }
+
+  res.send(response);
+
 }
 
 
@@ -265,7 +367,7 @@ module.exports.submitAnnotations = async function(req, res) {
   // find the corresponding records and proceed to save them and send their ids to the user
   if(documentAnnotationIds) {
 
-    newDGA = true;
+    
     var documentAnnotations = new Array(documentIds.length).fill(null);
 
     // Build a mapping of documentAnnotation index -> i
@@ -289,6 +391,7 @@ module.exports.submitAnnotations = async function(req, res) {
   //proceed(req, res, orderedDocumentAnnotations, false);
   // If this a brand new document group annotation, create a new object to save to the database.
   } else {
+    newDGA = true;
     var documentAnnotations = new Array();
 
     for(var i in documentIds) {

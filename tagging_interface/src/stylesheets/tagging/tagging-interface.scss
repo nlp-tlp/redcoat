@@ -139,7 +139,9 @@ body.taking-screenshot .save-to-png {
 	width: calc(100% - 370px);
 	justify-content: center;
 	align-items: center;
+
 	position: fixed;
+	
 	top: $navbar-height + 4px;
 	left: 370px;
 	background: #fefefe;
@@ -149,6 +151,8 @@ body.taking-screenshot .save-to-png {
 	height: $navbar-height;
 	font-size: 0.7em;
 	user-select: none;
+
+
 
 
 
@@ -191,7 +195,11 @@ body.taking-screenshot .save-to-png {
 		select {
 			width: 60px;
 			padding: 3px 5px;
+			&.sort-by {
+				width: 170px;
+			}
 		}
+		
 	}
 
 	input, select {
@@ -290,6 +298,7 @@ body.taking-screenshot .save-to-png {
 		}
 		span.group-name {
 			display: block;
+			font-size: 14px;
 			
 			form {
 				display: inline;
@@ -694,43 +703,6 @@ body.taking-screenshot .save-to-png {
 			}
 			.comments-wrapper {
 				display: none;
-
-				background: rgba(255, 255, 255, 0.8);
-				height: auto;
-				border: 1px solid #ddd;
-				border-radius: 4px;
-				margin-bottom: 40px;
-
-				box-shadow: 1px 1px 3px -3px rgba(0, 0, 0, 0.9);
-				//z-index: 100;
-				padding: 0;
-				box-sizing: border-box;
-				overflow: auto;
-
-
-
-				.comments-header {
-					color: #222;
-					font-size: 14px;
-					font-weight: bold;
-					background: #ddd;
-					display: flex;
-					align-items: center;
-					padding: 10px 20px;
-					width: 100%;
-					box-sizing: border-box;
-				}
-				.comments-inner {
-					.comments-even-more-inner { // dont care anymore
-						max-height: 400px;
-						overflow-y: scroll;
-					}					
-				}
-			
-				.comment-box {
-					padding: 10px 20px;
-					margin-bottom: 0;
-				}
 			}
 		}
 
@@ -1606,6 +1578,9 @@ button.blue-button {
 
 #tagging-interface {
 	display: flex;
+	#sentence-tagging {
+		width: 100%;
+	}
 	&.loading {
 		#sentence-tagging .document-container //, #tagging-menu, #pagination > *
 	 	{

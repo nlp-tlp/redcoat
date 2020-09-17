@@ -39,6 +39,8 @@ class CommentInput extends Component {
   onSubmit(e) {
     e.preventDefault();
 
+    if(this.state.comment.length === 0) return;
+
     this.props.submitComment(this.state.comment, () => {
       this.setState({
         comment: '',

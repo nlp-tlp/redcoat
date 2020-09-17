@@ -935,7 +935,8 @@
 	main {
 		margin-top: 00px;
 		min-height: 80vh;
-		padding: 10px;
+		padding: 40px 60px;
+
 		box-sizing: border-box;
 		h2 {
 			margin-top: -10px;
@@ -994,6 +995,7 @@
 @for $i from 1 through 12 {
 	.project-page-table tr td.color-#{$i} span.inner { border-left: 8px solid nth($colors, $i); }
 }
+
 
 
 
@@ -1071,10 +1073,12 @@
 			
 			&.submenu-header {
 				&.active {
-					background: #f7f7f7;
+					background: #f5f5f5;
 					ul { 
 						font-weight: normal;
-						color: #555;
+						li a {
+							color: #555;
+						}
 					}
 
 				}
@@ -1103,7 +1107,7 @@
 			&.active {
 				font-weight: bold;
 				background: #eee;
-				border-left: 3px solid $primary-red;
+				border-left: 4px solid $primary-red;
 				color: #222;
 				a {
 					color: #222;
@@ -1136,8 +1140,10 @@
 .project-view-wrapper {
 	width: 100%;
 	height: 100%;
-	padding: 40px 40px;
-
+	//padding: 40px 40px;
+}
+.padded {
+	padding: 40px;
 }
 
 #project-dashboard {

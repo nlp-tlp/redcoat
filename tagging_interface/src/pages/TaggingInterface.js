@@ -5,7 +5,6 @@ import {Component} from 'react';
 import $ from 'jquery';
 import { findDOMNode } from 'react-dom';
 import { Link } from 'react-router-dom'
-import ReactHtmlParser from 'react-html-parser';
 
 //const ReactDragListView = require('react-drag-listview');
 
@@ -16,13 +15,17 @@ import { saveAs } from 'file-saver';
 import domtoimage from 'dom-to-image';
 
 import CategoryHierarchy from '../components/CategoryHierarchy';
+import {Word, Sentence} from '../components/tagging_interface/documentComponents';
 
 import {Comment, CommentInput} from '../components/Comment';
+import ControlBar from '../components/ControlBar';
 
 import getCookie from '../functions/getCookie';
 
 import formatDate  from '../functions/formatDate';
 
+import initAnnotationsArray from '../functions/tagging_interface/initAnnotationsArray';
+import Annotation from '../functions/tagging_interface/Annotation';
 
 
 const BASE_URL = "/"
@@ -56,127 +59,6 @@ function clearWindowSelection() {
 
 
 
-// Returns the colour id of the given entityClass according to the entityColourMap, e.g.
-// 'item/pump': 1 (because "item" is the top level category)
-function getColourIdx(entityClass, entityColourMap) {
-  var baseClass = entityClass.split("/").slice(0, 1)[0];
-  return entityColourMap[baseClass];
-}
-
-// A label, drawn underneath a word.
-class Label extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-
-    var split = this.props.entityClass.split('/');
-    var truncatedLabel = split.length > 1 ? "/" : ""
-    truncatedLabel = truncatedLabel + split[split.length - 1];
-
-    return (
-      <span className={"label tag-" + this.props.colourIdx} onClick={(e) => {this.props.deleteTag(this.props.entityClass);  }}><span className="label-name">{truncatedLabel}</span></span>
-    )
-  }
-}
-
-
-
-
-
-// A single word (or token) in the tagging interface.
-class Word extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      selected: false,
-    }
-    this.wordInnerRef = React.createRef();
-  }
-
-  // Calls this.props.deleteTag with the index of this word as a parameter.
-  deleteTag(entityClass) {
-    this.props.deleteTag(this.props.index, entityClass);
-  }
-
-  // Clear the word justification of this word if it is does not have a label.
-  componentDidUpdate(prevProps, prevState) {
-
-    /* TODO: Fix the below to be much faster.
-       The code should update the width of this word back to auto if this word no longer has a label,
-       but it is too slow on long docs so I took it out.
-    */
-
-    // if(this.props.entityClasses.length === 0) {
-
-    //   var ele =  this.wordInnerRef.current;
-    //   $(ele).css("min-width", "auto");
-
-    //   var width = ele.offsetWidth;
-    //   var newWidth = Math.ceil(width / 25) * 25;
-    //   $(ele).css('min-width', newWidth + 'px');        
-
-    // }
-  }
-
-  getHighlightedWord() {
-    var text = this.props.text;
-    var highlighting = this.props.highlighting;
-
-    var output = '';
-
-    for(var i = 0; i < text.length; i++) {
-      if(i === highlighting[0]) {
-        output += '<span class="search-highlight">'
-      }
-      output += text[i];
-      if(i === highlighting[1]) {
-        output += '</span>'
-      }
-    }
-
-    console.log(output);
-    return ReactHtmlParser(output);
-  }
-
-  render() {
-
-    var hasLabel = this.props.entityClasses.length > 0;
-
-    var tagClass = hasLabel ? (" tag " + ((this.props.bioTag === "B") ? "tag-begin" : "") + (this.props.isLastInSpan ? " tag-end" : "")) : "";
-
-    if(hasLabel) {
-      var labels = this.props.entityClasses.map((entityClass, i) => 
-                  <Label deleteTag={this.deleteTag.bind(this)} key={i} bioTag={this.props.bioTag} entityClass={entityClass} colourIdx={getColourIdx(entityClass, this.props.entityColourMap)} />
-                  )
-      
-    } else {
-      var labels = '';
-    }
-
-    var text = this.props.text;
-    if(this.props.highlighting) {
-      text = this.getHighlightedWord();
-    }
-
-    var wordColourClass = (hasLabel ? (" tag-" + getColourIdx(this.props.entityClasses[0], this.props.entityColourMap)) : "")
-    console.log(this.props.text, this.props.highlighting)
-    return (
-      <span className={"word" + (this.props.selected ? " selected" : "") + tagClass}>
-
-        <span className={"word-inner" + wordColourClass + (this.props.highlighting ? " search-highlight" : "") } ref={this.wordInnerRef}
-              onMouseUp=  {() => this.props.updateSelections(this.props.index, 'up')}
-              onMouseDown={() => this.props.updateSelections(this.props.index, 'down')}>
-
-          {text}
-        </span>
-        {labels}
-        
-      </span>
-    );
-  }
-}
 
 
 // A single confidence button, which may have the value 'low' 'medium' or 'high'.
@@ -329,6 +211,8 @@ class DocumentContainer extends Component {
             <ConfidenceButtons docIdx={this.props.index} confidence={this.props.confidence} updateConfidence={this.props.updateConfidence}/>
           </div>
 
+
+
           <div className={"document document-underneath" + (this.state.commentsOpen ? " open" : "")} ref={this.documentUnderneathRef}>
             <div className="sentence-index"></div>
             <div className="sentence">
@@ -364,6 +248,9 @@ class DocumentContainer extends Component {
             <div className="confidence-buttons"></div>
 
           </div>
+
+
+
         </div>
       </div>
     )
@@ -372,75 +259,6 @@ class DocumentContainer extends Component {
 }
 
 
-
-// A sentence in the tagging interface.
-class Sentence extends Component {
-  constructor(props) {
-    super(props);
-
-  }
-
-  // Call the updateSelections function of the parent of this component (i.e. TaggingInterface), with this sentence's index included.
-  updateSelections(wordIndex, action) {
-    this.props.updateSelections(this.props.index, wordIndex, action)
-  }
-
-  deleteTag(wordIndex, entityClass) {
-    this.props.deleteTag(this.props.index, wordIndex, entityClass);
-  }
-
-
-
-
-  
-
-  render() {
-
-    var selections = this.props.selections;
-
-    // Check props.selections to determine whether the word with a given index in this sentence is selected.
-    // This is passed to the word as a prop so that it can be highlighted accordingly.
-    function isWordSelected(wordIndex) {      
-      if(selections.length === 0) return false;     
-      for(var i = 0; i < selections.length; i++) {
-        var selection = selections[i];
-        if(selection.wordEndIndex < 0) continue;
-        if(selection.wordEndIndex >= wordIndex && wordIndex >= selection.wordStartIndex ) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    console.log(this.props.annotations);
-
-    return (
-      <div className="sentence-inner">
-        { this.props.words.map((word, i) => 
-          <Word key={i}
-                index={i}
-                text={word}
-                selected={isWordSelected(i)}
-                entityClasses={this.props.annotations[i].entityClasses || []}
-                isLastInSpan={this.props.annotations[i].isLastInSpan()}
-                bioTag={this.props.annotations[i].bioTag}
-                updateSelections={this.updateSelections.bind(this)}
-                entityColourMap={this.props.entityColourMap}
-                deleteTag={this.deleteTag.bind(this)}
-                highlighting={this.props.annotations[i].highlighting}
-
-
-          />)
-        }   
-        
-
-
-       
-      </div>
-    );
-  }
-
-}
 
 
 // A simple function for traversing a list of nodes. Goes with the function below.
@@ -511,156 +329,6 @@ class HotkeyInfo extends Component {
 }
 
 
-// A class to store an annotation for a single token.
-// Seemed more logical to put all the annotation logic in one class rather than sticking it in the TaggingInterface component.
-// Each sentence will have one Annotation object per token.
-// Properties:
-/* 
-   token: the token e.g. 'centrifugal'
-   tokenIndex: the index of the token in the sentence
-   bioTag: the BIO tag ('B', 'I' or 'O')
-   entityClasses: the array of entity classes AKA labels (e.g. ['Item', 'Item/Pump'])   
-   spanText: the text of the span that this annotation is within (e.g. 'centrifugal pump')
-   spanStartIdx: the start index of the span this annotation is in, e.g. 0 if it starts at the first word of the sentence
-   spanEndIdx: the end index as above, e.g. 1,
-*/
-class Annotation {
-  constructor(token, tokenIndex) {
-    this.token = token;
-    this.tokenIndex = tokenIndex;
-    this.bioTag = "O";    
-    this.highlighting = null;
-  }
-
-  // Adds the specified entityClass to this annotation.
-  // bioTag: The bioTag, e.g. "B" or "I",
-  // entityClass: The entity class, e.g. "Item/Pump"
-  // text: The text of the span that this annotation is inside, e.g. "centrifugal pump".
-  // spanStartIdx, spanEndIdx: self explanatory (as above)
-  // nextAnnotation: The Annotation object for the next token in the sentence.
-  //                 When called during the dictionary annotation tagging, nextAnnotation is not necessary.
-  // Returns whether the label of this annotation was modified at all.
-  addLabel(bioTag, entityClass, spanText, spanStartIdx, spanEndIdx) {
-    
-    if(this.entityClasses === undefined) this.entityClasses = new Array();
-
-    var alreadyHasLabel = this.entityClasses.indexOf(entityClass) !== -1;
-    if(this.bioTag === bioTag && this.spanText === spanText && this.spanStartIdx === spanStartIdx && this.spanEndIdx === spanEndIdx && alreadyHasLabel) {
-      return false;
-    }
-
-    // Adjust the span.
-    this.bioTag = bioTag;
-    this.spanText = spanText;
-    this.spanStartIdx = spanStartIdx;
-    this.spanEndIdx = spanEndIdx;
-
-    // Add the entityClass to the entityClasses array for this Annotation.
-    // If it is already there, don't add it again.
-    if(!alreadyHasLabel) {
-      this.entityClasses.push(entityClass);
-    }
-    return true;
-  
-    // If the nextAnnotation is from the same mention (AKA span) as this one, and does not have exactly the same labels after
-    // the new class has been appended to this annotation's entityClasses, change its BIO tag to B.
-    // This is the part that ensures mentions are split up when the user changes the label of token(s) inside that mention.
-    // if(nextAnnotation) {
-    //   if(this.sameMention(nextAnnotation) && !this.sameEntityClasses(nextAnnotation) && nextAnnotation.hasLabel()) {
-    //     console.log("Changing bio tag to B")
-    //     nextAnnotation.changeBioTag("B");
-    //     nextAnnotation.setSpanStartIdx(spanEndIdx + 1)          
-    //   }
-    // }
-
-    // If the previous annotation is from the same mention as this one, and now no longer has the same labels,
-    // adjust the spanEndIdx to be the start of this new span -1.
-    // This ensures the tags are rendered correctly in the browser.
-    // Note that this seems to get called multiple times when applying tags because they are applied in reverse order,
-    // but the spanEndIdx will be set as below for the next annotation anyway so that shouldn't be an issue.
-    // if(prevAnnotation) {
-    //   if(this.sameMention(prevAnnotation) && !this.sameEntityClasses(prevAnnotation) && prevAnnotation.hasLabel()) {  
-    //     prevAnnotation.setSpanEndIdx(spanStartIdx - 1);
-    //   }
-    // }
-  }
-
-  // Removes all the labels from this annotation and resets the bioTag to "O".
-  removeAllLabels() {
-    delete this.entityClasses;
-    delete this.spanText;
-    delete this.spanStartIdx;
-    delete this.spanEndIdx;
-    this.bioTag = "O";
-  }
-
-  // Simple function to determine whether this annotation is in the same mention as another annotation.
-  sameMention(otherAnnotation) {
-    return otherAnnotation.spanStartIdx === this.spanStartIdx && otherAnnotation.spanEndIdx === this.spanEndIdx;
-  }
-
-  // Determine whether this annotation has the same labels as another annotation.
-  sameEntityClasses(otherAnnotation) {
-    return _.isEqual(this.entityClasses, otherAnnotation.entityClasses);
-  }
-
-  // Removes a specific label from this annotation.
-  // If it was the last label, reset this annotation's bioTag to "O" and delete the entityClasses and other properties.
-  removeLabel(entityClass) {
-    var index = this.entityClasses.indexOf(entityClass);
-    if(index === -1) {
-      console.log("Warning: tried to remove an entity class from an annotation that did not exist.")
-      return;
-    }
-    this.entityClasses.splice(index, 1);
-    if(this.entityClasses.length === 0) {
-      this.bioTag = "O";
-      delete this.entityClasses;
-      delete this.spanText;
-      delete this.spanStartIdx;
-      delete this.spanEndIdx;
-    }
-  }
-
-  // Change the bio tag of this annotation to another bio tag.
-  changeBioTag(bioTag) {
-    this.bioTag = bioTag;
-  }
-
-  // Returns whether this annotations has a label.
-  hasLabel() {
-    return this.bioTag !== "O";
-  }
-
-  // Determines whether this annotation is the last of its type in the given span.
-  isLastInSpan() {
-    return this.spanEndIdx === this.tokenIndex;
-  }
-
-  setSpanStartIdx(spanStartIdx) {
-    this.spanStartIdx = spanStartIdx;
-  }
-
-  setSpanEndIdx(spanEndIdx) {
-    this.spanEndIdx = spanEndIdx;
-  }
-
-  // Set the highlighting array (for search mode).
-  setHighlighting(startIdx, endIdx) {
-    this.highlighting = [startIdx, endIdx];
-  }
-
-  // Prints this annotation nicely to the console (for debugging).
-  prettyPrint() {
-    console.log("Token:    ", this.token);
-    console.log("BIO Tag:  ", this.bioTag)
-    console.log("Span:     ", this.spanText)
-    console.log("StartIdx: ", this.spanStartIdx)
-    console.log("EndIdx: ", this.spanEndIdx)
-    console.log("Classes:  \n", this.entityClasses);
-    console.log('\n');
-  }
-}
 
 // A debug printing function for printing out a list of annotations for a document.
 function prettyPrintAnnotations(documentAnnotations) {
@@ -1120,78 +788,7 @@ class TaggingInterface extends Component {
   }
 
 
-  // Sets up an array to store the annotations with the same length as docGroup.
-  // Prepopulate the annotations array with the automaticAnnotations if available (after converting them to BIO).
-  // This could be either the dictionary-based annotations or the annotations that the user has previously entered.
-  //
-  // Can be called with 'searchHighlighting', which dictates the [start_index, end_index] of each word that are highlighted
-  // according to the search term
-  initAnnotationsArray(documents, automaticAnnotations) {
-
-
-    if(this.state.searchTerm) {
-      var searchTerm = this.state.searchTerm;
-      var searchTermArray = searchTerm.split(' ');
-    }
-
-    //console.log(documents, "<");
-    //console.log(automaticAnnotations, "<");
-
-    var annotations = new Array(documents.length);
-    for(var doc_idx in documents) {
-      annotations[doc_idx] = new Array(documents[doc_idx].length);
-
-
-      var searchIdx = 0;
-      for(var token_idx in documents[doc_idx]) {
-        annotations[doc_idx][token_idx] = new Annotation(documents[doc_idx][token_idx], parseInt(token_idx));
-
-        // If a search term is present (i.e. user is in search mode), adjust the highlighting of the annotation
-        // so that it displays the searched portion of the token differently        
-        if(searchTerm) {
-          var token = documents[doc_idx][token_idx];
-          var foundIdx = token.indexOf(searchTermArray[searchIdx]);
-          if(foundIdx >= 0) {
-            annotations[doc_idx][token_idx].setHighlighting(foundIdx, foundIdx + searchTermArray[searchIdx].length - 1);
-            searchIdx++;
-          } else {
-            searchIdx = 0;
-          }        
-        }
-      }
-
-      
-    }
-
-    if(!automaticAnnotations) return annotations;
-
-    //console.log(this.state.documents, "<")
-
-    // Load annotations from the automaticAnnotations array if present.
-    for(var doc_idx in automaticAnnotations) {
-      for(var mention_idx in automaticAnnotations[doc_idx]['mentions']) {
-
-
-        var mention = automaticAnnotations[doc_idx]['mentions'][mention_idx];
-        var start = mention['start'];
-        var end = mention['end'];
-
-        for(var label_idx in mention['labels']) {
-          var label = mention['labels'][label_idx];
-
-          for(var k = start; k < end; k++) {
-            var bioTag = k === start ? 'B' : "I";
-
-            //console.log(annotations[doc_idx], k, automaticAnnotations[doc_idx]['mentions'])
-            annotations[doc_idx][k].addLabel(bioTag, label, documents[doc_idx].slice(start, end).join(' '), start, end - 1)
-
-
-          }
-        }
-      }        
-    }
-    return annotations;
-  }
+  
 
   // Initialise the confidences array.
   initConfidencesArray(documents) {
@@ -1387,7 +984,7 @@ class TaggingInterface extends Component {
               documentAnnotationIds: d.documentAnnotationIds ? d.documentAnnotationIds : null, // Will only be present when querying existing annotations
 
               confidences: this.initConfidencesArray(d.documents),
-              annotations: this.initAnnotationsArray(d.documents, d.automaticAnnotations, d.searchHighlighting),
+              annotations: initAnnotationsArray(d.documents, d.automaticAnnotations),
 
               comments:    d.comments,
 
@@ -2005,7 +1602,12 @@ class TaggingInterface extends Component {
                   querying={this.state.loading.querying}
                   saving={this.state.loading.saving}
                   inSearchMode={this.state.searchTerm}
+
+                  showDocsPerPage={true}
                   docsPerPage={this.state.docsPerPage}
+                  docsPerPageOptions={[1, 3, 5, 10, 15, 20]}
+
+                  showSaveButton={true}
 
                   searchDocuments={this.searchDocuments.bind(this)}
                   submitAnnotations={this.submitAnnotations.bind(this)}
@@ -2075,244 +1677,7 @@ class TaggingInterface extends Component {
   }
 }
 
-// The humble save button that appears at the top of the page.
-class SaveButton extends Component {
-  constructor(props) {
-    super(props);
-  }
-  render() {
 
-    var buttonClass = " disabled";
-    if(this.props.changesMade) buttonClass = "";
-    if(this.props.recentlySaved) buttonClass = " recently-saved";
-    if(this.props.saving) buttonClass = " saving";
-
-    var iconClass = "fa-save";
-    if(this.props.recentlySaved) iconClass = "fa-check";
-    if(this.props.saving) iconClass = "fa-cog fa-spin"
-
-    var text = "Save";
-    if(this.props.recentlySaved) text = "Saved";
-    if(this.props.saving) text = "Saving";
-
-    return (
-      <button className={"save-button" + buttonClass} onClick={this.props.submitAnnotations}>
-        <i className={"fa " + iconClass}></i>
-        { text }
-      </button>
-    )
-  }
-}
-
-
-// The progress bar that appears when the user saves a new doc group.
-class ProgressBar extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    return (
-      <div id="tagging-progress-bar" className={(this.props.show ? "show" : "hide")}>
-        <span className="progress-bar">
-          <span className="inner" style={{"width": (this.props.totalPagesAvailable - 1) / this.props.totalPages * 100 + "%"}}></span>
-        </span>
-      </div>
-    )
-  }
-}
-
-
-
-
-
-
-// The search bar that appears in the control bar, for searching through previously annotated docs.
-class DocumentSearchBar extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      value: '',
-    }
-    this.inputRef = React.createRef();
-  }  
-
-  updateValue(e) {
-    var value = e.target.value;
-    if(value.trim().length === 0) {
-      value = '';
-    }
-    this.setState({
-      value: value,
-    });
-  }
-
-  submit(e) {
-    
-
-    this.props.searchDocuments(this.state.value);
-
-    // this.setState({
-    //   value: null,
-    // }, () => {
-      var ele = $(this.inputRef.current);
-      ele.blur();
-    // });
-
-    e.preventDefault();
-    return null;
-  }
-
-
-  render() {
-    return (
-      <form className={"search-container" + (this.props.inSearchMode ? " active" : "")} onSubmit={this.submit.bind(this)} >
-        <input ref={this.inputRef} className="search-bar" id="document-search-bar" placeholder="Search..." value={this.state.value} onChange={(e) => this.updateValue(e)} ></input><button className="search-button"><i class="fa fa-search"></i></button>
-      </form>
-    )
-  }
-}
-
-
-
-
-// The 'control bar', which appears at the top of the interface (with page numbers, group number etc).
-class ControlBar extends Component {
-
-  constructor(props) {
-    super(props);
-    this.state =  {
-      pageNumber: null, // The desired page number of the user (not necessarily the one they are currently on).
-      pageNumberError: false,
-    }
-    this.pageInputRef = React.createRef();
-  }
-
-  // clearPageNumberError() {
-  //   this.setState({
-  //     pageNumber: this.props.pageNumber,
-  //     pageNumberError: false,
-  //   })
-  // }
-
-  clearPageNumberInput() {
-    var ele = $(this.pageInputRef.current);
-    ele.val('');
-    ele.blur();
-  }
-
-  goToPage(e) {
-
-    this.clearPageNumberInput();
-    if(this.state.pageNumber === '') {
-      this.setState({ pageNumber: this.props.pageNumber })
-      e.preventDefault();
-      return null;
-    }
-
-
-
-    if(this.state.pageNumber !== parseInt(this.state.pageNumber).toString()) {
-      this.setState({
-        pageNumber: this.props.totalPagesAvailable,
-      }, () => { this.props.goToPage(this.state.pageNumber)});
-      e.preventDefault();
-      return null;
-    }
-
-    if(this.state.pageNumber < 1) {
-      this.setState({
-        pageNumber: 1,
-      }, () => { this.props.goToPage(this.state.pageNumber)});
-    } else if (this.state.pageNumber > this.props.totalPagesAvailable) {
-      this.setState({
-        pageNumber: this.props.totalPagesAvailable,
-      }, () => { this.props.goToPage(this.state.pageNumber)});
-    } else {
-      this.props.goToPage(this.state.pageNumber);
-    }
- 
-
-    e.preventDefault();
-    return null;
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if(this.props.pageNumber !== prevProps.pageNumber) {
-      this.setState({
-        pageNumber: this.props.pageNumber
-      })
-    }
-  }
-
-
-  changePageNumber(e) {
-    this.setState({
-      pageNumber: e.target.value,
-    });
-  }
-
-  render() {
-
-    var groupName = (
-      <span className={"group-name"}>
-        <span>Page <b>
-          <form onSubmit={this.goToPage.bind(this)}>
-          <input 
-                 id="page-input"
-                 className={"page-input" + (this.state.pageNumberError ? " error" : "")}
-                 placeholder={this.state.pageNumber}
-                 name="page-input"
-                 onChange={(e) => this.changePageNumber(e)}
-                 ref={this.pageInputRef}
-                 />
-          </form>
-          
-        </b> of <b>{this.props.totalPages}</b></span>
-      </span>
-    );
-
-    var latestGroup = (this.props.totalPagesAvailable) === this.props.pageNumber // Whether the user is looking at the latest group, that they have not yet annotated
-
-    var lastModified = this.props.changesMade ? (this.props.saving ? "" : "Changes not saved") : (this.props.lastModified ? "Saved on " + formatDate(this.props.lastModified) : "");
-
-    var pageNumberOptions = [1, 3, 5, 10, 15, 20];
-
-    return (
-      <div id="pagination">
-        <div className="page-button-container previous-page">
-          <button className={(this.props.pageNumber === 1 ? " disabled" : (this.props.querying ? "loading" : ""))} onClick={this.props.loadPreviousPage}><i className="fa fa-chevron-left"></i>Prev
-          </button>
-        </div>
-        <div className="filler-left">
-          <DocumentSearchBar inSearchMode={this.props.inSearchMode} searchDocuments={this.props.searchDocuments} />
-        </div>
-        <div className={"current-page-container" + (this.props.showingProgressBar ? " progress-bar-underneath" : "")}>
-          { groupName }
-          <div className="docs-per-page-select-container">
-            <label>Per page:</label>
-            <select className="docs-per-page-select" onChange={(e) => {this.props.setDocsPerPage(e); $(e.target).blur()}} >
-              {pageNumberOptions.map((p, index) => 
-                <option value={p} selected={p === this.props.docsPerPage}>{p}</option>
-              )}
-            </select>
-          </div>
-          <ProgressBar 
-            show={this.props.showingProgressBar}
-            totalPagesAvailable={this.props.totalPagesAvailable}
-            totalPages={this.props.totalPages}
-          />
-        </div>
-        <div className="group-last-modified">{lastModified }</div>
-
-        <div className="page-button-container " ><SaveButton changesMade={this.props.changesMade} recentlySaved={this.props.recentlySaved} saving={this.props.saving} submitAnnotations={this.props.submitAnnotations}  /></div>
-        <div className="page-button-container next-page" title={latestGroup && !this.props.inSearchMode ? "Finish annotating this page to move on to the next page." : ""}>
-          <button className={(latestGroup  ? " disabled" : (this.props.querying ? "loading" : ""))}  onClick={this.props.loadNextPage}>Next<i className="fa fa-chevron-right"></i></button>
-        </div>              
-      </div>
-    )
-  }
-}
 
 
 class TaggingCompletePage extends Component {

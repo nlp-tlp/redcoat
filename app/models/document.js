@@ -234,6 +234,25 @@ DocumentSchema.methods.updateAgreement = function(next) {
 }
 
 
+// Add the user profiles (icons and colours) to the comments by querying by id.
+async function appendUserProfilesToComments(comments) {
+  var User = require('./user');
+  for(var i in comments) {
+    var user = await User.findById({_id: comments[i].user_id});
+    comments[i].user_profile_icon = user.profile_icon;
+  }
+  return Promise.resolve(comments);
+}
+
+// Return a list of comments for this doc.
+DocumentSchema.methods.getComments = async function() {
+  var Comment = require('./comment')
+  var comments = await Comment.find({document_id: this._id}).sort('created_at').lean();
+  comments = await appendUserProfilesToComments(comments);
+  return Promise.resolve(comments);
+}
+
+
 /* Middleware */
 
 DocumentSchema.pre('save', function(next) {

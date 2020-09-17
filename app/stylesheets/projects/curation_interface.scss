@@ -1,0 +1,128 @@
+.curation-interface-inner {
+	display: flex;
+	align-items: stretch;
+	justify-content: stretch;
+	height: 100%;
+}
+
+.document-window {
+	width: 100%;
+	background: none;
+
+}
+#sentence-tagging.document-window {
+	margin-top: 50px;
+}
+.comments-pane {
+	width: 600px;
+	background: #ccc;
+	box-shadow: inset 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
+	position: relative;
+	.comments-wrapper {
+		height: 100%;
+		h3 {
+			margin-top: 0;
+			margin-bottom: 0;
+			padding: 20px 25px;
+		}
+		.comments-inner {
+			padding: 0 10px;
+		}
+
+		border-radius: 0;
+		.comments-even-more-inner {
+			min-height: calc(100vh - 420px);
+
+		}
+		textarea {
+			height: 140px;
+		}
+	}
+}
+
+#sentence-tagging .sentence.display-only {
+	pointer-events: none;
+}
+
+#tagging-interface #sentence-tagging.curation-page {
+	margin-top: 0;
+}
+#tagging-interface #sentence-tagging.curation-page {
+	min-height: calc(100vh - 100px);
+	margin-bottom: 0;
+}
+#pagination.curation-page {
+	position: relative;
+	margin-top: 0;
+	left: 0;
+	top: 0;
+	width: 100%;
+	margin-bottom: 0;
+}
+
+.curation-page .sentence {
+	font-size: 16px;
+}
+.curation-page .document-container {
+	padding: 10px 60px;
+}
+
+#sentence-tagging {
+	.document-container {
+
+		.curation-document {
+			background: #fefefe;
+			display: block;
+			position: relative; 
+
+			.user-row {
+				display: flex;
+				background: #444;
+				padding: 3px 20px;
+				align-items: center;
+				font-size: 15px;
+				color: white;
+			}
+			&.not-yet-annotated {
+				.sentence .word { opacity: 0.2; }
+				.sentence:after {
+					position: absolute;
+					top: 0;
+					left: 0;
+					width: 100%;
+					font-size: 24px;
+					content: "Not yet annotated";
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					height: 100%;
+					color: rgba(0, 0, 0, 0.5);
+				}
+			}
+			.sentence {
+				padding: 20px;
+				padding-top: 16px;
+
+
+				.word .word-inner {
+					padding: 10px 8px;
+					height: auto;	
+
+				}
+
+				.word {
+
+					.label {
+						&:before {
+							display: none;
+						}
+						padding-left: 10px;
+						padding: 10px 5px;
+
+
+					}
+				}
+			}
+		}
+	}
+}

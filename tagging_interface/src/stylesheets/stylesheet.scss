@@ -22,6 +22,7 @@
 
 // The project dashboard
 @import "projects/projects";
+@import "projects/curation_interface";
 
 // The tagging interface
 @import "tagging/tagging-interface";
@@ -737,4 +738,46 @@ section.form-section {
 		color: rgba(255, 255, 255, 0.8);
 	}
 
+}
+
+
+.comments-wrapper {
+	display: block;
+
+	background: rgba(255, 255, 255, 0.8);
+	height: auto;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	margin-bottom: 40px;
+
+	box-shadow: 1px 1px 3px -3px rgba(0, 0, 0, 0.9);
+	//z-index: 100;
+	padding: 0;
+	box-sizing: border-box;
+	overflow: auto;
+
+
+
+	.comments-header {
+		color: #222;
+		font-size: 14px;
+		font-weight: bold;
+		background: #ddd;
+		display: flex;
+		align-items: center;
+		padding: 10px 20px;
+		width: 100%;
+		box-sizing: border-box;
+	}
+	.comments-inner {
+		.comments-even-more-inner { // dont care anymore
+			max-height: 400px;
+			overflow-y: scroll;
+		}					
+	}
+
+	.comment-box {
+		padding: 10px 20px;
+		margin-bottom: 0;
+	}
 }

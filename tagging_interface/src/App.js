@@ -213,7 +213,7 @@ class App extends Component {
 
           <Switch>
           <Route        path="/projects/:id/tagging"  render={(p) => <TaggingInterfaceTemplate {...this.state} pageComponent={<TaggingInterface projectTitle={this.state.projectTitle} projectAuthor={this.state.projectAuthor} setProject={this.setProject.bind(this)} project_id={p.match.params.id} user={this.state.user} />}/>} /> 
-          <Route        path="/projects/:id"          render={(p) => <ProjectViewTemplate {...this.state} pageTitle="Project View" pageComponent={ <ProjectView project_id={p.match.params.id} setProject={this.setProject.bind(this)}  projectTitle={this.state.projectTitle} projectAuthor={this.state.projectAuthor}/> } />} />     
+          <Route        path="/projects/:id"          render={(p) => <ProjectViewTemplate {...this.state} pageTitle="Project View" pageComponent={ <ProjectView project_id={p.match.params.id} setProject={this.setProject.bind(this)}  projectTitle={this.state.projectTitle} projectAuthor={this.state.projectAuthor} user={this.state.user} /> }  />} />     
           <Route        path="/projects"              render={( ) => <MainTemplate {...this.state} pageTitle="Projects" pageComponent={ <ProjectListPage setProject={this.setProject.bind(this)}/> } />} />     
           <Route        path="/setup-project"         render={( ) => <MainTemplate {...this.state} pageTitle="Setup project" pageComponent={ <SetupProjectPage/> } />} />     
 

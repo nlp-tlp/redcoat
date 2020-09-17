@@ -11,7 +11,7 @@ class Error404Page extends Component {
       <main class="error-page">
 
         <h1>404: Page not found.</h1>
-        <p>The page you were looking for does not appear to exist.</p>
+        <p>The page you were looking for does not exist.</p>
 
 
       </main>

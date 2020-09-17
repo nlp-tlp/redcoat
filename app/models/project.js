@@ -118,6 +118,63 @@ ProjectSchema.methods.getTotalUsers = function() {
   return this.user_ids.active.length + this.user_ids.inactive.length;
 }
 
+ProjectSchema.methods.getActiveUsers = async function() {
+  var t = this;
+  var activeUsers = await User.aggregate([    
+      { $match: { _id: { $in: t.user_ids.active } } },
+      { $project: {
+        username: 1,
+        email: 1,
+        _id: 1,
+        profile_icon: 1,
+        }
+      },    
+      { $sort: { username : 1 } }
+    ]);
+
+  return activeUsers;
+}
+
+
+// Retrieve a list of documents and a list of annotations (for each document),
+// optionally order by sortBy and search based on searchTerm.
+ProjectSchema.methods.getCurationDocument = async function(activeUsers, pageNumber, sortBy, searchTerm) {
+
+  var t = this;
+
+  var sortObj; 
+  var sortOrder = 'desc';
+
+  if(sortBy === "Annotations")        sortObj = {times_annotated: sortOrder};
+  else if(sortBy === "Creation date") sortObj = {updatedAt: sortOrder};
+  else if(sortBy === "Agreement")     sortObj = {annotator_agreement: sortOrder};
+
+  
+  console.log(sortObj);
+  var documents = await Document.find({project_id: t._id}).sort(sortObj);
+
+  if(searchTerm) {
+    var relevantDocuments = new Array();
+    for(var doc of documents) {
+      var tokenString = doc.tokens.join(" ");
+      if(tokenString.indexOf(searchTerm) > 0) {
+        relevantDocuments.push(doc);
+      }
+    }
+    documents = relevantDocuments;
+  }
+
+  if(documents.length === 0) { return Promise.reject(new Error("No documents"))}
+  if(pageNumber > documents.length) return Promise.reject(new Error("Page number exceeds number of documents"));
+
+  var doc = documents[pageNumber - 1];
+  console.log("doc:", doc);
+
+  var documentAnnotations = await DocumentAnnotation.find({document_id: doc._id});
+
+  return {doc: doc, documentAnnotations: documentAnnotations, totalDocuments: documents.length};
+}
+
 
 // Adds the creator of the project (or WIP Project) to its list of user_ids.active if it is not there.
 ProjectSchema.methods.addCreatorToUsers = function() {
@@ -381,7 +438,7 @@ ProjectSchema.methods.getInvitationsTableData = async function(next) {
     //console.log("pending", pending_users)
   var all_users = project_users
   all_users[0].pending_invitations = pending_users
-  console.log(",,,,,,,,,,,,,,,,,,,", all_users[0])
+  //console.log(",,,,,,,,,,,,,,,,,,,", all_users[0])
   return Promise.resolve(all_users[0]);
 
 
@@ -1051,7 +1108,7 @@ ProjectSchema.methods.getEntityChartData = async function(done) {
       }
     }
   }
-  console.log(entityCounts, "<<<")
+  //console.log(entityCounts, "<<<")
 
   // Sort the labels by frequency and return the entity labels and counts as separate arrays.
   // This is 20 lines of js that could be done in 1 line of python :(
@@ -1059,7 +1116,7 @@ ProjectSchema.methods.getEntityChartData = async function(done) {
   for(var i in entityCounts) {
     sortedEntityCounts.push([i, entityCounts[i]]);
   }
-  console.log(sortedEntityCounts);
+  //console.log(sortedEntityCounts);
 
   function compareFn(x, y) {
     if(x[1] < y[1]) return 1;
@@ -1253,7 +1310,7 @@ ProjectSchema.methods.getActivityChartData = async function() {
       datasets[user_id][label_idx] = result.count;
     }
 
-    console.log("datasets:", datasets, datasets[user_ids[0]], datasets[user_ids[1]]);
+    //console.log("datasets:", datasets, datasets[user_ids[0]], datasets[user_ids[1]]);
 
     // TODO: sort this properly
     var user_ids = [];
@@ -1279,7 +1336,7 @@ ProjectSchema.methods.getActivityChartData = async function() {
 
     for(var i in usernames) {
       //console.log(i, activityChartData.datasets)
-      console.log(usernames[i], activityChartData.datasets[i])
+      //console.log(usernames[i], activityChartData.datasets[i])
       activityChartData.datasets[i].label = usernames[i];
     }
 
@@ -1291,7 +1348,7 @@ ProjectSchema.methods.getActivityChartData = async function() {
 
     // Sort to ensure colours are always the same
     activityChartData.datasets = activityChartData.datasets.sort(compareFn);
-    console.log("Activity chart data:", activityChartData);
+    //console.log("Activity chart data:", activityChartData);
 
     return Promise.resolve(activityChartData);
     
@@ -1460,7 +1517,7 @@ ProjectSchema.methods.getDetails = async function(done) {
     var elapsed = new Date().getTime() - start;
 
     console.log("... done (" + elapsed + "ms)")
-    console.log('pingu')
+    //console.log('pingu')
     return Promise.resolve(data);
 }
 
@@ -1576,8 +1633,6 @@ ProjectSchema.statics.getCommentsArray = async function(documentIds, next) {
   }
   return Promise.resolve(all_comments);
 }
-
-
 
 
 

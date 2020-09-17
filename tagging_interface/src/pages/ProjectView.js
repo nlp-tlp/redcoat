@@ -12,6 +12,7 @@ import { Comment } from '../components/Comment';
 
 import CategoryHierarchyPage from '../pages/CategoryHierarchyPage';
 import InvitationsPage from '../pages/InvitationsPage';
+import CurationInterface from '../pages/CurationInterface';
 
 import _ from 'underscore';
 
@@ -326,7 +327,7 @@ class ProjectDashboard extends Component {
     //heatmapData = heatmapData.map(() => Math.random())
     return (
      
-      <div id="project-dashboard" className={(this.props.loading ? "loading" : "")}>
+      <div id="project-dashboard" className={"padded " + (this.props.loading ? "loading" : "")}>
         <div className="dashboard-top-row">
         <div className="dashboard-key-items">
           <div className="dashboard-item">
@@ -572,7 +573,7 @@ class ProjectViewSidenav extends Component {
 
           <ProjectViewSidenavSubmenu project_id={this.props.project_id} view={view} name="Annotations" menuItems={ [{name: "Curation", icon: "gavel"}, { name: "Download", icon: "download" }] } icon="list-alt"/>
 
-          <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Annotators" icon="users"/>
+          <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Annotators" icon="user"/>
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Settings" icon="wrench"/>
         </ul>
 
@@ -637,7 +638,7 @@ class EmptyThing extends Component {
     super(props);
   }
   render() {
-    return ( <div>This page is still a work in progress!</div> )
+    return ( <main>This page is still a work in progress!</main> )
   }
 }
 
@@ -755,8 +756,13 @@ class ProjectView extends Component {
           ],
         } ,
         categoryHierarchy: { children: [] },      
-      }   
+      },
+
+       
     }
+
+    // Store the state of the curation interface so it persists across page changes   
+    this.curationInterfaceState = null;
   }
 
   componentWillMount() {
@@ -776,14 +782,14 @@ class ProjectView extends Component {
 
           if(d.dashboard.activityChartData) d.dashboard.activityChartData = setActivityChartStyles(d.dashboard.activityChartData);
 
-          console.log(d);
+          //console.log(d);
 
 
           t.setState({
             loading: false,
             data: d,
             
-          }, () => { this.props.setProject(d.project_name, d.project_author); console.log(this.state.data.dashboard.entityChartData)} );
+          }, () => { this.props.setProject(d.project_name, d.project_author); } );
       }, 555);
     });
 
@@ -795,13 +801,19 @@ class ProjectView extends Component {
 
   }
 
+  setCurationInterfaceData(data) {
+    console.log("saving state", data);
+    this.curationInterfaceState = data;
+  }
+
   render() {
     var location = this.props.location;
+    console.log("Rendering project view", this.curationInterfaceState)
 
     return (
       <div>
         <div id="project-view" className={this.state.loading ? "loading" : ""}>
-          <ProjectViewSidenav view={this.state.view}
+          <ProjectViewSidenav 
                               project_id={this.props.project_id}
                               projectTitle={this.props.projectTitle}
                               projectAuthor={this.props.projectAuthor}
@@ -810,25 +822,25 @@ class ProjectView extends Component {
 
 
           <div className="project-view-wrapper">
-          <TransitionGroup className="transition-group">
-          <CSSTransition
-          key={location.key}
-          timeout={{ enter: 400, exit:400 }}
-          classNames="fade"
-          >
-          <section className={"route-section" + (!this.state.loading ? " loaded" : "")}>
-           <Switch location={location}>
-              <Route path="/projects/:id/dashboard"           render={() => <ProjectDashboard loading={this.state.loading} data={this.state.data.dashboard} project_id={this.props.project_id} />} />     
-              <Route path="/projects/:id/annotations/curation"            render={() => <EmptyThing {...this.state} />} />     
-              <Route path="/projects/:id/annotations/download"            render={() => <EmptyThing {...this.state} />} />     
-              <Route path="/projects/:id/entity-hierarchy"  render={() => <CategoryHierarchyPage loading={this.state.loading} data={this.state.data.categoryHierarchy} colourIndexes={this.state.data.dashboard.entityChartData ? this.state.data.dashboard.entityChartData.colourIndexes : null} />} />     
-              <Route path="/projects/:id/annotators"         render={() => <InvitationsPage data={this.state.data.invitationsTable ? this.state.data.invitationsTable : {}} loading={this.state.loading} />} />     
-              <Route path="/projects/:id/settings"            render={() => <EmptyThing {...this.state} />} />   
-              <Route             render={() => <Error404Page />} />   
-            </Switch>
-          </section>
-          </CSSTransition>
-          </TransitionGroup>
+            <TransitionGroup className="transition-group">
+              <CSSTransition
+              key={location.key}
+              timeout={{ enter: 400, exit:400 }}
+              classNames="fade"
+              >
+                <section className={"route-section" + (!this.state.loading ? " loaded" : "")}>
+                 <Switch location={location}>
+                    <Route path="/projects/:id/dashboard"           render={() => <ProjectDashboard loading={this.state.loading} data={this.state.data.dashboard} project_id={this.props.project_id} />} />     
+                    <Route path="/projects/:id/annotations/curation"            render={() => <CurationInterface user={this.props.user} project_id={this.props.project_id} prevState={this.curationInterfaceState} saveState={this.setCurationInterfaceData.bind(this)} loading={this.state.loading} />} />     
+                    <Route path="/projects/:id/annotations/download"            render={() => <EmptyThing {...this.state} />} />     
+                    <Route path="/projects/:id/entity-hierarchy"  render={() => <CategoryHierarchyPage loading={this.state.loading} data={this.state.data.categoryHierarchy} colourIndexes={this.state.data.dashboard.entityChartData ? this.state.data.dashboard.entityChartData.colourIndexes : null} />} />     
+                    <Route path="/projects/:id/annotators"         render={() => <InvitationsPage data={this.state.data.invitationsTable ? this.state.data.invitationsTable : {}} loading={this.state.loading} />} />     
+                    <Route path="/projects/:id/settings"            render={() => <EmptyThing {...this.state} />} />   
+                    <Route             render={() => <Error404Page />} />   
+                  </Switch>
+                </section>
+              </CSSTransition>
+            </TransitionGroup>
           </div>
         
       
