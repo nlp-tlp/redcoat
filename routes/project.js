@@ -20,10 +20,10 @@ verifyUserInProject = function(req, res, next) {
 
 	Project.findById(req.params.id, function(err, proj) {
 
-		console.log(req.user._id, proj.user_ids.active)
+		//console.log(req.user._id, proj.user_ids.active)
 		//console.log(err, proj);
-		if(err || proj === null) { return res.send("Error: Project does not exist")}
-		if(!proj.projectHasUser(req.user._id)) return res.send("Error: user does not belong to project");
+		if(err || proj === null) { return res.status(404).send(new Error("Error: Project does not exist"))}
+		if(!proj.projectHasUser(req.user._id)) return res.status(403).send(new Error("Error: user does not belong to project"));
 		next();
 	});
 }
@@ -45,15 +45,13 @@ router.get('/:id',         verifyUserInProject, projectController.getProjectDeta
 
 
 
-router.get('/:id/tagging/getDocumentGroup', verifyUserInProject, projectController.getDocumentGroup);
+router.get ('/:id/tagging/getDocumentGroup', verifyUserInProject, projectController.getDocumentGroup);
+router.post('/:id/tagging/modify_hierarchy', verifyUserInProject, projectController.modifyHierarchy);
+router.post('/:id/tagging/submitAnnotations', verifyUserInProject, projectController.submitAnnotations);
+
 
 router.get('/:id/curation', verifyUserInProject, projectController.getCurationDocument);
-//router.get('/:id/tagging/getDocumentGroup', verifyUserInProject, projectController.getDocumentGroup);
-//router.get('/:id/tagging/getPreviouslyAnnotatedDocumentGroup', verifyUserInProject, projectController.getDocumentGroup2);
 
-router.post('/:id/tagging/modify_hierarchy', verifyUserInProject, projectController.modifyHierarchy);
-
-router.post('/:id/tagging/submitAnnotations', verifyUserInProject, projectController.submitAnnotations);
 router.get('/:id/download_annotations/:user_id', verifyUserOwnsProject, projectController.downloadAnnotationsOfUser);
 router.get('/:id/download_combined_annotations', verifyUserOwnsProject, projectController.downloadCombinedAnnotations);
 

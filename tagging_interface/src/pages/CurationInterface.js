@@ -39,8 +39,6 @@ class CurationInterface extends Component {
 			compiledAnnotation: null, // annotations produced via compiled labels or perhaps machine learning model?
 			comments: [],
 
-			userHasAnnotated: [],
-
 			annotatorAgreement: null,
 
 			pageNumber: 1,
@@ -60,9 +58,12 @@ class CurationInterface extends Component {
 			}
 		}
 		this.commentBoxRef = React.createRef();
+		this._isMounted = false;
+		this.refreshDataFn = null;
 	}
 
 	componentWillMount() {
+		this._isMounted = true;
 		if(this.props.documentIdQuery) {
 			this.setState({
 				documentIdQuery: this.props.documentIdQuery,
@@ -80,6 +81,14 @@ class CurationInterface extends Component {
 		}
 	}
 
+	componentDidMount() {
+		
+	}
+
+	componentWillUnmount() {
+		this._isMounted = false;
+	}
+
 	componentDidUpdate(prevProps, prevState) {
 		if(!_.isEqual(prevState, this.state)) {
 			console.log("state updated");
@@ -91,6 +100,7 @@ class CurationInterface extends Component {
 
 
 	async queryAPI() {
+		if(!this._isMounted) return;
 
 		await this.setState({
 			loading: {
@@ -110,18 +120,8 @@ class CurationInterface extends Component {
 		fetch(queryString, fetchConfigGET)
 		.then(response => response.text())
       	.then((data) => {
-      		console.log(data, "xxx<<<");
       		var d = JSON.parse(data);
 
-      		var userHasAnnotated = new Array();
-      		for(var a of d.annotations) {
-      			console.log(a)
-      			userHasAnnotated.push((a !== null));
-      		}
-
-      		console.log("EE", userHasAnnotated);
-
-      		console.log(d.compiledAnnotation);
       		this.setState({
       			documentId: d.documentId,
       			tokens: d.tokens,
@@ -135,8 +135,6 @@ class CurationInterface extends Component {
 
       			documentIdQuery: null,
 
-      			userHasAnnotated: userHasAnnotated,
-
       			annotatorAgreement: d.annotatorAgreement,
 
       			entityColourMap: this.initEntityColourMap(d.categoryHierarchy.children),
@@ -148,7 +146,13 @@ class CurationInterface extends Component {
       				querying: false,
       				saving: false,
       			}
-      		}, () => { console.log("XXXXXXXXXXXXX", this.state.annotations) })
+      		}, () => { 
+
+      			if(this.refreshDataFn) window.clearTimeout(this.refreshDataFn)
+      			this.refreshDataFn = window.setTimeout(this.queryAPI.bind(this), 3000)
+
+
+      		})
       	});
 
 
@@ -299,8 +303,8 @@ class CurationInterface extends Component {
                   			
                   			  <div className="agreement-score">
                   			  <span className="name">Agreement:</span>
-                  			  	{ this.state.annotatorAgreement && <span className="value">{(this.state.annotatorAgreement * 100).toFixed(2)}%</span>}
-                  			  	{ !this.state.annotatorAgreement && <span className="value na">N/A</span>}
+                  			  	{ this.state.annotatorAgreement !== null && <span className="value">{(this.state.annotatorAgreement * 100).toFixed(2)}%</span>}
+                  			  	{ this.state.annotatorAgreement === null && <span className="value na">N/A</span>}
                   			  </div>
 
                   			{
@@ -320,6 +324,7 @@ class CurationInterface extends Component {
 		          			{ this.state.compiledAnnotation &&
 		          				<CurationDocumentContainer
 		          					specialName={"Compiled labels"}
+		          					specialDescription={"These labels are automatically compiled from the annotations above."}
 		          					tokens={this.state.tokens}
 		          					annotations={this.state.compiledAnnotation}
 		          					entityColourMap={this.state.entityColourMap}
@@ -386,7 +391,7 @@ class CurationDocumentContainer extends Component {
 	          			}
 	          			{ this.props.specialName && 
 	          				<div className="user-row">
-	          					<span className="username"><em>{this.props.specialName}</em></span>
+	          					<span className="username"><em>{this.props.specialName}</em><i class="fa fa-info-circle" title={this.props.specialDescription}></i></span>
 	          				</div>
 	          			}
 		          		<div className="sentence display-only">		          		

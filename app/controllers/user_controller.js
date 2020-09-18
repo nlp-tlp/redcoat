@@ -14,21 +14,23 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 /* GET Actions */
 
 // GET: Render the 'registration' page.
-exports.registerPage = function(req, res) {
-  res.render('users/register', { title: "Register", formData: {} });
-}
+// exports.registerPage = function(req, res) {
+//   res.render('users/register', { title: "Register", formData: {} });
+// }
 
-// GET: Render the login page.
-exports.loginPage = function(req, res) {
-  if(req.user)
-    res.redirect(BASE_URL + 'projects');
-  res.render('users/login', {formData: {}, title: "Login"});
-}
+// // GET: Render the login page.
+// exports.loginPage = function(req, res) {
+//   if(req.user)
+//     res.redirect(BASE_URL + 'projects');
+//   res.render('users/login', {formData: {}, title: "Login"});
+// }
 
 // GET: Render the 'user profile' page.
-module.exports.user_profile = function(req, res) {
-  res.render('users/profile', {title: "Your Profile"} )
-}
+// module.exports.user_profile = function(req, res) {
+//   res.render('users/profile', {title: "Your Profile"} )
+// }
+
+
 
 // GET: Render the 'forgot password' page.
 exports.forgot_password = function(req, res) { 

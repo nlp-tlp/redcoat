@@ -59,11 +59,11 @@ class Navbar extends Component {
             </div>
           }
 
-          <div className="dropdown-menu short">
+          {!this.props.loading && <div className="dropdown-menu short">
             <Link to={"" + BASE_URL + "features"}>v1.0</Link>
-          </div>
+          </div> }
         </div>
-        <header className="decorative-bar"></header>
+        {!this.props.loading && <header className="decorative-bar"></header>}
       </nav>
     )
   }

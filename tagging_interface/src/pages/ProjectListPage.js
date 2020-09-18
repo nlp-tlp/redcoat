@@ -58,7 +58,7 @@ class ProjectListPage extends Component {
         result += 'x'
       }
       return result;
-    }
+  }
 
     function randomName() {
       return randomString(5, 20);

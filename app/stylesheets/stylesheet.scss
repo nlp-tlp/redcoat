@@ -808,3 +808,78 @@ section.form-section {
 		}
 	}
 }
+
+@keyframes moving-bg {
+  from {background-position: 0px 0px}
+  to {background-position: -20000px -20000px}
+}
+
+.loading-screen {
+	
+	background-image: url($base_url + 'images/stripes-black-trans-50.png');
+	//width: 100%;
+	//margin-top: $navbar-height;
+	height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;	
+	pointer-events: none;
+	user-select: none;
+	position: relative;
+	position: absolute;
+	top: 0px;
+	left: 0;
+	width: 100%;
+	transition: opacity 0.3s ease;
+
+
+	&.fading-out {
+		opacity: 0;
+	}
+
+
+
+	div.background {	
+		//animation: moving-bg 400s; 	
+		background-repeat: no-repeat;
+		background-size: contain;
+		background-position: center;
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		&.background-under {
+			opacity: 0.6;
+			background-image: url($base_url + 'images/redcoat-1-grey-no-outline.png');
+		}
+		&.background-over {
+			opacity: 0.8;
+			background-image: url($base_url + 'images/redcoat-1-grey-transparent.png');
+		}
+	}
+	
+	span {
+		z-index: 100;
+		color: #999;
+		font-size: 120px;
+		//text-shadow: 3px 3px 3px  #111;
+		i {
+			margin-right: 40px;
+		}
+	}
+}
+
+
+@keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+.fade-in {
+    -webkit-animation: fadein 0.5s; /* Safari, Chrome and Opera > 12.1 */
+   -moz-animation: fadein 0.5s; /* Firefox < 16 */
+    -ms-animation: fadein 0.5s; /* Internet Explorer */
+     -o-animation: fadein 0.5s; /* Opera < 12.1 */
+        animation: fadein 0.5s;
+}

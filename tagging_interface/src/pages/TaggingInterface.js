@@ -26,6 +26,8 @@ import formatDate  from '../functions/formatDate';
 
 import initAnnotationsArray from '../functions/tagging_interface/initAnnotationsArray';
 import Annotation from '../functions/tagging_interface/Annotation';
+import Error403Page from '../pages/Error403Page';
+import Error404Page from '../pages/Error404Page';
 
 
 const BASE_URL = "/"
@@ -932,7 +934,14 @@ class TaggingInterface extends Component {
       }
     }, function() {
       fetch('http://localhost:3000/projects/' + this.props.project_id + '/tagging/' + route, fetchConfigGET) // TODO: move localhost out
-        .then(response => response.text())
+        .then((response) => {
+          if(response.status === 403) {
+            throw new Error(403);
+          } else if(response.status === 404) {
+            throw new Error(404);
+          }           
+          return response.text()
+        })
         .then((data) => {
           //console.log("data:", data);
           try { 
@@ -959,14 +968,6 @@ class TaggingInterface extends Component {
                 querying: false,
                 saving: false,
               },
-              // data: {
-              //   username: d.username,
-              //   documentGroup: [],
-              //   categoryHierarchy: {'children': []},
-              //   pageNumber: -1,
-              //   annotatedDocGroups: -1,
-              // },
-              // TODO: Fix this
             })
             console.log(d)
             return;
@@ -1029,6 +1030,13 @@ class TaggingInterface extends Component {
 
               window.scrollTo(0, 0);
             })
+        }).catch((err) => {
+          console.log(err.message);
+
+          this.setState({
+            error: parseInt(err.message)
+          })
+
         });
         
 
@@ -1578,7 +1586,8 @@ class TaggingInterface extends Component {
     //console.log(this.state.documents, taggingCompletePage);
 
     return (
-        <div>            
+        <div>   
+          {!this.state.error &&          
           <div id="tagging-interface" className={(this.state.loading.querying ? "loading" : "") + (taggingCompletePage ? " tagging-complete-page" : "")}>
 
             <div id="tagging-container">
@@ -1670,7 +1679,10 @@ class TaggingInterface extends Component {
                 draggable={true}
               />
             </div>      
-          </div>
+          </div> }
+
+          { this.state.error === 403 && <Error403Page/> }    
+          { this.state.error === 404 && <Error404Page/> }    
         </div>
        
     )

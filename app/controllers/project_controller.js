@@ -318,9 +318,9 @@ module.exports.getCurationDocument = async function(req, res) {
       automaticAnnotations.push(DocumentAnnotation.toMentionsJSON(documentAnnotations[i].labels, tokens));          
     }
 
-
-    var compiledAnnotation = Project.getCompiledAnnotation(tokens, documentAnnotations);
-
+    if(documentAnnotations.length > 1) {
+      var compiledAnnotation = Project.getCompiledAnnotation(tokens, documentAnnotations);
+    }
 
 
     for(var i = automaticAnnotations.length; i < project.overlap; i++) {
@@ -363,7 +363,7 @@ module.exports.getCurationDocument = async function(req, res) {
 
     saveTimes: saveTimes || null,
 
-    annotatorAgreement: annotatorAgreement || null,
+    annotatorAgreement: annotatorAgreement >= 0 ? annotatorAgreement : null,
 
     categoryHierarchy: categoryHierarchy,
 

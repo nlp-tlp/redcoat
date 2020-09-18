@@ -23,6 +23,8 @@ import UserProfilePage from './pages/UserProfilePage';
 
 import redcoatMan from './images/redcoat-1-grey.png'
 
+import Auth from "./functions/Auth"
+
 // Config for all API fetch requests
 const fetchConfigGET = {
   method: 'GET',
@@ -79,10 +81,22 @@ class TaggingInterfaceTemplate extends Component {
 }
 
 
+class LoadingScreen extends Component {
+  constructor(props) {
+    super(props);
+  }
 
+  render() {
+    return (
+      <div className={"loading-screen" + (this.props.fadingOut ? " fading-out" : "") }>
+        <div className="background background-under"></div>
+        <div className="background background-over"></div>
+        <span><i className="fa fa-cog fa-spin"></i>Loading...</span>
 
-
-
+      </div>
+    )
+  }
+}
 
 // A template component for the project dashboard.
 class ProjectViewTemplate extends Component {
@@ -134,6 +148,9 @@ class App extends Component {
 
       setProject: this.setProject.bind(this),
 
+      loading: true,
+      loadingFadeOut: false,
+
       user: null, // stores 'username' and 'profile icon'
     }
   }
@@ -147,19 +164,22 @@ class App extends Component {
   }
 
   getUserData() {
+    window.setTimeout( () => {
     fetch('http://localhost:3000/userData', fetchConfigGET) // TODO: move localhost out
     .then(response => response.text())
     .then((data) => {
       console.log(data);
       var d = JSON.parse(data);
+
       this.setState({
-        user: {
-          username: d.username,
-          profile_icon: d.profile_icon,
-        },
-        loading: false
+        user: d.user,
+        loading: false,
+        loadingFadeOut: true,
+      }, () => {
+        window.setTimeout(() => this.setState({loadingFadeOut: false}), 500);
       })
     });
+  }, 200);
   }
 
   // Update this component's user profile icon.
@@ -176,15 +196,11 @@ class App extends Component {
   // When mounted, determine the logged in user.
   componentWillMount() {
 
-    this.setState({
-      loading: true,
-
-    }, () => {
-      this.getUserData();
+    
+    this.getUserData();
       
 
-    });
-    
+
     // The express server will save the username into a cookie so that the front-end client can be 'logged in' immediately.
     // Check if the cookie exists. If not, query the API for the logged in user.
     // API is necessary because it is possible to disable cookies.
@@ -199,43 +215,92 @@ class App extends Component {
     // console.log("Username not found in cookie, querying API");
 
 
-    this.setState({
-      loading: true,
-
-    }, () => {
-      this.getUserData();
-      
-
-    });
   }
 
 
 
   render() {
+
+
+
+
+
     return (    
 
       <div id="app" className={this.state.loading ? "loading" : ""}>
         <BrowserRouter>
 
           <ScrollToTop/>
-          <Navbar user={this.state.user} />          
+          
 
-          <Switch>
-          <Route        path="/projects/:id/tagging"  render={(p) => <TaggingInterfaceTemplate {...this.state} pageComponent={<TaggingInterface projectTitle={this.state.projectTitle} projectAuthor={this.state.projectAuthor} setProject={this.setProject.bind(this)} project_id={p.match.params.id} user={this.state.user} />}/>} /> 
-          <Route        path="/projects/:id"          render={(p) => <ProjectViewTemplate {...this.state} pageTitle="Project View" pageComponent={ <ProjectView project_id={p.match.params.id} setProject={this.setProject.bind(this)}  projectTitle={this.state.projectTitle} projectAuthor={this.state.projectAuthor} user={this.state.user} /> }  />} />     
-          <Route        path="/projects"              render={( ) => <MainTemplate {...this.state} pageTitle="Projects" pageComponent={ <ProjectListPage setProject={this.setProject.bind(this)}/> } />} />     
-          <Route        path="/setup-project"         render={( ) => <MainTemplate {...this.state} pageTitle="Setup project" pageComponent={ <SetupProjectPage/> } />} />     
 
-          <Route        path="/features"              render={( ) => <MainTemplate {...this.state} pageTitle="Features" pageComponent={ <FeaturesPage/> } />} />     
-          <Route        path="/profile"               render={( ) => <MainTemplate {...this.state} pageTitle="User Profile" pageComponent={ <UserProfilePage user={this.state.user} setUserProfileIcon={this.setUserProfileIcon.bind(this)}/> } />} />     
-          <Route  exact path="/"                      render={( ) => <MainTemplate {...this.state} pageTitle="" pageComponent={ <HomePage/> } />} />
-          <Route                                      render={( ) => <MainTemplate {...this.state} pageTitle="" pageComponent={ <Error404Page/> } />} /> />
-        </Switch>
+
+          { (this.state.loading || this.state.loadingFadeOut) && <LoadingScreen fadingOut={this.state.loadingFadeOut}/>}
+          {!this.state.loading &&
+
+            <div className="fade-in">
+            <Navbar user={this.state.user} loading={this.state.loading} />  
+
+            <Switch>
+            <PrivateRoute user={this.state.user} path="/projects/:id/tagging" render={(p) => 
+              <TaggingInterfaceTemplate {...this.state} pageComponent={
+                <TaggingInterface 
+                  projectTitle={this.state.projectTitle}
+                  projectAuthor={this.state.projectAuthor}
+                  setProject={this.setProject.bind(this)}
+                  project_id={p.match.params.id}
+                  user={this.state.user}/>}
+                />}
+              /> 
+            <PrivateRoute user={this.state.user} path="/projects/:id" render={(p) => 
+              <ProjectViewTemplate {...this.state} pageTitle="Project View" pageComponent={ 
+                <ProjectView
+                  project_id={p.match.params.id}
+                  setProject={this.setProject.bind(this)}
+                  projectTitle={this.state.projectTitle}
+                  projectAuthor={this.state.projectAuthor}
+                  user={this.state.user} /> }
+                />}
+              />     
+
+
+            <PrivateRoute user={this.state.user} path="/projects" render={ () =>
+              <MainTemplate {...this.state} pageTitle="Projects" pageComponent={
+                <ProjectListPage setProject={this.setProject.bind(this)}/> } />} />    
+            
+
+            <PrivateRoute user={this.state.user} path="/setup-project" render={( ) =>
+              <MainTemplate {...this.state} pageTitle="Setup project" pageComponent={ 
+                <SetupProjectPage/> }
+                  />} />  
+
+            <PrivateRoute user={this.state.user} path="/profile"  render={( ) => 
+              <MainTemplate {...this.state} pageTitle="User Profile" pageComponent={ 
+                <UserProfilePage user={this.state.user} setUserProfileIcon={this.setUserProfileIcon.bind(this)}/> } />} />     
+
+
+
+            <Route path="/features" component={ () =>
+              <MainTemplate {...this.state} pageTitle="Features" pageComponent={ 
+                <FeaturesPage/> } />} />     
+            
+            <Route exact path="/"   render={( ) =>               
+                <HomePage/> } />
+            <Route                  render={( ) => 
+              <MainTemplate {...this.state} pageTitle="" pageComponent={ 
+                <Error404Page/> } />} /> />
+
+
+
+          </Switch>
+
+          </div>
+        }
 
 
             
         </BrowserRouter>
-        <Footer/>
+        {!this.state.loading && <Footer/>}
       </div>      
     );
   }
@@ -243,6 +308,44 @@ class App extends Component {
 
 
 
+/*
+
+    var publicRoutes = [
+
+      {
+        path: "/projects/:id/tagging",
+        template: TaggingInterfaceTemplate,
+        component: TaggingInterface,
+        componentProps: {
+          projectTitle: this.state.projectTitle,
+          projectAuthor: this.state.projectAuthor,
+          setProject: this.setProject.bind(this),
+          project_id: p.match.params.id,
+          user: this.state.user,
+        }
+      },
+      {
+        path: "/projects/:id/tagging",
+        template: MainTemplate,
+        component: ProjectListPage,
+        componentProps: {
+          setProject: this.setProject.bind(this),
+        }
+      }
+    ];
+
+*/
+
+const PrivateRoute = ({ component: Component, ...rest }) => (
+  <Route {...rest} render={(p) => {
+    var {user, ...other} = rest;
+    return rest.user
+      ? rest.render(p)
+      : <Redirect to='/login' />
+  
+  }
+  } />
+)
 
 
 

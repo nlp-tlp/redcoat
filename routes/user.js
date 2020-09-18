@@ -12,12 +12,12 @@ function notLoggedIn(req, res, next) {
 }
 
 // User methods
-router.get('/register',  userController.registerPage);
+//router.get('/register',  userController.registerPage);
 router.post('/register', userController.register);
-router.get('/login',     userController.loginPage);
+//router.get('/login',     userController.loginPage);
 router.post('/login',    userController.login);
 router.get('/logout',    userController.logout);
-router.get('/profile', userController.user_profile)
+//router.get('/profile', userController.user_profile)
 
 router.get('/forgot_password', notLoggedIn, userController.forgot_password);
 router.post('/forgot_password', notLoggedIn, userController.forgot_password_submit);

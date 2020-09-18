@@ -3,7 +3,6 @@ import {Component} from 'react';
 import { PieChart } from 'react-minimal-pie-chart';
 import { Redirect, Link, BrowserRouter, Route, Switch, withRouter } from 'react-router-dom'
 import { TransitionGroup, CSSTransition } from "react-transition-group";
-import Error404Page from '../pages/Error404Page';
 import {Bar, Line, HorizontalBar } from 'react-chartjs-2';
 
 import { defaults } from 'react-chartjs-2'
@@ -12,6 +11,10 @@ import { Comment } from '../components/Comment';
 
 import CategoryHierarchyPage from '../pages/CategoryHierarchyPage';
 import InvitationsPage from '../pages/InvitationsPage';
+
+import Error403Page from '../pages/Error403Page';
+import Error404Page from '../pages/Error404Page';
+
 import CurationInterface from '../pages/CurationInterface';
 
 import _ from 'underscore';
@@ -681,6 +684,8 @@ class ProjectView extends Component {
     this.state = {
       loading: true,
 
+      error: null,
+
       data: {
 
         dashboard: {
@@ -771,8 +776,17 @@ class ProjectView extends Component {
     var t = this;
 
     fetch('http://localhost:3000/projects/' + this.props.project_id, fetchConfigGET) // TODO: move localhost out
-      .then(response => response.text())
+      .then((response) => {
+        if(response.status === 403) {
+          throw new Error(403);
+        } else if(response.status === 404) {
+          throw new Error(404);
+        }     
+
+        return response.text()
+      })
       .then((data) => {
+
         //console.log(data, "<<<");
         var d = JSON.parse(data);
 
@@ -793,6 +807,13 @@ class ProjectView extends Component {
             
           }, () => { this.props.setProject(d.project_name, d.project_author); } );
       }, 555);
+    }).catch((err) => {
+      console.log(err.message);
+
+      this.setState({
+        error: parseInt(err.message)
+      })
+
     });
 
 
@@ -816,7 +837,9 @@ class ProjectView extends Component {
     
 
     return (
+      
       <div>
+      {!this.state.error && 
         <div id="project-view" className={this.state.loading ? "loading" : ""}>
           <ProjectViewSidenav 
                               project_id={this.props.project_id}
@@ -853,8 +876,11 @@ class ProjectView extends Component {
           
 
 
-        </div>     
+        </div> }
+        { this.state.error === 403 && <Error403Page/> }    
+        { this.state.error === 404 && <Error404Page/> }    
       </div>
+      
     )
   }
 }

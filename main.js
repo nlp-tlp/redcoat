@@ -230,7 +230,9 @@ const NON_LOGIN_PATHS = new Set([
   "/forgot_password",
   "/reset_password",
   "/pageData",
+  "/userData",
 ]);
+
 app.use(function(req, res, next) {
     logger.debug(req.path);
     if (req.isAuthenticated()) {
@@ -270,9 +272,12 @@ var homepageController = require("app/controllers/homepage_controller");
 
 app.get('/userData', function(req, res, next) {
   res.send({
-    username: req.user ? req.user.username : null,
-    profile_icon: req.user ? req.user.profile_icon : null,
+    user: req.user ? {
+      username: req.user ? req.user.username : null,
+      profile_icon: req.user ? req.user.profile_icon : null,
+    } : null
   });
+  
 })
 
 app.all('*', homepageController.index);

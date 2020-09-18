@@ -1,6 +1,9 @@
 @import "mixins";
 
 
+.loading nav#navbar {
+	pointer-events: none;
+}
 
 nav#navbar {
 
