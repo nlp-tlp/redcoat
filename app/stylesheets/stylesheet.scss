@@ -114,6 +114,9 @@ pre.error-stack {
 		height: 100%;
 		opacity: 0.5;
 	}
+	&:active {
+		transform: translate(0, 2px);
+	}
 }
 
 
@@ -492,10 +495,12 @@ span.progress-bar {
 }
 
 section.route-section {
-    //position: absolute;
+    position: absolute;
     width: 100%;
-    //top: 0;
-    //left: 0;
+    &:not(.homepage-route-section) {
+    	top: 0;
+    }
+    left: 0;
     
    	//transition: transform 400ms ease;
     box-sizing: border-box;
@@ -504,12 +509,7 @@ section.route-section {
 	// Transitions
 	&.fade-enter {
 	    //transition: transform 3000ms ease;
-	    position: absolute;
-	    &:not(.homepage-route-section) {
-	    	top: 0;	
-	    }
-	    
-	    left: 0;
+	  
 	    
 	    opacity: 0;
 	    transform: translate(-30px, 0);

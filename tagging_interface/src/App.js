@@ -31,7 +31,8 @@ const fetchConfigGET = {
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json'
-  }
+  },
+  credentials: 'include',
 };
 
 
@@ -168,8 +169,16 @@ class App extends Component {
     fetch('http://localhost:3000/userData', fetchConfigGET) // TODO: move localhost out
     .then(response => response.text())
     .then((data) => {
-      console.log(data);
       var d = JSON.parse(data);
+
+
+      try {
+      const username = getCookie('user');
+      console.log(username);
+      } catch(err) {
+        console.log(err);
+      }
+
 
       this.setState({
         user: d.user,

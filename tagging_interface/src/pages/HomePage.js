@@ -3,7 +3,7 @@ import {Component} from "react";
 
 import { Redirect, Link, BrowserRouter, Route, Switch, withRouter } from 'react-router-dom'
 import { TransitionGroup, CSSTransition } from "react-transition-group";
-
+import getCookie from '../functions/getCookie';
 
 
 var lipsumStr = "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc,";
@@ -100,6 +100,69 @@ class HomePageRegister extends Component {
 class HomePageLogin extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      username: '',
+      password: '',
+      error: null,
+      errorMessage: null,
+    }
+  }
+
+  handleUsernameChange(e) {
+    this.setState({
+      username: e.target.value,
+    })
+  }
+
+  handlePasswordChange(e) {
+    this.setState({
+      password: e.target.value,
+    })
+  }
+
+  submitForm(e) {
+    e.preventDefault();
+    console.log(e);
+    const csrfToken = getCookie('csrf-token');
+
+    const fetchConfigPOST = {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'csrf-token': csrfToken,
+      },
+      dataType: "json",
+      body: JSON.stringify({
+        username: this.state.username,
+        password: this.state.password,
+      }),  
+    };
+    this.setState({
+      errorMessage: null,
+    })
+
+    fetch('http://localhost:3000/login', fetchConfigPOST) // TODO: move localhost out
+    .then(async (response) => {
+      if(response.status !== 200) {
+        var d = await response.json();
+        throw new Error(d.message);      
+      }
+      return response.text()
+    })
+    .then((data) => {
+      console.log(data);
+      try { 
+        var d = JSON.parse(data);       
+      } catch(err) {
+        console.log("ERROR:", err);
+      }      
+    }).catch((err) => {
+      this.setState({
+        errorMessage: err.message
+      });
+    });
+
   }
 
   render() {
@@ -109,20 +172,51 @@ class HomePageLogin extends Component {
           <h1>Login</h1>
         </div>
         <div class="body">
-          <form action="/redcoat/login" method="post">
-            <input type="hidden" name="_csrf" value="JoYK9F5f-Z2AbKePiJC15tqlyBNs61sAb1Pk"/>
+          { this.state.errorMessage && <div className="error-message"><span className="error">Error: </span>{this.state.errorMessage}</div>}
+          <form onSubmit={this.submitForm.bind(this)} method="post">
             <div>
               <label>Username</label>
-              <input type="text" name="username" autofocus="autofocus" required="required" placeholder="Username"/>
+              <input type="text" name="username" autofocus="autofocus" required="required" placeholder="Username" value={this.state.username} onChange={this.handleUsernameChange.bind(this)} />
             </div>
             <div>
               <label>Password</label>
-              <input type="password" name="password" required="required" placeholder="Password"/>
-            </div><a class="forgot-password-link" href="/redcoat/forgot_password">Forgot password?</a>
+              <input type="password" name="password" required="required" placeholder="Password" value={this.state.password} onChange={this.handlePasswordChange.bind(this)} />
+            </div><Link class="forgot-password-link" to="/forgot_password">Forgot password?</Link>
             <div class="buttons">
               <div><Link class="back-button" to="/"><i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back</Link></div>
               <div>
                 <input type="submit" value="Login"/>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    )
+  }
+}
+
+class HomePageForgotPassword extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <div class="user-form form-box">
+        <div class="header">
+          <h1>Forgot Password</h1>
+        </div>
+        <div class="body">
+          <form action="/redcoat/forgot_password" method="post">
+            <input type="hidden" name="_csrf" value="oOFHs5QK-_YPdUWgNII3vfrQ_erXv2dwFmz8"/>
+            <div>
+              <label>Email</label>
+              <input type="email" name="email" placeholder="Email" required="required" autofocus="autofocus"/>
+            </div>
+            <div class="buttons">
+              <div><Link class="back-button" to="/login"><i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back</Link></div>
+              <div>
+                <input type="submit" value="Reset password"/>
               </div>
             </div>
           </form>
@@ -186,6 +280,7 @@ class HomePage extends Component {
                  
                 <Route path="/login"    component={HomePageLogin} />     
                 <Route path="/register" component={HomePageRegister} />  
+                <Route path="/forgot_password" component={HomePageForgotPassword} />  
                 <Route path="/"         component={HomePageMain} />       
                 
               </Switch>

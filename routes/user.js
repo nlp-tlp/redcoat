@@ -19,7 +19,7 @@ router.post('/login',    userController.login);
 router.get('/logout',    userController.logout);
 //router.get('/profile', userController.user_profile)
 
-router.get('/forgot_password', notLoggedIn, userController.forgot_password);
+//router.get('/forgot_password', notLoggedIn, userController.forgot_password);
 router.post('/forgot_password', notLoggedIn, userController.forgot_password_submit);
 router.get('/reset_password/:token', notLoggedIn, userController.reset_password);
 router.post('/reset_password/:token', notLoggedIn, userController.reset_password_submit);

@@ -25,7 +25,7 @@ module.exports.index = function(req, res) {
 	 	res.send(ejs.render(html, {'username': 'pingu'}))
 	});*/
 	console.log('sending index page')
-	res.cookie('username', req.user.username);
+	//res.cookie('username', req.user.username);
 	res.sendFile(path.join(appRoot+'/../tagging_interface/build/index.html'));
 
 }

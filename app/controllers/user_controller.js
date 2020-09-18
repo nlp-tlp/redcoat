@@ -32,15 +32,15 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 
 
-// GET: Render the 'forgot password' page.
-exports.forgot_password = function(req, res) { 
-  return res.render('users/forgot_password', {
-    formData: {
-      password: req.body.email,
-    },
-    title: "Forgot password"
-  });
-}
+// // GET: Render the 'forgot password' page.
+// exports.forgot_password = function(req, res) { 
+//   return res.render('users/forgot_password', {
+//     formData: {
+//       password: req.body.email,
+//     },
+//     title: "Forgot password"
+//   });
+// }
 
 // GET: Render the reset password page, called by clicking on the link sent via the reset password email.
 exports.reset_password = function(req, res) {
@@ -94,27 +94,47 @@ exports.register = function(req, res, next) {
     });
   }
 
+
+
+
+
+
 // POST: The login action.
 exports.login = function(req, res, next) {
   passport.authenticate('local', function(err, user, info) {
-    if(err) return next(err);
+    if(err) {
+      logger.err(err.stack);
+      return next(err);
+    }
     if(!user) { 
       var msg = info.message;
-      return res.render('users/login', {
-        formData: {
-          username: req.body.username,
-          password: req.body.password,
-        },
-        message: msg,
-      });
+      logger.error(msg);
+      res.status(401).send({message: msg});
+
+      return;
+
+      // return res.render('users/login', {
+      //   formData: {
+      //     username: req.body.username,
+      //     password: req.body.password,
+      //   },
+      //   message: msg,
+      // });
     }
     req.logIn(user, function(err) {
+      console.log(user, "logged in!!!!!")
       return res.redirect(BASE_URL + 'projects');
     });     
     
   })(req, res, next); 
    
 }
+
+
+
+
+
+
 
 // POST: The forgot password submit action, called when the user clicks the 'submit' button on the forgot password page.
 exports.forgot_password_submit = function(req, res, next) {

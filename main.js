@@ -6,11 +6,20 @@ const session = require('cookie-session');
 var cookieParser = require('cookie-parser')
 var csrf = require('csurf');
 var morgan = require('morgan');
-var passport = require('passport');
+
+
+
 var LocalStrategy = require('passport-local').Strategy;
 var logger = require("./config/winston.js");
 var mongoose = require('mongoose')
 var BASE_URL = require('./config/base_url.js').base_url;
+
+
+var passport = require('passport');
+// const JwtStrategy = require("passport-jwt").Strategy;
+// const ExtractJwt = require("passport-jwt").ExtractJwt;
+
+
 
 
 
@@ -57,7 +66,8 @@ var app = express();
 
 var cors = require('cors');
 app.use(cors({
-  origin: 'http://localhost:4000'
+  origin: 'http://localhost:4000',
+  credentials: true,
 }));
 
 
@@ -109,19 +119,33 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 passport.use(new LocalStrategy(User.authenticate()));
+
+
+// const opts = {};
+// opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+// opts.secretOrKey = 'bababooey'; // todo: move this to an environment variable
+
+// app.use(passport.initialize());
+// passport.use(
+//   new JwtStrategy(opts, (jwt_payload, done) => {
+//     User.findById(jwt_payload.id)
+//       .then(user => {
+//         if (user) {
+//           return done(null, user);
+//         }
+//         return done(null, false);
+//       })
+//       .catch(err => console.log(err));
+//   })
+// );
+
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
 
 
-
 // app.use(function(req, res, next) {
-//   res.header('Content-Type', 'application/json;charset=UTF-8')
 //   res.header('Access-Control-Allow-Credentials', true)
-//   res.header(
-//     'Access-Control-Allow-Headers',
-//     'Origin, X-Requested-With, Content-Type, Accept'
-//   )
 //   next();
 // })
 
@@ -172,10 +196,16 @@ app.use(function(req, res, next) {
   var debug = true;
   if (app.get('env') === 'development' && debug) {
 
-    User.findOne({username: "test"}, function(err, user) {      
+    User.findOne({username: "test"}, function(err, user) {
+
+      
       req.login(user, function(err) {
+
+        //const token = jwt.sign(user, 'your_jwt_secret');
+        //console.log(token);
         return proceed(req, res, next);
       });
+
     });
     return;
   }
@@ -271,6 +301,13 @@ for(var i in routes) {
 var homepageController = require("app/controllers/homepage_controller");
 
 app.get('/userData', function(req, res, next) {
+
+  const options = {
+    httpOnly: true,
+  };
+
+  res.cookie('user', req.user.username, options);
+
   res.send({
     user: req.user ? {
       username: req.user ? req.user.username : null,

@@ -90,7 +90,6 @@ class ProjectListPage extends Component {
     fetch('http://localhost:3000/projects', fetchConfigGET) // TODO: move localhost out
       .then(response => response.text())
       .then((data) => {
-        console.log(data);
         var d = JSON.parse(data);
 
         this.setState({
@@ -121,7 +120,6 @@ class ProjectListPage extends Component {
 
 
   render() {
-    console.log(this.state.data);
     return (
       <div id="projects-table-wrapper">
 
