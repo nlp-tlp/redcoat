@@ -9,19 +9,21 @@ div.letters-background {
 	font-family: "Droid Sans", monospace;
 	z-index: 0;
 	padding: 5px;
-	color: rgb(250, 139, 91);
-	opacity: 0.2;
+	color: rgb(255, 255, 255);
+	opacity: 0.1;
 	box-sizing: border-box;
 	overflow: hidden;
+	mix-blend-mode: screen;
 }
 
 #welcome {
 
-
+	display: flex;
+	align-items: center;
+	justify-content: center;
 
 	background: linear-gradient(rgb(250, 139, 91), rgb(185, 12, 5)) no-repeat;
 	margin-top: 50px;
-	padding-top: 20px;
 	box-sizing: border-box;
 	height: calc(100vh - 50px);
 	.title-container {
@@ -35,7 +37,7 @@ div.letters-background {
 			margin-left: -70px;
 		}
 	}
-	h1, h2#h2-byline  {
+	h1#h1-welcome, h2#h2-byline  {
 		text-align: center;
 		//text-transform: uppercase;
 		font-size: 140px;
@@ -43,10 +45,10 @@ div.letters-background {
 		margin-bottom:  0px;
 		color: white;
 		letter-spacing: 2px;
-		margin-top: 40px;
 		box-sizing: border-box;
 		width: 100%;
 		text-shadow: 2px 2px rgba(darken(rgb(185, 12, 5), 30), 0.7);
+		margin-top: 0;
 	}
 	h2#h2-byline {
 		font-size: 27px;
@@ -58,14 +60,16 @@ div.letters-background {
 		color: #444;
 		font-size: 28px;
 	}
-	div.buttons {
+	.homepage-main {
+		div.buttons {
 
-		width: 90%;
-		margin: 0 5%;
-		box-sizing: border-box;
-		text-align: center;
-		margin-top: 27vh;
+			width: 90%;
+			margin: 0 5%;
+			box-sizing: border-box;
+			text-align: center;
+			margin-top: 27vh;
 
+		}
 	}
 }
 

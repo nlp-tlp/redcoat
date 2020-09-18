@@ -1,8 +1,8 @@
 import React from "react";
 import {Component} from "react";
 
-import { Link } from "react-router-dom";
-
+import { Redirect, Link, BrowserRouter, Route, Switch, withRouter } from 'react-router-dom'
+import { TransitionGroup, CSSTransition } from "react-transition-group";
 
 
 
@@ -56,20 +56,90 @@ class LettersBackground extends Component {
   }
 }
 
-
-
-
-
-
-class HomePage extends Component {
+class HomePageRegister extends Component {
   constructor(props) {
     super(props);
   }
+
   render() {
     return (
-    
-      <section id="welcome">
-        <LettersBackground/>
+      <div class="user-form form-box">
+        <div class="header">
+          <h1>Register</h1>
+        </div>
+        <div class="body">
+          <form action="/redcoat/register" method="post">
+            <input type="hidden" name="_csrf" value="8tb7dlyN-cJPwiKjIFeZEZLfXxm-UvBvEPGc"/>
+            <div>
+              <label>Username</label>
+              <input type="text" name="username" autofocus="autofocus" placeholder="Username"/>
+            </div>
+            <div>
+              <label>Email</label>
+              <input type="email" name="email" placeholder="Email" required="required"/>
+            </div>
+            <div>
+              <label>Password</label>
+              <input id="password" type="password" name="password" placeholder="Password" required="required"/>
+              <label>Password confirmation</label>
+              <input id="password_confirmation" type="password" name="password_confirmation" required="required" placeholder="Password confirmation"/>
+            </div>
+            <div class="buttons">
+              <div><Link class="back-button" to="/"><i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back</Link></div>
+              <div>
+                <input type="submit" value="Register"/>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    )
+  }
+}
+
+class HomePageLogin extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <div class="user-form form-box">
+        <div class="header">
+          <h1>Login</h1>
+        </div>
+        <div class="body">
+          <form action="/redcoat/login" method="post">
+            <input type="hidden" name="_csrf" value="JoYK9F5f-Z2AbKePiJC15tqlyBNs61sAb1Pk"/>
+            <div>
+              <label>Username</label>
+              <input type="text" name="username" autofocus="autofocus" required="required" placeholder="Username"/>
+            </div>
+            <div>
+              <label>Password</label>
+              <input type="password" name="password" required="required" placeholder="Password"/>
+            </div><a class="forgot-password-link" href="/redcoat/forgot_password">Forgot password?</a>
+            <div class="buttons">
+              <div><Link class="back-button" to="/"><i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back</Link></div>
+              <div>
+                <input type="submit" value="Login"/>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    )
+  }
+}
+
+class HomePageMain extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <div className="homepage-main">
         <h1 id="h1-welcome" data-content="Redcoat">Redcoat</h1>
         <h2 id="h2-byline" data-content="Collaborative Annotation Tool">Collaborative Annotation Tool</h2>
         <div class="buttons"><Link to="/register">
@@ -83,6 +153,46 @@ class HomePage extends Component {
                 Login
               </h2>
             </div></Link></div>
+        </div>
+
+      )
+
+
+  }
+}
+
+class HomePage extends Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+
+    var location = this.props.location;
+    console.log(location);
+
+    return (
+    
+      <section id="welcome">
+        <LettersBackground/>
+
+        <TransitionGroup className="transition-group">
+          <CSSTransition
+          key={location.key}
+          timeout={{ enter: 400, exit:400 }}
+          classNames="fade"
+          >
+            <section className="route-section homepage-route-section">
+             <Switch location={location}>
+                 
+                <Route path="/login"    component={HomePageLogin} />     
+                <Route path="/register" component={HomePageRegister} />  
+                <Route path="/"         component={HomePageMain} />       
+                
+              </Switch>
+            </section>
+          </CSSTransition>
+        </TransitionGroup>
+
       </section>
       
 
@@ -91,4 +201,4 @@ class HomePage extends Component {
 }
 
 
-export default HomePage
+export default withRouter(HomePage);

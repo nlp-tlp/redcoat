@@ -284,7 +284,7 @@ class App extends Component {
               <MainTemplate {...this.state} pageTitle="Features" pageComponent={ 
                 <FeaturesPage/> } />} />     
             
-            <Route exact path="/"   render={( ) =>               
+            <Route path="/"   render={( ) =>               
                 <HomePage/> } />
             <Route                  render={( ) => 
               <MainTemplate {...this.state} pageTitle="" pageComponent={ 

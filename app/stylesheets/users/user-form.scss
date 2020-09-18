@@ -19,7 +19,8 @@
 	background: white;
 	width: 600px;
 	margin: 0 auto; 
-	margin-top: 20px;
+	margin-top: -80px;
+	box-shadow: 1px 1px 6px -3px rgba(0, 0, 0, 0.9);
 	.body {
 		padding: 20px 40px 10px 40px; 
 	}
@@ -63,7 +64,7 @@
 			font-size: 16px;
 			&:focus {
 				outline: none;
-				border: 1px solid rgba(250, 185, 5, 0.8);
+				border: 2px solid rgba(250, 185, 5, 0.8);
 			}
 		}
 		select {
@@ -100,7 +101,6 @@
 			}
 			&:focus {
 				outline: 0;
-
 			}
 			&:active {
 				padding-left: 45px;
