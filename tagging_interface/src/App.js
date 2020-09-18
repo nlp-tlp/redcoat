@@ -176,18 +176,27 @@ class App extends Component {
   // When mounted, determine the logged in user.
   componentWillMount() {
 
+    this.setState({
+      loading: true,
+
+    }, () => {
+      this.getUserData();
+      
+
+    });
+    
     // The express server will save the username into a cookie so that the front-end client can be 'logged in' immediately.
     // Check if the cookie exists. If not, query the API for the logged in user.
     // API is necessary because it is possible to disable cookies.
-    const username = getCookie('username');
-    if(username !== undefined) {
-      console.log('Username from cookie:', username)
-      this.setState({
-        username: username,
-      });
-      return;
-    }
-    console.log("Username not found in cookie, querying API");
+    // const username = getCookie('username');
+    // if(username !== undefined) {
+    //   console.log('Username from cookie:', username)
+    //   this.setState({
+    //     username: username,
+    //   });
+    //   return;
+    // }
+    // console.log("Username not found in cookie, querying API");
 
 
     this.setState({

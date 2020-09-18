@@ -570,6 +570,7 @@ div.transition-group {
 		display: block;
 	}
 
+
 }
 
 
@@ -593,6 +594,9 @@ blockquote {
 	blockquote.st {
 		border-left: 4px solid rgba(0, 0, 0, 0);
 		background: #eee;
+		i {
+			visibility: hidden;
+		}
 	}
 	.st:after {
 		background: #eee;
@@ -746,18 +750,20 @@ section.form-section {
 
 	background: rgba(255, 255, 255, 0.8);
 	height: auto;
-	border: 1px solid #ddd;
+	//border: 1px solid #ddd;
 	border-radius: 4px;
 	margin-bottom: 40px;
 
-	box-shadow: 1px 1px 3px -3px rgba(0, 0, 0, 0.9);
+	//box-shadow: 1px 1px 3px -3px rgba(0, 0, 0, 0.9);
 	//z-index: 100;
 	padding: 0;
 	box-sizing: border-box;
 	overflow: auto;
+	position: relative;
 
-
-
+	&.no-comments {
+		box-shadow: none;
+	}
 	.comments-header {
 		color: #222;
 		font-size: 14px;
@@ -779,5 +785,26 @@ section.form-section {
 	.comment-box {
 		padding: 10px 20px;
 		margin-bottom: 0;
+	}
+	.comment-document a {
+		margin-left: 10px;
+		margin-right: -10px;
+		color: darken($button-blue, 16);
+		text-decoration: none !important;
+	}
+	blockquote {
+		box-sizing: border-box;
+		display: flex;
+		width: 100%;
+		align-items: center;
+		span.document-string {
+			display: block;
+			width: 100%;
+		
+		}
+		a {
+			display: block;
+
+		}
 	}
 }

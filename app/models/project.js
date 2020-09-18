@@ -138,7 +138,9 @@ ProjectSchema.methods.getActiveUsers = async function() {
 
 // Retrieve a list of documents and a list of annotations (for each document),
 // optionally order by sortBy and search based on searchTerm.
-ProjectSchema.methods.getCurationDocument = async function(pageNumber, sortBy, searchTerm) {
+ProjectSchema.methods.getCurationDocument = async function(pageNumber, sortBy, searchTerm, documentIdQuery) {
+
+  console.log("docidq", documentIdQuery);
 
   var t = this;
 
@@ -146,8 +148,9 @@ ProjectSchema.methods.getCurationDocument = async function(pageNumber, sortBy, s
   var sortOrder = 'desc';
 
   if(sortBy === "Annotations")        sortObj = {times_annotated: sortOrder, annotator_agreement: sortOrder};
-  //else if(sortBy === "Creation date") sortObj = {updatedAt: sortOrder};
+    //else if(sortBy === "Creation date") sortObj = {updatedAt: sortOrder};
   else if(sortBy === "Agreement")     sortObj = {annotator_agreement: sortOrder, times_annotated: sortOrder};
+  else if(sortBy === "Document Index")     sortObj = {document_index: sortOrder};
 
   
   /*var documents = await Document.aggregate([
@@ -159,36 +162,54 @@ ProjectSchema.methods.getCurationDocument = async function(pageNumber, sortBy, s
 
 
   try {
-  if(searchTerm) {
-    var relevantDocuments = new Array();
-    for(var doc of documents) {
-      var tokenString = doc.tokens.join(" ");
-      if(tokenString.indexOf(searchTerm) > 0) {
-        relevantDocuments.push(doc);
+
+    if(searchTerm) {
+      var relevantDocuments = new Array();
+      for(var doc of documents) {
+        var tokenString = doc.tokens.join(" ");
+        if(tokenString.indexOf(searchTerm) > 0) {
+          relevantDocuments.push(doc);
+        }
       }
+      documents = relevantDocuments;
     }
-    documents = relevantDocuments;
-  }
 
 
-  if(documents.length === 0) { return Promise.reject(new Error("No documents"))}
-  if(pageNumber > documents.length) return Promise.reject(new Error("Page number exceeds number of documents"));
+    if(documentIdQuery) {
+      var doc;
+      for(var i in documents) {
+        var d = documents[i];
+        if(d._id.equals(ObjectId(documentIdQuery))) {
+          var doc = d;
+          pageNumber = (parseInt(i) + 1);
+          break;
+        }
+      }
+      console.log(doc, "<<DOC")
 
-  var doc = documents[pageNumber - 1];
+    } else {
+      if(documents.length === 0) { return Promise.reject(new Error("No documents"))}
+      if(pageNumber > documents.length) return Promise.reject(new Error("Page number exceeds number of documents"));
+      var doc = documents[pageNumber - 1];
+    }
+    
 
-  var documentAnnotations = await DocumentAnnotation.find({document_id: doc._id}).sort({user_id: "asc"});
 
-  var users = new Array();
 
-  var saveTimes = new Array();
-  for(var d of documentAnnotations) {
-    var user = await User.findOne({_id: d.user_id}).select({username: 1, profile_icon: 1}).lean().exec();
-    users.push(user);
-    saveTimes.push(d.updated_at);
-  }
-  var response = {doc: doc, documentAnnotations: documentAnnotations, totalDocuments: documents.length, users: users, saveTimes: saveTimes}
-  return response;
-} catch(err) { console.log(err)}
+    var documentAnnotations = await DocumentAnnotation.find({document_id: doc._id}).sort({user_id: "asc"});
+
+    var users = new Array();
+
+    var saveTimes = new Array();
+    for(var d of documentAnnotations) {
+      var user = await User.findOne({_id: d.user_id}).select({username: 1, profile_icon: 1}).lean().exec();
+      users.push(user);
+      saveTimes.push(d.updated_at);
+    }
+    var response = {doc: doc, documentAnnotations: documentAnnotations, totalDocuments: documents.length, users: users, saveTimes: saveTimes, pageNumber: pageNumber}
+    return response;
+
+  } catch(err) { console.log(err)}
 }
 
 

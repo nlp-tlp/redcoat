@@ -49,6 +49,7 @@ class CurationInterface extends Component {
 			
 			searchTerm: null,
 			sortBy: "Annotations",
+			documentIdQuery: null, // For searching a specific document id via a comment button
 
 			entityColourMap: {},
 
@@ -61,6 +62,15 @@ class CurationInterface extends Component {
 	}
 
 	componentWillMount() {
+		if(this.props.documentIdQuery) {
+			this.setState({
+				documentIdQuery: this.props.documentIdQuery,
+			}, this.queryAPI);
+			return;
+		}
+
+
+
 		console.log("Loading state:", this.props.prevState)
 		if(this.props.prevState) {
 			this.setState(this.props.prevState);
@@ -92,6 +102,9 @@ class CurationInterface extends Component {
 		if(this.state.searchTerm) {
 			queryString += "&searchTerm=" + this.state.searchTerm;
 		}
+		if(this.state.documentIdQuery) {
+			queryString += "&documentId=" + this.state.documentIdQuery;
+		}
 
 		fetch(queryString, fetchConfigGET)
 		.then(response => response.text())
@@ -115,6 +128,8 @@ class CurationInterface extends Component {
 
       			users: d.users,
       			saveTimes: d.saveTimes,
+
+      			documentIdQuery: null,
 
       			userHasAnnotated: userHasAnnotated,
 
@@ -256,7 +271,7 @@ class CurationInterface extends Component {
 
 	                  showSortBy={true}
                   	  sortBy={this.state.sortBy}
-                  	  sortByOptions={["Annotations", "Agreement"]}
+                  	  sortByOptions={["Annotations", "Agreement", "Document Index"]}
                   	  setSortBy={this.setSortBy.bind(this)}
 
 

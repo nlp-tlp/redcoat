@@ -99,10 +99,13 @@ function parseDocsPerPage(docsPerPage) {
 
 // Parse the sortBy provided by the client.
 function parseSortBy(sortBy) {
-  if(sortBy !== "Annotations" && sortBy !== "Creation date" && sortBy !== "Agreement") return "Annotations";  
+  if(sortBy !== "Annotations" && sortBy !== "Document Index" && sortBy !== "Agreement") return "Annotations";  
   return sortBy;
 }
 
+function parseDocumentIdQuery(documentIdQuery) {
+  return documentIdQuery; // TODO: Make it more strict
+}
 
 // Refactored getDocumentGroup function, which sends a document group to the client.
 module.exports.getDocumentGroup = async function(req, res) {
@@ -266,6 +269,7 @@ module.exports.getCurationDocument = async function(req, res) {
   try {
     var pageNumber  = parsePageNumber(req.query.pageNumber);  
     var sortBy = parseSortBy(req.query.sortBy);
+    var documentIdQuery = parseDocumentIdQuery(req.query.documentId);
     if(req.query.searchTerm) {
       var searchTerm = req.query.searchTerm;
     }
@@ -289,7 +293,7 @@ module.exports.getCurationDocument = async function(req, res) {
 
 
   try {
-    var curationDoc = await project.getCurationDocument(pageNumber, sortBy, searchTerm);
+    var curationDoc = await project.getCurationDocument(pageNumber, sortBy, searchTerm, documentIdQuery);
 
     var doc = curationDoc.doc;
     var documentAnnotations = curationDoc.documentAnnotations;
@@ -298,6 +302,7 @@ module.exports.getCurationDocument = async function(req, res) {
     var documentId = doc._id;
     var users = curationDoc.users;
     var saveTimes = curationDoc.saveTimes;
+    pageNumber = curationDoc.pageNumber;
 
     console.log("DOC:", doc);
 

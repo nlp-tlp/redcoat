@@ -15,6 +15,8 @@ import InvitationsPage from '../pages/InvitationsPage';
 import CurationInterface from '../pages/CurationInterface';
 
 import _ from 'underscore';
+const queryString = require('query-string');
+
 
 defaults.global.defaultFontFamily = 'Open Sans'
 defaults.global.animation.duration = 500;
@@ -511,7 +513,7 @@ class ProjectDashboard extends Component {
 
               { this.props.data.comments.length === 0 && <div className="no-comments">This project does not have any comments yet.</div>}       
 
-              { this.props.data.comments.map((comment, i) => <Comment index={i} {...comment} />) }
+              { this.props.data.comments.map((comment, i) => <Comment index={i} {...comment} project_id={this.props.project_id} />) }
 
             </div>
           </div>
@@ -771,7 +773,7 @@ class ProjectView extends Component {
     fetch('http://localhost:3000/projects/' + this.props.project_id, fetchConfigGET) // TODO: move localhost out
       .then(response => response.text())
       .then((data) => {
-        console.log(data, "<<<");
+        //console.log(data, "<<<");
         var d = JSON.parse(data);
 
         window.setTimeout(() => {
@@ -810,6 +812,9 @@ class ProjectView extends Component {
     var location = this.props.location;
     console.log("Rendering project view", this.curationInterfaceState)
 
+    var docId = queryString.parse(location.search).docId;
+    
+
     return (
       <div>
         <div id="project-view" className={this.state.loading ? "loading" : ""}>
@@ -831,7 +836,7 @@ class ProjectView extends Component {
                 <section className={"route-section" + (!this.state.loading ? " loaded" : "")}>
                  <Switch location={location}>
                     <Route path="/projects/:id/dashboard"           render={() => <ProjectDashboard loading={this.state.loading} data={this.state.data.dashboard} project_id={this.props.project_id} />} />     
-                    <Route path="/projects/:id/annotations/curation"            render={() => <CurationInterface user={this.props.user} project_id={this.props.project_id} prevState={this.curationInterfaceState} saveState={this.setCurationInterfaceData.bind(this)} loading={this.state.loading} />} />     
+                    <Route path="/projects/:id/annotations/curation"            render={() => <CurationInterface user={this.props.user} project_id={this.props.project_id} prevState={this.curationInterfaceState} saveState={this.setCurationInterfaceData.bind(this)} loading={this.state.loading} documentIdQuery={docId} />} />     
                     <Route path="/projects/:id/annotations/download"            render={() => <EmptyThing {...this.state} />} />     
                     <Route path="/projects/:id/entity-hierarchy"  render={() => <CategoryHierarchyPage loading={this.state.loading} data={this.state.data.categoryHierarchy} colourIndexes={this.state.data.dashboard.entityChartData ? this.state.data.dashboard.entityChartData.colourIndexes : null} />} />     
                     <Route path="/projects/:id/annotators"         render={() => <InvitationsPage data={this.state.data.invitationsTable ? this.state.data.invitationsTable : {}} loading={this.state.loading} />} />     
