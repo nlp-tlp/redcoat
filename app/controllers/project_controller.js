@@ -317,9 +317,17 @@ module.exports.getCurationDocument = async function(req, res) {
     for(var i = 0; i < documentAnnotations.length; i++) {
       automaticAnnotations.push(DocumentAnnotation.toMentionsJSON(documentAnnotations[i].labels, tokens));          
     }
+
+
+    var compiledAnnotation = Project.getCompiledAnnotation(tokens, documentAnnotations);
+
+
+
     for(var i = automaticAnnotations.length; i < project.overlap; i++) {
       automaticAnnotations.push(null);
     }
+
+
 
     var annotatorAgreement = doc.annotator_agreement;
 
@@ -331,7 +339,7 @@ module.exports.getCurationDocument = async function(req, res) {
 
 
   } catch(err) {
-    logger.error(err);
+    logger.error(err.stack);
     if(err.message === "No documents") {
       logger.error("no docs")
     } else {
@@ -347,6 +355,9 @@ module.exports.getCurationDocument = async function(req, res) {
     documentId: documentId || null,
     tokens: tokens || null,
     annotations: automaticAnnotations || null,
+
+    compiledAnnotation: compiledAnnotation || null,
+
     users: users || null,
     comments: comments || null,
 

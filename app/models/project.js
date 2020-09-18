@@ -676,24 +676,151 @@ ProjectSchema.methods.getAnnotationsOfUserForProject = function(user, next) {
 }
 
 
-// Return a JSON array of entity typing-formatted annotations.
-// The annotations JSON should be in the format of 'getAnnotationsOfUserForProject' above.
-ProjectSchema.methods.getEntityTypingAnnotations = function(annotations,  next) {
+// https://stackoverflow.com/questions/31128855/comparing-ecma6-sets-for-equality
+isSetsEqual = (a, b) => a.size === b.size && [...a].every(value => b.has(value));
 
-  // https://stackoverflow.com/questions/31128855/comparing-ecma6-sets-for-equality
-  isSetsEqual = (a, b) => a.size === b.size && [...a].every(value => b.has(value));
+function* zip(args) {
+  const iterators = args.map(x => x[Symbol.iterator]());
+  while (true) {
+    const current = iterators.map(x => x.next());
+    if (current.some(x => x.done)) {
+      break;
+    }
+    yield current.map(x => x.value);
+  }
+}
 
-  function* zip(args) {
-    const iterators = args.map(x => x[Symbol.iterator]());
-    while (true) {
-      const current = iterators.map(x => x.next());
-      if (current.some(x => x.done)) {
-        break;
-      }
-      yield current.map(x => x.value);
+
+// Computes the compiled annotations for a list of annotations for a single document.
+// Input labels should be in BIO format (not converted to mention json).
+ProjectSchema.statics.getCompiledAnnotation = function(tokens, annotations, next) {
+
+  console.log(annotations[0])
+  var compiledAnnotation = {
+    'tokens': tokens,
+    'mentions': new Array()
+  };
+
+
+  var numUsers = annotations.length;
+
+
+
+  // Labels required for majority (more than 50%)
+  if(numUsers % 2 == 0) {
+    var m = Math.ceil((numUsers / 2) + 0.0001);
+  } else {
+    var m = Math.ceil((numUsers / 2));
+  }
+
+
+  var zippedLabels = new Array(annotations[0].labels.length);
+  for(var i = 0; i < zippedLabels.length; i++) {
+    zippedLabels[i] = new Array();
+  }
+
+  // For each set of labels, zip them so that we get a list of labels for each token
+  for(var annotator of annotations) {
+    var labels = annotator.labels;
+    
+    for(var token_idx in labels) {
+      zippedLabels[token_idx].push(labels[token_idx]);
     }
   }
 
+
+  console.log("zipped:", zippedLabels[0]);
+
+  var mentionStart = -1;
+  var mentionEnd = -1;
+  var mentionLabels = new Set();
+
+
+
+  for(var l = 0; l < zippedLabels.length; l++) {
+    var currentMention = {};
+
+    var zl = zippedLabels[l];
+
+    // 1. Count number of markers
+    var marker_counts = {"B-": 0, "I-": 0, "": 0}
+    var label_counts  = {}
+    var majority_markers = new Set();
+    var majority_labels = new Set();
+    //console.log(zipped_labels[l])
+
+
+    for(var idx in zl) {
+      var marker_name = zl[idx][0]
+      marker_counts[marker_name] += 1
+      if(marker_counts[marker_name] >= m) {
+        majority_markers.add(marker_name);
+      }
+      if(zl[idx][1] !== undefined) {
+        for(var label_idx in zl[idx][1]) {
+          var label_name = zl[idx][1][label_idx]
+          if(!label_counts.hasOwnProperty(label_name)) {
+            label_counts[label_name] = 0
+          }
+          label_counts[label_name] += 1
+          if(label_counts[label_name] >= m) {
+            majority_labels.add(label_name);
+          }
+        }
+      }          
+    }
+            
+
+    //console.log(mentionLabels)
+    // 2.a If we are not in a mention, count B tags
+    if(mentionStart === -1) {
+
+      // 3.a If there are any majority labels (regardless of B- or I-), start a new mention
+      if(majority_labels.size > 0) {
+        mentionStart  = l;
+        mentionEnd    = l + 1;
+        mentionLabels = majority_labels;
+      }
+
+    } else {
+
+      // 2.b If we *are* in a mention, ensure that majority labels == the current mentionLabels.
+
+      if(isSetsEqual(majority_labels, mentionLabels) && !majority_markers.has("B-")) {
+
+        mentionEnd += 1
+      } else {
+
+        // 2.c If the sets are not equal, the current mention ends.
+        compiledAnnotation.mentions.push({ "start": mentionStart, "end": mentionEnd, "labels": Array.from(mentionLabels) });
+        mentionStart = -1;
+        mentionEnd   = -1;
+        mentionLabels = new Set();
+
+        // Then, check for B- tags.
+        if(majority_markers.has("B-")) {
+          if(majority_labels.size > 0) {
+            mentionStart  = l;
+            mentionEnd    = l + 1;
+            mentionLabels = majority_labels;
+          }              
+        }
+      }
+    }
+    // If at the end of the sentence and still in-mention, push that mention.
+    if(mentionStart > -1) {
+      compiledAnnotation.mentions.push({ "start": mentionStart, "end": mentionEnd, "labels": Array.from(mentionLabels) });
+    }
+  }
+
+
+  console.log("Compiled annotation:", compiledAnnotation);
+  return compiledAnnotation;
+}
+
+// Return a JSON array of entity typing-formatted annotations.
+// The annotations JSON should be in the format of 'getAnnotationsOfUserForProject' above.
+ProjectSchema.methods.getEntityTypingAnnotations = function(annotations,  next) {
 
   var mentions = [];
   for(var i in annotations) {

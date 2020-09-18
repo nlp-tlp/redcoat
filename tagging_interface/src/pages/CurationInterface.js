@@ -36,6 +36,7 @@ class CurationInterface extends Component {
 			documentId: null,
 			documents: [],			
 			annotations: [],
+			compiledAnnotation: null, // annotations produced via compiled labels or perhaps machine learning model?
 			comments: [],
 
 			userHasAnnotated: [],
@@ -119,11 +120,14 @@ class CurationInterface extends Component {
       		}
 
       		console.log("EE", userHasAnnotated);
+
+      		console.log(d.compiledAnnotation);
       		this.setState({
       			documentId: d.documentId,
       			tokens: d.tokens,
 
       			annotations: initAnnotationsArray([d.tokens], d.annotations, this.state.searchTerm, true), //fix
+      			compiledAnnotation: d.compiledAnnotation ? initAnnotationsArray([d.tokens], [d.compiledAnnotation], this.state.searchTerm, true)[0] : null, //fix
       			comments: d.comments,
 
       			users: d.users,
@@ -156,7 +160,7 @@ class CurationInterface extends Component {
 	searchDocuments(searchTerm) {
 		this.setState({
 			pageNumber: 1,
-			searchTerm: searchTerm 
+			searchTerm: searchTerm,
 		}, this.queryAPI);   
 	}
 
@@ -300,7 +304,7 @@ class CurationInterface extends Component {
                   			  </div>
 
                   			{
-		          			this.state.annotations.map((annotations, index) => 
+		          				this.state.annotations.map((annotations, index) => 
 		          				<CurationDocumentContainer
 		          					user={this.state.users[index] || null}
 		          					index={index}
@@ -311,6 +315,18 @@ class CurationInterface extends Component {
 				                	saveTime={this.state.saveTimes[index] || null}
 		          				/>
 		          			)}
+		          			{ this.state.compiledAnnotation && <div className="divider"><span></span></div> }
+
+		          			{ this.state.compiledAnnotation &&
+		          				<CurationDocumentContainer
+		          					specialName={"Compiled labels"}
+		          					tokens={this.state.tokens}
+		          					annotations={this.state.compiledAnnotation}
+		          					entityColourMap={this.state.entityColourMap}
+				                	displayOnly={true}
+		          				/>
+	          				}
+	          			
 
 
                   		</div>
@@ -359,11 +375,20 @@ class CurationDocumentContainer extends Component {
 		return (
 			<div className="document-container">
           		<div className="document-wrapper">
-	          		<div className={"curation-document" + (this.props.user ? "" : " not-yet-annotated")}>
+	          		<div className={"curation-document" + ((!this.props.specialName && !this.props.user) ? " not-yet-annotated" : "")}>
+
+	          			{ !this.props.specialName && 
 	          			<div className="user-row">
+
 	          				<ProfileIcon user={this.props.user}/><span className="username">{this.props.user && this.props.user.username}</span> 
 	          				<div className="save-time">Saved on {formatDate(this.props.saveTime)}</div>
 	          			</div>
+	          			}
+	          			{ this.props.specialName && 
+	          				<div className="user-row">
+	          					<span className="username"><em>{this.props.specialName}</em></span>
+	          				</div>
+	          			}
 		          		<div className="sentence display-only">		          		
 
 		              		<Sentence 

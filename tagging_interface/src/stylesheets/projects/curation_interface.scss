@@ -40,6 +40,19 @@
 	width: 100%;
 	background: none;
 
+	div.divider {
+		padding: 20px 60px;
+		box-sizing: border-box;
+		margin-bottom: 10px;
+		span {
+			border-bottom: 1px solid #ccc;
+			width: 100%;
+			height: 10px;
+			display: block;
+
+		}
+	}
+
 }
 #sentence-tagging.document-window {
 	margin-top: 50px;
@@ -118,12 +131,14 @@
 }
 
 #sentence-tagging {
+	margin-bottom: 200px;
 	.document-container {
 
 		.curation-document {
 			background: #fefefe;
 			display: block;
 			position: relative; 
+
 
 			// cursor: pointer;
 			// &:hover {
@@ -137,6 +152,7 @@
 				align-items: center;
 				font-size: 15px;
 				color: white;
+				min-height: 35px;
 				.username {
 					margin-right: auto;
 				}
