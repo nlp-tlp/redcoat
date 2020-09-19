@@ -8,7 +8,5 @@ var homepageController = require("app/controllers/homepage_controller");
 
 
 
-router.get('/features', homepageController.features);
-
 
 module.exports = router

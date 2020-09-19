@@ -87,7 +87,7 @@ class ProjectListPage extends Component {
   // Once done, set this.state.data to the returned projects, numUserInvolvedIn, and numCreatedByUser.
   componentWillMount() {
     this.props.setProject(null, null); // Reset the current project in the sidenav
-    fetch('http://localhost:3000/projects', fetchConfigGET) // TODO: move localhost out
+    fetch('http://localhost:3000/api/projects', fetchConfigGET) // TODO: move localhost out
       .then(response => response.text())
       .then((data) => {
         var d = JSON.parse(data);

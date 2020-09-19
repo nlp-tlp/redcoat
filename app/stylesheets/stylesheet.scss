@@ -889,3 +889,11 @@ section.form-section {
      -o-animation: fadein 0.5s; /* Opera < 12.1 */
         animation: fadein 0.5s;
 }
+
+
+#app.logging-out {
+	> * {
+		opacity: 0.8;
+		pointer-events: none;
+	}
+}

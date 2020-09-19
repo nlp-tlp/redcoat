@@ -134,6 +134,20 @@ class Footer extends Component {
   }
 }
 
+class Logout extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  componentWillMount() {
+    this.props.logout()    
+  }
+
+  render() {
+    return (<Redirect to="/"/>)
+  }
+}
+
 // The app, which routes everything and renders the pages.
 class App extends Component {
 
@@ -152,6 +166,8 @@ class App extends Component {
       loading: true,
       loadingFadeOut: false,
 
+      loggingOut: false,
+
       user: null, // stores 'username' and 'profile icon'
     }
   }
@@ -166,15 +182,18 @@ class App extends Component {
 
   getUserData() {
     window.setTimeout( () => {
-    fetch('http://localhost:3000/userData', fetchConfigGET) // TODO: move localhost out
+    fetch('http://localhost:3000/api/users/userData', fetchConfigGET) // TODO: move localhost out
     .then(response => response.text())
     .then((data) => {
+      console.log(data);
       var d = JSON.parse(data);
 
 
+
+
       try {
-      const username = getCookie('user');
-      console.log(username);
+        const username = getCookie('user');
+        console.log(username);
       } catch(err) {
         console.log(err);
       }
@@ -189,6 +208,35 @@ class App extends Component {
       })
     });
   }, 200);
+  }
+
+  // set the data for the currently logged-in user
+  // Called by the homepage (after logging in)
+  setUserData(user) {
+    this.setState({
+      user: user,
+    })
+  }
+
+  // Log out.
+  async logout() {
+    if(!this.state.user) return;
+    await this.setState({
+      user: null,
+      //loggingOut: true,
+    });
+
+    window.setTimeout( () => 
+
+    fetch('http://localhost:3000/api/users/logout', fetchConfigGET)
+    .then(response => response.text())
+    .then((data) => {
+      console.log("Logged out")
+      this.setState({
+        //loggingOut: false,
+        user: null,
+      })
+    }), 2);    
   }
 
   // Update this component's user profile icon.
@@ -236,7 +284,7 @@ class App extends Component {
 
     return (    
 
-      <div id="app" className={this.state.loading ? "loading" : ""}>
+      <div id="app" className={(this.state.loading ? "loading" : "") + (this.state.loggingOut ? " logging-out" : "")}>
         <BrowserRouter>
 
           <ScrollToTop/>
@@ -293,11 +341,16 @@ class App extends Component {
               <MainTemplate {...this.state} pageTitle="Features" pageComponent={ 
                 <FeaturesPage/> } />} />     
             
-            <Route path="/"   render={( ) =>               
-                <HomePage/> } />
+            <Route path="/logout" render={ () => <Logout logout={this.logout.bind(this)}/> } />
+            <Route path="/"   render={( ) =>            
+                this.state.user && !this.state.loggingOut
+                ? <Redirect to="/projects"/>
+                : <HomePage setUserData={this.setUserData.bind(this)}/> }  />
             <Route                  render={( ) => 
               <MainTemplate {...this.state} pageTitle="" pageComponent={ 
                 <Error404Page/> } />} /> />
+
+
 
 
 

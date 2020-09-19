@@ -109,7 +109,7 @@ class CurationInterface extends Component {
 			}
 		})
 
-		var queryString = 'http://localhost:3000/projects/' + this.props.project_id + "/curation?pageNumber=" + this.state.pageNumber + "&sortBy=" + this.state.sortBy;
+		var queryString = 'http://localhost:3000/api/projects/' + this.props.project_id + "/curation?pageNumber=" + this.state.pageNumber + "&sortBy=" + this.state.sortBy;
 		if(this.state.searchTerm) {
 			queryString += "&searchTerm=" + this.state.searchTerm;
 		}
@@ -237,7 +237,7 @@ class CurationInterface extends Component {
 		  }),  
 		};
 
-		fetch('http://localhost:3000/projects/' + this.props.project_id + '/comments/submit', fetchConfigPOST) // TODO: move localhost out
+		fetch('http://localhost:3000/api/projects/' + this.props.project_id + '/comments/submit', fetchConfigPOST) // TODO: move localhost out
 		.then(response => response.text())
 		.then((data) => {
 		  console.log(data);

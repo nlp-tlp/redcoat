@@ -30,9 +30,9 @@ validatePassword = function(pw, done) {
 
 
 
-passwordValidation = [
-  { validator: cf.validateNotBlank, msg: "Password may not be blank." },
-];
+// passwordValidation = [
+//   { validator: cf.validateNotBlank, msg: "Password may not be blank." },
+// ];
 
 
 var RecentProject = new Schema({
@@ -151,8 +151,17 @@ var UserSchema = new Schema({
 UserSchema.plugin(passportLocalMongoose,
   {
     passwordValidator: validatePassword,
+    usernameQueryFields: ["email"],
   }
 );
+
+
+UserSchema.methods.validPassword = function (password) {
+  console.log(password)
+  console.log(this.password);
+  return password === this.password;
+}
+
 
 UserSchema.methods.cascadeDelete = cf.cascadeDelete;
 UserSchema.methods.setCurrentDate = cf.setCurrentDate;

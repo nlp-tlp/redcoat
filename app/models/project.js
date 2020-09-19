@@ -179,7 +179,7 @@ ProjectSchema.methods.getCurationDocument = async function(pageNumber, sortBy, s
       var doc;
       for(var i in documents) {
         var d = documents[i];
-        if(d._id.equals(ObjectId(documentIdQuery))) {
+        if(d._id.equals(mongoose.Types.ObjectId(documentIdQuery))) {
           var doc = d;
           pageNumber = (parseInt(i) + 1);
           break;

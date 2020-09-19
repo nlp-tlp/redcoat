@@ -111,14 +111,44 @@ app.enable('trust proxy');
 
 
 
-
+app.use(session({secret: 'redcoatisaprettycoolannotationtool!'}));
 app.use(express.static(path.join(__dirname, 'public')));
+
+
 
 // Setup Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
-passport.use(new LocalStrategy(User.authenticate()));
+//passport.use(new LocalStrategy(User.authenticate()));
+passport.use(new LocalStrategy({
+    usernameField: 'email',
+    passwordField: 'password'
+}, User.authenticate()));
+
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+// passport.use(new LocalStrategy({
+//     usernameField: 'email',
+//     passwordField: 'password'
+//   },
+//   function(email, password, done) {
+//     User.findOne({ email: email }, function(err, user) {
+//       if (err) { return done(err); }
+//       if (!user) {
+//         return done(null, false, { message: 'An account with that email does not exist' });
+//       }
+//       console.log(user, password, "<<")
+//       if (!user.validPassword(password)) {
+//         return done(null, false, { message: 'Incorrect password' });
+//       }
+//       return done(null, user);
+//     });
+//   }
+// ));
+
+
 
 
 // const opts = {};
@@ -139,8 +169,7 @@ passport.use(new LocalStrategy(User.authenticate()));
 //   })
 // );
 
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
+
 
 
 
@@ -151,7 +180,10 @@ passport.deserializeUser(User.deserializeUser());
 
 
 
-var useCSRF = false; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.
+var debugMode = false; // Set to true when running the react server (e.g. port 4000).
+
+
+var useCSRF = !debugMode; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.
                      // When not running localhost:4000, this should be set to true.
 if(app.get('env') === 'production') useCSRF = true;
 
@@ -164,7 +196,6 @@ app.use(function(req, res, next) {
   
 
 
-  console.log("HELLO")
 
   res.locals.base_url = BASE_URL;
   
@@ -175,7 +206,8 @@ app.use(function(req, res, next) {
   if(useCSRF) {
     var csrfToken = req.csrfToken();
     res.locals.csrfToken = req.csrfToken();
-    //res.cookie('csrf-token', csrfToken);
+
+    res.cookie('csrf-token', csrfToken);
     console.log("CSRF:", csrfToken);
   }
 
@@ -193,13 +225,13 @@ app.use(function(req, res, next) {
   // If using the development server, log in as 'test'.
   // This is seemingly the only way to make sure the tagging interface app works by itself (i.e. localhost:4000).
   // Can comment this out if you aren't developing the react app via localhost:4000.
-  var debug = true;
-  if (app.get('env') === 'development' && debug) {
+  if (app.get('env') === 'development' && debugMode) {
 
     User.findOne({username: "test"}, function(err, user) {
 
       
       req.login(user, function(err) {
+
 
         //const token = jwt.sign(user, 'your_jwt_secret');
         //console.log(token);
@@ -255,30 +287,33 @@ app.use(function(req, res, next) {
 const NON_LOGIN_PATHS = new Set([
   "/",
   "/login",
-  "/register",
+  "/api/users/login",
+  "/api/users/register",
   "/features",
-  "/forgot_password",
-  "/reset_password",
-  "/pageData",
-  "/userData",
+  "/api/users/forgot_password",
+  "/api/users/reset_password",
+  //"/pageData",
+  "/api/users/userData",
 ]);
 
 app.use(function(req, res, next) {
-    logger.debug(req.path);
-    if (req.isAuthenticated()) {
-      logger.debug("Logged in as " + req.user.username);
-      res.locals.user_stars = req.user.docgroups_annotated.length;
-      return next();
-    }
-    if(NON_LOGIN_PATHS.has(req.path) || req.path.startsWith('/reset_password/')) {      
-      return next();
-    } 
+  logger.debug(req.path);
+  if (req.isAuthenticated()) {
+    logger.debug("Logged in as " + req.user.username);
+    res.locals.user_stars = req.user.docgroups_annotated.length;
+    return next();
+  }
+  if(NON_LOGIN_PATHS.has(req.path) || req.path.startsWith('/reset_password/')) {      
+    return next();
+  } 
 
-    console.log('not logged in', req.path);
-    
-    // TODO: IF working with new React interface, return res.send({"error": "user must be logged in"}) and redirect in the front end
+  console.log('not logged in', req.path);
 
-    res.redirect(BASE_URL + 'login');
+  
+  // TODO: IF working with new React interface, return res.send({"error": "user must be logged in"}) and redirect in the front end
+  //res.send({})
+
+  res.redirect(BASE_URL + 'login');
 });
 
 
@@ -287,35 +322,19 @@ app.use(function(req, res, next) {
 
 
 // Setup routes
-var routes = {
-  homepage:         ['/',          require('./routes/homepage')],
-  setup_project:    ['/',          require('./routes/setup_project')],
-  user:             ['/',          require('./routes/user')],
-  project:          ['/projects/', require('./routes/project')]
+var routes = { 
+  homepage:         ['/',              require('./routes/homepage')],
+  //setup_project:    ['/',          require('./routes/setup_project')],
+  user:             ['/api/users/',    require('./routes/user')],
+  project:          ['/api/projects/', require('./routes/project')]
 }
 
 for(var i in routes) {
   app.use(routes[i][0], routes[i][1]);
 }
 
+
 var homepageController = require("app/controllers/homepage_controller");
-
-app.get('/userData', function(req, res, next) {
-
-  const options = {
-    httpOnly: true,
-  };
-
-  res.cookie('user', req.user.username, options);
-
-  res.send({
-    user: req.user ? {
-      username: req.user ? req.user.username : null,
-      profile_icon: req.user ? req.user.profile_icon : null,
-    } : null
-  });
-  
-})
 
 app.all('*', homepageController.index);
 

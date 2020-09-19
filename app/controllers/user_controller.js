@@ -62,7 +62,9 @@ exports.reset_password = function(req, res) {
 // GET: The logout action.
 exports.logout = function(req, res) {
   req.logout();
-  res.redirect(BASE_URL);
+  res.send({
+    "logged out": true,
+  })
 }
 
 
@@ -100,7 +102,13 @@ exports.register = function(req, res, next) {
 
 
 // POST: The login action.
-exports.login = function(req, res, next) {
+exports.login = async function(req, res, next) {
+  // var user = await User.findOne({username: req.body.username});
+  // if(user === null) {
+  //   return res.status(401).send({message: "Username does not exist"})
+  // }
+
+
   passport.authenticate('local', function(err, user, info) {
     if(err) {
       logger.err(err.stack);
@@ -109,6 +117,7 @@ exports.login = function(req, res, next) {
     if(!user) { 
       var msg = info.message;
       logger.error(msg);
+      if(msg === "Password or username is incorrect") msg = "Username/email or password is incorrect"
       res.status(401).send({message: msg});
 
       return;
@@ -121,13 +130,21 @@ exports.login = function(req, res, next) {
       //   message: msg,
       // });
     }
+
+
     req.logIn(user, function(err) {
       console.log(user, "logged in!!!!!")
-      return res.redirect(BASE_URL + 'projects');
+      var response = {
+          username: user.username,
+          profile_icon: user.profile_icon
+      }
+      console.log(response);
+      return res.send(response);
+      //return res.redirect(BASE_URL + 'projects');
     });     
     
   })(req, res, next); 
-   
+
 }
 
 

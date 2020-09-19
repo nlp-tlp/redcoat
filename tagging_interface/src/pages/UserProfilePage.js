@@ -68,7 +68,7 @@ class UserProfilePage extends Component {
     this.setState({
       saving: true, 
     }, () => {
-      fetch('http://localhost:3000/set_profile_icon', fetchConfigPOST) // TODO: move localhost out
+      fetch('http://localhost:3000/api/users/set_profile_icon', fetchConfigPOST) // TODO: move localhost out
       .then(response => response.text())
       .then((data) => {
 

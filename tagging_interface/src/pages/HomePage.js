@@ -68,11 +68,11 @@ class HomePageRegister extends Component {
           <h1>Register</h1>
         </div>
         <div class="body">
+          <div className="loading-message"><i className="fa fa-spinner fa-spin"></i>Loading...</div>
           <form action="/redcoat/register" method="post">
-            <input type="hidden" name="_csrf" value="8tb7dlyN-cJPwiKjIFeZEZLfXxm-UvBvEPGc"/>
             <div>
               <label>Username</label>
-              <input type="text" name="username" autofocus="autofocus" placeholder="Username"/>
+              <input type="text" name="username" autoFocus="autofocus" placeholder="Username"/>
             </div>
             <div>
               <label>Email</label>
@@ -101,7 +101,7 @@ class HomePageLogin extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      username: '',
+      email: '',
       password: '',
       error: null,
       errorMessage: null,
@@ -110,7 +110,7 @@ class HomePageLogin extends Component {
 
   handleUsernameChange(e) {
     this.setState({
-      username: e.target.value,
+      email: e.target.value,
     })
   }
 
@@ -134,49 +134,63 @@ class HomePageLogin extends Component {
       },
       dataType: "json",
       body: JSON.stringify({
-        username: this.state.username,
+        email: this.state.email,
         password: this.state.password,
       }),  
+      credentials: 'include',
     };
+
+
     this.setState({
       errorMessage: null,
-    })
+      loading: true,
+    }, () => 
 
-    fetch('http://localhost:3000/login', fetchConfigPOST) // TODO: move localhost out
-    .then(async (response) => {
-      if(response.status !== 200) {
-        var d = await response.json();
-        throw new Error(d.message);      
-      }
-      return response.text()
-    })
-    .then((data) => {
-      console.log(data);
-      try { 
-        var d = JSON.parse(data);       
-      } catch(err) {
-        console.log("ERROR:", err);
-      }      
-    }).catch((err) => {
-      this.setState({
-        errorMessage: err.message
-      });
-    });
+      window.setTimeout( () => {
+
+        fetch('http://localhost:3000/api/users/login', fetchConfigPOST) // TODO: move localhost out
+        .then(async (response) => {
+          if(response.status !== 200) {
+            var d = await response.json();
+            throw new Error(d.message);      
+          }          
+          return response.text()
+        })
+        .then((data) => {
+          try {
+            var d = JSON.parse(data);
+          } catch(err) {
+            console.log(err, d);
+            throw new Error("An unexpected error has occured")
+          }
+          
+          this.props.setUserData(d);          
+        }).catch((err) => {
+          this.setState({
+            errorMessage: err.message,
+            password: '',
+            loading: false,
+          });
+        })
+      }, 1)
+    );
 
   }
 
   render() {
     return (
-      <div class="user-form form-box">
+      <div class={"user-form form-box" + (this.state.loading ? " loading" : "")}>
         <div class="header">
           <h1>Login</h1>
         </div>
         <div class="body">
-          { this.state.errorMessage && <div className="error-message"><span className="error">Error: </span>{this.state.errorMessage}</div>}
+          <div className="loading-message"><i className="fa fa-spinner fa-spin"></i>Loading...</div>
+          { this.state.errorMessage && <div className="error-message"><span className="error">Error: </span>{this.state.errorMessage}.</div>}
+          
           <form onSubmit={this.submitForm.bind(this)} method="post">
             <div>
-              <label>Username</label>
-              <input type="text" name="username" autofocus="autofocus" required="required" placeholder="Username" value={this.state.username} onChange={this.handleUsernameChange.bind(this)} />
+              <label>Username or email</label>
+              <input type="text" name="email" autoFocus="autofocus" required="required" placeholder="Username or email" value={this.state.email} onChange={this.handleUsernameChange.bind(this)} />
             </div>
             <div>
               <label>Password</label>
@@ -189,6 +203,7 @@ class HomePageLogin extends Component {
               </div>
             </div>
           </form>
+
         </div>
       </div>
     )
@@ -211,7 +226,7 @@ class HomePageForgotPassword extends Component {
             <input type="hidden" name="_csrf" value="oOFHs5QK-_YPdUWgNII3vfrQ_erXv2dwFmz8"/>
             <div>
               <label>Email</label>
-              <input type="email" name="email" placeholder="Email" required="required" autofocus="autofocus"/>
+              <input type="email" name="email" placeholder="Email" required="required" autoFocus="autofocus"/>
             </div>
             <div class="buttons">
               <div><Link class="back-button" to="/login"><i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back</Link></div>
@@ -262,7 +277,6 @@ class HomePage extends Component {
   render() {
 
     var location = this.props.location;
-    console.log(location);
 
     return (
     
@@ -278,7 +292,7 @@ class HomePage extends Component {
             <section className="route-section homepage-route-section">
              <Switch location={location}>
                  
-                <Route path="/login"    component={HomePageLogin} />     
+                <Route path="/login"    render={() => <HomePageLogin setUserData={this.props.setUserData}/> } />     
                 <Route path="/register" component={HomePageRegister} />  
                 <Route path="/forgot_password" component={HomePageForgotPassword} />  
                 <Route path="/"         component={HomePageMain} />       

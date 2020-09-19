@@ -21,8 +21,39 @@
 	margin: 0 auto; 
 	margin-top: -80px;
 	box-shadow: 1px 1px 6px -3px rgba(0, 0, 0, 0.9);
+
+	&.loading .body {
+		position: relative;
+		pointer-events: none;
+		form {
+			opacity: 0.3;
+		}
+		
+		div.loading-message {
+			display: flex;
+		}
+
+	}
 	.body {
 		padding: 20px 40px 10px 40px; 
+		div.loading-message {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			
+			align-items: center;
+			justify-content: center;			
+			height: 100%;
+			display: none;
+			font-size: 32px;
+			margin-top: -30px;
+			z-index: 100;
+			color: #666;
+			i {
+				margin-right: 20px;
+			}
+		}
 	}
 	.buttons {
 		display: table;

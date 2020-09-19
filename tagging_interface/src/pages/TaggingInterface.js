@@ -933,7 +933,7 @@ class TaggingInterface extends Component {
         firstLoad: firstLoad,
       }
     }, function() {
-      fetch('http://localhost:3000/projects/' + this.props.project_id + '/tagging/' + route, fetchConfigGET) // TODO: move localhost out
+      fetch('http://localhost:3000/api/projects/' + this.props.project_id + '/tagging/' + route, fetchConfigGET) // TODO: move localhost out
         .then((response) => {
           if(response.status === 403) {
             throw new Error(403);
@@ -1100,7 +1100,7 @@ class TaggingInterface extends Component {
       }
     }, () => {
 
-      fetch('http://localhost:3000/projects/' + this.props.project_id + '/tagging/submitAnnotations', fetchConfigPOST) // TODO: move localhost out
+      fetch('http://localhost:3000/api/projects/' + this.props.project_id + '/tagging/submitAnnotations', fetchConfigPOST) // TODO: move localhost out
       .then(response => response.text())
       .then((data) => {
         try { 
@@ -1524,7 +1524,7 @@ class TaggingInterface extends Component {
       }),  
     };
 
-    fetch('http://localhost:3000/projects/' + this.props.project_id + '/comments/submit', fetchConfigPOST) // TODO: move localhost out
+    fetch('http://localhost:3000/api/projects/' + this.props.project_id + '/comments/submit', fetchConfigPOST) // TODO: move localhost out
     .then(response => response.text())
     .then((data) => {
       console.log(data);

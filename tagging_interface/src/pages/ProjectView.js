@@ -775,7 +775,7 @@ class ProjectView extends Component {
   componentWillMount() {
     var t = this;
 
-    fetch('http://localhost:3000/projects/' + this.props.project_id, fetchConfigGET) // TODO: move localhost out
+    fetch('http://localhost:3000/api/projects/' + this.props.project_id, fetchConfigGET) // TODO: move localhost out
       .then((response) => {
         if(response.status === 403) {
           throw new Error(403);
