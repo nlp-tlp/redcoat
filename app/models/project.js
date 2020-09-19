@@ -1384,6 +1384,8 @@ ProjectSchema.methods.getAnnotationsChartData = async function(done) {
     annotationsChartData[result._id.times_annotated] = result.count;
   }
 
+  console.log("ACD", annotationsChartData);
+
   return Promise.resolve(annotationsChartData);
 
 

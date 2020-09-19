@@ -180,7 +180,7 @@ passport.deserializeUser(User.deserializeUser());
 
 
 
-var debugMode = false; // Set to true when running the react server (e.g. port 4000).
+var debugMode = true; // Set to true when running the react server (e.g. port 4000).
 
 
 var useCSRF = !debugMode; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.

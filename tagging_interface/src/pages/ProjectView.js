@@ -207,6 +207,233 @@ function darken(colourRGB, amount) {
 }
 
 
+class EntityFrequenciesChart extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      data: [],
+      multicolour: false,
+    }
+  }
+
+
+    // Apply colouring to entityChartData if entityChartMulticolour is true.
+  getColouredData(data, multicolour) {
+
+    const entityColours = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff"];
+
+
+    console.log(data.entityClasses, "<<")
+    var entityChartData = data;
+
+    entityChartData.entityClasses.datasets[0].borderWidth = 1;
+   
+    if(multicolour) {
+
+      entityChartData.entityClasses.datasets[0].backgroundColor = [];
+      entityChartData.entityClasses.datasets[0].borderColor = [];
+      
+
+      for(var i in data.entityClasses.labels) {
+        var label = data.entityClasses.labels[i];
+        var colourIdx = data.colourIndexes[label];
+
+        console.log(colourIdx, label);
+        var colourHex = entityColours[colourIdx % entityColours.length];
+
+        console.log(colourHex);
+        var colourRGB = colourHex.slice(1, 7).convertToRGB();
+
+        entityChartData.entityClasses.datasets[0].backgroundColor.push('rgba(' + colourRGB[0] + ', ' + colourRGB[1] + ', ' + colourRGB[2] + ', 1)');
+
+        var colourRGBBorder = darken(colourRGB, 50);
+        entityChartData.entityClasses.datasets[0].borderColor.push('rgba(' + colourRGBBorder[0] + ', ' + colourRGBBorder[1] + ', ' + colourRGBBorder[2] + ', 1)');
+      }
+
+    } else {
+      entityChartData.entityClasses.datasets[0].backgroundColor = 'rgba(54, 162, 235, 0.6)';      
+      entityChartData.entityClasses.datasets[0].borderColor = 'rgba(54, 162, 235, 0.6)';      
+    }    
+
+    
+    return entityChartData;
+  }
+
+  componentWillMount() {
+    this.setState({
+      data: this.getColouredData(this.props.data, this.props.multicolour),
+      multicolour: this.props.multicolour
+    })
+  }
+
+
+  shouldComponentUpdate(prevProps, prevState) {
+    if(this.state.multicolour !== prevState.multicolour) return true;
+    if(prevProps.multicolour !== this.props.multicolour) return true;
+    return false;
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    
+    var multicolour = this.props.multicolour;
+    this.setState({
+      multicolour: multicolour,
+      data: this.getColouredData(this.state.data, multicolour)
+    })
+  }
+
+
+
+  render() {
+
+    return (
+      <Bar
+        data={this.state.data.entityClasses}
+        height={230}
+        options={{
+          responsive: true,
+          maintainAspectRatio: false,
+          legend: {
+            display: false
+          },
+          scales: {
+            yAxes: [{
+              ticks: {
+                beginAtZero: true,
+                precision: 0
+                
+              },
+              scaleLabel: {
+                display: true,
+                labelString: "Frequency"
+              }
+            }]
+          },
+        }}
+      />
+
+
+    )
+
+  }
+}
+class ActivityChart extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      data: [],
+    }
+  }
+
+  componentWillMount() {
+    this.setState({
+      data: this.props.data,
+      cumulative: this.props.cumulative
+    })
+  }
+
+  // Process the activity chart data depending on whether cumulative has been checked.
+  processActivityChartData(cumulative) {
+
+    // Transform datasets into cumulative datasets.
+    // This is probably far more complicated than it needs to be and could be significantly refactored.
+    // Turns out chartjs has a 'redraw' prop that would solve all the issues I was having, so all this weird code is probably unnecessary...
+    // Same goes for getColouredData.
+    function getCumulative(datasets) {
+      var cumulativeDatasets = [];
+      for(var i = 0; i < datasets.length; i++) {
+
+        var label = datasets[i].label;
+        var cumulativeDataset = {label: label, data: new Array(datasets[i].data.length).fill(0)};
+
+        var c = 0;
+        for(var j = datasets[i].data.length - 1; j >= 0; j--) {
+          c += datasets[i].data[j];
+          cumulativeDataset.data[j] = c;
+        }
+        console.log(cumulativeDataset, ">>");
+        cumulativeDatasets.push(cumulativeDataset);
+      }
+      return cumulativeDatasets;
+    }
+
+    var activityChartDatasets = Object.assign({}, this.props.data.datasets);
+    console.log("cumu", cumulative);
+
+    if(cumulative) {
+      console.log(this.props.data.activityChartData, "<<");
+
+      var cumulativeData = getCumulative(this.props.data.datasets);
+
+      var cumulativeDataset = setActivityChartStyles({
+        labels: Object.assign([], this.props.data.labels),
+        datasets: cumulativeData,
+      })
+
+      console.log(cumulativeDataset, "<<<")
+      return cumulativeDataset;
+    }
+
+    return this.props.data;
+  }
+
+  shouldComponentUpdate(prevProps, prevState) {
+    if(this.state.cumulative !== prevState.cumulative) return true;
+    if(prevProps.cumulative !== this.props.cumulative) return true;
+    return false;
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    
+    var cumulative = this.props.cumulative;
+    this.setState({
+      cumulative: cumulative,
+      data: this.processActivityChartData(cumulative)
+    })
+  }
+
+  render() {
+
+    console.log('rerendering', this.props.cumulative);
+
+    return (
+      <Line
+        data={this.state.data}
+        height={230}
+        redraw
+        options={{
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            xAxes: [{
+              type: 'time',
+              time: {
+                unit: 'day',
+              },
+              ticks: {
+                max: new Date()
+              }
+            }],
+            yAxes: [{
+              ticks: {
+                beginAtZero: true,
+                precision: 0
+                
+              },
+              scaleLabel: {
+                display: true,
+                labelString: "Annotations"
+              }
+            }]
+          }
+        }}/>
+
+
+    )
+
+  }
+}
+
 // The project dashboard, which renders in the container to the right of the navigation.
 // Its data comes from props, not state (so that the dashboard doesn't need to be reloaded when switching between
 // pages in the Project view).
@@ -232,91 +459,9 @@ class ProjectDashboard extends Component {
     });
   }
 
-  // Apply colouring to entityChartData if entityChartMulticolour is true.
-  getColouredData() {
-
-    const entityColours = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC99", "#fbafff"];
 
 
-    console.log(this.props.data.entityChartData.entityClasses, "<<")
-    var entityChartData = this.props.data.entityChartData;
-
-    entityChartData.entityClasses.datasets[0].borderWidth = 1;
-   
-    if(this.state.entityChartMulticolour) {
-
-      entityChartData.entityClasses.datasets[0].backgroundColor = [];
-      entityChartData.entityClasses.datasets[0].borderColor = [];
-      
-
-      for(var i in this.props.data.entityChartData.entityClasses.labels) {
-        var label = this.props.data.entityChartData.entityClasses.labels[i];
-        var colourIdx = this.props.data.entityChartData.colourIndexes[label];
-
-        console.log(colourIdx, label);
-        var colourHex = entityColours[colourIdx % entityColours.length];
-
-        console.log(colourHex);
-        var colourRGB = colourHex.slice(1, 7).convertToRGB();
-
-        entityChartData.entityClasses.datasets[0].backgroundColor.push('rgba(' + colourRGB[0] + ', ' + colourRGB[1] + ', ' + colourRGB[2] + ', 1)');
-
-        var colourRGBBorder = darken(colourRGB, 50);
-        entityChartData.entityClasses.datasets[0].borderColor.push('rgba(' + colourRGBBorder[0] + ', ' + colourRGBBorder[1] + ', ' + colourRGBBorder[2] + ', 1)');
-      }
-
-    } else {
-      entityChartData.entityClasses.datasets[0].backgroundColor = 'rgba(54, 162, 235, 0.6)';      
-      entityChartData.entityClasses.datasets[0].borderColor = 'rgba(54, 162, 235, 0.6)';      
-    }    
-
-    
-    return entityChartData.entityClasses;
-  }
-
-
-  // Process the activity chart data depending on whether cumulative has been checked.
-  processActivityChartData() {
-
-    // Transform datasets into cumulative datasets.
-    // This is probably far more complicated than it needs to be and could be significantly refactored.
-    // Turns out chartjs has a 'redraw' prop that would solve all the issues I was having, so all this weird code is probably unnecessary...
-    // Same goes for getColouredData.
-    function getCumulative(datasets) {
-      var cumulativeDatasets = [];
-      for(var i = 0; i < datasets.length; i++) {
-
-        var label = datasets[i].label;
-        var cumulativeDataset = {label: label, data: new Array(datasets[i].data.length).fill(0)};
-
-        var c = 0;
-        for(var j = datasets[i].data.length - 1; j >= 0; j--) {
-          c += datasets[i].data[j];
-          cumulativeDataset.data[j] = c;
-        }
-        console.log(cumulativeDataset, ">>");
-        cumulativeDatasets.push(cumulativeDataset);
-      }
-      return cumulativeDatasets;
-    }
-
-    var activityChartDatasets = Object.assign({}, this.props.data.activityChartData.datasets);
-
-    if(this.state.activityChartCumulative) {
-      console.log(this.props.data.activityChartData, "<<");
-
-      var cumulativeData = getCumulative(this.props.data.activityChartData.datasets);
-
-      var cumulative = setActivityChartStyles({
-        labels: Object.assign([], this.props.data.activityChartData.labels),
-        datasets: cumulativeData,
-      })
-      return cumulative;
-    }
-
-    return this.props.data.activityChartData;
-  }
-
+  
 
   render() {
 
@@ -413,30 +558,9 @@ class ProjectDashboard extends Component {
                   }
                   { !this.props.loading && !this.props.data.entityChartData && <div className="chart-placeholder chart-not-available">This project does not have any annotations yet.</div>}
                   { !this.props.loading && this.props.data.entityChartData &&
-                  <Bar
-                    data={this.getColouredData()}
-                    height={230}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      legend: {
-                        display: false
-                      },
-                      scales: {
-                        yAxes: [{
-                          ticks: {
-                            beginAtZero: true,
-                            precision: 0
-                            
-                          },
-                          scaleLabel: {
-                            display: true,
-                            labelString: "Frequency"
-                          }
-                        }]
-                      },
-                    }}
-                  />}
+                  
+                    <EntityFrequenciesChart data={this.props.data.entityChartData} multicolour={this.state.entityChartMulticolour} />
+                  }
 
 
                 </div>
@@ -444,50 +568,29 @@ class ProjectDashboard extends Component {
             </div>
 
             <div className="dashboard-item col-60">
+
+
               <div className="inner">
                 <div className="dashboard-flex-header">
                   <h3>Activity</h3>
                   { this.props.data.activityChartData && <div onClick={this.toggleActivityChartCumulative.bind(this)} className={"chart-option" + (this.state.activityChartCumulative ? " active" : "")}><span className="checkbox"></span><span>Cumulative</span></div> }
                 </div>
+
+
                 <div>
                   { this.props.loading && 
                     <div className="chart-placeholder"><i class="fa fa-cog fa-spin"></i>Loading...</div>
                   }
                   { !this.props.loading && !this.props.data.activityChartData && <div className="chart-placeholder chart-not-available">This project does not have any activity yet.</div>}
                   { !this.props.loading &&  this.props.data.activityChartData &&
-                  <Line
-                    data={() => this.processActivityChartData()}
-                    height={230}
-                    redraw
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      scales: {
-                        xAxes: [{
-                          type: 'time',
-                          time: {
-                            unit: 'day',
-                          },
-                          ticks: {
-                            max: new Date()
-                          }
-                        }],
-                        yAxes: [{
-                          ticks: {
-                            beginAtZero: true,
-                            precision: 0
-                            
-                          },
-                          scaleLabel: {
-                            display: true,
-                            labelString: "Annotations"
-                          }
-                        }]
-                      }
-                    }}/>
+                    <ActivityChart data={this.props.data.activityChartData} cumulative={this.state.activityChartCumulative}/>
                   }
                 </div>
               </div>
+
+
+
+
             </div>
 
             
