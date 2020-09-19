@@ -935,12 +935,12 @@ class TaggingInterface extends Component {
     }, function() {
       fetch('http://localhost:3000/api/projects/' + this.props.project_id + '/tagging/' + route, fetchConfigGET) // TODO: move localhost out
         .then((response) => {
-          if(response.status === 403) {
-            throw new Error(403);
-          } else if(response.status === 404) {
-            throw new Error(404);
-          }           
-          return response.text()
+            if(response.status !== 200) {
+              var t = response.text();
+              console.log(t);
+              throw new Error(response.status); 
+            }              
+            return response.text()
         })
         .then((data) => {
           //console.log("data:", data);
@@ -1033,9 +1033,7 @@ class TaggingInterface extends Component {
         }).catch((err) => {
           console.log(err.message);
 
-          this.setState({
-            error: parseInt(err.message)
-          })
+          this.props.setErrorCode(parseInt(err.message));
 
         });
         
@@ -1101,7 +1099,12 @@ class TaggingInterface extends Component {
     }, () => {
 
       fetch('http://localhost:3000/api/projects/' + this.props.project_id + '/tagging/submitAnnotations', fetchConfigPOST) // TODO: move localhost out
-      .then(response => response.text())
+      .then((response) => {
+        if(response.status !== 200) {          
+          throw new Error(response.status); 
+        }              
+        return response.text()
+      })
       .then((data) => {
         try { 
           var d = JSON.parse(data);
@@ -1145,8 +1148,11 @@ class TaggingInterface extends Component {
           alert(data);
         }
         
-      });
-    });
+      }).catch((err) => {
+        console.log(err.message);
+        this.props.setErrorCode(parseInt(err.message));
+      });;
+    })
   }
 
   /* Mounting function */
@@ -1525,7 +1531,12 @@ class TaggingInterface extends Component {
     };
 
     fetch('http://localhost:3000/api/projects/' + this.props.project_id + '/comments/submit', fetchConfigPOST) // TODO: move localhost out
-    .then(response => response.text())
+    .then((response) => {
+        if(response.status !== 200) {
+          throw new Error(response.status); 
+        }              
+        return response.text()
+    })
     .then((data) => {
       console.log(data);
       try { 
@@ -1543,6 +1554,11 @@ class TaggingInterface extends Component {
       } catch(err) {
         console.log("ERROR:", err);
       }      
+    }).catch((err) => {
+      console.log(err.message);
+
+      this.props.setErrorCode(parseInt(err.message));
+
     });
 
 
@@ -1680,9 +1696,7 @@ class TaggingInterface extends Component {
               />
             </div>      
           </div> }
-
-          { this.state.error === 403 && <Error403Page/> }    
-          { this.state.error === 404 && <Error404Page/> }    
+   
         </div>
        
     )

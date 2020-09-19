@@ -1386,6 +1386,8 @@ ProjectSchema.methods.getAnnotationsChartData = async function(done) {
 
   console.log("ACD", annotationsChartData);
 
+  var annotationsChartData = annotationsChartData.reverse();
+
   return Promise.resolve(annotationsChartData);
 
 

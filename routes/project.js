@@ -7,7 +7,16 @@ var projectController = require("app/controllers/project_controller");
 
 var Project = require('app/models/project');
 
+
+isLoggedIn = function(req, res, next) {
+	if(!req.user) return res.status(401).send(new Error("Error: user is not logged in"))
+	next();
+}
+
 verifyUserOwnsProject = function(req, res, next) {
+
+	if(!req.user) return res.status(401).send(new Error("Error: user is not logged in"))
+
 	Project.findById(req.params.id, function(err, proj) {
 		if(err || proj === null) { return res.send("Error: Project does not exist")}
 		if(!proj.projectCreatedByUser(req.user._id)) return res.send("Error: user does not own project");
@@ -15,8 +24,10 @@ verifyUserOwnsProject = function(req, res, next) {
 	});
 }
 
+
 verifyUserInProject = function(req, res, next) {
 
+	if(!req.user) return res.status(401).send(new Error("Error: user is not logged in"))
 
 	Project.findById(req.params.id, function(err, proj) {
 
@@ -28,7 +39,7 @@ verifyUserInProject = function(req, res, next) {
 	});
 }
 
-router.get('/', projectController.getProjects);
+router.get('/', isLoggedIn, projectController.getProjects);
 //router.get('/joined', projectController.getProjects);
 
 

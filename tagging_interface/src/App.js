@@ -18,6 +18,9 @@ import ProjectListPage from './pages/ProjectListPage';
 import ProjectView from './pages/ProjectView';
 import HomePage from './pages/HomePage';
 import Error404Page from './pages/Error404Page';
+import Error403Page from './pages/Error403Page';
+import Error401Redirect from './pages/Error401Redirect';
+import ErrorClearer from './components/ErrorClearer';
 import SetupProjectPage from './pages/SetupProjectPage';
 import UserProfilePage from './pages/UserProfilePage';
 
@@ -34,6 +37,10 @@ const fetchConfigGET = {
   },
   credentials: 'include',
 };
+
+
+
+
 
 
 // A template component that renders the majority of the pages.
@@ -169,7 +176,24 @@ class App extends Component {
       loggingOut: false,
 
       user: null, // stores 'username' and 'profile icon'
+
+      errorCode: null, // 401, 403, 404 etc
     }
+  }
+
+  clearErrorCode() {
+    this.setState({
+      errorCode: null,
+    })
+  }
+
+  setErrorCode(errorCode) {
+    this.setState({
+      errorCode: errorCode,
+      user: errorCode === 401 ? null : this.state.user, // Delete user info if 401, which means user is not logged in
+    }, () => {
+      console.log(this.state.user, this.state.errorCode);
+    })
   }
 
   // Update the project title and author
@@ -187,17 +211,6 @@ class App extends Component {
     .then((data) => {
       console.log(data);
       var d = JSON.parse(data);
-
-
-
-
-      try {
-        const username = getCookie('user');
-        console.log(username);
-      } catch(err) {
-        console.log(err);
-      }
-
 
       this.setState({
         user: d.user,
@@ -252,116 +265,115 @@ class App extends Component {
 
   // When mounted, determine the logged in user.
   componentWillMount() {
-
-    
-    this.getUserData();
-      
-
-
-    // The express server will save the username into a cookie so that the front-end client can be 'logged in' immediately.
-    // Check if the cookie exists. If not, query the API for the logged in user.
-    // API is necessary because it is possible to disable cookies.
-    // const username = getCookie('username');
-    // if(username !== undefined) {
-    //   console.log('Username from cookie:', username)
-    //   this.setState({
-    //     username: username,
-    //   });
-    //   return;
-    // }
-    // console.log("Username not found in cookie, querying API");
-
-
+    this.getUserData();      
   }
 
-
-
   render() {
-
-
-
-
 
     return (    
 
       <div id="app" className={(this.state.loading ? "loading" : "") + (this.state.loggingOut ? " logging-out" : "")}>
+        
+
         <BrowserRouter>
 
           <ScrollToTop/>
           
 
-
+          <ErrorClearer clearErrorCode={this.clearErrorCode.bind(this)}/>
 
           { (this.state.loading || this.state.loadingFadeOut) && <LoadingScreen fadingOut={this.state.loadingFadeOut}/>}
-          {!this.state.loading &&
+
+          {!this.state.loading && 
 
             <div className="fade-in">
-            <Navbar user={this.state.user} loading={this.state.loading} />  
+              <Navbar user={this.state.user} loading={this.state.loading} />  
 
-            <Switch>
-            <PrivateRoute user={this.state.user} path="/projects/:id/tagging" render={(p) => 
-              <TaggingInterfaceTemplate {...this.state} pageComponent={
-                <TaggingInterface 
-                  projectTitle={this.state.projectTitle}
-                  projectAuthor={this.state.projectAuthor}
-                  setProject={this.setProject.bind(this)}
-                  project_id={p.match.params.id}
-                  user={this.state.user}/>}
-                />}
-              /> 
-            <PrivateRoute user={this.state.user} path="/projects/:id" render={(p) => 
-              <ProjectViewTemplate {...this.state} pageTitle="Project View" pageComponent={ 
-                <ProjectView
-                  project_id={p.match.params.id}
-                  setProject={this.setProject.bind(this)}
-                  projectTitle={this.state.projectTitle}
-                  projectAuthor={this.state.projectAuthor}
-                  user={this.state.user} /> }
-                />}
-              />     
+              {!this.state.errorCode && <Switch>
+              <PrivateRoute user={this.state.user} path="/projects/:id/tagging" render={(p) => 
+                <TaggingInterfaceTemplate {...this.state} pageComponent={
+                  <TaggingInterface 
+                    projectTitle={this.state.projectTitle}
+                    projectAuthor={this.state.projectAuthor}
+                    setProject={this.setProject.bind(this)}
+                    project_id={p.match.params.id}
+                    user={this.state.user}
+
+                    setErrorCode={this.setErrorCode.bind(this)}
+
+                    />}
+
+                    
+                  />}
+                /> 
+              <PrivateRoute user={this.state.user} path="/projects/:id" render={(p) => 
+                <ProjectViewTemplate {...this.state} pageTitle="Project View" pageComponent={ 
+                  <ProjectView
+                    project_id={p.match.params.id}
+                    setProject={this.setProject.bind(this)}
+                    projectTitle={this.state.projectTitle}
+                    projectAuthor={this.state.projectAuthor}
+                    user={this.state.user} 
+
+                    setErrorCode={this.setErrorCode.bind(this)}
+
+                    /> }
+
+                    
+                  />}
+                />     
 
 
-            <PrivateRoute user={this.state.user} path="/projects" render={ () =>
-              <MainTemplate {...this.state} pageTitle="Projects" pageComponent={
-                <ProjectListPage setProject={this.setProject.bind(this)}/> } />} />    
+              <PrivateRoute user={this.state.user} path="/projects" render={ () =>
+                <MainTemplate {...this.state} pageTitle="Projects" pageComponent={
+                  <ProjectListPage setProject={this.setProject.bind(this)} setErrorCode={this.setErrorCode.bind(this)}/> } />} />    
+              
+
+              <PrivateRoute user={this.state.user} path="/setup-project" render={( ) =>
+                <MainTemplate {...this.state} pageTitle="Setup project" pageComponent={ 
+                  <SetupProjectPage/> }
+                    />} />  
+
+              <PrivateRoute user={this.state.user} path="/profile"  render={( ) => 
+                <MainTemplate {...this.state} pageTitle="User Profile" pageComponent={ 
+                  <UserProfilePage user={this.state.user} setUserProfileIcon={this.setUserProfileIcon.bind(this)} setErrorCode={this.setErrorCode.bind(this)}/> } />} />     
+
+
+
+              <Route path="/features" component={ () =>
+                <MainTemplate {...this.state} pageTitle="Features" pageComponent={ 
+                  <FeaturesPage/> } />} />     
+              
+              <Route path="/logout" render={ () => <Logout logout={this.logout.bind(this)}/> } />
+              <Route path="/"   render={( ) =>            
+                  this.state.user && !this.state.loggingOut
+                  ? <Redirect to="/projects"/>
+                  : <HomePage setUserData={this.setUserData.bind(this)}/> }  />
+              <Route                  render={( ) => 
+                <MainTemplate {...this.state} pageTitle="" pageComponent={ 
+                  <Error404Page/> } />} /> />
+
+
+
+
+
+            </Switch> }
+
+            { this.state.errorCode === 401 && <Error401Redirect clearErrorCode={this.clearErrorCode.bind(this)}/> }    
+            { this.state.errorCode === 403 && <Error403Page/> } 
+
             
-
-            <PrivateRoute user={this.state.user} path="/setup-project" render={( ) =>
-              <MainTemplate {...this.state} pageTitle="Setup project" pageComponent={ 
-                <SetupProjectPage/> }
-                  />} />  
-
-            <PrivateRoute user={this.state.user} path="/profile"  render={( ) => 
-              <MainTemplate {...this.state} pageTitle="User Profile" pageComponent={ 
-                <UserProfilePage user={this.state.user} setUserProfileIcon={this.setUserProfileIcon.bind(this)}/> } />} />     
-
-
-
-            <Route path="/features" component={ () =>
-              <MainTemplate {...this.state} pageTitle="Features" pageComponent={ 
-                <FeaturesPage/> } />} />     
-            
-            <Route path="/logout" render={ () => <Logout logout={this.logout.bind(this)}/> } />
-            <Route path="/"   render={( ) =>            
-                this.state.user && !this.state.loggingOut
-                ? <Redirect to="/projects"/>
-                : <HomePage setUserData={this.setUserData.bind(this)}/> }  />
-            <Route                  render={( ) => 
-              <MainTemplate {...this.state} pageTitle="" pageComponent={ 
-                <Error404Page/> } />} /> />
-
-
-
-
-
-          </Switch>
 
           </div>
         }
 
 
+           
+
+
             
         </BrowserRouter>
+
         {!this.state.loading && <Footer/>}
       </div>      
     );

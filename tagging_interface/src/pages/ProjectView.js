@@ -5,6 +5,8 @@ import { Redirect, Link, BrowserRouter, Route, Switch, withRouter } from 'react-
 import { TransitionGroup, CSSTransition } from "react-transition-group";
 import {Bar, Line, HorizontalBar } from 'react-chartjs-2';
 
+import _fetch from '../functions/_fetch'
+
 import { defaults } from 'react-chartjs-2'
 
 import { Comment } from '../components/Comment';
@@ -12,6 +14,7 @@ import { Comment } from '../components/Comment';
 import CategoryHierarchyPage from '../pages/CategoryHierarchyPage';
 import InvitationsPage from '../pages/InvitationsPage';
 
+import Error401Redirect from '../pages/Error401Redirect';
 import Error403Page from '../pages/Error403Page';
 import Error404Page from '../pages/Error404Page';
 
@@ -72,14 +75,15 @@ class WaffleChart extends Component {
     var tooltipSide = -1;
     var rowIdx = 0;
 
-    var data = this.props.data.reverse(); // Reverse the order so that the docs annotated more are on top
+
+    //var data = this.props.data.reverse(); // Reverse the order so that the docs annotated more are on top
 
     // Calculate the tooltip positions
     var totalSquares = 0;
     for(var i in this.props.data) {
 
       var count = this.props.data[i];
-      var squares = Math.ceil(count * ratio);
+      var squares = Math.floor(count * ratio);
 
       tooltips.push(
         <span style={{'top': (Math.ceil(totalSquares / 10) * 19) + 'px'}} className={"waffle-chart-tooltip tooltip-" + (tooltipSide === 1 ? "right" : "left")}>
@@ -114,7 +118,7 @@ class WaffleChart extends Component {
 
               var value = maxValue - groupIndex;
 
-              return new Array(Math.ceil(frequency * ratio)).fill(0).map((square, squareIndex) => {
+              return new Array(Math.floor(frequency * ratio)).fill(0).map((square, squareIndex) => {
                 return (
                   <div className="waffle-square" style={
                     {'background': 'rgba(54, 162, 235,' + Math.max(0.1, ((value) / maxValue)) + ')'}}>
@@ -473,6 +477,8 @@ class ProjectDashboard extends Component {
     // heatmapData = heatmapData.concat(h1);
     // heatmapData = heatmapData.concat(h2);
     // heatmapData = heatmapData.concat(h3);
+
+    //console.log(this.props.data.annotationsChartData);
 
     //heatmapData = heatmapData.map(() => Math.random())
     return (
@@ -875,54 +881,22 @@ class ProjectView extends Component {
     this.curationInterfaceState = null;
   }
 
-  componentWillMount() {
+  async componentWillMount() {
     var t = this;
 
-    fetch('http://localhost:3000/api/projects/' + this.props.project_id, fetchConfigGET) // TODO: move localhost out
-      .then((response) => {
-        if(response.status === 403) {
-          throw new Error(403);
-        } else if(response.status === 404) {
-          throw new Error(404);
-        }     
+    try { 
+      var d = await _fetch('http://localhost:3000/api/projects/' + this.props.project_id, 'GET', this.props.setErrorCode, 555)
 
-        return response.text()
-      })
-      .then((data) => {
+      if(d.dashboard.activityChartData) d.dashboard.activityChartData = setActivityChartStyles(d.dashboard.activityChartData);
 
-        //console.log(data, "<<<");
-        var d = JSON.parse(data);
-
-        window.setTimeout(() => {
-
-          // Add the chart styles here in the front-end
-          //var entityChartData = d.dashboard.entityChartData.entityClasses   //.datasets[0], getEntityChartStyles())
-          //d.dashboard.entityChartData.entityClasses.datasets[0] = entityChartData;
-
-          if(d.dashboard.activityChartData) d.dashboard.activityChartData = setActivityChartStyles(d.dashboard.activityChartData);
-
-          //console.log(d);
-
-
-          t.setState({
-            loading: false,
-            data: d,
-            
-          }, () => { this.props.setProject(d.project_name, d.project_author); } );
-      }, 555);
-    }).catch((err) => {
-      console.log(err.message);
-
-      this.setState({
-        error: parseInt(err.message)
-      })
-
-    });
-
-
-
-
-    
+      t.setState({
+        loading: false,
+        data: d,
+        
+      }, () => { this.props.setProject(d.project_name, d.project_author); } ); 
+    } catch(err) {
+      console.log(err);
+    }
     // Query api for project
 
   }
@@ -941,47 +915,40 @@ class ProjectView extends Component {
 
     return (
       
-      <div>
-      {!this.state.error && 
-        <div id="project-view" className={this.state.loading ? "loading" : ""}>
-          <ProjectViewSidenav 
-                              project_id={this.props.project_id}
-                              projectTitle={this.props.projectTitle}
-                              projectAuthor={this.props.projectAuthor}
+  
+    
+      <div id="project-view" className={this.state.loading ? "loading" : ""}>
+        <ProjectViewSidenav 
+                            project_id={this.props.project_id}
+                            projectTitle={this.props.projectTitle}
+                            projectAuthor={this.props.projectAuthor}
 
-                               />
+                             />
 
 
-          <div className="project-view-wrapper">
-            <TransitionGroup className="transition-group">
-              <CSSTransition
-              key={location.key}
-              timeout={{ enter: 400, exit:400 }}
-              classNames="fade"
-              >
-                <section className={"route-section" + (!this.state.loading ? " loaded" : "")}>
-                 <Switch location={location}>
-                    <Route path="/projects/:id/dashboard"           render={() => <ProjectDashboard loading={this.state.loading} data={this.state.data.dashboard} project_id={this.props.project_id} />} />     
-                    <Route path="/projects/:id/annotations/curation"            render={() => <CurationInterface user={this.props.user} project_id={this.props.project_id} prevState={this.curationInterfaceState} saveState={this.setCurationInterfaceData.bind(this)} loading={this.state.loading} documentIdQuery={docId} />} />     
-                    <Route path="/projects/:id/annotations/download"            render={() => <EmptyThing {...this.state} />} />     
-                    <Route path="/projects/:id/entity-hierarchy"  render={() => <CategoryHierarchyPage loading={this.state.loading} data={this.state.data.categoryHierarchy} colourIndexes={this.state.data.dashboard.entityChartData ? this.state.data.dashboard.entityChartData.colourIndexes : null} />} />     
-                    <Route path="/projects/:id/annotators"         render={() => <InvitationsPage data={this.state.data.invitationsTable ? this.state.data.invitationsTable : {}} loading={this.state.loading} />} />     
-                    <Route path="/projects/:id/settings"            render={() => <EmptyThing {...this.state} />} />   
-                    <Route             render={() => <Error404Page />} />   
-                  </Switch>
-                </section>
-              </CSSTransition>
-            </TransitionGroup>
-          </div>
+        <div className="project-view-wrapper">
+          <TransitionGroup className="transition-group">
+            <CSSTransition
+            key={location.key}
+            timeout={{ enter: 400, exit:400 }}
+            classNames="fade"
+            >
+              <section className={"route-section" + (!this.state.loading ? " loaded" : "")}>
+               <Switch location={location}>
+                  <Route path="/projects/:id/dashboard"           render={() => <ProjectDashboard loading={this.state.loading} data={this.state.data.dashboard} project_id={this.props.project_id} />} />     
+                  <Route path="/projects/:id/annotations/curation"            render={() => <CurationInterface user={this.props.user} project_id={this.props.project_id} prevState={this.curationInterfaceState} saveState={this.setCurationInterfaceData.bind(this)} loading={this.state.loading} documentIdQuery={docId} setErrorCode={this.props.setErrorCode} />} />     
+                  <Route path="/projects/:id/annotations/download"            render={() => <EmptyThing {...this.state} />} />     
+                  <Route path="/projects/:id/entity-hierarchy"  render={() => <CategoryHierarchyPage loading={this.state.loading} data={this.state.data.categoryHierarchy} colourIndexes={this.state.data.dashboard.entityChartData ? this.state.data.dashboard.entityChartData.colourIndexes : null} />} />     
+                  <Route path="/projects/:id/annotators"         render={() => <InvitationsPage data={this.state.data.invitationsTable ? this.state.data.invitationsTable : {}} loading={this.state.loading} />} />     
+                  <Route path="/projects/:id/settings"            render={() => <EmptyThing {...this.state} />} />   
+                  <Route             render={() => <Error404Page />} />   
+                </Switch>
+              </section>
+            </CSSTransition>
+          </TransitionGroup>
+        </div>
         
-      
-
-          
-
-
-        </div> }
-        { this.state.error === 403 && <Error403Page/> }    
-        { this.state.error === 404 && <Error404Page/> }    
+     
       </div>
       
     )

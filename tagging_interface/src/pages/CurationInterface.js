@@ -118,7 +118,14 @@ class CurationInterface extends Component {
 		}
 
 		fetch(queryString, fetchConfigGET)
-		.then(response => response.text())
+		.then((response) => {
+	        if(response.status === 403) {
+	          throw new Error(403);
+	        } else if(response.status === 401) {
+	          throw new Error(401);
+	        } 
+	        return response.text()
+	    })
       	.then((data) => {
       		var d = JSON.parse(data);
 
@@ -153,7 +160,10 @@ class CurationInterface extends Component {
 
 
       		})
-      	});
+      	}).catch((err) => {
+	        console.log(err.message);
+	        this.props.setErrorCode(parseInt(err.message));
+	    });;
 
 
 
@@ -238,7 +248,14 @@ class CurationInterface extends Component {
 		};
 
 		fetch('http://localhost:3000/api/projects/' + this.props.project_id + '/comments/submit', fetchConfigPOST) // TODO: move localhost out
-		.then(response => response.text())
+		.then((response) => {
+	        if(response.status === 403) {
+	          throw new Error(403);
+	        } else if(response.status === 401) {
+	          throw new Error(401);
+	        } 
+	        return response.text()
+	    })
 		.then((data) => {
 		  console.log(data);
 		  try { 
@@ -258,7 +275,10 @@ class CurationInterface extends Component {
 		    console.log("ERROR:", err);
 		    next();
 		  }      
-		});
+		}).catch((err) => {
+	        console.log(err.message);
+	        this.props.setErrorCode(parseInt(err.message));
+	    });
 
 	}
 

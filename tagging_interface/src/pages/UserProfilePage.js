@@ -69,7 +69,12 @@ class UserProfilePage extends Component {
       saving: true, 
     }, () => {
       fetch('http://localhost:3000/api/users/set_profile_icon', fetchConfigPOST) // TODO: move localhost out
-      .then(response => response.text())
+      .then((response) => {
+        if(response.status !== 200) {
+          throw new Error(response.status);
+        }  
+        return response.text()
+      })
       .then((data) => {
 
         var d = JSON.parse(data);       
@@ -78,6 +83,8 @@ class UserProfilePage extends Component {
         this.setState({
           saving: false,
         });
+      }).catch((err) => {
+        this.props.setErrorCode(parseInt(err.message));
       });
     });
   }

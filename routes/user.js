@@ -6,6 +6,11 @@ var userController = require('app/controllers/user_controller.js');
 var express = require('express');
 var router = express.Router();
 
+function loggedIn(req, res, next) {
+	if(!req.user) res.status(403).send({"error": "user must be logged in"});
+	next();
+}
+
 function notLoggedIn(req, res, next) {
 	if(req.user) res.redirect(BASE_URL + 'projects');
 	next();
@@ -13,7 +18,7 @@ function notLoggedIn(req, res, next) {
 
 
 router.get('/userData', function(req, res, next) {
-  console.log("user:", req.user);
+  if(req.user) console.log("logged in as user:", req.user.username);
   res.send({
     user: req.user ? {
       username: req.user ? req.user.username : null,
@@ -38,6 +43,6 @@ router.post('/forgot_password', notLoggedIn, userController.forgot_password_subm
 router.get('/reset_password/:token', notLoggedIn, userController.reset_password);
 router.post('/reset_password/:token', notLoggedIn, userController.reset_password_submit);
 
-router.post('/set_profile_icon', userController.setProfileIcon);
+router.post('/set_profile_icon', loggedIn, userController.setProfileIcon);
 
 module.exports = router;

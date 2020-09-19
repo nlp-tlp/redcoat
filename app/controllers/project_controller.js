@@ -23,8 +23,10 @@ var mongoose = require('mongoose');
 module.exports.getProjects = async function(req, res) {
   try {
     var data = await Project.getInvolvedProjectData(req.user);
+    console.log(data);
     res.send(data);
   } catch(err) {
+    console.log('err');
     res.send(err);
     logger.error(err);
   }

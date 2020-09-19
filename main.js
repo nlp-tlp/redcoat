@@ -180,7 +180,7 @@ passport.deserializeUser(User.deserializeUser());
 
 
 
-var debugMode = true; // Set to true when running the react server (e.g. port 4000).
+var debugMode = false; // Set to true when running the react server (e.g. port 4000).
 
 
 var useCSRF = !debugMode; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.
@@ -195,7 +195,7 @@ app.use(function(req, res, next) {
 
   
 
-
+  if(req.user) console.log("loeegged in as user:", req.user.username);
 
   res.locals.base_url = BASE_URL;
   
@@ -284,37 +284,36 @@ app.use(function(req, res, next) {
 
 // Route middleware to make sure a user is logged in.
 // Users will be redirected if not.
-const NON_LOGIN_PATHS = new Set([
-  "/",
-  "/login",
-  "/api/users/login",
-  "/api/users/register",
-  "/features",
-  "/api/users/forgot_password",
-  "/api/users/reset_password",
-  //"/pageData",
-  "/api/users/userData",
-]);
+// const NON_LOGIN_PATHS = new Set([
+//   "/",
+//   "/api/users/login",
+//   "/api/users/register",
+//   "/api/users/forgot_password",
+//   "/api/users/reset_password",
+//   "/api/users/userData",
+// ]);
 
-app.use(function(req, res, next) {
-  logger.debug(req.path);
-  if (req.isAuthenticated()) {
-    logger.debug("Logged in as " + req.user.username);
-    res.locals.user_stars = req.user.docgroups_annotated.length;
-    return next();
-  }
-  if(NON_LOGIN_PATHS.has(req.path) || req.path.startsWith('/reset_password/')) {      
-    return next();
-  } 
+// app.use(function(req, res, next) {
 
-  console.log('not logged in', req.path);
+//   logger.debug(req.path);
+//   if (req.isAuthenticated()) {
+//     logger.debug("Logged in as " + req.user.username);
+//     res.locals.user_stars = req.user.docgroups_annotated.length;
+//     return next();
+//   }
+//   if(NON_LOGIN_PATHS.has(req.path) || req.path.startsWith('/reset_password/')) {      
+//     return next();
+//   } 
+
+//   console.log('not logged in', req.path);
 
   
-  // TODO: IF working with new React interface, return res.send({"error": "user must be logged in"}) and redirect in the front end
-  //res.send({})
+//   // TODO: IF working with new React interface, return res.send({"error": "user must be logged in"}) and redirect in the front end
+//   //res.send({})
 
-  res.redirect(BASE_URL + 'login');
-});
+//   //res.status(401) //redirect(BASE_URL + 'login');
+//   return next()
+// });
 
 
 

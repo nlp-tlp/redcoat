@@ -88,7 +88,14 @@ class ProjectListPage extends Component {
   componentWillMount() {
     this.props.setProject(null, null); // Reset the current project in the sidenav
     fetch('http://localhost:3000/api/projects', fetchConfigGET) // TODO: move localhost out
-      .then(response => response.text())
+      .then((response) => {
+        if(response.status !== 200) {
+          var t =  response.text()
+          console.log("Response:", t)
+          throw new Error(response.status);
+        }
+        return response.text()
+      })
       .then((data) => {
         var d = JSON.parse(data);
 
@@ -96,7 +103,10 @@ class ProjectListPage extends Component {
           data: d,
           loading: false
         })
-      });
+      }).catch((err) => {
+        console.log(err.message);
+        this.props.setErrorCode(parseInt(err.message));
+      });;
   }
 
   // Set this component's view to the specified view.
