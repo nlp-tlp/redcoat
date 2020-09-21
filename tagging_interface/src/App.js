@@ -26,7 +26,6 @@ import UserProfilePage from './pages/UserProfilePage';
 
 import redcoatMan from './images/redcoat-1-grey.png'
 
-import Auth from "./functions/Auth"
 
 // Config for all API fetch requests
 const fetchConfigGET = {

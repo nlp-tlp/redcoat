@@ -1454,7 +1454,7 @@ ProjectSchema.methods.getActivityChartData = async function() {
     console.log("End:", end)
 
     for(var d = start; d <= end; d.setDate(d.getDate() + 1)) {
-      activityChartData.labels.push(dateFormat(d, "mm-d-yy"));
+      activityChartData.labels.push(dateFormat(d, "mm/dd/yy"));
     }
 
     activityChartData.labels.reverse();
@@ -1473,7 +1473,7 @@ ProjectSchema.methods.getActivityChartData = async function() {
         user_ids.push(user_id);
       }
 
-      var label_idx = activityChartData.labels.indexOf(dateFormat(result._id.created_at, "mm-d-yy"))
+      var label_idx = activityChartData.labels.indexOf(dateFormat(result._id.created_at, "mm/dd/yy"))
 
       datasets[user_id][label_idx] = result.count;
     }

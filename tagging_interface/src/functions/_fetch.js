@@ -19,6 +19,7 @@ async function wait(ms) {
 
 // A function to make fetching a little bit easier and avoid a lot of repeated code.
 // This one returns data only when there wasn't an error.
+// Returns 500 error if anything unexpected happens.
 async function _fetch(url, method, setErrorCode, delay=0) {
 
   console.log(url);

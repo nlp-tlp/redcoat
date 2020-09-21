@@ -330,6 +330,7 @@ class ActivityChart extends Component {
   }
 
   componentWillMount() {
+    console.log(this.props.data);
     this.setState({
       data: this.props.data,
       cumulative: this.props.cumulative
