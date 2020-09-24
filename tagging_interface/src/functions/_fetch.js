@@ -22,7 +22,6 @@ async function wait(ms) {
 // Returns 500 error if anything unexpected happens.
 async function _fetch(url, method, setErrorCode, delay=0) {
 
-  console.log(url);
   var response = await fetch(url, fetchConfig[method]) // TODO: move localhost out
   
   if(response.status !== 200) {

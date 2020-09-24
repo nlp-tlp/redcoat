@@ -24,7 +24,7 @@ class Navbar extends Component {
               <button>Projects</button>
               <ul className="dropdown-menu-items">
                 <li><Link to={"" + BASE_URL + "projects"}>Projects list</Link></li>
-                <li><Link to={"" + BASE_URL + "setup-project"}>Setup project</Link></li>
+                <li><Link to={"" + BASE_URL + "projects/new"}>New project</Link></li>
               </ul>
             </div>
           }

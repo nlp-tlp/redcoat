@@ -13,6 +13,19 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 /* GET Actions */
 
+
+exports.userData = function(req, res, next) {
+  if(req.user) console.log("logged in as user:", req.user.username);
+  res.send({
+    user: req.user ? {
+      username: req.user ? req.user.username : null,
+      profile_icon: req.user ? req.user.profile_icon : null,
+    } : null
+  });
+}
+
+
+
 // GET: Render the 'registration' page.
 // exports.registerPage = function(req, res) {
 //   res.render('users/register', { title: "Register", formData: {} });
@@ -266,3 +279,4 @@ exports.setProfileIcon = function(req, res, next) {
   });
 
 }
+

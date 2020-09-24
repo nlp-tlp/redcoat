@@ -499,6 +499,8 @@ class ProjectDashboard extends Component {
 
               <div class="pieChart">
 
+                <span className="pie-chart-value"><span className="inner st st-darker">{(100 * this.props.data.numDocGroupsAnnotated / this.props.data.totalDocGroups).toFixed(0)}%</span></span>
+
                 { this.props.loading && 
                 <PieChart
                   data={[
@@ -676,7 +678,7 @@ class ProjectViewSidenav extends Component {
     return (
       <nav id="project-view-sidenav">
         <div className="project-card">
-          <div>
+          <div className="project-title-creator">
             <div className={"project-name" + (!this.props.projectTitle ? " st" : "")} style={{'display': 'block'}}><Link to={"/projects/" + this.props.project_id + "/dashboard"}>{this.props.projectTitle ? this.props.projectTitle : "xxxxxxxx"}</Link></div>
             <div className={"project-creator" + (!this.props.projectAuthor ? " st" : "")} style={{'display': 'block'}}>Created by <span className="creator-name">{this.props.projectAuthor ? this.props.projectAuthor : "xxxxxxxx"}</span></div>
           </div>

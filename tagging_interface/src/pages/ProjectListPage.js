@@ -4,15 +4,7 @@ import { Link } from 'react-router-dom'
 import formatDate  from '../functions/formatDate';
 import { PieChart } from 'react-minimal-pie-chart';
 
-// Config for all API fetch requests
-const fetchConfigGET = {
-  method: 'GET',
-  headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json'
-  }
-};
-
+import _fetch from '../functions/_fetch';
 
 
 class ProjectsTable extends Component {
@@ -85,28 +77,15 @@ class ProjectListPage extends Component {
 
   // Query the API when this component is mounted.
   // Once done, set this.state.data to the returned projects, numUserInvolvedIn, and numCreatedByUser.
-  componentWillMount() {
+  async componentWillMount() {
     this.props.setProject(null, null); // Reset the current project in the sidenav
-    fetch('http://localhost:3000/api/projects', fetchConfigGET) // TODO: move localhost out
-      .then((response) => {
-        if(response.status !== 200) {
-          var t =  response.text()
-          console.log("Response:", t)
-          throw new Error(response.status);
-        }
-        return response.text()
-      })
-      .then((data) => {
-        var d = JSON.parse(data);
 
-        this.setState({
-          data: d,
-          loading: false
-        })
-      }).catch((err) => {
-        console.log(err.message);
-        this.props.setErrorCode(parseInt(err.message));
-      });;
+    var d = await _fetch('http://localhost:3000/api/projects/', 'GET', this.props.setErrorCode, 555)
+
+    this.setState({
+      data: d,
+      loading: false
+    })
   }
 
   // Set this component's view to the specified view.

@@ -12,9 +12,10 @@
 @import "users/user-form";
 
 // The setup project page
-@import "setup_project/setup-project";
-@import "setup_project/upload-widget";
-@import "setup_project/jquery-linedtextarea";
+@import "setup_project/new-project";
+//@import "setup_project/setup-project";
+//@import "setup_project/upload-widget";
+//@import "setup_project/jquery-linedtextarea";
 
 // The category tree
 @import "category_tree/category-tree";
@@ -257,7 +258,8 @@ header.bg-header {
 		}
 		.right {
 			position: absolute;
-			right: 390px;
+			right: 290px;
+			top: -12px;
 		}
 		a.button {
 			border-radius: 3px;
@@ -730,6 +732,7 @@ section.form-section {
 	font-weight: 600;
 	cursor: pointer;
 	border-width: 0;
+	user-select: none;
 	i {
 		margin-right: 15px;
 	}
@@ -740,12 +743,25 @@ section.form-section {
 	&:active {
 		transform: translate(0, 2px);
 	}
+	&:focus {
+		outline: none !important;
+	}
 
 	.subtitle {
 		font-weight: normal;
 		margin-top: 8px;
 		font-size: 16px;
 		color: rgba(255, 255, 255, 0.8);
+	}
+	&.grey-button {
+		background: #888;
+		&:hover {
+			background: lighten(#888, 10);
+		}
+	}
+	&.disabled {
+		opacity: 0.35;
+		pointer-events: none;
 	}
 
 }

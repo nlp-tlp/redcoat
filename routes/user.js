@@ -17,19 +17,10 @@ function notLoggedIn(req, res, next) {
 }
 
 
-router.get('/userData', function(req, res, next) {
-  if(req.user) console.log("logged in as user:", req.user.username);
-  res.send({
-    user: req.user ? {
-      username: req.user ? req.user.username : null,
-      profile_icon: req.user ? req.user.profile_icon : null,
-    } : null
-  });
-});
 
 
 
-
+router.get('/userData', userController.userData);
 // User methods
 //router.get('/register',  userController.registerPage);
 router.post('/register', userController.register);

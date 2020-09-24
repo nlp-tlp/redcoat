@@ -1,0 +1,82 @@
+header.new-project-header {
+	background: #d3d3d3;
+	color: #222;
+	div.flex-container {
+		display: flex;
+
+		.item {
+			
+			font-size: 15px;
+
+			a {
+
+				padding: 15px 30px;
+				display: inline-block;
+				color: #222;
+				text-decoration: none;
+				border-bottom: 3px solid rgba(0, 0, 0, 0);
+
+			}
+
+		
+			&:not(:first-child):before {
+				content: "\f054";
+				font-family: FontAwesome;
+				transform: translate(0, 30px);
+				color: #777;
+				font-size: 15px;
+				padding: 0 10px;
+
+			}
+			&.disabled {
+				opacity: 0.5;
+				pointer-events: none;
+				user-select: none;
+			}
+			&.active {
+
+				a {
+					background: rgba(255, 255, 255, 0.15);
+					padding: 15px 24px;
+					font-weight: bold;
+					color: #111;
+					border-bottom: 3px solid $primary-red;
+				}
+			}
+			a:hover {
+				background: rgba(255, 255, 255, 0.25);
+				border-bottom: 3px solid #777;
+			}
+		}
+	}
+}
+
+main.new-project {
+	padding-top: 40px;
+	min-height: 500px;
+}
+
+.new-project-form-body {
+	min-height: calc(100vh - 390px);
+}
+.new-project-submit-row {
+	background: #d3d3d3;
+	padding: 50px 0;
+	.container {
+		display: flex;
+		justify-content: space-between;
+	}
+	button {
+		font-size: 16px;
+		margin-bottom: 0;
+	}
+}
+
+.annotate-button.new-project-button {
+	margin-top: 0;
+	max-width: 300px;
+	i.after {
+		margin-left: 10px;
+		margin-right: 0;
+	}
+}

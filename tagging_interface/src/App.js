@@ -17,15 +17,17 @@ import FeaturesPage from './pages/FeaturesPage';
 import ProjectListPage from './pages/ProjectListPage';
 import ProjectView from './pages/ProjectView';
 import HomePage from './pages/HomePage';
+import Error401Redirect from './pages/Error401Redirect';
 import Error404Page from './pages/Error404Page';
 import Error403Page from './pages/Error403Page';
-import Error401Redirect from './pages/Error401Redirect';
+import Error500Page from './pages/Error500Page';
 import ErrorClearer from './components/ErrorClearer';
 import SetupProjectPage from './pages/SetupProjectPage';
 import UserProfilePage from './pages/UserProfilePage';
 
 import redcoatMan from './images/redcoat-1-grey.png'
 
+import _fetch from './functions/_fetch'
 
 // Config for all API fetch requests
 const fetchConfigGET = {
@@ -67,7 +69,31 @@ class MainTemplate extends Component {
   }
 }
 
+// A template component that renders the majority of the pages.
+class ProjectListTemplate extends Component {
 
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+
+    return (
+      <div>
+        
+        <header className="bg-header">
+            <div id="header-project-details" className="title">
+              <h1>{this.props.pageTitle}</h1>
+              <div class="right"><Link className="button" to="/projects/new"><i class="fa fa-plus-circle"></i>New project</Link></div>
+            </div>
+          </header>
+        <main className="container">
+          { this.props.pageComponent }
+        </main>
+      </div>
+    )
+  }
+}
 
 
 // A template component for the tagging interface, which is almost the same as MainTemplate but without the <main> container.
@@ -203,23 +229,17 @@ class App extends Component {
     })
   }
 
-  getUserData() {
-    window.setTimeout( () => {
-    fetch('http://localhost:3000/api/users/userData', fetchConfigGET) // TODO: move localhost out
-    .then(response => response.text())
-    .then((data) => {
-      console.log(data);
-      var d = JSON.parse(data);
+  async getUserData() {
 
-      this.setState({
-        user: d.user,
-        loading: false,
-        loadingFadeOut: true,
-      }, () => {
-        window.setTimeout(() => this.setState({loadingFadeOut: false}), 500);
-      })
+    var d = await _fetch('http://localhost:3000/api/users/userData', 'GET', this.setErrorCode.bind(this), 555)
+
+    await this.setState({
+      user: d.user,
+      loading: false,
+      loadingFadeOut: true,
     });
-  }, 200);
+
+    window.setTimeout(() => this.setState({loadingFadeOut: false}), 500);
   }
 
   // set the data for the currently logged-in user
@@ -237,18 +257,12 @@ class App extends Component {
       user: null,
       //loggingOut: true,
     });
+    
+    var d = await _fetch('http://localhost:3000/api/users/logout', 'GET', this.setErrorCode.bind(this));
 
-    window.setTimeout( () => 
-
-    fetch('http://localhost:3000/api/users/logout', fetchConfigGET)
-    .then(response => response.text())
-    .then((data) => {
-      console.log("Logged out")
-      this.setState({
-        //loggingOut: false,
-        user: null,
-      })
-    }), 2);    
+    this.setState({
+      user: null,
+    });
   }
 
   // Update this component's user profile icon.
@@ -305,6 +319,12 @@ class App extends Component {
                     
                   />}
                 /> 
+
+              <PrivateRoute user={this.state.user} path="/projects/new" render={( ) =>
+                <SetupProjectPage/> }
+              />  
+
+
               <PrivateRoute user={this.state.user} path="/projects/:id" render={(p) => 
                 <ProjectViewTemplate {...this.state} pageTitle="Project View" pageComponent={ 
                   <ProjectView
@@ -324,14 +344,12 @@ class App extends Component {
 
 
               <PrivateRoute user={this.state.user} path="/projects" render={ () =>
-                <MainTemplate {...this.state} pageTitle="Projects" pageComponent={
+                <ProjectListTemplate {...this.state} pageTitle="Projects"
+         pageComponent={
                   <ProjectListPage setProject={this.setProject.bind(this)} setErrorCode={this.setErrorCode.bind(this)}/> } />} />    
               
 
-              <PrivateRoute user={this.state.user} path="/setup-project" render={( ) =>
-                <MainTemplate {...this.state} pageTitle="Setup project" pageComponent={ 
-                  <SetupProjectPage/> }
-                    />} />  
+              
 
               <PrivateRoute user={this.state.user} path="/profile"  render={( ) => 
                 <MainTemplate {...this.state} pageTitle="User Profile" pageComponent={ 
@@ -360,6 +378,8 @@ class App extends Component {
 
             { this.state.errorCode === 401 && <Error401Redirect clearErrorCode={this.clearErrorCode.bind(this)}/> }    
             { this.state.errorCode === 403 && <Error403Page/> } 
+            { this.state.errorCode === 404 && <Error404Page/> } 
+            { this.state.errorCode === 500 && <Error500Page/> } 
 
             
 
