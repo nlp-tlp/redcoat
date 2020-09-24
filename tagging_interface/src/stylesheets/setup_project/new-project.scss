@@ -1,5 +1,7 @@
 header.new-project-header {
 	background: #d3d3d3;
+
+
 	color: #222;
 	div.flex-container {
 		display: flex;
@@ -53,15 +55,13 @@ header.new-project-header {
 
 main.new-project {
 	padding-top: 40px;
-	min-height: 500px;
+	min-height: 655px;
+	
 }
 
-.new-project-form-body {
-	min-height: calc(100vh - 390px);
-}
 .new-project-submit-row {
 	background: #d3d3d3;
-	padding: 50px 0;
+	padding: 30px 0;
 	.container {
 		display: flex;
 		justify-content: space-between;
@@ -72,6 +72,8 @@ main.new-project {
 	}
 }
 
+
+
 .annotate-button.new-project-button {
 	margin-top: 0;
 	max-width: 300px;
@@ -79,4 +81,103 @@ main.new-project {
 		margin-left: 10px;
 		margin-right: 0;
 	}
+}
+
+.new-project-form-body {
+	padding-bottom: 60px;
+	h2 {
+		margin: 0;
+		margin-bottom: 30px;
+		border-bottom: 1px solid #d1d1d1;
+		padding-bottom: 15px;
+		&:not(:first-child) {
+			margin-top: 45px;
+		}
+		span.form-help {
+			float: right;
+			color: #777;
+			cursor: help;
+		}
+	}
+}
+
+.form-group {
+	margin-bottom: 15px;
+	padding: 0 15px;
+	box-sizing: border-box;
+
+	label {
+		display: block;
+		font-weight: bold;
+	}
+	input, textarea {
+
+		box-sizing: border-box;
+		font-family: $primary-font;
+		margin: 15px 0;
+		width: 100%;
+		padding: 12px 18px;
+		border-radius: 4px;
+		font-size: 18px;
+		&:focus, &:active {
+			border: 2px solid $button-blue;
+			outline: none !important;
+		}
+	}
+	textarea {
+		height: 200px;
+	}
+}
+
+.upload-form-container {	
+	margin-top: 36px;
+	.upload-form {
+		background: rgba($button-blue, 0.3);
+		border: 2px dashed rgba($button-blue, 0.7);
+		height: 355px;
+		box-sizing: border-box;
+		border-radius: 4px;
+	}
+}
+
+body.ReactModal__Body--open #app {
+	filter: blur(2px);
+	#navbar {
+		top: -50px;
+	}
+
+}
+
+.modal {
+	
+	background-color: #eee;
+	border-radius: 3px;
+	padding: 30px 45px;
+	box-sizing: border-box;
+	box-shadow: 1px 1px 6px -3px rgba(0, 0, 0, 0.9);
+	&:focus {
+		outline: none !important;
+	}
+	height: 400px;
+	width: 600px;
+	h2 {
+		margin: 0;
+		border-bottom: 1px solid #ddd;
+		padding-bottom: 10px;
+	}
+
+}
+
+.modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.6);
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
 }

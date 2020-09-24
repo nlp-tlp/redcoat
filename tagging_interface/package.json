@@ -21,6 +21,7 @@
     "react-heatmap-grid": "^0.8.2",
     "react-html-parser": "^2.0.2",
     "react-minimal-pie-chart": "^8.0.1",
+    "react-modal": "^3.11.2",
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.3",
     "react-transition-group": "^4.4.1",

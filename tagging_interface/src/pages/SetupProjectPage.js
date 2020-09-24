@@ -1,19 +1,92 @@
 import React from "react";
 import {Component} from "react";
 import { Redirect, Link, BrowserRouter, Route, Switch, withRouter } from 'react-router-dom'
+import Modal from 'react-modal';
 
 import { TransitionGroup, CSSTransition } from "react-transition-group";
 import Error404Page from '../pages/Error404Page';
 
+Modal.setAppElement('body')
 
-class SetupProjectDetails extends Component {
+
+class SetupProjectFormHelpIcon extends Component {
   constructor(props) {
     super(props);
   }
 
+
   render() {
     return (
-      <div>Project details</div>
+      <span className="form-help" onClick={this.props.onClick} ><i className="fa fa-info-circle fa-xxs"></i></span>
+    )
+  }
+}
+
+class SetupProjectDetails extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      projectName: '',
+      projectDescription: '',
+    }
+  }
+
+  updateProjectName(e) {
+    var value = e.target.value;
+    if(value.trim().length === 0) value = '';
+    this.setState({
+      projectName: value,
+    });
+  }
+
+  updateProjectDescription(e) {
+    var value = e.target.value;
+    if(value.trim().length === 0) value = '';
+    this.setState({
+      projectDescription: value,
+    });
+  }
+
+  render() {
+
+    var dataHelp = (<div>
+        <h2>Data</h2>
+        <p>Please upload your data using the form below.</p>
+        <p>The dataset must be saved as a .txt file. Each token within your data must be separated by a space, and each document must be on a new line.</p>
+      </div>
+    )
+
+
+    return (
+      <div>
+
+        <div className="flex-columns flex-columns-2">
+
+          <div className="flex-column">
+            <h2>Project details</h2>
+            <div className="form-group">
+              <label>Project name</label>
+              <input placeholder="Project name" value={this.state.projectName} onChange={(e) => this.updateProjectName(e)}></input>
+            </div>
+            <div className="form-group">
+              <label>Project description (optional)</label>
+              <textarea placeholder="Project description" value={this.state.projectDescription} onChange={(e) => this.updateProjectDescription(e)}></textarea>
+            </div>
+
+          </div>
+          <div className="flex-column">
+            <h2>Data <SetupProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(dataHelp)} /></h2>
+            
+
+            <div className="upload-form-container">
+              <div className="upload-form"></div>
+
+            </div>
+          </div>
+        </div>
+
+
+      </div>
     )
   }
 }
@@ -25,7 +98,10 @@ class SetupProjectEntityHierarchy extends Component {
 
   render() {
     return (
-      <div>Entity hierarchy</div>
+      <div>
+        <h2>Entity Hierarchy</h2>
+        <p>Please determine the entity categories in your data using the form below.</p>
+      </div>
     )
   }
 }
@@ -37,7 +113,10 @@ class SetupProjectAutomaticTagging extends Component {
 
   render() {
     return (
-      <div>Automatic Tagging</div>
+      <div>
+        <h2>Automatic Tagging</h2>
+        <p>Redcoat can automatically annotate terms according to a dictionary, helping to save annotation time. These annotations can be adjusted by your annotators when necessary.</p>
+      </div>
     )
   }
 }
@@ -50,7 +129,10 @@ class SetupProjectAnnotators extends Component {
 
   render() {
     return (
-      <div>Annotators</div>
+      <div>
+        <h2>Annotators</h2>
+        <p></p>
+      </div>
     )
   }
 }
@@ -63,7 +145,10 @@ class SetupProjectProjectOptions extends Component {
 
   render() {
     return (
-      <div>Project opts</div>
+      <div>
+        <h2>Project Options</h2>
+        <p></p>
+      </div>
     )
   }
 }
@@ -85,6 +170,7 @@ class SetupProjectHeaderItem extends Component {
 class SetupProjectPage extends Component {
   constructor(props) {
     super(props);
+    this.ref = React.createRef();
     this.state = {
       loading: false,
       data: {},
@@ -119,6 +205,8 @@ class SetupProjectPage extends Component {
       ],
 
       currentFormPageIndex: 0,
+
+      formHelpContent: null,
     }
 
     
@@ -133,6 +221,12 @@ class SetupProjectPage extends Component {
     if(this.props.location !== prevProps.location) {
       this.updateCurrentFormPageIndex();
     }
+  }
+
+  toggleFormHelp(formHelpContent) {
+    this.setState({
+      formHelpContent: formHelpContent,
+    })
   }
 
   updateCurrentFormPageIndex() {  
@@ -171,14 +265,35 @@ class SetupProjectPage extends Component {
     this.props.history.push(this.state.formPages[nextIndex]);
   }
 
+  handleCloseModal() {
+    this.setState({
+      formHelpContent: null,
+    })
+  }
+
   render() {
     var location = this.props.location;    
     var currentPathname = location.pathname;    
 
     var lastPage = this.state.currentFormPageIndex === (this.state.formPages.length - 1);
 
+
+
     return (
-      <div>
+      <div id="new-project-form" ref={this.ref} >
+
+        <Modal 
+           isOpen={this.state.formHelpContent ? true : false}
+           contentLabel="Hello there"
+           onRequestClose={this.handleCloseModal.bind(this)}
+           className="modal"
+           overlayClassName="modal-overlay"
+           app={this.ref}
+        >
+          {this.state.formHelpContent}
+        </Modal>
+
+
         <header className="bg-header">
           <div id="header-project-details" className="title">
             <h1>New project</h1>
@@ -211,9 +326,9 @@ class SetupProjectPage extends Component {
                   <Route path="/projects/new/annotators" render={() =>
                     <SetupProjectAnnotators loading={this.state.loading} data={this.state.data.annotators} />} />
                   <Route path="/projects/new/project-options" render={() =>
-                    <SetupProjectProjectOptions loading={this.state.loading} data={this.state.data.project_options} />} />
+                    <SetupProjectProjectOptions loading={this.state.loading} data={this.state.data.project_options}  />} />
                   <Route exact path="/projects/new" render={() =>
-                    <SetupProjectDetails loading={this.state.loading} data={this.state.data.project_details} />} /> 
+                    <SetupProjectDetails loading={this.state.loading} data={this.state.data.project_details} toggleFormHelp={this.toggleFormHelp.bind(this)} />} /> 
                   <Route render={() => <Error404Page />} />   
                 </Switch>
               </section>
