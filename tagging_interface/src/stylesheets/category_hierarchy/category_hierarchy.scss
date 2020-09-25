@@ -1,0 +1,253 @@
+#category-hierarchy-tree {
+	overflow-y: scroll;
+	height: 100%;
+	margin-top: 10px;
+	padding-right: 5px;
+	position: relative;
+	&.tall {
+		height: 80vh;
+	}
+	&.hidden {
+		display: none;
+	}
+
+}
+
+#category-hierarchy-tree.display-only ul li span.category-name,
+#category-hierarchy-tree.display-only ul li span.description {
+	cursor: auto;
+}
+
+#category-hierarchy-tree.table-form > ul {
+	padding-left: 0;
+
+}
+
+#category-hierarchy-tree.display-only ul li {
+	user-select: auto;
+}
+
+#category-hierarchy-tree.table-form ul li {
+	
+	
+	span.inner-container {
+		span.category-name, span.description {
+		padding-top: 10px;
+		padding-bottom: 10px;
+		
+		}
+		span.category-name {
+			width: 30%;
+		}
+		span.description {
+			width: 70%;
+		}
+	}
+	span.open-button {
+		margin-top: 9px;
+	}
+	&.header-row {
+		font-weight: bold;
+		padding-left: 10px;
+		background: #fefefe;
+		color: #111;
+		pointer-events: none;
+	}
+}
+#category-hierarchy-tree.table-form > ul > li:nth-child(odd) {
+	background: #fefefe;
+}
+#category-hierarchy-tree.table-form > ul > li:nth-child(even) {
+	background: #f3f3f3;
+}
+
+#category-hierarchy-tree.table-form > ul.reversed-stripes > li:nth-child(even) {
+	background: #fefefe;	
+}
+
+#category-hierarchy-tree.table-form > ul.reversed-stripes > li:nth-child(odd) {
+	background: #f3f3f3;	
+}
+#category-hierarchy-tree.table-form {
+	//max-height: 70vh;
+	overflow-y: auto;
+	padding-right: 0;
+}
+
+
+@keyframes animatedBackground {
+	from { background-position: 0 0; }
+	to { background-position: 200px 0; }
+}
+
+
+#category-hierarchy-tree {
+	width: 100%;
+	box-sizing: border-box;
+	> ul:not(.dragging) span.open-button:hover {
+		background: white;
+		border: 2px solid rgba(0, 0, 0, 0.15);
+	}
+	> ul:not(.dragging) li:hover span.drag-handle {
+		opacity: 1;
+	}
+	ul {
+		box-sizing: border-box;
+		padding: 0;
+		margin: 0;
+		width: 100%;
+		padding: 0;
+		padding-left: 10px;
+		
+		&.limit-height {
+			max-height: 600px;
+			overflow-y: scroll;
+		}
+
+		li {
+			&.new-category {
+				box-sizing: border-box;
+				border: 2px solid rgba(0, 0, 0, 0);
+				&:hover {
+					color: #111;
+					background: rgba(255, 255, 255, 0.9);
+					background-blend-mode: multiply;
+					background-image: url($base_url + 'images/stripes-light.png') !important;
+					animation: animatedBackground 20s linear infinite !important;
+					border: 2px solid rgba($button-blue, 0.35);
+				}
+				
+				user-select: none;
+				cursor: pointer !important;
+				color: #555;
+				i {
+					margin-right: 15px;
+
+				}
+				span.category-name {
+					width: 100% !important;
+					text-align: center;	
+					cursor: pointer !important;				
+				}
+			}
+
+			padding: 0;
+			box-sizing: border-box;
+			margin: 0;
+			width: 100%;
+			display: block;
+			user-select: none;
+			color: #666;
+			position: relative;
+			&:hover span.inner-container {
+				color: #111;
+			}
+			span.inner-container {
+				display: flex;
+
+				span.category-name {
+					width: 100%;
+				}
+			}
+			span.open-button {
+				margin-right: 0px;
+				cursor: pointer;
+				border-radius: 4px;
+				padding: 1px 4px;
+				margin-left: 8px;
+				border: 2px solid rgba(0, 0, 0, 0);
+				height: 1.5em;
+				margin-top: 3px;
+				font-size: 0.8em;				
+				&:active {
+					transform: translate(0px, 2px);
+				}
+			}
+
+			
+
+
+			span.category-name, span.description {
+				box-sizing: border-box;
+				cursor: pointer;
+				width: auto;
+				padding: 4px 6px;
+				padding-left: 12px;
+				display: block;
+				position: relative;
+				&.has-hotkey:after{
+					content: attr(data-hotkey-id);
+					position: absolute;
+					right: 6px;
+					top: 6px;
+					font-size: 0.6em;
+					padding: 2px 4px;
+					background: white;
+					border: 2px solid #eee;
+					border-radius: 4px;
+					min-width: 16px;
+					text-align: center;
+					//transition: background-position 0s;
+					//background-size: 100% 200%;
+					
+
+				}
+				
+
+
+				
+			}
+			
+			
+			span.drag-handle {
+				width: 24px;	// The width of the drag handle is much larger than it appears to make it easier to click
+				display: inline-block;
+				height: calc(100% - 12px);
+				margin-top: 6px;
+				margin-left: -4px;
+				position: absolute;
+				opacity: 0;
+				&:before {	// Pseudo elements are necessary to draw the borders correctly
+					border-left: 2px dotted #aaa;
+					content: " ";
+					
+					height: 100%;
+					width: 4px;
+					position: absolute;
+					top: 0;
+					left: 10px;
+					pointer-events: none;
+				}
+				&:after {
+					border-left: 2px dotted #aaa;
+					content: " ";
+					height: 100%;
+					width: 4px;
+					position: absolute;
+					top: 0;
+					left: 14px;
+					pointer-events: none;
+				}
+
+			}
+			ul {
+				&.hidden {
+					display: none;
+				}
+				
+				li {
+					display: block;
+				}
+			}
+
+		}
+
+	}
+	> ul > li > ul > li span.category-name {
+		padding-left: 60px;
+	}
+	> ul > li > span.inner-container {
+		padding-left: 15px;
+	}
+
+}

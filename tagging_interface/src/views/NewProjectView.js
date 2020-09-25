@@ -2,125 +2,21 @@ import React from "react";
 import {Component} from "react";
 import { Redirect, Link, BrowserRouter, Route, Switch, withRouter } from 'react-router-dom'
 import Modal from 'react-modal';
-
 import { TransitionGroup, CSSTransition } from "react-transition-group";
+
 import Error404Page from 'views/Errors/Error404Page';
 
-Modal.setAppElement('body')
+import NewProjectDetails from 'views/NewProjectView/NewProjectDetails';
+import NewProjectEntityHierarchy from 'views/NewProjectView/NewProjectEntityHierarchy';
+
+import NewProjectFormHelpIcon from 'views/NewProjectView/NewProjectFormHelpIcon';
 
 
-class SetupProjectFormHelpIcon extends Component {
-  constructor(props) {
-    super(props);
-  }
+Modal.setAppElement('body');
 
 
-  render() {
-    return (
-      <span className="form-help" onClick={this.props.onClick} ><i className="fa fa-info-circle fa-xxs"></i><span className="info">Info</span></span>
-    )
-  }
-}
 
-class SetupProjectDetails extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      projectName: '',
-      projectDescription: '',
-    }
-  }
-
-  updateProjectName(e) {
-    var value = e.target.value;
-    if(value.trim().length === 0) value = '';
-    this.setState({
-      projectName: value,
-    });
-  }
-
-  updateProjectDescription(e) {
-    var value = e.target.value;
-    if(value.trim().length === 0) value = '';
-    this.setState({
-      projectDescription: value,
-    });
-  }
-
-  render() {
-
-    var dataHelp = (<div>
-        <h2>Data</h2>
-        <p>Please upload your data using the form. The data may be in one of two formats: </p>
-        <p>
-          <ul>
-            <li><b>Raw data</b>: The dataset must be saved as a .txt file. Each token within your data must be separated by a space, and each document must be on a new line.</li>
-            <li><b>Already labelled data</b>: The dataset must be saved as a .json file, in the same format as Redcoat annotation files.</li>
-          </ul>
-        </p>
-      </div>
-    )
-
-
-    return (
-      <div>
-
-        <div className="flex-columns flex-columns-2">
-
-          <div className="flex-column">
-            <h2>Project details</h2>
-            <div className="form-group">
-              <label>Project name</label>
-              <input placeholder="Project name" value={this.state.projectName} onChange={(e) => this.updateProjectName(e)}></input>
-            </div>
-            <div className="form-group">
-              <label>Project description (optional)</label>
-              <textarea placeholder="Project description" value={this.state.projectDescription} onChange={(e) => this.updateProjectDescription(e)}></textarea>
-            </div>
-
-          </div>
-          <div className="flex-column">
-            <h2>Data <SetupProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(dataHelp)} /></h2>
-            
-
-            <div className="upload-form-container">
-              <div className="upload-form"></div>
-
-            </div>
-          </div>
-        </div>
-
-
-      </div>
-    )
-  }
-}
-
-class SetupProjectEntityHierarchy extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-
-    var help = (<div>
-        <h2>Entity Hierarchy</h2>
-        <p>Please define your entity hierarchy.</p>
-        <p>You may create new categories by entering them in the form below. To specify a parent category, place a space before the child category. The categories are visualised in the Category Hierarchy, which you may also use to create your hierarchy if you prefer. You may also select from a list of presets, such as the standard 4-class Named Entity Recognition model.</p>
-      </div>
-    )
-
-
-    return (
-      <div>
-        <h2>Entity Hierarchy <SetupProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(help)} /></h2>
-        <div style={{'height': '800px', 'background': 'rgba(0, 0, 0, 0.2)'}}></div>
-      </div>
-    )
-  }
-}
-
-class SetupProjectAutomaticTagging extends Component {
+class NewProjectAutomaticTagging extends Component {
   constructor(props) {
     super(props);
   }
@@ -136,7 +32,7 @@ class SetupProjectAutomaticTagging extends Component {
 
     return (
       <div>
-        <h2>Automatic Tagging <SetupProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(help)} /></h2>
+        <h2>Automatic Tagging <NewProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(help)} /></h2>
         <p>Redcoat can automatically annotate terms according to a dictionary, helping to save annotation time. These annotations can be adjusted by your annotators when necessary.</p>
       </div>
     )
@@ -144,7 +40,7 @@ class SetupProjectAutomaticTagging extends Component {
 }
 
 
-class SetupProjectAnnotators extends Component {
+class NewProjectAnnotators extends Component {
   constructor(props) {
     super(props);
   }
@@ -159,7 +55,7 @@ class SetupProjectAnnotators extends Component {
 
     return (
       <div>
-        <h2>Annotators <SetupProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(help)} /></h2>
+        <h2>Annotators <NewProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(help)} /></h2>
         <p></p>
       </div>
     )
@@ -167,7 +63,7 @@ class SetupProjectAnnotators extends Component {
 }
 
 
-class SetupProjectProjectOptions extends Component {
+class NewProjectProjectOptions extends Component {
   constructor(props) {
     super(props);
   }
@@ -188,7 +84,7 @@ class SetupProjectProjectOptions extends Component {
 
     return (
       <div>
-        <h2>Project Options <SetupProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(help)} /></h2>
+        <h2>Project Options <NewProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(help)} /></h2>
         <p></p>
       </div>
     )
@@ -197,7 +93,7 @@ class SetupProjectProjectOptions extends Component {
 
 
 
-class SetupProjectHeaderItem extends Component {
+class NewProjectHeaderItem extends Component {
   constructor(props) {
     super(props);
   }
@@ -209,13 +105,15 @@ class SetupProjectHeaderItem extends Component {
   }
 }
 
-class SetupProjectPage extends Component {
+class NewProjectView extends Component {
   constructor(props) {
     super(props);
     this.ref = React.createRef();
     this.state = {
       loading: false,
-      data: {},
+      data: {
+        entity_hierarchy: { children: [], },
+      },
 
 
       formPages: [
@@ -345,7 +243,7 @@ class SetupProjectPage extends Component {
         <header className="new-project-header">
           <div className="container flex-container">
             { this.state.formPages.map((page, index) => 
-              <SetupProjectHeaderItem name={page.name} pathname={page.pathname} currentPathname={currentPathname} ready={page.ready}/>
+              <NewProjectHeaderItem name={page.name} pathname={page.pathname} currentPathname={currentPathname} ready={page.ready}/>
             )}            
           </div>
         </header>
@@ -362,23 +260,24 @@ class SetupProjectPage extends Component {
                <Switch location={location}>
                    
                   <Route path="/projects/new/entity-hierarchy" render={() =>
-                    <SetupProjectEntityHierarchy loading={this.state.loading}
-                      data={this.state.data.entity_hierarchy}
+                    <NewProjectEntityHierarchy loading={this.state.loading}
+                      entity_hierarchy={this.state.data.entity_hierarchy.children}                      
+                      hierarchyPresets={["Named Entity Recognition (NER)", "Fine-grained Entity Recognition (FIGER)", "Maintenance"]}
                       toggleFormHelp={this.toggleFormHelp.bind(this)} />} /> 
                   <Route path="/projects/new/automatic-tagging" render={() =>
-                    <SetupProjectAutomaticTagging loading={this.state.loading}
+                    <NewProjectAutomaticTagging loading={this.state.loading}
                       data={this.state.data.automatic_tagging}
                       toggleFormHelp={this.toggleFormHelp.bind(this)} />} /> 
                   <Route path="/projects/new/annotators" render={() =>
-                    <SetupProjectAnnotators loading={this.state.loading}
+                    <NewProjectAnnotators loading={this.state.loading}
                       data={this.state.data.annotators}
                       toggleFormHelp={this.toggleFormHelp.bind(this)} />} />
                   <Route path="/projects/new/project-options" render={() =>
-                    <SetupProjectProjectOptions loading={this.state.loading}
+                    <NewProjectProjectOptions loading={this.state.loading}
                       data={this.state.data.project_options}
                       toggleFormHelp={this.toggleFormHelp.bind(this)} />} />
                   <Route exact path="/projects/new" render={() =>
-                    <SetupProjectDetails loading={this.state.loading}
+                    <NewProjectDetails loading={this.state.loading}
                       data={this.state.data.project_details}
                       toggleFormHelp={this.toggleFormHelp.bind(this)} />} /> 
                   <Route render={() => <Error404Page />} />   
@@ -404,4 +303,4 @@ class SetupProjectPage extends Component {
   }
 }
 
-export default withRouter(SetupProjectPage);
+export default withRouter(NewProjectView);

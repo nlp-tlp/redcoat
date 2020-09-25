@@ -1761,29 +1761,16 @@ button.blue-button {
 	}
 }
 
-.category-hierarchy {
-	height: 100%;
-}
+// .category-hierarchy {
+// 	height: 100%;
+// }
 
-#category-hierarchy-tree {
-	overflow-y: scroll;
-	height: 100%;
-	margin-top: 10px;
-	padding-right: 5px;
-	position: relative;
-	&.tall {
-		height: 80vh;
-	}
-	&.hidden {
-		display: none;
-	}
 
-}
-#category-hierarchy-tree-no-results {
-	display: none;
-	color: #999;
-	padding: 14px 24px;
-}
+// #category-hierarchy-tree-no-results {
+// 	display: none;
+// 	color: #999;
+// 	padding: 14px 24px;
+// }
 a#untag-tokens {
 	color: #999;
 	padding: 4px 26px;
@@ -2141,179 +2128,6 @@ a#untag-tokens {
 
 
 
-
-#category-hierarchy-tree.display-only ul li span.category-name,
-#category-hierarchy-tree.display-only ul li span.description {
-	cursor: auto;
-
-}
-#category-hierarchy-tree.display-only > ul {
-	padding-left: 0;
-
-}
-#category-hierarchy-tree.display-only ul li {
-	color: #111 !important;
-	user-select: auto;
-	span.inner-container {
-		span.category-name, span.description {
-		padding-top: 10px;
-		padding-bottom: 10px;
-		width: 50%;
-		}
-	}
-	span.open-button {
-		margin-top: 9px;
-	}
-	&.header-row {
-		font-weight: bold;
-		padding-left: 10px;
-	}
-}
-#category-hierarchy-tree.display-only > ul > li:nth-child(even) {
-	background: #f3f3f3;
-}
-#category-hierarchy-tree.display-only {
-	//max-height: 70vh;
-	overflow-y: auto;
-	padding-right: 0;
-}
-
-#category-hierarchy-tree {
-	width: 100%;
-	box-sizing: border-box;
-	> ul:not(.dragging) span.open-button:hover {
-		background: white;
-		border: 2px solid rgba(0, 0, 0, 0.15);
-	}
-	> ul:not(.dragging) li:hover span.drag-handle {
-		opacity: 1;
-	}
-	ul {
-		box-sizing: border-box;
-		padding: 0;
-		margin: 0;
-		width: 100%;
-		padding: 0;
-		padding-left: 10px;
-		
-		li {
-			padding: 0;
-			box-sizing: border-box;
-			margin: 0;
-			width: 100%;
-			display: block;
-			user-select: none;
-			color: #666;
-			position: relative;
-			&:hover span.inner-container {
-				color: #111;
-			}
-			span.inner-container {
-				display: flex;
-
-				span.category-name {
-					width: 100%;
-				}
-			}
-			span.open-button {
-				margin-right: 0px;
-				cursor: pointer;
-				border-radius: 4px;
-				padding: 1px 4px;
-				margin-left: 8px;
-				border: 2px solid rgba(0, 0, 0, 0);
-				height: 1.5em;
-				margin-top: 3px;
-				font-size: 0.8em;				
-				&:active {
-					transform: translate(0px, 2px);
-				}
-			}
-
-			span.category-name, span.description {
-
-				cursor: pointer;
-				width: auto;
-				padding: 4px 6px;
-				padding-left: 12px;
-				display: block;
-				position: relative;
-				&.has-hotkey:after{
-					content: attr(data-hotkey-id);
-					position: absolute;
-					right: 6px;
-					top: 6px;
-					font-size: 0.6em;
-					padding: 2px 4px;
-					background: white;
-					border: 2px solid #eee;
-					border-radius: 4px;
-					min-width: 16px;
-					text-align: center;
-					//transition: background-position 0s;
-					//background-size: 100% 200%;
-					
-
-				}
-				
-
-
-				
-			}
-			
-			
-			span.drag-handle {
-				width: 24px;	// The width of the drag handle is much larger than it appears to make it easier to click
-				display: inline-block;
-				height: calc(100% - 12px);
-				margin-top: 6px;
-				margin-left: -4px;
-				position: absolute;
-				opacity: 0;
-				&:before {	// Pseudo elements are necessary to draw the borders correctly
-					border-left: 2px dotted #aaa;
-					content: " ";
-					
-					height: 100%;
-					width: 4px;
-					position: absolute;
-					top: 0;
-					left: 10px;
-					pointer-events: none;
-				}
-				&:after {
-					border-left: 2px dotted #aaa;
-					content: " ";
-					height: 100%;
-					width: 4px;
-					position: absolute;
-					top: 0;
-					left: 14px;
-					pointer-events: none;
-				}
-
-			}
-			ul {
-				&.hidden {
-					display: none;
-				}
-				padding-left: 40px;
-				li {
-					display: block;
-				}
-			}
-
-		}
-
-	}
-	> ul > li > ul {
-		padding-left: 60px;
-	}
-	> ul > li > span.inner-container {
-		padding-left: 15px;
-	}
-
-}
 .drag-line {
 	border: none !important;
 	border-top: 2px solid #ccc !important;

@@ -11,15 +11,13 @@
 // The form for logging in/registering
 @import "users/user-form";
 
+@import "category_hierarchy/category_hierarchy";
+
 // The setup project page
 @import "setup_project/new-project";
 //@import "setup_project/setup-project";
 //@import "setup_project/upload-widget";
 //@import "setup_project/jquery-linedtextarea";
-
-// The category tree
-@import "category_tree/category-tree";
-@import "category_tree/d3-context-menu";
 
 // The project dashboard
 @import "projects/projects";
@@ -553,9 +551,10 @@ section.route-section {
 	}
 
 	&.fade-enter-done {
-		transform: translate(0px, 0);
+		//transform: translate(0px, 0);
 	    opacity: 1;
 	    position: relative;
+	    transform: none;
 	}
 
 
@@ -963,3 +962,19 @@ section.form-section {
 		pointer-events: none;
 	}
 }
+
+
+.category-hierarchy-wrapper {
+	box-sizing: border-box;
+	background: #f4f4f4;
+	box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
+	&.min-height {
+		min-height: 450px;
+	}
+	.inner {
+
+	} 
+}
+
+
+

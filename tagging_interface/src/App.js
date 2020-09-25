@@ -9,20 +9,26 @@ import getCookie from './functions/getCookie';
 
 import ScrollToTop from './functions/ScrollToTop';
 
+// Components
 import Navbar from './views/SharedComponents/Navbar';
 
+// Views
 import TaggingInterfaceView from './views/TaggingInterfaceView';
 import FeaturesPage from './views/FeaturesPage';
 import ProjectListView from './views/ProjectListView';
 import ProjectView from './views/ProjectView';
-import HomePage from './views/HomePage';
+import HomeView from './views/HomeView';
+import NewProjectView from './views/NewProjectView';
+import UserProfileView from './views/UserProfileView';
+
+// Error views
 import Error401Redirect from './views/Errors/Error401Redirect';
 import Error404Page from './views/Errors/Error404Page';
 import Error403Page from './views/Errors/Error403Page';
 import Error500Page from './views/Errors/Error500Page';
+
 import ErrorClearer from './views/SharedComponents/ErrorClearer';
-import SetupProjectPage from './views/SetupProjectPage';
-import UserProfilePage from './views/UserProfilePage';
+
 
 import redcoatMan from './images/redcoat-1-grey.png'
 
@@ -320,7 +326,7 @@ class App extends Component {
                 /> 
 
               <PrivateRoute user={this.state.user} path="/projects/new" render={( ) =>
-                <SetupProjectPage/> }
+                <NewProjectView/> }
               />  
 
 
@@ -352,7 +358,7 @@ class App extends Component {
 
               <PrivateRoute user={this.state.user} path="/profile"  render={( ) => 
                 <MainTemplate {...this.state} pageTitle="User Profile" pageComponent={ 
-                  <UserProfilePage user={this.state.user} setUserProfileIcon={this.setUserProfileIcon.bind(this)} setErrorCode={this.setErrorCode.bind(this)}/> } />} />     
+                  <UserProfileView user={this.state.user} setUserProfileIcon={this.setUserProfileIcon.bind(this)} setErrorCode={this.setErrorCode.bind(this)}/> } />} />     
 
 
 
@@ -364,7 +370,7 @@ class App extends Component {
               <Route path="/"   render={( ) =>            
                   this.state.user && !this.state.loggingOut
                   ? <Redirect to="/projects"/>
-                  : <HomePage setUserData={this.setUserData.bind(this)}/> }  />
+                  : <HomeView setUserData={this.setUserData.bind(this)}/> }  />
               <Route                  render={( ) => 
                 <MainTemplate {...this.state} pageTitle="" pageComponent={ 
                   <Error404Page/> } />} /> />

@@ -4,6 +4,7 @@ import {Component} from 'react';
 import CategoryHierarchy from 'views/SharedComponents/CategoryHierarchy';
 
 
+
 function generateEmptyTable() {
   var n = 15;
   var arr = new Array(n).fill(0);
@@ -32,21 +33,21 @@ function generateEmptyTable() {
 }
 
 
-function getColourIndex(row, colourIndexes) {
-  var s = row.split('/');
-  var base_class = s.length > 1 ? s[0] : s;
-  return colourIndexes[base_class] + 1
-}
+// function getColourIndex(row, colourIndexes) {
+//   var s = row.split('/');
+//   var base_class = s.length > 1 ? s[0] : s;
+//   return colourIndexes[base_class] + 1
+// }
 
-function getRowName(row) {
-  var s = row.split('/');
-  var rowName = s.length > 1 ? s[s.length - 1] : s;
-  var spacing = '';
-  for(var i = 1; i < s.length; i++) {
-    spacing += " - ";
-  }
-  return spacing + rowName;
-}
+// function getRowName(row) {
+//   var s = row.split('/');
+//   var rowName = s.length > 1 ? s[s.length - 1] : s;
+//   var spacing = '';
+//   for(var i = 1; i < s.length; i++) {
+//     spacing += " - ";
+//   }
+//   return spacing + rowName;
+// }
 
 class CategoryHierarchyPage extends Component {
   constructor(props) {
@@ -62,7 +63,7 @@ class CategoryHierarchyPage extends Component {
 
         <h2>Entity Hierarchy</h2>
 
-        <div className="wrapper">
+        <div className="category-hierarchy-wrapper">
           { this.props.loading && generateEmptyTable() }
 
 
@@ -71,6 +72,7 @@ class CategoryHierarchyPage extends Component {
               visible={true}   
               draggable={false}
               displayOnly={true}  
+              tableForm={true}
           
 
           />

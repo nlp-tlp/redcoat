@@ -124,13 +124,16 @@ main.new-project {
 .form-group {
 	margin-bottom: 15px;
 	padding: 0 15px;
+	&.no-padding {
+		padding: 0;
+	}
 	box-sizing: border-box;
 
 	label {
 		display: block;
 		font-weight: bold;
 	}
-	input, textarea {
+	input, textarea, select {
 
 		box-sizing: border-box;
 		font-family: $primary-font;
@@ -143,6 +146,9 @@ main.new-project {
 			border: 2px solid $button-blue;
 			outline: none !important;
 		}
+	}
+	select {
+		padding-right: 36px;
 	}
 	textarea {
 		height: 200px;

@@ -56,7 +56,7 @@ class LettersBackground extends Component {
   }
 }
 
-class HomePageRegister extends Component {
+class HomeViewRegister extends Component {
   constructor(props) {
     super(props);
   }
@@ -97,7 +97,7 @@ class HomePageRegister extends Component {
   }
 }
 
-class HomePageLogin extends Component {
+class HomeViewLogin extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -210,7 +210,7 @@ class HomePageLogin extends Component {
   }
 }
 
-class HomePageForgotPassword extends Component {
+class HomeViewForgotPassword extends Component {
   constructor(props) {
     super(props);
   }
@@ -241,14 +241,14 @@ class HomePageForgotPassword extends Component {
   }
 }
 
-class HomePageMain extends Component {
+class HomeViewMain extends Component {
   constructor(props) {
     super(props);
   }
 
   render() {
     return (
-      <div className="homepage-main">
+      <div className="HomeView-main">
         <h1 id="h1-welcome" data-content="Redcoat">Redcoat</h1>
         <h2 id="h2-byline" data-content="Collaborative Annotation Tool">Collaborative Annotation Tool</h2>
         <div class="buttons"><Link to="/register">
@@ -270,7 +270,7 @@ class HomePageMain extends Component {
   }
 }
 
-class HomePage extends Component {
+class HomeView extends Component {
   constructor(props) {
     super(props);
   }
@@ -289,13 +289,13 @@ class HomePage extends Component {
           timeout={{ enter: 400, exit:400 }}
           classNames="fade"
           >
-            <section className="route-section homepage-route-section">
+            <section className="route-section HomeView-route-section">
              <Switch location={location}>
                  
-                <Route path="/login"    render={() => <HomePageLogin setUserData={this.props.setUserData}/> } />     
-                <Route path="/register" component={HomePageRegister} />  
-                <Route path="/forgot_password" component={HomePageForgotPassword} />  
-                <Route path="/"         component={HomePageMain} />       
+                <Route path="/login"    render={() => <HomeViewLogin setUserData={this.props.setUserData}/> } />     
+                <Route path="/register" component={HomeViewRegister} />  
+                <Route path="/forgot_password" component={HomeViewForgotPassword} />  
+                <Route path="/"         component={HomeViewMain} />       
                 
               </Switch>
             </section>
@@ -310,4 +310,4 @@ class HomePage extends Component {
 }
 
 
-export default withRouter(HomePage);
+export default withRouter(HomeView);

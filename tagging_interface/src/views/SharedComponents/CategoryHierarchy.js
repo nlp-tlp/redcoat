@@ -4,6 +4,8 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import styled from 'styled-components';
 import _ from 'underscore';
 
+const numEntityColours = 12;
+
 // A single category in the category hierarchy tree.
 class Category extends Component {
 
@@ -15,6 +17,10 @@ class Category extends Component {
     var item = this.props.item;
     var index = this.props.index;
     var children = this.props.item.children;
+    var colorId = item.colorId;
+    if(this.props.colorByIndex) {
+      colorId = index;
+    }
 
     // If this component has any children, render each of them.
     if(children) {
@@ -30,6 +36,7 @@ class Category extends Component {
                       hotkeyChain={this.props.hotkeyChain}
                       isTopLevelCategory={false}
                       applyTag={this.props.applyTag}
+                      colorByIndex={this.props.colorByIndex}
             />)) }
         </ul>
       );
@@ -58,6 +65,7 @@ class Category extends Component {
 
           {item.name}
         </span>
+        { item.description && <span className="description">{item.description}</span>}
       </span>      
     )
 
@@ -71,7 +79,7 @@ class Category extends Component {
         return (
           <Draggable key={item.id.toString()} draggableId={item.id.toString()} index={index}>
             {(provided, snapshot) => (
-              <li ref={provided.innerRef} {...provided.draggableProps} className={"draggable " + (snapshot.isDragging ? "dragging": "not-dragging") + " color-" + (item.colorId + 1)}>
+              <li ref={provided.innerRef} {...provided.draggableProps} className={"draggable " + (snapshot.isDragging ? "dragging": "not-dragging") + " color-" + ((parseInt(colorId) % numEntityColours) + 1)}>
                 <div {...provided.dragHandleProps} className="drag-handle-container"><span className="drag-handle"></span></div>
                 
                 { content }
@@ -83,7 +91,7 @@ class Category extends Component {
         )
       } else {
         return (
-          <li className={" color-" + (item.colorId + 1)}>
+          <li className={" color-" + ((parseInt(colorId) % numEntityColours) + 1)}>
             { content }
             { childItems }                
           </li>
@@ -220,7 +228,7 @@ class CategoryHierarchy extends Component {
 
 
     return (
-      <div id="category-hierarchy-tree" className={(this.props.visible ? "" : "hidden") + (this.props.displayOnly ? " display-only" : "")}>
+      <div id="category-hierarchy-tree" className={(this.props.visible ? "" : "hidden") + (this.props.displayOnly ? " display-only" : "") + (this.props.tableForm ? " table-form" : "")}>
         <DragDropContext onDragEnd={this.onDragEnd}>
           <Droppable droppableId="droppable">
             {(provided, snapshot) => (
@@ -256,4 +264,122 @@ class CategoryHierarchy extends Component {
   }
 }
 
+class ModifiableCategoryHierarchy extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      items: [],
+      openedItems: new Set(),
+    }
+  }
+
+  componentDidMount() {
+    this.setState({
+      items: this.props.items,
+    })
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    console.log(prevProps.items, this.props.items);
+    if(!_.isEqual(prevProps.items, this.props.items)) {
+      this.setState({
+        items: this.props.items,
+      }, () => {
+        console.log(this.state.items, "XX")
+      });
+    }
+  }
+
+  toggleCategory(full_name) {
+    var openedItems = this.state.openedItems;    
+
+    if(openedItems.has(full_name)) {
+      openedItems.delete(full_name);
+    } else {
+      openedItems.add(full_name);
+    }
+
+    this.setState({
+      openedItems: openedItems
+    })
+  }
+
+
+  // When the user has finished dragging a category, determine the new item order and save this order to the state.
+  onDragEnd(result) {
+    // dropped outside the list
+    if (!result.destination) {
+      return;
+    }
+
+    const items = reorder(
+      this.state.items,
+      result.source.index,
+      result.destination.index
+    );
+
+    this.setState({
+      items: items,
+    })
+    
+  }
+
+  render() {
+    var items       = this.state.items;
+    var openedItems = this.state.openedItems;
+
+    console.log('items:', items)
+    return (
+      <div id="category-hierarchy-tree" className="table-form display-only" >
+        <ul>
+          <li className="header-row"><span className="inner-container"><span className="category-name">Entity Class</span><span className="description">Description</span></span></li>
+        </ul>
+
+
+        <DragDropContext onDragEnd={this.onDragEnd.bind(this)}>
+          <Droppable droppableId="droppable">
+            {(provided, snapshot) => (
+
+              <ul className={"draggable-list reversed-stripes " + (this.props.limitHeight ? "limit-height" : "") + (snapshot.isDraggingOver ? " dragging" : "")}
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+              >
+
+
+                {items.map((item, index) => (
+                  <Category 
+                    key={index}
+                    item={item}
+                    index={index}
+                    onClick={this.toggleCategory.bind(this)}
+                    open={openedItems.has(item.name)} 
+                    openedItems={this.state.openedItems} 
+                    isTopLevelCategory={true}
+                    draggable={true}
+                    colorByIndex={true}
+                  />
+                ))}
+
+
+                {provided.placeholder}
+            </ul>
+          )}
+        </Droppable>
+        </DragDropContext>
+
+        <ul className="reversed-stripes">
+
+          <li className="new-category">
+            <span className="inner-container">
+              <span className="category-name"><i class="fa fa-plus"></i>New Category</span>
+            </span>
+
+          </li>
+        </ul>
+      </div>
+    )
+  }
+}
+
 export default CategoryHierarchy;
+export { ModifiableCategoryHierarchy };
