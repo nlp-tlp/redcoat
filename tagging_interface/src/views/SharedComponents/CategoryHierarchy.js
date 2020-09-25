@@ -6,11 +6,36 @@ import _ from 'underscore';
 
 const numEntityColours = 12;
 
+class NewCategoryButton extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <li className="new-category">
+        <span className="inner-container">
+          <span className="category-name"><i class="fa fa-plus"></i>New Category</span>
+        </span>
+      </li>
+    )
+  }
+}
+
 // A single category in the category hierarchy tree.
 class Category extends Component {
 
   constructor(props) {
     super(props);
+    this.state = {
+      isHovered: false,
+    }
+  }
+
+  setHovered(hovered) {
+    this.setState({
+      isHovered: hovered
+    })
   }
 
   render() {
@@ -18,6 +43,7 @@ class Category extends Component {
     var index = this.props.index;
     var children = this.props.item.children;
     var colorId = item.colorId;
+    var modifiable = this.props.modifiable;
     if(this.props.colorByIndex) {
       colorId = index;
     }
@@ -37,6 +63,7 @@ class Category extends Component {
                       isTopLevelCategory={false}
                       applyTag={this.props.applyTag}
                       colorByIndex={this.props.colorByIndex}
+                      modifiable={this.props.modifiable}
             />)) }
         </ul>
       );
@@ -57,15 +84,23 @@ class Category extends Component {
 
     var content = (
       <span className="inner-container">
-        
-         {children && <span className="open-button" onClick={() => this.props.onClick(item.full_name)}><i className={"fa fa-chevron-" + (this.props.open ? "up" : "down")}></i></span>}
-       
-        <span className={"category-name" + (hasHotkey ? " has-hotkey" :"") + (this.props.hotkeyChain === hotkeyStr ? " hotkey-active" : "")}
-              data-hotkey-id={hotkeyStr} onClick={this.props.applyTag ? () => this.props.applyTag(this.props.item.full_name) : null}>             
 
-          {item.name}
+        <span className="left">
+        
+         {(children || modifiable) && <span className={"open-button" + (children ? "" : " no-children-yet")} onClick={() => this.props.onClick(item.full_name)}><i className={"fa fa-chevron-" + (this.props.open ? "up" : "down")}></i></span>}
+
+        <span className={"category-name" + (hasHotkey ? " has-hotkey" :"") + (modifiable ? " modifiable" :"") + (this.props.hotkeyChain === hotkeyStr ? " hotkey-active" : "")}
+              data-hotkey-id={hotkeyStr} onClick={this.props.applyTag ? () => this.props.applyTag(this.props.item.full_name) : null}>
+            { modifiable ? <input value={item.name}/> : item.name}
         </span>
-        { item.description && <span className="description">{item.description}</span>}
+        
+        </span>
+        <span className="right">
+        { <span className={"description" + (modifiable ? " modifiable" : "")}>
+          {modifiable ? <input value={item.description || ""} placeholder="(no description)"/> : (item.description || "") }
+        </span>}
+        </span>
+        { modifiable && <span className="delete-button-container"><span className="delete-button" onMouseEnter={() => this.setHovered(true)} onMouseLeave={() => this.setHovered(false)}><i className="fa fa-trash"></i></span></span>}
       </span>      
     )
 
@@ -79,21 +114,25 @@ class Category extends Component {
         return (
           <Draggable key={item.id.toString()} draggableId={item.id.toString()} index={index}>
             {(provided, snapshot) => (
-              <li ref={provided.innerRef} {...provided.draggableProps} className={"draggable " + (snapshot.isDragging ? "dragging": "not-dragging") + " color-" + ((parseInt(colorId) % numEntityColours) + 1)}>
+              <li  ref={provided.innerRef} {...provided.draggableProps} className={"draggable " + (snapshot.isDragging ? "dragging": "not-dragging") + " color-" + ((parseInt(colorId) % numEntityColours) + 1) + (this.state.isHovered ? " delete-hover" : "")}>
                 <div {...provided.dragHandleProps} className="drag-handle-container"><span className="drag-handle"></span></div>
                 
                 { content }
                 { childItems }
+
+
+                { this.props.open && this.props.modifiable && <ul><NewCategoryButton/></ul>}
                 
-              </li>
+              </li>              
             )}
           </Draggable>
         )
       } else {
         return (
-          <li className={" color-" + ((parseInt(colorId) % numEntityColours) + 1)}>
+          <li className={" color-" + ((parseInt(colorId) % numEntityColours) + 1) + (this.state.isHovered ? " delete-hover" : "")}>
             { content }
-            { childItems }                
+            { childItems }  
+            { this.props.open && this.props.modifiable && <ul><NewCategoryButton/></ul>}              
           </li>
         )
       }
@@ -101,9 +140,10 @@ class Category extends Component {
 
     } else {
       return (
-        <li>
+        <li className={(this.state.isHovered ? " delete-hover" : "")}>
           { content }
           { childItems }
+          { this.props.open && this.props.modifiable && <ul><NewCategoryButton/></ul>}
         </li>
       )
     }
@@ -332,7 +372,7 @@ class ModifiableCategoryHierarchy extends Component {
     return (
       <div id="category-hierarchy-tree" className="table-form display-only" >
         <ul>
-          <li className="header-row"><span className="inner-container"><span className="category-name">Entity Class</span><span className="description">Description</span></span></li>
+          <li className="header-row"><span className="inner-container"><span className="left"><span className="category-name">Entity Class</span></span><span className="right"><span className="description">Description</span></span><span className="delete-button-container"><span className="delete-button"></span></span></span></li>
         </ul>
 
 
@@ -357,6 +397,7 @@ class ModifiableCategoryHierarchy extends Component {
                     isTopLevelCategory={true}
                     draggable={true}
                     colorByIndex={true}
+                    modifiable={true}
                   />
                 ))}
 
@@ -369,13 +410,10 @@ class ModifiableCategoryHierarchy extends Component {
 
         <ul className="reversed-stripes">
 
-          <li className="new-category">
-            <span className="inner-container">
-              <span className="category-name"><i class="fa fa-plus"></i>New Category</span>
-            </span>
-
-          </li>
+          <NewCategoryButton/>
         </ul>
+
+
       </div>
     )
   }

@@ -13,8 +13,8 @@
 
 }
 
-#category-hierarchy-tree.display-only ul li span.category-name,
-#category-hierarchy-tree.display-only ul li span.description {
+#category-hierarchy-tree.display-only ul li .category-name,
+#category-hierarchy-tree.display-only ul li .description {
 	cursor: auto;
 }
 
@@ -29,18 +29,55 @@
 
 #category-hierarchy-tree.table-form ul li {
 	
-	
+	&.delete-hover {
+		background: lighten($primary-red, 30) !important;
+		span.inner-container {
+			background: none;
+		}
+		
+	}
+
+	&:hover span.inner-container .delete-button-container {
+		opacity: 1;
+
+	}
 	span.inner-container {
-		span.category-name, span.description {
-		padding-top: 10px;
-		padding-bottom: 10px;
+
+		.category-name, .description {
+			padding-top: 8px;
+			padding-bottom: 8px;
+		&.modifiable {
+			padding-top: 4px;
+			padding-bottom: 4px;
+		}
 		
 		}
-		span.category-name {
+		span.left {
 			width: 30%;
 		}
-		span.description {
+		span.right {
 			width: 70%;
+		}
+		span.delete-button-container {
+
+			width: 40px;
+			display: flex;
+			align-items: center;
+			opacity: 0.2;
+			span.delete-button {
+				cursor: pointer;
+				border-radius: 4px;
+				padding: 0 8px;
+
+				&:hover {
+					background: $primary-red;
+					
+					color: white;
+				}
+				&:active {
+					transform: translate(0, 1px);
+				}
+			}
 		}
 	}
 	span.open-button {
@@ -97,7 +134,7 @@
 		margin: 0;
 		width: 100%;
 		padding: 0;
-		padding-left: 10px;
+		padding-left: 30px;
 		
 		&.limit-height {
 			max-height: 600px;
@@ -105,26 +142,46 @@
 		}
 
 		li {
+
 			&.new-category {
 				box-sizing: border-box;
 				border: 2px solid rgba(0, 0, 0, 0);
-				&:hover {
-					color: #111;
-					background: rgba(255, 255, 255, 0.9);
-					background-blend-mode: multiply;
-					background-image: url($base_url + 'images/stripes-light.png') !important;
-					animation: animatedBackground 20s linear infinite !important;
-					border: 2px solid rgba($button-blue, 0.35);
-				}
-				
+				padding-left: 38px;
+				display: flex;
+				align-items: center;
+				padding-top: 4px;
+				padding-bottom: 4px;
 				user-select: none;
-				cursor: pointer !important;
+				.category-name {
+					background: $button-blue;
+					color: white;
+					border-radius: 4px;
+					font-size: 14px;
+					padding: 0 20px;
+					&:hover {
+						background: lighten($button-blue, 7);
+					}
+					&:active {
+						transform: translate(0px, 1px);
+					}
+				}
+				// &:hover {
+				// 	color: #111;
+					
+				// 	background-blend-mode: multiply;
+				// 	background-image: url($base_url + 'images/stripes-light.png') !important;
+				// 	animation: animatedBackground 20s linear infinite !important;
+				// 	border: 2px solid rgba($button-blue, 0.35);
+				// }
+				
+				//user-select: none;
+				//cursor: pointer !important;
 				color: #555;
 				i {
 					margin-right: 15px;
 
 				}
-				span.category-name {
+				.category-name {
 					width: 100% !important;
 					text-align: center;	
 					cursor: pointer !important;				
@@ -145,7 +202,7 @@
 			span.inner-container {
 				display: flex;
 
-				span.category-name {
+				.category-name {
 					width: 100%;
 				}
 			}
@@ -162,19 +219,37 @@
 				&:active {
 					transform: translate(0px, 2px);
 				}
+				&.no-children-yet {
+					color: rgba(0, 0, 0, 0.15);
+				}
 			}
 
 			
+			span.left {
+				width: 100%;
+				display: flex;
+
+			}
 
 
-			span.category-name, span.description {
+			.category-name, .description {
 				box-sizing: border-box;
 				cursor: pointer;
-				width: auto;
+				width: 100%;
 				padding: 4px 6px;
 				padding-left: 12px;
+				//margin-left: 6px;
 				display: block;
 				position: relative;
+				//border: 1px solid rgba(0, 0, 0, 0);
+				height: 100%;
+				background: none;
+				font-size: 20px;
+				&.modifiable {
+					padding-top: 0;
+					padding-bottom: 0;
+				}
+
 				&.has-hotkey:after{
 					content: attr(data-hotkey-id);
 					position: absolute;
@@ -189,14 +264,46 @@
 					text-align: center;
 					//transition: background-position 0s;
 					//background-size: 100% 200%;
+
 					
 
 				}
-				
+
+
+				input {
+					padding: 2px 8px;
+					font-size: 20px;
+					cursor: text;
+					border: 2px solid rgba(0, 0, 0, 0);
+					border-radius: 3px;
+					display: block;
+					background: none;
+					width: 100%;
+					box-sizing: border-box;
+					color: rgba(0, 0, 0, 0.85);
+					&::placeholder {
+						color: rgba(0, 0, 0, 0);
+					}
+
+
+				}
+				input:hover, input:focus {
+					border: 2px solid #ddd;
+					outline: none !important;
+					background: white;
+					&::placeholder {
+						color: rgba(0, 0, 0, 0.35);
+					}
+
+				}
+				input:focus {
+					border: 2px solid $button-blue;
+				}
 
 
 				
 			}
+		
 			
 			
 			span.drag-handle {
@@ -243,8 +350,8 @@
 		}
 
 	}
-	> ul > li > ul > li span.category-name {
-		padding-left: 60px;
+	> ul > li > ul > li .left {
+		padding-left: 30px;
 	}
 	> ul > li > span.inner-container {
 		padding-left: 15px;

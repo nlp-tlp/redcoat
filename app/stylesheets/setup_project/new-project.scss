@@ -65,11 +65,23 @@ main.new-project {
 	.container {
 		display: flex;
 		justify-content: space-between;
+		div.buttons-right {
+			display: flex;
+			justify-content: flex-end;
+			button:first-child {
+				margin-right: 20px;
+			}
+			button:last-child {
+				margin-right: 0;
+			}
+
+		}
 	}
 	button {
 		font-size: 16px;
 		margin-bottom: 0;
 	}
+
 }
 
 

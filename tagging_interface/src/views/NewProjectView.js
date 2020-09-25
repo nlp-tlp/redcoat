@@ -190,8 +190,13 @@ class NewProjectView extends Component {
   }
 
   submitFormPage() {
+    // do something
+  }
+
+  nextFormPage() {
     this.gotoNextFormPage();
   }
+
 
   gotoPrevFormPage() {
     if(this.state.currentFormPageIndex === 0) return;
@@ -293,8 +298,14 @@ class NewProjectView extends Component {
             
 
             { lastPage && <button onClick={() => this.submitFormPage()} className="annotate-button new-project-button">Create project</button> }
+
+
             { !lastPage && 
-            <button onClick={() => this.submitFormPage()} className="annotate-button new-project-button">Save & Next<i className="fa fa-chevron-right after"></i></button> }
+            <div className="buttons-right">
+              <button onClick={() => this.submitFormPage()} className="annotate-button new-project-button"><i className="fa fa-save"></i>Save</button>
+              <button onClick={() => this.nextFormPage()}  className="annotate-button new-project-button grey-button">Next<i className="fa fa-chevron-right after"></i></button>
+
+              </div> }
           </div>
         </div>
        
