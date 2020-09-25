@@ -1,7 +1,7 @@
 import React from 'react';
 import {Component} from 'react';
 
-import CategoryHierarchy from '../components/CategoryHierarchy';
+import CategoryHierarchy from 'views/SharedComponents/CategoryHierarchy';
 
 
 function generateEmptyTable() {

@@ -5,20 +5,20 @@ import { Redirect, Link, BrowserRouter, Route, Switch, withRouter } from 'react-
 import { TransitionGroup, CSSTransition } from "react-transition-group";
 import {Bar, Line, HorizontalBar } from 'react-chartjs-2';
 
-import _fetch from '../functions/_fetch'
+import _fetch from 'functions/_fetch'
 
 import { defaults } from 'react-chartjs-2'
 
-import { Comment } from '../components/Comment';
+import { Comment } from 'views/SharedComponents/Comment';
 
-import CategoryHierarchyPage from '../pages/CategoryHierarchyPage';
-import InvitationsPage from '../pages/InvitationsPage';
+import CategoryHierarchyPage from 'views/ProjectView/CategoryHierarchyPage';
+import InvitationsPage from 'views/ProjectView/InvitationsPage';
 
-import Error401Redirect from '../pages/Error401Redirect';
-import Error403Page from '../pages/Error403Page';
-import Error404Page from '../pages/Error404Page';
+import Error401Redirect from 'views/Errors/Error401Redirect';
+import Error403Page from 'views/Errors/Error403Page';
+import Error404Page from 'views/Errors/Error404Page';
 
-import CurationInterface from '../pages/CurationInterface';
+import CurationInterface from 'views/ProjectView/CurationInterface';
 
 import _ from 'underscore';
 const queryString = require('query-string');

@@ -2,18 +2,18 @@ import React from 'react';
 import {Component} from 'react';
 import _ from 'underscore';
 
-import ControlBar from '../components/ControlBar';
+import ControlBar from 'views/SharedComponents/ControlBar';
 
-import getCookie from '../functions/getCookie';
+import getCookie from 'functions/getCookie';
 
-import initAnnotationsArray from '../functions/tagging_interface/initAnnotationsArray';
-import Annotation from '../functions/tagging_interface/Annotation';
-import {Comment, CommentInput} from '../components/Comment';
-import ProfileIcon from '../components/ProfileIcon';
+import initAnnotationsArray from 'views/TaggingInterfaceView/initAnnotationsArray';
+import Annotation from 'views/TaggingInterfaceView/Annotation';
+import {Comment, CommentInput} from 'views/SharedComponents/Comment';
+import ProfileIcon from 'views/SharedComponents/ProfileIcon';
 
-import {Word, Sentence} from '../components/tagging_interface/documentComponents';
+import {Word, Sentence} from 'views/TaggingInterfaceView/documentComponents';
 
-import formatDate  from '../functions/formatDate';
+import formatDate  from 'functions/formatDate';
 
 
 

@@ -1,10 +1,10 @@
 import React from 'react';
 import {Component} from 'react';
 import { Link } from 'react-router-dom'
-import formatDate  from '../functions/formatDate';
+import formatDate  from 'functions/formatDate';
 import { PieChart } from 'react-minimal-pie-chart';
 
-import _fetch from '../functions/_fetch';
+import _fetch from 'functions/_fetch';
 
 
 class ProjectsTable extends Component {
@@ -22,7 +22,7 @@ class ProjectsTable extends Component {
   }
 }
 
-class ProjectListPage extends Component {
+class ProjectListView extends Component {
   constructor(props) {
     super(props);
 
@@ -178,4 +178,4 @@ class ProjectListPage extends Component {
 }
 
 
-export default ProjectListPage;
+export default ProjectListView;

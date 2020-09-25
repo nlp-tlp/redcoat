@@ -4,7 +4,7 @@ import { Redirect, Link, BrowserRouter, Route, Switch, withRouter } from 'react-
 import Modal from 'react-modal';
 
 import { TransitionGroup, CSSTransition } from "react-transition-group";
-import Error404Page from '../pages/Error404Page';
+import Error404Page from 'views/Errors/Error404Page';
 
 Modal.setAppElement('body')
 
@@ -17,7 +17,7 @@ class SetupProjectFormHelpIcon extends Component {
 
   render() {
     return (
-      <span className="form-help" onClick={this.props.onClick} ><i className="fa fa-info-circle fa-xxs"></i></span>
+      <span className="form-help" onClick={this.props.onClick} ><i className="fa fa-info-circle fa-xxs"></i><span className="info">Info</span></span>
     )
   }
 }
@@ -51,8 +51,13 @@ class SetupProjectDetails extends Component {
 
     var dataHelp = (<div>
         <h2>Data</h2>
-        <p>Please upload your data using the form below.</p>
-        <p>The dataset must be saved as a .txt file. Each token within your data must be separated by a space, and each document must be on a new line.</p>
+        <p>Please upload your data using the form. The data may be in one of two formats: </p>
+        <p>
+          <ul>
+            <li><b>Raw data</b>: The dataset must be saved as a .txt file. Each token within your data must be separated by a space, and each document must be on a new line.</li>
+            <li><b>Already labelled data</b>: The dataset must be saved as a .json file, in the same format as Redcoat annotation files.</li>
+          </ul>
+        </p>
       </div>
     )
 
@@ -97,10 +102,19 @@ class SetupProjectEntityHierarchy extends Component {
   }
 
   render() {
+
+    var help = (<div>
+        <h2>Entity Hierarchy</h2>
+        <p>Please define your entity hierarchy.</p>
+        <p>You may create new categories by entering them in the form below. To specify a parent category, place a space before the child category. The categories are visualised in the Category Hierarchy, which you may also use to create your hierarchy if you prefer. You may also select from a list of presets, such as the standard 4-class Named Entity Recognition model.</p>
+      </div>
+    )
+
+
     return (
       <div>
-        <h2>Entity Hierarchy</h2>
-        <p>Please determine the entity categories in your data using the form below.</p>
+        <h2>Entity Hierarchy <SetupProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(help)} /></h2>
+        <div style={{'height': '800px', 'background': 'rgba(0, 0, 0, 0.2)'}}></div>
       </div>
     )
   }
@@ -112,9 +126,17 @@ class SetupProjectAutomaticTagging extends Component {
   }
 
   render() {
+
+    var help = (<div>
+        <h2>Automatic Tagging</h2>
+        <p>Redcoat can automatically annotate terms according to a dictionary, helping to save annotation time. These annotations can be adjusted by your annotators when necessary.</p>
+      </div>
+    )
+
+
     return (
       <div>
-        <h2>Automatic Tagging</h2>
+        <h2>Automatic Tagging <SetupProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(help)} /></h2>
         <p>Redcoat can automatically annotate terms according to a dictionary, helping to save annotation time. These annotations can be adjusted by your annotators when necessary.</p>
       </div>
     )
@@ -128,9 +150,16 @@ class SetupProjectAnnotators extends Component {
   }
 
   render() {
+    var help = (<div>
+        <h2>Annotators</h2>
+        <p>Please specify the annotators of this project.</p>
+      </div>
+    )
+
+
     return (
       <div>
-        <h2>Annotators</h2>
+        <h2>Annotators <SetupProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(help)} /></h2>
         <p></p>
       </div>
     )
@@ -144,9 +173,22 @@ class SetupProjectProjectOptions extends Component {
   }
 
   render() {
+    var help = (<div>
+        <h2>Project Options</h2>
+        <p>Please specify the options of this project.
+          <ul>
+            <li><b>Overlap</b>: The number of times each document will be annotated.</li>
+            <li><b>Hierarchy permissions</b>: Whether your users can modify the hierarchy during annotation.</li>
+          </ul>
+
+        </p>
+      </div>
+    )
+
+
     return (
       <div>
-        <h2>Project Options</h2>
+        <h2>Project Options <SetupProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(help)} /></h2>
         <p></p>
       </div>
     )
@@ -320,15 +362,25 @@ class SetupProjectPage extends Component {
                <Switch location={location}>
                    
                   <Route path="/projects/new/entity-hierarchy" render={() =>
-                    <SetupProjectEntityHierarchy loading={this.state.loading} data={this.state.data.entity_hierarchy} />} /> 
+                    <SetupProjectEntityHierarchy loading={this.state.loading}
+                      data={this.state.data.entity_hierarchy}
+                      toggleFormHelp={this.toggleFormHelp.bind(this)} />} /> 
                   <Route path="/projects/new/automatic-tagging" render={() =>
-                    <SetupProjectAutomaticTagging loading={this.state.loading} data={this.state.data.automatic_tagging} />} /> 
+                    <SetupProjectAutomaticTagging loading={this.state.loading}
+                      data={this.state.data.automatic_tagging}
+                      toggleFormHelp={this.toggleFormHelp.bind(this)} />} /> 
                   <Route path="/projects/new/annotators" render={() =>
-                    <SetupProjectAnnotators loading={this.state.loading} data={this.state.data.annotators} />} />
+                    <SetupProjectAnnotators loading={this.state.loading}
+                      data={this.state.data.annotators}
+                      toggleFormHelp={this.toggleFormHelp.bind(this)} />} />
                   <Route path="/projects/new/project-options" render={() =>
-                    <SetupProjectProjectOptions loading={this.state.loading} data={this.state.data.project_options}  />} />
+                    <SetupProjectProjectOptions loading={this.state.loading}
+                      data={this.state.data.project_options}
+                      toggleFormHelp={this.toggleFormHelp.bind(this)} />} />
                   <Route exact path="/projects/new" render={() =>
-                    <SetupProjectDetails loading={this.state.loading} data={this.state.data.project_details} toggleFormHelp={this.toggleFormHelp.bind(this)} />} /> 
+                    <SetupProjectDetails loading={this.state.loading}
+                      data={this.state.data.project_details}
+                      toggleFormHelp={this.toggleFormHelp.bind(this)} />} /> 
                   <Route render={() => <Error404Page />} />   
                 </Switch>
               </section>

@@ -9,21 +9,20 @@ import getCookie from './functions/getCookie';
 
 import ScrollToTop from './functions/ScrollToTop';
 
-import Container from './Container';
-import Navbar from './components/Navbar';
+import Navbar from './views/SharedComponents/Navbar';
 
-import TaggingInterface from './pages/TaggingInterface';
-import FeaturesPage from './pages/FeaturesPage';
-import ProjectListPage from './pages/ProjectListPage';
-import ProjectView from './pages/ProjectView';
-import HomePage from './pages/HomePage';
-import Error401Redirect from './pages/Error401Redirect';
-import Error404Page from './pages/Error404Page';
-import Error403Page from './pages/Error403Page';
-import Error500Page from './pages/Error500Page';
-import ErrorClearer from './components/ErrorClearer';
-import SetupProjectPage from './pages/SetupProjectPage';
-import UserProfilePage from './pages/UserProfilePage';
+import TaggingInterfaceView from './views/TaggingInterfaceView';
+import FeaturesPage from './views/FeaturesPage';
+import ProjectListView from './views/ProjectListView';
+import ProjectView from './views/ProjectView';
+import HomePage from './views/HomePage';
+import Error401Redirect from './views/Errors/Error401Redirect';
+import Error404Page from './views/Errors/Error404Page';
+import Error403Page from './views/Errors/Error403Page';
+import Error500Page from './views/Errors/Error500Page';
+import ErrorClearer from './views/SharedComponents/ErrorClearer';
+import SetupProjectPage from './views/SetupProjectPage';
+import UserProfilePage from './views/UserProfilePage';
 
 import redcoatMan from './images/redcoat-1-grey.png'
 
@@ -305,7 +304,7 @@ class App extends Component {
               {!this.state.errorCode && <Switch>
               <PrivateRoute user={this.state.user} path="/projects/:id/tagging" render={(p) => 
                 <TaggingInterfaceTemplate {...this.state} pageComponent={
-                  <TaggingInterface 
+                  <TaggingInterfaceView 
                     projectTitle={this.state.projectTitle}
                     projectAuthor={this.state.projectAuthor}
                     setProject={this.setProject.bind(this)}
@@ -346,7 +345,7 @@ class App extends Component {
               <PrivateRoute user={this.state.user} path="/projects" render={ () =>
                 <ProjectListTemplate {...this.state} pageTitle="Projects"
          pageComponent={
-                  <ProjectListPage setProject={this.setProject.bind(this)} setErrorCode={this.setErrorCode.bind(this)}/> } />} />    
+                  <ProjectListView setProject={this.setProject.bind(this)} setErrorCode={this.setErrorCode.bind(this)}/> } />} />    
               
 
               

@@ -3,7 +3,7 @@ import {Component} from "react";
 import { TwitterPicker } from 'react-color';
 
 import { Link } from "react-router-dom";
-import getCookie from '../functions/getCookie'
+import getCookie from 'functions/getCookie'
 import _ from 'underscore';
 
 // A list of icon options from FontAwesome that the user can choose from

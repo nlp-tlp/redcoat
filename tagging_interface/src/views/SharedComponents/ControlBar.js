@@ -1,7 +1,7 @@
 import React from 'react';
 import {Component} from 'react';
 import $ from 'jquery';
-import formatDate  from '../functions/formatDate';
+import formatDate  from 'functions/formatDate';
 
 // The humble save button that appears at the top of the page.
 class SaveButton extends Component {

@@ -1,7 +1,7 @@
 import React from 'react';
 import {Component} from 'react';
 
-import formatDate from '../functions/formatDate'
+import formatDate from 'functions/formatDate'
 import { Link } from 'react-router-dom'
 
 // text={comment.text} date={comment.created_at} author={comment.author} document={comment.document_string}

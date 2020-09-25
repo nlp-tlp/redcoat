@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, Switch, Route, withRouter } from "react-router-dom";
 import {Component} from 'react';
-import logo from '../favicon.png'
+import logo from 'favicon.png'
 
 import ProfileIcon from './ProfileIcon';
 

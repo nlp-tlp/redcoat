@@ -1,7 +1,7 @@
 import React from 'react';
 import {Component} from 'react';
 
-import ProfileIcon from '../components/ProfileIcon';
+import ProfileIcon from 'views/SharedComponents/ProfileIcon';
 
 function generateEmptyTable() {
   var n = 15;

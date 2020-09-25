@@ -1,6 +1,5 @@
 import React from 'react';
 
-import redcoatMan from '../redcoat-1-threshold.png';
 import {Component} from 'react';
 import $ from 'jquery';
 import { findDOMNode } from 'react-dom';
@@ -14,20 +13,20 @@ import html2canvas from 'html2canvas';
 import { saveAs } from 'file-saver';
 import domtoimage from 'dom-to-image';
 
-import CategoryHierarchy from '../components/CategoryHierarchy';
-import {Word, Sentence} from '../components/tagging_interface/documentComponents';
+import CategoryHierarchy from 'views/SharedComponents/CategoryHierarchy';
+import {Word, Sentence} from 'views/TaggingInterfaceView/documentComponents';
 
-import {Comment, CommentInput} from '../components/Comment';
-import ControlBar from '../components/ControlBar';
+import {Comment, CommentInput} from '../views/SharedComponents/Comment';
+import ControlBar from 'views/SharedComponents/ControlBar';
 
-import getCookie from '../functions/getCookie';
+import getCookie from 'functions/getCookie';
 
-import formatDate  from '../functions/formatDate';
+import formatDate  from 'functions/formatDate';
 
-import initAnnotationsArray from '../functions/tagging_interface/initAnnotationsArray';
-import Annotation from '../functions/tagging_interface/Annotation';
-import Error403Page from '../pages/Error403Page';
-import Error404Page from '../pages/Error404Page';
+import initAnnotationsArray from 'views/TaggingInterfaceView/initAnnotationsArray';
+import Annotation from 'views/TaggingInterfaceView/Annotation';
+import Error403Page from 'views/Errors/Error403Page';
+import Error404Page from 'views/Errors/Error404Page';
 
 
 const BASE_URL = "/"
@@ -483,7 +482,7 @@ class WikipediaSummary extends Component {
 }
 
 // The TaggingInterface class. Contains the vast majority of the logic for the interface.
-class TaggingInterface extends Component {
+class TaggingInterfaceView extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -1728,4 +1727,4 @@ class TaggingCompletePage extends Component {
   }
 }
 
-export default TaggingInterface
+export default TaggingInterfaceView
