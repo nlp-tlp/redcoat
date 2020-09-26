@@ -34,9 +34,15 @@ class NewProjectEntityHierarchy extends Component {
   }
 
   setModified() {
-    var modifiedPresetName = hierarchyPresets[this.state.selectedPreset]['name'];
+    if(this.state.selectedPreset === "None") {
+      var modifiedPresetName = "Custom"
+    } else {
+      var modifiedPresetName = hierarchyPresets[this.state.selectedPreset]['name'];
+      modifiedPresetName += " (modified)";
+    }
+    
 
-    modifiedPresetName += " (modified)";
+    
 
 
     this.setState({

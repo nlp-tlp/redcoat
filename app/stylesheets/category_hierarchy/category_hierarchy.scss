@@ -156,6 +156,10 @@
 				padding-bottom: 4px;
 				user-select: none;
 				.category-name {
+					&.disabled {
+						pointer-events: none;
+						opacity: 0.2;
+					}
 					background: $button-blue;
 					color: white;
 					border-radius: 4px;
@@ -285,7 +289,18 @@
 					&::placeholder {
 						color: rgba(0, 0, 0, 0);
 					}
-
+					&.empty {
+						border: 2px solid $primary-red;
+						background: rgba($primary-red, 0.1);
+						&:hover {
+							border: 2px solid lighten($primary-red, 10);
+							background: rgba($primary-red, 0.1);
+						}
+						&:focus {
+							background: white;
+							border: 2px solid $button-blue;
+						}
+					}
 
 				}
 				input:hover, input:focus {
@@ -353,9 +368,11 @@
 	}
 	> ul > li > ul > li .left {
 		padding-left: 30px;
+		box-sizing: border-box;
 	}
 	> ul > li > span.inner-container {
 		padding-left: 15px;
+		box-sizing: border-box;
 	}
 
 }
