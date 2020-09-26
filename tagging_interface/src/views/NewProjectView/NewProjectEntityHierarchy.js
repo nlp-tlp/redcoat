@@ -17,40 +17,50 @@ class NewProjectEntityHierarchy extends Component {
     this.state = {
       entity_hierarchy: [],
       selectedPreset: "None",
-    }
+      hierarchyModified: false,
+      hierarchyModifiedPreset: null,
 
-    console.log(this.hierarchy_presets)
+    }
 
     this.selectLabelRef = React.createRef();
     this.selectRef = React.createRef();
   }
 
   componentDidMount() {
-    console.log("mounted")
     this.setState({
       entity_hierarchy: this.props.entity_hierarchy,
       selectedPreset: "None",
     })
   }
 
+  setModified() {
+    var modifiedPresetName = hierarchyPresets[this.state.selectedPreset]['name'];
+
+    modifiedPresetName += " (modified)";
+
+
+    this.setState({
+      hierarchyModified: true,
+      hierarchyModifiedPreset: modifiedPresetName,
+    })
+  }
+
   changePreset(e) {
     var value = e.target.value;
     var hierarchy;
-    console.log("VALUE:", value)
     if(value === "None") {
       hierarchy = [];
     } else {
       var index = parseInt(value);
       var hierarchy = txt2json(slash2txt(hierarchyPresets[index]['entities']), hierarchyPresets[index]['entities'], hierarchyPresets[index]['descriptions']).children;
     }
-    console.log(hierarchy)
     this.selectRef.current.blur();
 
     this.setState({
       entity_hierarchy: hierarchy,
       selectedPreset: value,
+      hierarchyModified: false,
     }, () => {
-      console.log(this.state.entity_hierarchy, "<<");
       window.scrollTo({
         top: this.selectLabelRef.current.offsetTop + 140,
         left: 0,
@@ -68,17 +78,17 @@ class NewProjectEntityHierarchy extends Component {
       </div>
     )
 
-    console.log(this.state.selectedPreset);
-    console.log(this.state.entity_hierarchy);
     return (
       <div>
         <h2>Entity Hierarchy <NewProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(help)} /></h2>
 
         <div className="form-group no-padding">
           <label ref={this.selectLabelRef} >Preset</label>
-          <select onChange={(e) => this.changePreset(e)} ref={this.selectRef} value={this.state.selectedPreset}  >
+          <select onChange={(e) => this.changePreset(e)} ref={this.selectRef} value={this.state.hierarchyModified ? this.state.selectedPreset + "_" : this.state.selectedPreset}  >
             <option value="None">None</option>
             { hierarchyPresets.map((preset, index) => <option value={index} index={index}>{preset['name'] + " (" + preset['entities'].length + " entity classes)"} </option> ) }
+          
+            { this.state.hierarchyModified && <option value={this.state.selectedPreset + "_"}>{this.state.hierarchyModifiedPreset}</option> }
           </select>
         </div>
 
@@ -89,6 +99,7 @@ class NewProjectEntityHierarchy extends Component {
               draggable={false}
               displayOnly={true}
               limitHeight={true}
+              setModified={this.setModified.bind(this)}
         />
         </div>
 

@@ -44,6 +44,9 @@ class Category extends Component {
     var children = this.props.item.children;
     var colorId = item.colorId;
     var modifiable = this.props.modifiable;
+
+    var path = this.props.path; 
+
     if(this.props.colorByIndex) {
       colorId = index;
     }
@@ -64,6 +67,10 @@ class Category extends Component {
                       applyTag={this.props.applyTag}
                       colorByIndex={this.props.colorByIndex}
                       modifiable={this.props.modifiable}
+                      itemNameChange={this.props.itemNameChange}
+                      itemDescChange={this.props.itemDescChange}
+                      deleteItem={this.props.deleteItem}
+                      path={this.props.path.concat([index])}
             />)) }
         </ul>
       );
@@ -91,16 +98,16 @@ class Category extends Component {
 
         <span className={"category-name" + (hasHotkey ? " has-hotkey" :"") + (modifiable ? " modifiable" :"") + (this.props.hotkeyChain === hotkeyStr ? " hotkey-active" : "")}
               data-hotkey-id={hotkeyStr} onClick={this.props.applyTag ? () => this.props.applyTag(this.props.item.full_name) : null}>
-            { modifiable ? <input value={item.name}/> : item.name}
+            { modifiable ? <input value={item.name} onChange={(e) => this.props.itemNameChange(e, path)} /> : item.name}
         </span>
         
         </span>
         <span className="right">
         { <span className={"description" + (modifiable ? " modifiable" : "")}>
-          {modifiable ? <input value={item.description || ""} placeholder="(no description)"/> : (item.description || "") }
+          {modifiable ? <input value={item.description || ""} onChange={(e) => this.props.itemDescChange(e, path)} placeholder="(no description)"/> : (item.description || "") }
         </span>}
         </span>
-        { modifiable && <span className="delete-button-container"><span className="delete-button" onMouseEnter={() => this.setHovered(true)} onMouseLeave={() => this.setHovered(false)}><i className="fa fa-trash"></i></span></span>}
+        { modifiable && <span className="delete-button-container"><span className="delete-button" onClick={() => this.props.deleteItem(path)} onMouseEnter={() => this.setHovered(true)} onMouseLeave={() => this.setHovered(false)}><i className="fa fa-trash"></i></span></span>}
       </span>      
     )
 
@@ -292,6 +299,8 @@ class CategoryHierarchy extends Component {
                             isTopLevelCategory={true}
                             applyTag={this.props.applyTag}
                             draggable={this.props.draggable}
+                            itemNameChange={this.props.itemNameChange}
+                            path={[index]}
                   />
                 ))}
                 {provided.placeholder}
@@ -309,7 +318,7 @@ class ModifiableCategoryHierarchy extends Component {
     super(props);
     this.state = {
       items: [],
-      openedItems: new Set(),
+      openedItems: new Set(),      
     }
   }
 
@@ -320,12 +329,10 @@ class ModifiableCategoryHierarchy extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    console.log(prevProps.items, this.props.items);
+    //console.log(prevProps.items, this.props.items);
     if(!_.isEqual(prevProps.items, this.props.items)) {
       this.setState({
         items: this.props.items,
-      }, () => {
-        console.log(this.state.items, "XX")
       });
     }
   }
@@ -364,11 +371,102 @@ class ModifiableCategoryHierarchy extends Component {
     
   }
 
+
+  // Change the name of an item.
+  // This is possible via the path, which is the path of indexes of the item name to be changed e.g. 
+  // [0, 1] means the first item in the tree, and then the second item inside that one.
+  itemNameChange(e, path) {
+
+    var newName = e.target.value;
+
+    var items = this.state.items;
+    var currentItems = items;
+    for(var i = 0; i < path.length - 1; i++) {
+      var index = path[i];
+      currentItems = currentItems[index].children;
+    }
+    
+    // Update the item name
+    var item = currentItems[path[path.length - 1]];    
+    item.name = newName;
+
+    // If this item is open, remove it from the opened items set and add the updated name later.
+    var open = false;
+    var openedItems = this.state.openedItems;
+    if(this.state.openedItems.has(item.full_name)) {
+      open = true;
+      openedItems.delete(item.full_name);      
+    }
+    
+    // Update the full name as well
+    var full_name_s = item.full_name.split('/');
+    full_name_s[full_name_s.length - 1] = newName;
+    item.full_name = full_name_s.join('/');
+
+    if(open) openedItems.add(item.full_name);
+
+    this.props.setModified();
+
+    this.setState({
+      items: items,
+      openedItems: openedItems,
+    });
+  }
+
+  // Change the item description of the corresponding item, same as above.
+  itemDescChange(e, path) {
+    var newDesc = e.target.value;
+
+    var items = this.state.items;
+    var currentItems = items;
+    for(var i = 0; i < path.length - 1; i++) {
+      var index = path[i];
+      currentItems = currentItems[index].children;
+    }
+    
+    // Update the item name
+    var item = currentItems[path[path.length - 1]];    
+    item.description = newDesc;
+
+    this.props.setModified();
+
+    this.setState({
+      items: items,
+    })
+
+  }
+
+  // Delete the item at the specified path.
+  deleteItem(path) {
+
+    var items = this.state.items;
+    var currentItems = items;
+    for(var i = 0; i < path.length - 1; i++) {
+      var index = path[i];
+      currentItems = currentItems[index].children;
+    }
+
+    // Remove the item from openedItems
+    var openedItems = this.state.openedItems;    
+    var item = currentItems[path[path.length - 1]];
+    openedItems.delete(item.full_name);
+
+    currentItems.splice(path[path.length - 1], 1);
+
+    this.props.setModified();
+
+    this.setState({
+      items: items,
+      openedItems: openedItems,
+    })
+    
+  }
+
+
   render() {
     var items       = this.state.items;
     var openedItems = this.state.openedItems;
 
-    console.log('items:', items)
     return (
       <div id="category-hierarchy-tree" className="table-form display-only" >
         <ul>
@@ -398,6 +496,11 @@ class ModifiableCategoryHierarchy extends Component {
                     draggable={true}
                     colorByIndex={true}
                     modifiable={true}
+                    itemNameChange={this.itemNameChange.bind(this)}
+                    itemDescChange={this.itemDescChange.bind(this)}
+                    deleteItem={this.deleteItem.bind(this)}
+
+                    path={[index]}
                   />
                 ))}
 

@@ -121,6 +121,9 @@
 #category-hierarchy-tree {
 	width: 100%;
 	box-sizing: border-box;
+	&:not(.display-only) ul li:hover span.inner-container {
+				color: rgba(0, 0, 0, 0.95);
+	}
 	> ul:not(.dragging) span.open-button:hover {
 		background: white;
 		border: 2px solid rgba(0, 0, 0, 0.15);
@@ -196,9 +199,7 @@
 			user-select: none;
 			color: #666;
 			position: relative;
-			&:hover span.inner-container {
-				color: #111;
-			}
+
 			span.inner-container {
 				display: flex;
 
@@ -271,7 +272,7 @@
 
 
 				input {
-					padding: 2px 8px;
+					padding: 4px 8px;
 					font-size: 20px;
 					cursor: text;
 					border: 2px solid rgba(0, 0, 0, 0);
