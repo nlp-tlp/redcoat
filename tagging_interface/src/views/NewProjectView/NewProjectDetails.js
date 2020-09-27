@@ -1,6 +1,7 @@
 import React from "react";
 import {Component} from "react";
 import NewProjectFormHelpIcon from 'views/NewProjectView/NewProjectFormHelpIcon';
+import _ from 'underscore';
 
 // Set up project details page.
 // (project title, description, data)
@@ -8,16 +9,34 @@ class NewProjectDetails extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      projectName: '',
-      projectDescription: '',
+      data: {
+        projectName: '',
+        projectDescription: '',        
+      },
     }
+  }
+
+
+  componentDidMount() {
+    if(this.props.data) {
+      this.setState({
+        data: this.props.data,
+      })
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if(!_.isEqual(prevState.data, this.state.data)) {
+      this.props.saveData(this.state.data);
+      this.props.setModified();
+    }    
   }
 
   updateProjectName(e) {
     var value = e.target.value;
     if(value.trim().length === 0) value = '';
     this.setState({
-      projectName: value,
+      data: { ...this.state.data, projectName: value }
     });
   }
 
@@ -25,7 +44,7 @@ class NewProjectDetails extends Component {
     var value = e.target.value;
     if(value.trim().length === 0) value = '';
     this.setState({
-      projectDescription: value,
+      data: { ...this.state.data, projectDescription: value }
     });
   }
 
@@ -53,11 +72,11 @@ class NewProjectDetails extends Component {
             <h2>Project details</h2>
             <div className="form-group">
               <label>Project name</label>
-              <input placeholder="Project name" value={this.state.projectName} onChange={(e) => this.updateProjectName(e)}></input>
+              <input maxLength={100} placeholder="Project name" value={this.state.data.projectName} onChange={(e) => this.updateProjectName(e)}></input>
             </div>
             <div className="form-group">
               <label>Project description (optional)</label>
-              <textarea placeholder="Project description" value={this.state.projectDescription} onChange={(e) => this.updateProjectDescription(e)}></textarea>
+              <textarea maxLength={1000} placeholder="Project description" value={this.state.data.projectDescription} onChange={(e) => this.updateProjectDescription(e)}></textarea>
             </div>
 
           </div>

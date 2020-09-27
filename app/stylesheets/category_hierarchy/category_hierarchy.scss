@@ -55,6 +55,7 @@
 		span.left {
 			width: 30%;
 		}
+
 		span.right {
 			width: 70%;
 		}
@@ -90,6 +91,21 @@
 		color: #111;
 		pointer-events: none;
 	}
+	> ul > li span.inner-container span.left {
+		width: calc(30% - 35px);		
+	}
+	> ul > li span.inner-container span.right {
+		width: calc(70% + 0px);
+	}
+	> ul > li > ul > li span.inner-container span.left {
+			width: calc(30% - 60px);
+	}
+	> ul > li > ul > li span.inner-container span.right {
+		width: calc(70% + 20px);
+	}
+}
+#category-hierarchy-tree.table-form > ul > li {
+	transition: background 0.3s ease;
 }
 #category-hierarchy-tree.table-form > ul > li:nth-child(odd) {
 	background: #fefefe;
@@ -104,6 +120,9 @@
 
 #category-hierarchy-tree.table-form > ul.reversed-stripes > li:nth-child(odd) {
 	background: #f3f3f3;	
+}
+#category-hierarchy-tree.table-form >ul.dragging > li {
+	background: #fefefe !important;
 }
 #category-hierarchy-tree.table-form {
 	//max-height: 70vh;
@@ -131,13 +150,14 @@
 	> ul:not(.dragging) li:hover span.drag-handle {
 		opacity: 1;
 	}
+
 	ul {
 		box-sizing: border-box;
 		padding: 0;
 		margin: 0;
 		width: 100%;
 		padding: 0;
-		padding-left: 30px;
+		//padding-left: 30px;
 		
 		&.limit-height {
 			max-height: 600px;
@@ -227,6 +247,10 @@
 				&.no-children-yet {
 					color: rgba(0, 0, 0, 0.15);
 				}
+				&.hidden {
+					pointer-events: none;
+					visibility: hidden;
+				}
 			}
 
 			
@@ -242,7 +266,7 @@
 				cursor: pointer;
 				width: 100%;
 				padding: 4px 6px;
-				padding-left: 12px;
+				
 				//margin-left: 6px;
 				display: block;
 				position: relative;
@@ -276,6 +300,7 @@
 
 
 				input {
+
 					padding: 4px 8px;
 					font-size: 20px;
 					cursor: text;
@@ -283,11 +308,13 @@
 					border-radius: 3px;
 					display: block;
 					background: none;
+					//background: green;
 					width: 100%;
 					box-sizing: border-box;
 					color: rgba(0, 0, 0, 0.85);
+					//background: green;
 					&::placeholder {
-						color: rgba(0, 0, 0, 0);
+						color: rgba(0, 0, 0, 0.35);
 					}
 					&.empty {
 						border: 2px solid $primary-red;
@@ -327,7 +354,7 @@
 				display: inline-block;
 				height: calc(100% - 12px);
 				margin-top: 6px;
-				margin-left: -4px;
+				margin-left: -15px;
 				position: absolute;
 				opacity: 0;
 				&:before {	// Pseudo elements are necessary to draw the borders correctly
@@ -366,13 +393,17 @@
 		}
 
 	}
-	> ul > li > ul > li .left {
-		padding-left: 30px;
+	> ul > li > ul  li  {
+		padding-left: 35px;
 		box-sizing: border-box;
 	}
+
 	> ul > li > span.inner-container {
-		padding-left: 15px;
+	 	//padding-left: 15px;
 		box-sizing: border-box;
+	}
+	> ul > li {
+		padding-left: 15px;
 	}
 
 }

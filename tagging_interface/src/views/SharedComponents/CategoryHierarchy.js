@@ -80,7 +80,6 @@ class Category extends Component {
                       itemDescChange={this.props.itemDescChange}
                       deleteItem={this.props.deleteItem}
                       newItem={this.props.newItem}                      
-                      cantCreateNew = {this.props.cantCreateNew}
             />)) }
         </ul>
       );
@@ -104,7 +103,7 @@ class Category extends Component {
 
         <span className="left">
         
-         {(children || modifiable) && <span className={"open-button" + (children ? "" : " no-children-yet")} onClick={() => this.props.onClick(item.full_name)}><i className={"fa fa-chevron-" + (this.props.open ? "up" : "down")}></i></span>}
+         {(children || modifiable) && <span className={"open-button" + (children ? "" : " no-children-yet") + (item.name.length > 0 ? "" : " hidden")} onClick={() => this.props.onClick(item.full_name)}><i className={"fa fa-chevron-" + (this.props.open ? "up" : "down")}></i></span>}
 
         <span className={"category-name" + (hasHotkey ? " has-hotkey" :"") + (modifiable ? " modifiable" :"") + (this.props.hotkeyChain === hotkeyStr ? " hotkey-active" : "")}
               data-hotkey-id={hotkeyStr} onClick={this.props.applyTag ? () => this.props.applyTag(this.props.item.full_name) : null}>
@@ -138,7 +137,7 @@ class Category extends Component {
                 { childItems }
 
 
-                { this.props.open && this.props.modifiable && <ul><NewCategoryButton disabled={this.props.cantCreateNew}  newItem={() => this.props.newItem(path)}/></ul>}
+                { this.props.open && this.props.modifiable && <ul><NewCategoryButton newItem={() => this.props.newItem(path)}/></ul>}
                 
               </li>              
             )}
@@ -149,7 +148,7 @@ class Category extends Component {
           <li className={" color-" + ((parseInt(colorId) % numEntityColours) + 1) + (this.state.isHovered ? " delete-hover" : "")}>
             { content }
             { childItems }  
-            { this.props.open && this.props.modifiable && <ul><NewCategoryButton disabled={this.props.cantCreateNew} newItem={() => this.props.newItem(path)}/></ul>}              
+            { this.props.open && this.props.modifiable && <ul><NewCategoryButton newItem={() => this.props.newItem(path)}/></ul>}              
           </li>
         )
       }
@@ -160,7 +159,7 @@ class Category extends Component {
         <li className={(this.state.isHovered ? " delete-hover" : "")}>
           { content }
           { childItems }
-          { this.props.open && this.props.modifiable && <ul><NewCategoryButton disabled={this.props.cantCreateNew} newItem={() => this.props.newItem(path)}/></ul>}
+          { this.props.open && this.props.modifiable && <ul><NewCategoryButton newItem={() => this.props.newItem(path)}/></ul>}
         </li>
       )
     }
@@ -329,7 +328,6 @@ class ModifiableCategoryHierarchy extends Component {
     this.state = {
       items: [],
       openedItems: new Set(),   
-      cantCreateNew: false, // Set to true when the user has not yet entered a category name   
     }
   }
 
@@ -343,6 +341,7 @@ class ModifiableCategoryHierarchy extends Component {
     //console.log(prevProps.items, this.props.items);
     if(!_.isEqual(prevProps.items, this.props.items)) {
       this.setState({
+        openedItems: new Set(),
         items: this.props.items,
       });
     }
@@ -435,7 +434,6 @@ class ModifiableCategoryHierarchy extends Component {
     this.props.setModified();
     this.setState({
       items: items,
-      cantCreateNew: true,
     });
   }
 
@@ -456,17 +454,8 @@ class ModifiableCategoryHierarchy extends Component {
     // Update the item name
     var item = currentItems[path[path.length - 1]];
 
-    var cantCreateNew = this.state.cantCreateNew;
-    if(item.name.length === 0) {
-      cantCreateNew = false;
-    }
-
     item.name = newName;
 
-
-    if(item.name.length === 0) {
-      cantCreateNew = true;
-    }
     // If this item is open, remove it from the opened items set and add the updated name later.
     var open = false;
     var openedItems = this.state.openedItems;
@@ -488,7 +477,6 @@ class ModifiableCategoryHierarchy extends Component {
     this.setState({
       items: items,
       openedItems: openedItems,
-      cantCreateNew: cantCreateNew,
     });
   }
 
@@ -520,10 +508,15 @@ class ModifiableCategoryHierarchy extends Component {
 
     var items = this.state.items;
     var currentItems = items;
-    for(var i = 0; i < path.length - 1; i++) {
-      var index = path[i];
-      currentItems = currentItems[index].children;
+    if(path.length > 1) {
+      for(var i = 0; i < path.length - 1; i++) {
+        var index = path[i];
+        var deleteRef = currentItems[index];
+        currentItems = currentItems[index].children;
+
+      }      
     }
+
 
     // Remove the item from openedItems
     var openedItems = this.state.openedItems;    
@@ -531,6 +524,7 @@ class ModifiableCategoryHierarchy extends Component {
     openedItems.delete(item.full_name);
 
     currentItems.splice(path[path.length - 1], 1);
+    if(currentItems.length === 0 && path.length > 1) { delete deleteRef.children; }
 
     this.props.setModified();
 
@@ -580,15 +574,14 @@ class ModifiableCategoryHierarchy extends Component {
                     deleteItem={this.deleteItem.bind(this)}
                     newItem={this.newItem.bind(this)}
 
-                    cantCreateNew={this.state.cantCreateNew}
-
                     path={[index]}
                   />
                 ))}
 
-
                 {provided.placeholder}
-                <NewCategoryButton disabled={this.state.cantCreateNew} newItem={() => this.newItem([])}/>
+                
+                <NewCategoryButton newItem={() => this.newItem([])}/>
+                
             </ul>
           )}
         </Droppable>

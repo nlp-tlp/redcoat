@@ -5,7 +5,7 @@ import NewProjectFormHelpIcon from 'views/NewProjectView/NewProjectFormHelpIcon'
 import hierarchyPresets from 'views/NewProjectView/functions/hierarchy_presets';
 import { slash2txt, txt2json } from 'views/NewProjectView/functions/hierarchy_helpers';
 
-
+import _ from 'underscore';
 
 import { ModifiableCategoryHierarchy } from 'views/SharedComponents/CategoryHierarchy';
 
@@ -27,10 +27,23 @@ class NewProjectEntityHierarchy extends Component {
   }
 
   componentDidMount() {
-    this.setState({
-      entity_hierarchy: this.props.entity_hierarchy,
-      selectedPreset: "None",
-    })
+    
+    if(this.props.prevState) {
+      console.log("Loading state:", this.props.prevState)
+      this.setState(this.props.prevState);
+    } else {
+      this.setState({
+        entity_hierarchy: this.props.entity_hierarchy,
+        selectedPreset: "None",
+      });
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if(!_.isEqual(prevState.entity_hierarchy, this.state.entity_hierarchy)) {
+      this.props.saveData(this.state.entity_hierarchy);
+      this.props.setModified();
+    }    
   }
 
   setModified() {

@@ -803,9 +803,9 @@ section.form-section {
 		color: rgba(255, 255, 255, 0.8);
 	}
 	&.grey-button {
-		background: #888;
+		background: rgba(0, 0, 0, 0.3);
 		&:hover {
-			background: lighten(#888, 10);
+			background: rgba(0, 0, 0, 0.25);
 		}
 	}
 	&.disabled {
