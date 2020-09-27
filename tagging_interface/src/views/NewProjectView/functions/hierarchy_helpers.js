@@ -56,3 +56,66 @@ module.exports.txt2json = function(text, slash, descriptions={} ) {
   return root;
 }
 
+// Converts 'space' notation to 'slash' notation, e.g.
+// person
+//  president
+//   president_of_us
+//  burgerflipper
+// ... becomes ->
+// person
+// person/president
+// person/president/president_of_us
+// person/burgerflipper
+function txt2slash(text) {
+  var lines = text.split('\n');  
+  var slashData = [];
+  var depth = 1;
+  var parents = [];
+  var prev = "";
+  for(var i = 0; i < lines.length; i++) {
+    var cleanLine = lines[i].replace(/\s/g, "").replace(/\//g, '|');
+    var newDepth  = lines[i].search(/\S/) + 1;
+    if(newDepth < depth){
+      parents = parents.slice(0, newDepth-1);
+    } else if (newDepth == depth + 1) {
+      parents.push(prev);
+    } else if(newDepth > depth + 1) {
+      //return new Error("Unparsable tree.");
+    }
+    depth = newDepth;
+    prev = cleanLine;
+    slashData.push(parents.join("/") + (parents.length > 0 ? "/" : "") + cleanLine);
+  }
+  return slashData;
+}
+
+function json2text(root) {
+  var allNodes = [];
+  var depth = 1;
+  function addNode(d) {
+    allNodes.push((new Array(depth).join(" ")) + d.name.replace(/\|/, '/'));
+    if(d.children) {
+      depth++;
+      d.children.forEach(addNode);
+      depth--;
+    }
+    else if(d._children) {
+      depth++;
+      d._children.forEach(addNode);
+      depth--;
+    }    
+  }
+  if(root.children)
+    root.children.forEach(addNode);
+  else if(root._children) 
+    root._children.forEach(addNode);
+
+  return allNodes.join("\n");
+}
+
+
+module.exports.json2slash = function(json) {
+  var txt = json2text(json);
+  var slash = txt2slash(txt);
+  return slash;
+}

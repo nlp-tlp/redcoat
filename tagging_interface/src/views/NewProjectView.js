@@ -3,7 +3,6 @@ import {Component} from "react";
 import { Redirect, Link, BrowserRouter, Route, Switch, withRouter } from 'react-router-dom'
 import Modal from 'react-modal';
 import { TransitionGroup, CSSTransition } from "react-transition-group";
-
 import Error404Page from 'views/Errors/Error404Page';
 
 import NewProjectDetails from 'views/NewProjectView/NewProjectDetails';
@@ -12,6 +11,8 @@ import NewProjectEntityHierarchy from 'views/NewProjectView/NewProjectEntityHier
 import NewProjectFormHelpIcon from 'views/NewProjectView/NewProjectFormHelpIcon';
 
 import _fetch from 'functions/_fetch';
+
+import {json2slash} from 'views/NewProjectView/functions/hierarchy_helpers'
 
 Modal.setAppElement('body');
 
@@ -106,6 +107,15 @@ class NewProjectHeaderItem extends Component {
   }
 }
 
+function getErrorPathsSet(errors) {
+  if(!errors) return new Set();
+  var errorPaths = new Set();
+  for(var e of errors) {
+    errorPaths.add(e.path);
+  }
+  return errorPaths;
+}
+
 const PROJECT_DETAILS = 0;
 const ENTITY_HIERARCHY = 1;
 const AUTOMATIC_TAGGING = 2;
@@ -119,9 +129,10 @@ class NewProjectView extends Component {
 
     var sharedProps = (function() {
       return {
-      loading: this.state.loading,
-      toggleFormHelp: this.toggleFormHelp.bind(this),
-      setModified: this.setModified.bind(this),
+        loading: this.state.loading,
+        toggleFormHelp: this.toggleFormHelp.bind(this),
+        setModified: this.setModified.bind(this),
+        errorPaths: getErrorPathsSet(this.state.formErrors),
       }
     }).bind(this);
 
@@ -190,7 +201,7 @@ class NewProjectView extends Component {
         },
       ],
 
-      formErrors: ["Name cannot be blank"],
+      formErrors: null,
 
       currentFormPageIndex: 0,
 
@@ -257,13 +268,26 @@ class NewProjectView extends Component {
     // do something
     var formPath = this.getFormPagePathname();
     var data = this.state.formPages[this.state.currentFormPageIndex].data;
-    var d = await _fetch('http://localhost:3000/api/projects/new?formPage=' + formPath, 'POST', this.props.setErrorCode, data);
+    if(this.state.currentFormPageIndex === ENTITY_HIERARCHY) {
+      data = json2slash(data);
+    }
+    var d = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=' + formPath, 'POST', this.props.setErrorCode, data);
 
     console.log(d);
+    if(d.errors) {
+      this.setState({
+        formErrors: d.errors,
+        isModified: false,
+        isSaved: false,
+      })
+    } else {
+      this.setState({
+        formErrors: null,
+        isSaved: true,
+      })
+    }
 
-    this.setState({
-      isSaved: true,
-    })
+    
 
 
 
@@ -279,7 +303,7 @@ class NewProjectView extends Component {
   }
 
   // Go to the previous form page.
-  gotoPrevFormPage() {
+  async gotoPrevFormPage() {
     if(this.state.currentFormPageIndex === 0) return;
 
     // Reset form data
@@ -288,24 +312,35 @@ class NewProjectView extends Component {
 
     var prevIndex = this.state.currentFormPageIndex - 1;
     //this.props.history.push(this.state.formPages[prevIndex]);
-    this.setState({
+    await this.setState({
       verifyBack: false,
       formPages: formPages,
       currentFormPageIndex: prevIndex,
       wasModified: false,
       isSaved: true,
-    })
+    });
+
+    window.scrollTo({
+      top: 0,
+      left: 0,
+    });
+  
   }
 
   // Go to the next form page.
-  gotoNextFormPage() {
+  async gotoNextFormPage() {
     if(this.state.currentFormPageIndex === (this.state.formPages.length - 1)) return;
     var nextIndex = this.state.currentFormPageIndex + 1;
-    this.setState({
+    await this.setState({
       currentFormPageIndex: nextIndex,
       wasModified: false,
       isSaved: false,
 
+    });
+
+    window.scrollTo({
+      top: 0,
+      left: 0,
     });
   }
 
@@ -383,7 +418,7 @@ class NewProjectView extends Component {
         <header className="new-project-header">
           <div className="container flex-container">
             { this.state.formPages.map((page, index) => 
-              <NewProjectHeaderItem name={page.name} pathname={page.pathname} saved={page.saved} active={index === this.state.currentFormPageIndex} ready={this.state.currentFormPageIndex >= index}/>
+              <NewProjectHeaderItem name={page.name} pathname={page.pathname} saved={page.saved} active={index === this.state.currentFormPageIndex} ready={this.state.currentFormPageIndex >= index || this.state.isSaved && index === this.state.currentFormPageIndex + 1}/>
             )}            
           </div>
         </header>
@@ -398,16 +433,19 @@ class NewProjectView extends Component {
             >
               
               <section className={"route-section" + (!this.state.loading ? " loaded" : "")}>
-                  { this.state.formErrors && 
-                    <div className="form-errors">
-                      Please fix the following errors before saving:
-                      <ul>
-                      { this.state.formErrors.map((err, index) => 
-                        <li>{err}</li>
-                      )}
-                      </ul>
-                    </div>
-                  }
+
+                  <div className={"form-notice form-success " + (this.state.isSaved ? "" : "hidden")}><i className="fa fa-check"></i>This page has been saved.</div>
+
+                  <div className={"form-notice form-errors " + (this.state.formErrors ? "" : "hidden")}>
+                    <i className="fa fa-times"></i>Please fix the following errors before saving:
+                    <ul>
+                    { this.state.formErrors && this.state.formErrors.map((err, index) => 
+                      <li>{err.message}</li>
+                    )}
+                    { !this.state.formErrors && <li></li>}
+                    </ul>
+                  </div>
+                  
                   { this.renderFormPage(this.state.currentFormPageIndex) }
               </section>
             </CSSTransition>
@@ -424,7 +462,9 @@ class NewProjectView extends Component {
 
             { !lastPage && 
             <div className="buttons-right">
-              <button onClick={() => this.submitFormPage()} className={"annotate-button new-project-button " + (this.state.wasModified ? "": "disabled")}><i className="fa fa-save"></i>Save</button>
+
+              <button onClick={this.state.isSaved ? null : () => this.submitFormPage()} className={"annotate-button new-project-button " + (!this.state.wasModified && !this.state.isSaved ? "disabled": "") + (this.state.isSaved ? " saved": "")}><i className={"fa fa-" + (this.state.isSaved ? "check": "save")}></i>Save{this.state.isSaved && 'd'}</button>
+
               <button onClick={() => this.gotoNextFormPage()}  className={"annotate-button new-project-button grey-button " + (this.state.isSaved ? "" : "disabled")}>Next<i className="fa fa-chevron-right after"></i></button>
 
               </div> }

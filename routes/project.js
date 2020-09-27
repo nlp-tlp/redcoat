@@ -4,6 +4,7 @@ var logger = require('config/winston');
 var express = require('express');
 var router = express.Router();
 var projectController = require("app/controllers/project_controller");
+var newProjectController = require("app/controllers/new_project_controller");
 
 var Project = require('app/models/project');
 
@@ -53,7 +54,9 @@ router.get('/:id',         verifyUserInProject, projectController.getProjectDeta
 //router.get('/:id/tagging', verifyUserInProject, projectController.tagging);
 
 
-router.post('/new', projectController.submitProjectData);
+
+
+
 
 
 
@@ -72,5 +75,12 @@ router.post('/:id/comments/submit', verifyUserInProject, projectController.submi
 
 router.post('/invitations/:id/accept', projectController.acceptInvitation);
 router.post('/invitations/:id/decline', projectController.declineInvitation);
+
+router.get('/new', newProjectController.getWipProject);
+router.post('/new/submit', newProjectController.submitProjectData);
+router.post('/new/clear' , newProjectController.clearProjectData);
+
+
+
 
 module.exports = router;

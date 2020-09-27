@@ -10,8 +10,8 @@ class NewProjectDetails extends Component {
     super(props);
     this.state = {
       data: {
-        projectName: '',
-        projectDescription: '',        
+        project_name: '',
+        project_description: '',        
       },
     }
     this.justMounted = true; // Set to false on first update
@@ -39,7 +39,7 @@ class NewProjectDetails extends Component {
     var value = e.target.value;
     if(value.trim().length === 0) value = '';
     this.setState({
-      data: { ...this.state.data, projectName: value }
+      data: { ...this.state.data, project_name: value }
     });
   }
 
@@ -47,7 +47,7 @@ class NewProjectDetails extends Component {
     var value = e.target.value;
     if(value.trim().length === 0) value = '';
     this.setState({
-      data: { ...this.state.data, projectDescription: value }
+      data: { ...this.state.data, project_description: value }
     });
   }
 
@@ -73,13 +73,23 @@ class NewProjectDetails extends Component {
 
           <div className="flex-column">
             <h2>Project details</h2>
-            <div className="form-group">
+
+            <div className={"form-group" + (this.props.errorPaths.has("project_name") ? " error" : "") }>
               <label>Project name</label>
-              <input maxLength={100} placeholder="Project name" value={this.state.data.projectName} onChange={(e) => this.updateProjectName(e)}></input>
+              <input maxLength={100}
+                     placeholder="Project name"
+                     value={this.state.data.project_name}
+                     onChange={(e) => this.updateProjectName(e)}>
+              </input>
             </div>
-            <div className="form-group">
+
+            <div className={"form-group" + (this.props.errorPaths.has("project_description") ? " error" : "") }>
               <label>Project description (optional)</label>
-              <textarea maxLength={1000} placeholder="Project description" value={this.state.data.projectDescription} onChange={(e) => this.updateProjectDescription(e)}></textarea>
+              <textarea maxLength={1000}
+                        placeholder="Project description"
+                        value={this.state.data.project_description}
+                        onChange={(e) => this.updateProjectDescription(e)}>
+              </textarea>
             </div>
 
           </div>

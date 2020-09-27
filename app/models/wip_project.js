@@ -106,30 +106,64 @@ WipProjectSchema.set('validateBeforeSave', false);
 /* Static methods */
 
 // Finds a Wip Project by User.
-WipProjectSchema.statics.findWipByUserId = function(uid, done) {
-  WipProject.findOne( { user_id : uid }, function(err, wip_project) {
-    if(err) { done(err); return; }
-    done(null, wip_project);
-  });
+WipProjectSchema.statics.getUserWip = async function(user) {
+  var wip = await WipProject.findOne( { user_id : user._id });
+  return Promise.resolve(wip);
 }
 
-// Verifies a 'wippid' (WIP id). The WIP id will be placed in a header, and this function verifies that the person who created
-// this WIP is the user with id user_id. (it should be called with the value of req.headers.wippid and logged_in_user._id).
-WipProjectSchema.statics.verifyWippid = function(user_id, wippid, done) {
-  // try {
-  // var wippid = ObjectId(wippid);
-  // } catch(err) { 
-  //   done(err); return;
-  // } 
-  WipProject.findWipByUserId(user_id, function(err, wip_project) {
-    if(!wip_project) { return done(err, null)}
-    if(!wip_project._id == wippid) {
-      done(err, null);
+WipProjectSchema.methods.updateNameAndDesc = async function(project_name, project_description) {
+  var t = this;
+  try {
+    t.project_name = project_name;
+    if(project_description.length > 0) {
+      t.project_description = project_description;
+    }   
+
+    await t.validate();
+    
+  } catch(err) {
+    logger.error(err);
+    var relevantErrors = new Array();
+    console.log('---')
+    for(var error in err.errors) {
+      var path = err.errors[error].path;
+      var message = err.errors[error].message;
+
+      if(path === 'project_name' || path === 'project_description') {
+        if(message === "Path `project_name` is required.") message = "Project name is required.";
+        relevantErrors.push({message: message, path: path});
+      }
     }
-    else 
-      done(err, wip_project);
-  });
+    if(relevantErrors.length > 0) {
+      return Promise.reject(relevantErrors);
+    }    
+  }
+
+  var saved = await t.save();
+  return Promise.resolve(saved);
 }
+
+
+
+
+
+// // Verifies a 'wippid' (WIP id). The WIP id will be placed in a header, and this function verifies that the person who created
+// // this WIP is the user with id user_id. (it should be called with the value of req.headers.wippid and logged_in_user._id).
+// WipProjectSchema.statics.verifyWippid = function(user_id, wippid, done) {
+//   // try {
+//   // var wippid = ObjectId(wippid);
+//   // } catch(err) { 
+//   //   done(err); return;
+//   // } 
+//   WipProject.findWipByUserId(user_id, function(err, wip_project) {
+//     if(!wip_project) { return done(err, null)}
+//     if(!wip_project._id == wippid) {
+//       done(err, null);
+//     }
+//     else 
+//       done(err, wip_project);
+//   });
+// }
 
 /* Common methods */
 

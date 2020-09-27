@@ -90,19 +90,57 @@ main.new-project {
 		font-size: 16px;
 		margin-bottom: 0;
 	}
+	.saved {
+		background: darken($primary-green, 4);
+		&:hover {
+			background: darken($primary-green, 2);
+		}
+	}
 
 }
 
-.form-errors {
-	border: 2px solid rgba(darken($primary-red, 25), 0.5);
-	background: rgba($primary-red, 0.12);
+.form-notice {
 	padding: 12px;
 	font-size: 15px;
 	border-radius: 3px;
 	margin-bottom: 30px;
-	color: darken($primary-red, 35);
+	border: 2px solid #eee;
+	overflow: hidden;
+	//transition: max-height 0.2s ease, padding 0.2s ease, border-width 0.2s ease, margin 0.2s ease, opacity 0.2s ease;
+	transition: opacity 0.3s ease;
+	max-height: 100px;
+	opacity: 1;
 	ul {
 		margin-bottom: 0;
+	}
+	i {
+		margin-right: 7px;
+		transform: translate(0, -1px);
+	}
+	&.hidden {
+		max-height: 0;
+		padding-top: 0;
+		padding-bottom: 0;
+		border-width: 0;
+		margin-top: 0;
+		margin-bottom: 0;
+		opacity: 0;
+	}
+}
+.form-errors {
+	border-color: rgba(darken($primary-red, 15), 0.75);
+	background: rgba($primary-red, 0.12);	
+	color: darken($primary-red, 35);
+	i {
+		color: darken($primary-red, 20);
+	}
+}
+.form-success {
+	border-color: rgba($primary-green, 0.25);
+	background: rgba($primary-green, 0.12);
+	color: darken($primary-green, 35);
+	i {
+		color: darken($primary-green, 10);
 	}
 }
 
@@ -184,6 +222,11 @@ main.new-project {
 	}
 	textarea {
 		height: 200px;
+	}
+	&.error {
+		input:not(:focus):not(:active) {
+			border-color: rgba(darken($primary-red, 15), 0.75);
+		}
 	}
 }
 
