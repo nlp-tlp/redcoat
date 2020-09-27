@@ -21,15 +21,23 @@ var mongoose = require('mongoose');
 
 // GET (AJAX): Return some basic details of the projects that this user is involved in.
 module.exports.getProjects = async function(req, res) {
+  console.log('a')
   try {
     var data = await Project.getInvolvedProjectData(req.user);
     console.log(data);
+    console.log('b')
     res.send(data);
   } catch(err) {
     console.log('err');
     res.send(err);
     logger.error(err);
   }
+}
+
+module.exports.submitProjectData = async function(req, res) {  
+  console.log(req.query)
+  console.log(req.body)
+  res.send({errors: null})
 }
 
 // Automatically tag all tokens on the screen that appear in the dictionary.

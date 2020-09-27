@@ -1,3 +1,6 @@
+import getCookie from 'functions/getCookie';
+const csrfToken = getCookie('csrf-token');
+
 // Config for all API fetch requests
 const fetchConfig = {
   "GET": {
@@ -8,7 +11,19 @@ const fetchConfig = {
     },
     credentials: 'include',
   },
+  "POST": {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'csrf-token': csrfToken,
+    },
+    dataType: "json",
+    body: null,
+  }
 }
+
+
 
 
 async function wait(ms) {
@@ -20,9 +35,15 @@ async function wait(ms) {
 // A function to make fetching a little bit easier and avoid a lot of repeated code.
 // This one returns data only when there wasn't an error.
 // Returns 500 error if anything unexpected happens.
-async function _fetch(url, method, setErrorCode, delay=0) {
+async function _fetch(url, method, setErrorCode, postBody=null, delay=0) {
 
-  var response = await fetch(url, fetchConfig[method]) // TODO: move localhost out
+  var fetchConf = fetchConfig[method];
+  if(method === "POST") {
+    if(!postBody) throw new Error("Cannot POST without post body");
+    fetchConf.body = JSON.stringify(postBody);
+  }
+
+  var response = await fetch(url, fetchConf) // TODO: move localhost out
   
   if(response.status !== 200) {
     var errorCode = parseInt(response.status)

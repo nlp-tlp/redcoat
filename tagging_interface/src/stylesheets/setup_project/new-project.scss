@@ -93,7 +93,18 @@ main.new-project {
 
 }
 
-
+.form-errors {
+	border: 2px solid rgba(darken($primary-red, 25), 0.5);
+	background: rgba($primary-red, 0.12);
+	padding: 12px;
+	font-size: 15px;
+	border-radius: 3px;
+	margin-bottom: 30px;
+	color: darken($primary-red, 35);
+	ul {
+		margin-bottom: 0;
+	}
+}
 
 .annotate-button.new-project-button {
 	margin-top: 0;

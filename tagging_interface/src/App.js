@@ -326,7 +326,7 @@ class App extends Component {
                 /> 
 
               <PrivateRoute user={this.state.user} path="/projects/new" render={( ) =>
-                <NewProjectView/> }
+                <NewProjectView setErrorCode={this.setErrorCode.bind(this)} /> }
               />  
 
 

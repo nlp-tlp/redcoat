@@ -53,6 +53,7 @@ router.get('/:id',         verifyUserInProject, projectController.getProjectDeta
 //router.get('/:id/tagging', verifyUserInProject, projectController.tagging);
 
 
+router.post('/new', projectController.submitProjectData);
 
 
 

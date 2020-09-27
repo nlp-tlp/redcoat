@@ -11,6 +11,7 @@ import NewProjectEntityHierarchy from 'views/NewProjectView/NewProjectEntityHier
 
 import NewProjectFormHelpIcon from 'views/NewProjectView/NewProjectFormHelpIcon';
 
+import _fetch from 'functions/_fetch';
 
 Modal.setAppElement('body');
 
@@ -140,7 +141,7 @@ class NewProjectView extends Component {
       formPages: [
         {
           name: "Project details & data",
-          pathname: "/projects/new",
+          pathname: "project_details",
           saved: false,
           data: null,  
           component: () => <NewProjectDetails
@@ -150,7 +151,7 @@ class NewProjectView extends Component {
         },
         {
           name: "Entity hierarchy",
-          pathname: "/projects/new/entity-hierarchy",
+          pathname: "entity_hierarchy",
           saved: false,
           data: null,
           component: () => <NewProjectEntityHierarchy
@@ -163,7 +164,7 @@ class NewProjectView extends Component {
 
         {
           name: "Automatic tagging",
-          pathname: "/projects/new/automatic-tagging",
+          pathname: "automatic_tagging",
           saved: false,
           data: null,
           component: () => <NewProjectAutomaticTagging
@@ -172,34 +173,39 @@ class NewProjectView extends Component {
         },
         {
           name: "Annotators",
-          pathname: "/projects/new/annotators",
+          pathname: "annotators",
           saved: false,
+          data: null,
           component: () => <NewProjectAnnotators
             data={this.state.formPages[ANNOTATORS].data}
             { ... sharedProps() }/>
         },
         {
           name: "Project options",
-          pathname: "/projects/new/project-options",
+          pathname: "project_options",
           saved: false,
+          data: null,
           component: () => <NewProjectProjectOptions
             data={this.state.formPages[PROJECT_OPTIONS].data} { ... sharedProps() }/>
         },
       ],
 
+      formErrors: ["Name cannot be blank"],
+
       currentFormPageIndex: 0,
 
       wasModified: false, // Whether the currently displayed form has been modified
+      isSaved: false, // Whether the currently displayed form has been saved
       formHelpContent: null, // The content currently appearing in the modal. null if modal is not being displayed.
       verifyBack: false, // Whether or not the confirmation window is showing (do you want to go back?)
     }
 
     // Store the previous states of each form so that the API does not need to be queried when going back and forth between
     // form pages.
-    this.prevStates = {
-      "Project details & data": null,
-      "Entity hierarchy": null,
-    };
+    // this.prevStates = {
+    //   "Project details & data": null,
+    //   "Entity hierarchy": null,
+    // };
     
 
   }
@@ -210,7 +216,6 @@ class NewProjectView extends Component {
 
   // Save the previous state of the given form page.
   saveData(page, data) {
-    //this.prevStates[page] = state;
     var formPages = this.state.formPages;
     console.log(page, data);
 
@@ -224,8 +229,11 @@ class NewProjectView extends Component {
 
     this.setState({
       formPages: formPages,
+      wasModified: false,      
     })
   }
+
+
 
   // Update the form page index when this component's location is updated (i.e. a route change).
   componentDidUpdate(prevProps) {    
@@ -241,8 +249,24 @@ class NewProjectView extends Component {
     })
   }
 
-  submitFormPage() {
+  getFormPagePathname() {
+    return this.state.formPages[this.state.currentFormPageIndex].pathname;
+  }
+
+  async submitFormPage() {
     // do something
+    var formPath = this.getFormPagePathname();
+    var data = this.state.formPages[this.state.currentFormPageIndex].data;
+    var d = await _fetch('http://localhost:3000/api/projects/new?formPage=' + formPath, 'POST', this.props.setErrorCode, data);
+
+    console.log(d);
+
+    this.setState({
+      isSaved: true,
+    })
+
+
+
   }
 
 
@@ -250,6 +274,7 @@ class NewProjectView extends Component {
   setModified() {
     this.setState({
       wasModified: true,
+      isSaved: false,
     })
   }
 
@@ -268,6 +293,7 @@ class NewProjectView extends Component {
       formPages: formPages,
       currentFormPageIndex: prevIndex,
       wasModified: false,
+      isSaved: true,
     })
   }
 
@@ -278,6 +304,7 @@ class NewProjectView extends Component {
     this.setState({
       currentFormPageIndex: nextIndex,
       wasModified: false,
+      isSaved: false,
 
     });
   }
@@ -291,16 +318,16 @@ class NewProjectView extends Component {
 
   // Get the previous state of the requested page.
   // If this page was not saved, return null instead.
-  getPrevState(pageName) {
-    var formIndex = -1;
-    for(var i in this.state.formPages) {
-      if(this.state.formPages[i].name === pageName) {
-        formIndex = i;
-        break;
-      }
-    }
-    return this.state.formPages[i].saved ? this.prevStates[pageName] : null;
-  }
+  // getPrevState(pageName) {
+  //   var formIndex = -1;
+  //   for(var i in this.state.formPages) {
+  //     if(this.state.formPages[i].name === pageName) {
+  //       formIndex = i;
+  //       break;
+  //     }
+  //   }
+  //   return this.state.formPages[i].saved ? this.prevStates[pageName] : null;
+  // }
 
   // Verify that the user wants to go back to the previous page.
   verifyBack() {
@@ -369,7 +396,18 @@ class NewProjectView extends Component {
             timeout={{ enter: 400, exit:400 }}
             classNames="fade"
             >
+              
               <section className={"route-section" + (!this.state.loading ? " loaded" : "")}>
+                  { this.state.formErrors && 
+                    <div className="form-errors">
+                      Please fix the following errors before saving:
+                      <ul>
+                      { this.state.formErrors.map((err, index) => 
+                        <li>{err}</li>
+                      )}
+                      </ul>
+                    </div>
+                  }
                   { this.renderFormPage(this.state.currentFormPageIndex) }
               </section>
             </CSSTransition>
@@ -386,8 +424,8 @@ class NewProjectView extends Component {
 
             { !lastPage && 
             <div className="buttons-right">
-              <button onClick={() => this.submitFormPage()} className="annotate-button new-project-button"><i className="fa fa-save"></i>Save</button>
-              <button onClick={() => this.gotoNextFormPage()}  className={"annotate-button new-project-button grey-button " + (this.state.formPages[this.state.currentFormPageIndex].saved ? "" : "disablsed")}>Next<i className="fa fa-chevron-right after"></i></button>
+              <button onClick={() => this.submitFormPage()} className={"annotate-button new-project-button " + (this.state.wasModified ? "": "disabled")}><i className="fa fa-save"></i>Save</button>
+              <button onClick={() => this.gotoNextFormPage()}  className={"annotate-button new-project-button grey-button " + (this.state.isSaved ? "" : "disabled")}>Next<i className="fa fa-chevron-right after"></i></button>
 
               </div> }
           </div>

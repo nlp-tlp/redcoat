@@ -14,11 +14,13 @@ class NewProjectDetails extends Component {
         projectDescription: '',        
       },
     }
+    this.justMounted = true; // Set to false on first update
   }
 
 
   componentDidMount() {
     if(this.props.data) {
+      console.log('modified 1')
       this.setState({
         data: this.props.data,
       })
@@ -26,10 +28,11 @@ class NewProjectDetails extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if(!_.isEqual(prevState.data, this.state.data)) {
+    if(!this.justMounted && !_.isEqual(prevState.data, this.state.data)) {
       this.props.saveData(this.state.data);
       this.props.setModified();
-    }    
+    }   
+    this.justMounted = false; 
   }
 
   updateProjectName(e) {

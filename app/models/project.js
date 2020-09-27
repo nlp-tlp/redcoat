@@ -244,6 +244,9 @@ ProjectSchema.methods.getNumDocumentAnnotations = function(next) {
   return DocumentAnnotation.count({ project_id: this._id }).exec(next);  
 }
 
+// ProjectSchema.methods.getNumDocumentAnnotations = function(next) {
+//   return this.completed_annotations;  
+// }
 
 // Return the documents annotated by the user for this project.
 // ProjectSchema.methods.getDocumentsAnnotatedByUser_old = function(user, next) {
