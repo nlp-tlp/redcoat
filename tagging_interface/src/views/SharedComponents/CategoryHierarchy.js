@@ -338,8 +338,11 @@ class ModifiableCategoryHierarchy extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    //console.log(prevProps.items, this.props.items);
-    if(!_.isEqual(prevProps.items, this.props.items)) {
+    
+    if(!_.isEqual(prevState.items, this.state.items) && this.state.items.length > 0) {      
+      this.props.setModified(this.state.items);
+    }
+    if(!_.isEqual(prevProps.items, this.props.items) && !_.isEqual(prevProps.preset, this.props.preset)) {
       this.setState({
         openedItems: new Set(),
         items: this.props.items,
@@ -349,8 +352,6 @@ class ModifiableCategoryHierarchy extends Component {
 
   toggleCategory(full_name) {
     var openedItems = this.state.openedItems;    
-
-
 
     if(openedItems.has(full_name)) {
       openedItems.delete(full_name);
@@ -378,12 +379,8 @@ class ModifiableCategoryHierarchy extends Component {
       result.destination.index
     );
 
-    if(result.source.index !== result.destination.index) {
-      this.props.setModified();
-    }
-
     this.setState({
-      items: items,
+      items: [ ...items],
     })
     
   }
@@ -393,7 +390,7 @@ class ModifiableCategoryHierarchy extends Component {
   // Create a new item at the specified path.
   newItem(path) {
 
-    var items = this.state.items;
+    var items = [...this.state.items];
 
 
     if(path.length > 0) {
@@ -431,7 +428,7 @@ class ModifiableCategoryHierarchy extends Component {
 
 
     
-    this.props.setModified();
+    
     this.setState({
       items: items,
     });
@@ -444,7 +441,7 @@ class ModifiableCategoryHierarchy extends Component {
 
     var newName = e.target.value;
 
-    var items = this.state.items;
+    var items = this.state.items.slice();
     var currentItems = items;
     for(var i = 0; i < path.length - 1; i++) {
       var index = path[i];
@@ -471,12 +468,11 @@ class ModifiableCategoryHierarchy extends Component {
 
     if(open) openedItems.add(item.full_name);
 
-    this.props.setModified();
-
-
     this.setState({
       items: items,
       openedItems: openedItems,
+    }, () => {
+      this.props.setModified(this.state.items);
     });
   }
 
@@ -484,7 +480,7 @@ class ModifiableCategoryHierarchy extends Component {
   itemDescChange(e, path) {
     var newDesc = e.target.value;
 
-    var items = this.state.items;
+    var items = [...this.state.items];
     var currentItems = items;
     for(var i = 0; i < path.length - 1; i++) {
       var index = path[i];
@@ -495,10 +491,10 @@ class ModifiableCategoryHierarchy extends Component {
     var item = currentItems[path[path.length - 1]];    
     item.description = newDesc;
 
-    this.props.setModified();
-
     this.setState({
-      items: items,
+      items: [ ...items],
+    }, () => {
+      this.props.setModified(this.state.items);
     })
 
   }
@@ -506,7 +502,7 @@ class ModifiableCategoryHierarchy extends Component {
   // Delete the item at the specified path.
   deleteItem(path) {
 
-    var items = this.state.items;
+    var items = [...this.state.items];
     var currentItems = items;
     if(path.length > 1) {
       for(var i = 0; i < path.length - 1; i++) {
@@ -525,8 +521,6 @@ class ModifiableCategoryHierarchy extends Component {
 
     currentItems.splice(path[path.length - 1], 1);
     if(currentItems.length === 0 && path.length > 1) { delete deleteRef.children; }
-
-    this.props.setModified();
 
     this.setState({
       items: items,

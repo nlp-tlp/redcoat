@@ -39,26 +39,27 @@ class NewProjectEntityHierarchy extends Component {
     }
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    if(!_.isEqual(prevState.entity_hierarchy, this.state.entity_hierarchy)) {
-      this.props.saveData(this.state.entity_hierarchy);
-      this.props.setModified();
-    }    
-  }
+  // componentDidUpdate(prevProps, prevState) {
+  //   if(!_.isEqual(prevState.entity_hierarchy, this.state.entity_hierarchy)) {
+  //     this.props.saveData(this.state.entity_hierarchy);      
+  //   }    
+  // }
 
-  setModified() {
+  setModified(entity_hierarchy) {
     if(this.state.selectedPreset === "None") {
       var modifiedPresetName = "Custom"
     } else {
       var modifiedPresetName = hierarchyPresets[this.state.selectedPreset]['name'];
       modifiedPresetName += " (modified)";
     }
-    
 
-    
-
+    //console.log('modified')
+    this.props.saveData(entity_hierarchy);
+    this.props.setModified();
 
     this.setState({
+      entity_hierarchy: entity_hierarchy,
+
       hierarchyModified: true,
       hierarchyModifiedPreset: modifiedPresetName,
     })
@@ -113,10 +114,9 @@ class NewProjectEntityHierarchy extends Component {
 
         <div className="category-hierarchy-wrapper min-height">
         <ModifiableCategoryHierarchy
-              items={ this.state.entity_hierarchy }                         
+              items={ this.state.entity_hierarchy }  
+              preset={this.state.selectedPreset}                       
               visible={true}   
-              draggable={false}
-              displayOnly={true}
               limitHeight={true}
               setModified={this.setModified.bind(this)}
         />

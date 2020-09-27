@@ -100,7 +100,7 @@ class NewProjectHeaderItem extends Component {
 
   render() {
     return (
-      <div className={"item " + (this.props.currentPathname === this.props.pathname ? "active": "") + (this.props.ready ? "" : " disabled")}><div className="inner">{this.props.name}</div></div>
+      <div className={"item " + (this.props.active ? "active": "") + (this.props.ready ? "" : " disabled")}><div className="inner">{this.props.name}</div></div>
     )
   }
 }
@@ -115,6 +115,15 @@ class NewProjectView extends Component {
   constructor(props) {
     super(props);
     this.ref = React.createRef();
+
+    var sharedProps = (function() {
+      return {
+      loading: this.state.loading,
+      toggleFormHelp: this.toggleFormHelp.bind(this),
+      setModified: this.setModified.bind(this),
+      }
+    }).bind(this);
+
     this.state = {
       loading: false,
 
@@ -132,34 +141,49 @@ class NewProjectView extends Component {
         {
           name: "Project details & data",
           pathname: "/projects/new",
-          ready: true,
-          saved: true,
-          data: null,         
+          saved: false,
+          data: null,  
+          component: () => <NewProjectDetails
+            data={this.state.formPages[PROJECT_DETAILS].data}
+            saveData={this.saveData.bind(this, "Project details & data")}
+            { ... sharedProps() } />       
         },
         {
           name: "Entity hierarchy",
           pathname: "/projects/new/entity-hierarchy",
-          ready: true,
           saved: false,
           data: null,
+          component: () => <NewProjectEntityHierarchy
+            entity_hierarchy={this.state.formPages[ENTITY_HIERARCHY].data ? this.state.formPages[1].data.children : []}  
+            hierarchyPresets={["Named Entity Recognition (NER)", "Fine-grained Entity Recognition (FIGER)", "Maintenance"]}
+            saveData={this.saveData.bind(this, "Entity hierarchy")}
+            { ... sharedProps() }/>
         },
+
+
         {
           name: "Automatic tagging",
           pathname: "/projects/new/automatic-tagging",
-          ready: false,
           saved: false,
+          data: null,
+          component: () => <NewProjectAutomaticTagging
+            data={this.state.formPages[AUTOMATIC_TAGGING].data}
+            { ... sharedProps() }/>
         },
         {
           name: "Annotators",
           pathname: "/projects/new/annotators",
-          ready: false,
           saved: false,
+          component: () => <NewProjectAnnotators
+            data={this.state.formPages[ANNOTATORS].data}
+            { ... sharedProps() }/>
         },
         {
           name: "Project options",
           pathname: "/projects/new/project-options",
-          ready: false,
           saved: false,
+          component: () => <NewProjectProjectOptions
+            data={this.state.formPages[PROJECT_OPTIONS].data} { ... sharedProps() }/>
         },
       ],
 
@@ -181,7 +205,7 @@ class NewProjectView extends Component {
   }
 
   componentDidMount() {
-    this.updateCurrentFormPageIndex();
+    //this.updateCurrentFormPageIndex();
   }
 
   // Save the previous state of the given form page.
@@ -191,11 +215,11 @@ class NewProjectView extends Component {
     console.log(page, data);
 
     if(page === 'Project details & data') {
-
       formPages[PROJECT_DETAILS].data = data;
     }
     if(page === "Entity hierarchy") {      
-      formPages[ENTITY_HIERARCHY].data = { children: data };      
+      formPages[ENTITY_HIERARCHY].data = { children: data };    
+      console.log(formPages[ENTITY_HIERARCHY].data)  
     }
 
     this.setState({
@@ -215,27 +239,6 @@ class NewProjectView extends Component {
     this.setState({
       formHelpContent: formHelpContent,
     })
-  }
-
-  // Update the current form page index, using the pathname to determine the index.
-  updateCurrentFormPageIndex() {  
-    var location = this.props.location;
-    var currentPathname = location.pathname;
-
-    this.setState({
-      currentFormPageIndex: this.getFormPageIndex(currentPathname),
-      wasModified: false,
-    }, () => {
-      console.log(this.state.currentFormPageIndex)
-    })
-  }
-
-  // Get the name, pathname and ready JSON obj from this.state.formPages that correspond to the current path name.
-  getFormPageIndex(currentPathname) {
-    for(var i in this.state.formPages) {
-      var formPage = this.state.formPages[i];
-      if(currentPathname === formPage.pathname) return parseInt(i);
-    }
   }
 
   submitFormPage() {
@@ -259,10 +262,12 @@ class NewProjectView extends Component {
     formPages[this.state.currentFormPageIndex].data = null;
 
     var prevIndex = this.state.currentFormPageIndex - 1;
-    this.props.history.push(this.state.formPages[prevIndex]);
+    //this.props.history.push(this.state.formPages[prevIndex]);
     this.setState({
       verifyBack: false,
       formPages: formPages,
+      currentFormPageIndex: prevIndex,
+      wasModified: false,
     })
   }
 
@@ -270,7 +275,11 @@ class NewProjectView extends Component {
   gotoNextFormPage() {
     if(this.state.currentFormPageIndex === (this.state.formPages.length - 1)) return;
     var nextIndex = this.state.currentFormPageIndex + 1;
-    this.props.history.push(this.state.formPages[nextIndex]);
+    this.setState({
+      currentFormPageIndex: nextIndex,
+      wasModified: false,
+
+    });
   }
 
   // Close the modal, setting formHelpContent to null.
@@ -305,9 +314,11 @@ class NewProjectView extends Component {
     });
   }
 
+  renderFormPage(index) {
+    return this.state.formPages[index].component();
+  }
+
   render() {
-    var location = this.props.location;    
-    var currentPathname = location.pathname;    
 
     var lastPage = this.state.currentFormPageIndex === (this.state.formPages.length - 1);
 
@@ -345,7 +356,7 @@ class NewProjectView extends Component {
         <header className="new-project-header">
           <div className="container flex-container">
             { this.state.formPages.map((page, index) => 
-              <NewProjectHeaderItem name={page.name} pathname={page.pathname} saved={page.saved} currentPathname={currentPathname} ready={page.ready}/>
+              <NewProjectHeaderItem name={page.name} pathname={page.pathname} saved={page.saved} active={index === this.state.currentFormPageIndex} ready={this.state.currentFormPageIndex >= index}/>
             )}            
           </div>
         </header>
@@ -354,54 +365,12 @@ class NewProjectView extends Component {
           <div className="new-project-form-body">
           <TransitionGroup className="transition-group">
             <CSSTransition
-            key={location.key}
+            key={this.state.currentFormPageIndex}
             timeout={{ enter: 400, exit:400 }}
             classNames="fade"
             >
               <section className={"route-section" + (!this.state.loading ? " loaded" : "")}>
-               <Switch location={location}>
-                   
-                  <Route path="/projects/new/entity-hierarchy" render={() =>
-                    <NewProjectEntityHierarchy loading={this.state.loading}
-
-                      entity_hierarchy={this.state.formPages[ENTITY_HIERARCHY].data ? this.state.formPages[1].data.children : []}  
-
-                      hierarchyPresets={["Named Entity Recognition (NER)", "Fine-grained Entity Recognition (FIGER)", "Maintenance"]}
-                      toggleFormHelp={this.toggleFormHelp.bind(this)} 
-
-                      setModified={this.setModified.bind(this)}
-
-                      //prevState={ this.getPrevState('Entity hierarchy')}
-                      saveData={this.saveData.bind(this, "Entity hierarchy")}
-
-                      />} /> 
-                  <Route path="/projects/new/automatic-tagging" render={() =>
-                    <NewProjectAutomaticTagging loading={this.state.loading}
-                      setModified={this.setModified.bind(this)}
-                      data={this.state.data.automatic_tagging}
-                      toggleFormHelp={this.toggleFormHelp.bind(this)} />} /> 
-                  <Route path="/projects/new/annotators" render={() =>
-                    <NewProjectAnnotators loading={this.state.loading}
-                      setModified={this.setModified.bind(this)}
-                      data={this.state.data.annotators}
-                      toggleFormHelp={this.toggleFormHelp.bind(this)} />} />
-                  <Route path="/projects/new/project-options" render={() =>
-                    <NewProjectProjectOptions loading={this.state.loading}
-                      setModified={this.setModified.bind(this)}
-                      data={this.state.data.project_options}
-                      toggleFormHelp={this.toggleFormHelp.bind(this)} />} />
-                  <Route exact path="/projects/new" render={() =>
-                    <NewProjectDetails loading={this.state.loading}
-                      data={this.state.formPages[PROJECT_DETAILS].data}
-                      toggleFormHelp={this.toggleFormHelp.bind(this)} 
-                      //prevState={ this.getPrevState('Project details & data')}
-                      saveData={this.saveData.bind(this, "Project details & data")}
-                      setModified={this.setModified.bind(this)}
-
-
-                      />} /> 
-                  <Route render={() => <Error404Page />} />   
-                </Switch>
+                  { this.renderFormPage(this.state.currentFormPageIndex) }
               </section>
             </CSSTransition>
           </TransitionGroup>
@@ -418,7 +387,7 @@ class NewProjectView extends Component {
             { !lastPage && 
             <div className="buttons-right">
               <button onClick={() => this.submitFormPage()} className="annotate-button new-project-button"><i className="fa fa-save"></i>Save</button>
-              <button onClick={() => this.gotoNextFormPage()}  className="annotate-button new-project-button grey-button">Next<i className="fa fa-chevron-right after"></i></button>
+              <button onClick={() => this.gotoNextFormPage()}  className={"annotate-button new-project-button grey-button " + (this.state.formPages[this.state.currentFormPageIndex].saved ? "" : "disablsed")}>Next<i className="fa fa-chevron-right after"></i></button>
 
               </div> }
           </div>
@@ -429,4 +398,46 @@ class NewProjectView extends Component {
   }
 }
 
-export default withRouter(NewProjectView);
+export default NewProjectView;
+
+/*
+<Route path="/projects/new/entity-hierarchy" render={() =>
+                    <NewProjectEntityHierarchy loading={this.state.loading}
+
+                      entity_hierarchy={this.state.formPages[ENTITY_HIERARCHY].data ? this.state.formPages[1].data.children : []}  
+
+                      hierarchyPresets={["Named Entity Recognition (NER)", "Fine-grained Entity Recognition (FIGER)", "Maintenance"]}
+                      toggleFormHelp={this.toggleFormHelp.bind(this)} 
+
+                      setModified={this.setModified.bind(this)}
+
+                      //prevState={ this.getPrevState('Entity hierarchy')}
+                      saveData={this.saveData.bind(this, "Entity hierarchy")}
+
+                      />} /> 
+                  <Route path="/projects/new/automatic-tagging" render={() =>
+                    <NewProjectAutomaticTagging loading={this.state.loading}
+                      setModified={this.setModified.bind(this)}
+                      data={this.state.formPages[AUTOMATIC_TAGGING].data}
+                      toggleFormHelp={this.toggleFormHelp.bind(this)} />} /> 
+                  <Route path="/projects/new/annotators" render={() =>
+                    <NewProjectAnnotators loading={this.state.loading}
+                      setModified={this.setModified.bind(this)}
+                      data={this.state.formPages[ANNOTATORS].data}
+                      toggleFormHelp={this.toggleFormHelp.bind(this)} />} />
+                  <Route path="/projects/new/project-options" render={() =>
+                    <NewProjectProjectOptions loading={this.state.loading}
+                      setModified={this.setModified.bind(this)}
+                      data={this.state.formPages[PROJECT_OPTIONS].data}
+                      toggleFormHelp={this.toggleFormHelp.bind(this)} />} />
+                  <Route exact path="/projects/new" render={() =>
+                    <NewProjectDetails loading={this.state.loading}
+                      data={this.state.formPages[PROJECT_DETAILS].data}
+                      toggleFormHelp={this.toggleFormHelp.bind(this)} 
+                      //prevState={ this.getPrevState('Project details & data')}
+                      saveData={this.saveData.bind(this, "Project details & data")}
+                      setModified={this.setModified.bind(this)}
+
+
+                      />} /> 
+                  <Route render={() => <Error404Page />} />    */
