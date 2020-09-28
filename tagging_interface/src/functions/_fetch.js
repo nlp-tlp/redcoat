@@ -14,9 +14,10 @@ const fetchConfig = {
   "POST": {
     method: 'POST',
     headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
       'csrf-token': csrfToken,
+      //'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      //'Content-Type': 'multipart/form-data',
     },
     dataType: "json",
     body: null,
@@ -35,12 +36,16 @@ async function wait(ms) {
 // A function to make fetching a little bit easier and avoid a lot of repeated code.
 // This one returns data only when there wasn't an error.
 // Returns 500 error if anything unexpected happens.
-async function _fetch(url, method, setErrorCode, postBody=null, delay=0) {
+async function _fetch(url, method, setErrorCode, postBody=null, fileUpload=false, delay=0) {
 
   var fetchConf = fetchConfig[method];
   if(method === "POST") {
     if(!postBody) throw new Error("Cannot POST without post body");
-    fetchConf.body = JSON.stringify(postBody);
+    if(fileUpload) {
+      fetchConf.body = postBody;
+    } else {
+      fetchConf.body = JSON.stringify(postBody);
+    }    
   }
 
   var response = await fetch(url, fetchConf) // TODO: move localhost out

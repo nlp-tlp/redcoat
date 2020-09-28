@@ -12,31 +12,137 @@ var Document = require('app/models/document')
 var ch = require('./helpers/category_hierarchy_helpers')
 
 var mongoose = require('mongoose');
+var formidable = require('formidable');
+
+var fs = require('fs');
+
+var MAX_FILESIZE_MB = 10;
+
+async function uploadDataset(req, res, wip) {
+	var form = new formidable.IncomingForm({"maxFileSize": MAX_FILESIZE_MB * 1024 * 1024}); // 25mb
+
+	form.parse(req);
+
+	var responded = false;
+	console.log(wip, 'heello')
+	
+	console.log(wip, 'hello')
+
+	form.on('file', function(field, file) {
+      filename = file.name;
+      var f = this;  
+      console.log("FILENAME", filename);
+
+      // Ensure filetype is correct
+      var fileType = file.type;        
+      if (fileType != 'text/plain') {
+
+        this.emit('error', [{ message: "File must be a plain text file.", path: 'dataset' }]);
+        return;
+        //return Promise.reject([{message: "poopy", path: "datasets"}]);
+      }
+      
+      // Tokenize the file with the WipProject.
+      var str = fs.readFileSync(file.path, 'utf-8');
+      wip.createDocumentsFromString(str, function(err, numberOfLines, numberOfTokens) {
+
+        if(err) { 
+          f.emit('error', err.errors.documents);
+          fs.unlink(file.path, (err) => {
+            if (err) throw err;
+          });
+        } else {
+
+          // numberOfLines = wip_project.documents.length;
+          // numberOfTokens = [].concat.apply([], wip_project.documents).length;
+
+          wip.setFileMetadata({
+            "Filename": filename ,
+            "Number of documents": numberOfLines,
+            "Number of tokens" : numberOfTokens,
+            "Average tokens/document" : parseFloat((numberOfTokens / numberOfLines).toFixed(2))
+          });         
+
+          wip.save(function(err, wip_project) {
+            if(err) { 
+              f.emit('error', err);
+            } else {
+              // Delete the file after reading is complete.
+              fs.unlink(file.path, (err) => {
+                if (err) throw err;
+              });
+
+              //console.log("New Documents (first 3):", wip_project.documents.slice(0, 3));              
+              //numberOfLines = wip_project.documents.length;
+              //numberOfTokens = [].concat.apply([], wip_project.documents).length;
 
 
+              f.emit('end_uploading'); // Only send out signal once the WipProject has been updated.
+            }
+          });
+        }
+      });
+    });
+
+    // log any errors that occur
+    form.on('error', function(errors) {
+        if(!responded) {
+
+          console.log(errors)
+          for(var err of errors) {
+          	// If err.message is the one about filesize being too large, change it to a nicer message.
+          	if(err.message.substr(0, 20) == 'maxFileSize exceeded') {
+            	err.message = "The file was too large. Please ensure it is less than 1mb.";
+          	}
+          }
+
+          
+          res.send({ "success": false, "errors": errors });
+          res.end();
+          responded = true;          
+        }   
+    });
+
+    // once all the files have been uploaded, send a response to the client
+    form.on('end_uploading', function() {
+      if(!responded){
+        res.send({'success': true, details: wip.fileMetadataToArray() });
+      }
+    });
+
+
+  return Promise.resolve('hello')
+}
 
 module.exports.submitProjectData = async function(req, res) {  
   var wip = await WipProject.getUserWip(req.user);
   var formPage = req.query.formPage;
   var data = req.body;
   var saved_wip;
+  console.log("req.body is ", req.body);
 
-  switch(formPage) {
-  	case 'project_details': {
-  		try {
-  			saved_wip = await wip.updateNameAndDesc(data.project_name, data.project_description);
-  			console.log("Saved wip:", saved_wip)
-  		} catch(errors) {
-  			console.log('eee', errors, ',,');
-  			return res.send({"errors": errors});
-  		}
-  		
-  		break;
-  	}
-  	case 'entity_hierarchy': {
+  try {
+	switch(formPage) {
+	  case 'project_details': {	  	
+	  	console.log(data);	
+		saved_wip = await wip.updateNameAndDesc(data.project_name, data.project_description);
+		
+		console.log("Saved wip:", saved_wip)	  		
+		break;
+	  }
+	  case 'dataset': {
+	  	wip = await wip.deleteDocumentsAndMetadataAndSave();
+	  	return uploadDataset(req, res, wip);
+	  	break;
+	  }
+	  case 'entity_hierarchy': {
 
-  		break;
-  	}
+		break;
+	  }
+	}
+  } catch(errors) {
+  	console.log('eee', errors, ',,');
+  	return res.send({"errors": errors});
   }
 
 

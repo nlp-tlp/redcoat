@@ -4,11 +4,11 @@ var logger = require('config/winston');
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
 var cf = require("./common/common_functions")
-//var WipDocumentGroup = require('./wip_document_group')
+//var WipDocument = require('./wip_document_group')
 var Project = require("./project")
 
 
-//var DocumentGroup = require("./document_group")
+var Document = require("./document")
 //var FrequentTokens = require("./frequent_tokens")
 
 
@@ -170,20 +170,26 @@ WipProjectSchema.methods.updateNameAndDesc = async function(project_name, projec
 WipProjectSchema.methods.cascadeDelete = cf.cascadeDelete;
 WipProjectSchema.methods.verifyAssociatedExists = cf.verifyAssociatedExists;
 
+
+
+
+
+
 // Removes this wip_project's documents and metadata and saves it.
-WipProjectSchema.methods.deleteDocumentsAndMetadataAndSave = function(next) {  
+WipProjectSchema.methods.deleteDocumentsAndMetadataAndSave = async function(next) {  
   var t = this;
 
   delete t.file_metadata;
   t.file_metadata = {};
 
-  DocumentGroup.remove({ project_id: t._id }, function(err) { // No associated objects so it's OK to use remove this way (no pre-remove hooks)
+  await Document.remove({ project_id: t._id }) // No associated objects so it's OK to use remove this way (no pre-remove hooks)
 
-    if(err) { return next(err); }
-    t.save(function(err, wipp) {
-      next(err, wipp);
-    });
-  });
+  var wipp = await t.save();
+
+  console.log(wipp, "<WIP")
+
+  return Promise.resolve(wipp);
+
 }
 
 WipProjectSchema.methods.deleteDictionaryAndMetadataAndSave = function(next) {
@@ -233,7 +239,7 @@ WipProjectSchema.methods.fileMetadataToArray = function() {
   arr = [];
   var stringy = JSON.parse(JSON.stringify(this.file_metadata));
   for(var k in stringy) {  
-    arr.push({ [k]: stringy[k] });
+    arr.push([k, stringy[k]]);
   }
   return arr;
 }
@@ -380,7 +386,7 @@ WipProjectSchema.methods.createAutomaticTaggingDictionaryFromString = function(s
 }
 
 // Creates an array of documents from a given string, assigns them to this wip_project's documents array, and validates the documents field.
-WipProjectSchema.methods.createDocumentGroupsFromString = function(str, done) {
+WipProjectSchema.methods.createDocumentsFromString = function(str, done) {
 
   var t = this;
   t.tokenizeString(str, function(err, tokenized_sentences, number_of_tokens, line_indexes) {
@@ -399,32 +405,29 @@ WipProjectSchema.methods.createDocumentGroupsFromString = function(str, done) {
         return;
       }
 
-      var doc_chunks = (array, chunk_size) => Array(Math.ceil(array.length / chunk_size)).fill().map((_, index) => index * chunk_size).map(begin => array.slice(begin, begin + chunk_size));
-      var chunk_size = cf.DOCUMENT_MAXCOUNT;
+      // var doc_chunks = (array, chunk_size) => Array(Math.ceil(array.length / chunk_size)).fill().map((_, index) => index * chunk_size).map(begin => array.slice(begin, begin + chunk_size));
+      // var chunk_size = cf.DOCUMENT_MAXCOUNT;
     
-      docgroups = doc_chunks(tokenized_sentences, chunk_size);
+      // docgroups = doc_chunks(tokenized_sentences, chunk_size);
 
-      docgroupsToCreate = [];
-      for (var i = 0; i < docgroups.length; i++) {
-        document_indexes = []
-        for(var j = 0; j < docgroups[i].length; j++) {
-          document_indexes.push((i*10) + j)
-        }
-        var d = new DocumentGroup( { project_id : t._id, documents: docgroups[i], document_indexes: document_indexes } )
-        d.generateDisplayName(function(err) {
-          docgroupsToCreate.push(d);      
-        });
-         
+      docsToCreate = [];
+
+      for(var i = 0; i < tokenized_sentences.length; i++) {
+        var d = new Document ( { project_id : t._id, tokens: tokenized_sentences[i], document_index: i } )        
+        docsToCreate.push(d);      
+        
       }
+      
+      
+         
+      
 
       //console.log(docgroupsToCreate[0])
       //console.log(docgroupsToCreate[1])
       //console.log(docgroupsToCreate[2])
 
       // Bypassses validation as it was already done before.
-      DocumentGroup.collection.insert(docgroupsToCreate, function(err, docgroups) {
-
-
+      Document.collection.insert(docsToCreate, function(err, docs) {
 
         if(err) { done(err); return; }
         done(null, number_of_lines, number_of_tokens);
@@ -462,9 +465,9 @@ WipProjectSchema.methods.tokenizeString = function(str, done) {
 }
 
 // Returns a list of this WipProject's document groups.
-WipProjectSchema.methods.getDocumentGroups = function(done) {
+WipProjectSchema.methods.getDocuments = function(done) {
   var t = this;
-  DocumentGroup.find({ project_id: t._id}, function(err, document_groups) {
+  Document.find({ project_id: t._id}, function(err, document_groups) {
     done(err, document_groups);
   });
 }
@@ -506,7 +509,7 @@ WipProjectSchema.methods.convertToProject = function(done) {
 
 
     
-    t.getDocumentGroups(function(err, document_groups) {
+    t.getDocuments(function(err, document_groups) {
 
       if(err) { return done(err); }
 
@@ -515,7 +518,7 @@ WipProjectSchema.methods.convertToProject = function(done) {
 
       // for(var i = 0; i < wip_document_groups.length; i++) {
       //   var w = wip_document_groups[i];
-      //   docgroupsToCreate.push(new DocumentGroup( { project_id : w.wip_project_id, documents: w.documents, _id: w._id } ));
+      //   docgroupsToCreate.push(new Document( { project_id : w.wip_project_id, documents: w.documents, _id: w._id } ));
       //   removeIds.push(w._id);
       // }
 
@@ -553,7 +556,7 @@ WipProjectSchema.methods.convertToProject = function(done) {
       //   }
       // }
 
-      // DocumentGroup.collection.insert(docgroupsToCreate, function(err, docgroups) {
+      // Document.collection.insert(docgroupsToCreate, function(err, docgroups) {
       // f.save(function(err, ft) {
 
         // console.log(Object.keys(f.tokens).length, "tokens total.")
@@ -673,7 +676,7 @@ WipProjectSchema.pre('remove', function(next) {
   // Only cascade delete if a project with the same id as this wip_project doesn't exist
   Project.findById(t._id, function(err, proj) {
     if(!proj) {
-       t.cascadeDelete(DocumentGroup, {project_id: t._id}, next);
+       t.cascadeDelete(Document, {project_id: t._id}, next);
     } else {
       next();
     }
