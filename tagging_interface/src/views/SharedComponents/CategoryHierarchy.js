@@ -107,7 +107,7 @@ class Category extends Component {
 
         <span className={"category-name" + (hasHotkey ? " has-hotkey" :"") + (modifiable ? " modifiable" :"") + (this.props.hotkeyChain === hotkeyStr ? " hotkey-active" : "")}
               data-hotkey-id={hotkeyStr} onClick={this.props.applyTag ? () => this.props.applyTag(this.props.item.full_name) : null}>
-            { modifiable ? <input className={item.name.length === 0 ? "empty" : ""} placeholder="(no name)" ref={this.nameInputRef} maxLength={50} value={item.name} onChange={(e) => this.props.itemNameChange(e, path)} /> : item.name}
+            { modifiable ? <input required className={item.name.length === 0 ? "empty" : ""} placeholder="(no name)" ref={this.nameInputRef} maxLength={50} value={item.name} onChange={(e) => this.props.itemNameChange(e, path)} /> : item.name}
         </span>
         
         </span>

@@ -37,7 +37,7 @@ async function uploadDataset(req, res, wip) {
       var fileType = file.type;        
       if (fileType != 'text/plain') {
 
-        this.emit('error', [{ message: "File must be a plain text file.", path: 'dataset' }]);
+        this.emit('error', [{ message: "File must be a plain text file." }]);
         return;
         //return Promise.reject([{message: "poopy", path: "datasets"}]);
       }
@@ -88,13 +88,19 @@ async function uploadDataset(req, res, wip) {
     form.on('error', function(errors) {
         if(!responded) {
 
-          console.log(errors)
-          for(var err of errors) {
-          	// If err.message is the one about filesize being too large, change it to a nicer message.
-          	if(err.message.substr(0, 20) == 'maxFileSize exceeded') {
-            	err.message = "The file was too large. Please ensure it is less than 1mb.";
+          if(!Array.isArray(errors)) {
+          	if(errors.message.substr(0, 20) == 'maxFileSize exceeded') {
+            	errors = {message: "The file was too large. Please ensure it is less than " + MAX_FILESIZE_MB + "mb."};
           	}
-          }
+          	errors = [errors];
+	      }
+	      for(var err of errors) {
+	      	err.message = err.message;
+	      	err.path = 'dataset';
+	      }
+
+          
+          console.log(errors, "<<");
 
           
           res.send({ "success": false, "errors": errors });
@@ -124,7 +130,7 @@ module.exports.submitProjectData = async function(req, res) {
   try {
 	switch(formPage) {
 	  case 'project_details': {	  	
-	  	console.log(data);	
+	  	console.log("Project details:", data);	
 		saved_wip = await wip.updateNameAndDesc(data.project_name, data.project_description);
 		
 		console.log("Saved wip:", saved_wip)	  		
@@ -136,7 +142,7 @@ module.exports.submitProjectData = async function(req, res) {
 	  	break;
 	  }
 	  case 'entity_hierarchy': {
-
+	  	console.log('entity')
 		break;
 	  }
 	}

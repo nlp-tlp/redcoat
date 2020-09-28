@@ -38,13 +38,16 @@ async function wait(ms) {
 // Returns 500 error if anything unexpected happens.
 async function _fetch(url, method, setErrorCode, postBody=null, fileUpload=false, delay=0) {
 
-  var fetchConf = fetchConfig[method];
+  var fetchConf = {... fetchConfig[method] };
   if(method === "POST") {
     if(!postBody) throw new Error("Cannot POST without post body");
     if(fileUpload) {
       fetchConf.body = postBody;
+      delete fetchConf.headers;
     } else {
+
       fetchConf.body = JSON.stringify(postBody);
+      fetchConf.headers['Content-Type'] = 'application/json';
     }    
   }
 

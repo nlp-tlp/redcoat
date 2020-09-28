@@ -21,6 +21,7 @@ class FileUploadForm extends Component {
 
   async updateFile(e) {
     console.log(e.target.files[0]);
+    if(!e.target.files[0]) return;
 
     this.setState({
       file: e.target.files[0],
@@ -33,26 +34,30 @@ class FileUploadForm extends Component {
       <div className="upload-form-container">
         <div className={"upload-form " + (this.props.savedFileMetadata ? "saved" : "")  + (this.props.hasError ? "error" : "")}>
 
-          <input required type="file" id="upload-dataset" name="upload-dataset" onChange={(e) => this.updateFile(e)}/>
-          <label for="upload-dataset">
-            { this.props.hasError              
-            ? <span className="center"><i className="form-icon fa fa-times"></i>An error occurred while uploading<br/><em>{this.state.filename}</em>.</span>
-            : (this.props.savedFileMetadata 
-              ? (
-                  <span>
-                    
-                    <span className="center"><em>{this.state.filename}</em> uploaded successfully.</span>
-                    <table className="file-metadata">
-                      { this.props.savedFileMetadata.slice(1, this.props.savedFileMetadata.length).map((item, index) => 
-                        <tr><td>{item[0]}:</td><td>{item[1]}</td></tr>                    
-                      )}
-                    </table>
+          <input required={!this.props.savedFileMetadata} type="file" id="upload-dataset" name="upload-dataset" onChange={(e) => this.updateFile(e)}/>
+          <label htmlFor="upload-dataset">
 
-                  </span>
+            { this.props.saving
+            ? <span className="center"><i className="form-icon fa fa-cog fa-spin"></i>Uploading...</span>
+            : (this.props.hasError              
+              ? <span className="center"><i className="form-icon fa fa-times"></i>An error occurred while uploading<br/><em>{this.state.filename}</em>.</span>
+              : (this.props.savedFileMetadata 
+                ? (
+                    <span>
+                      
+                      <span className="center"><em>{this.props.savedFileMetadata[0][1]}</em> uploaded successfully.</span>
+                      <table className="file-metadata">
+                        { this.props.savedFileMetadata.slice(1, this.props.savedFileMetadata.length).map((item, index) => 
+                          <tr><td>{item[0]}:</td><td>{item[1]}</td></tr>                    
+                        )}
+                      </table>
+
+                    </span>
+                  )
+                : (this.state.filename              
+                  ? (<span><i className="form-icon fa fa-check"></i>Ready to upload <em>{this.state.filename}</em>.</span>)
+                  : <span><i className="form-icon fa fa-upload"></i>Click here to upload a dataset.</span>
                 )
-              : (this.state.filename              
-                ? (<span><i className="form-icon fa fa-check"></i>Ready to upload <em>{this.state.filename}</em>.</span>)
-                : <span><i className="form-icon fa fa-upload"></i>Click here to upload a dataset.</span>
               )
             )
             }
@@ -76,7 +81,7 @@ class NewProjectDetails extends Component {
       data: {
         project_name: '',
         project_description: '',  
-        dataset: null,      
+        dataset: null,
       },
     }
     this.justMounted = true; // Set to false on first update
@@ -94,7 +99,7 @@ class NewProjectDetails extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     if(!this.justMounted && !_.isEqual(prevState.data, this.state.data)) {
-      this.props.saveData(this.state.data);
+      this.props.updateFormPageData(this.state.data, { reset_form: false });
     }   
     this.justMounted = false; 
   }
@@ -120,7 +125,7 @@ class NewProjectDetails extends Component {
       data: { ...this.state.data, dataset: file }
     }, () => {
       console.log('changed')
-      this.props.saveData(this.state.data);
+      this.props.updateFormPageData(this.state.data, { reset_form: true });
     })
   }
 
@@ -170,6 +175,7 @@ class NewProjectDetails extends Component {
             
 
             <FileUploadForm 
+              saving={this.props.saving && !this.props.savedFileMetadata}
               hasError={this.props.uploadFormHasError}
               updateFile={this.updateDataset.bind(this)}
               savedFileMetadata={this.props.savedFileMetadata}

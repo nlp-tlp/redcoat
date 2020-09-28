@@ -90,6 +90,10 @@ main.new-project {
 		font-size: 16px;
 		margin-bottom: 0;
 	}
+	.saving {
+		pointer-events: none;
+		opacity: 0.75;
+	}
 	.saved {
 		background: darken($primary-green, 4);
 		&:hover {
@@ -302,6 +306,42 @@ form.errors {
 			}
 		}
 
+	}
+}
+@keyframes shake {
+  10%, 90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  
+  20%, 80% {
+    transform: translate3d(2px, 0, 0);
+  }
+
+  30%, 50%, 70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+
+  40%, 60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}
+
+form.saving {
+	pointer-events: none;
+	input, .upload-form label {
+		opacity: 0.8;
+	}
+}
+
+form.shake {
+
+	input:invalid {
+		//border-color: $primary-gold;
+		animation: shake 0.5s;
+	}
+	.upload-form input:invalid + label {
+		//border-color: $primary-gold;
+		animation: shake 0.5s;
 	}
 }
 

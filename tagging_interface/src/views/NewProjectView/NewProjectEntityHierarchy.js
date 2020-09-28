@@ -54,7 +54,7 @@ class NewProjectEntityHierarchy extends Component {
     }
 
     //console.log('modified')
-    this.props.saveData(entity_hierarchy);
+    this.props.updateFormPageData(entity_hierarchy);
 
     this.setState({
       entity_hierarchy: entity_hierarchy,
