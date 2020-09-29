@@ -18,6 +18,10 @@ var fs = require('fs');
 
 var MAX_FILESIZE_MB = 10;
 
+
+var ch = require('./helpers/category_hierarchy_helpers')
+
+
 async function uploadDataset(req, res, wip) {
 	var form = new formidable.IncomingForm({"maxFileSize": MAX_FILESIZE_MB * 1024 * 1024}); // 25mb
 
@@ -117,10 +121,68 @@ async function uploadDataset(req, res, wip) {
     });
 
 
-  return Promise.resolve('hello')
+  return;
 }
 
-module.exports.submitProjectData = async function(req, res) {  
+
+var formPageOrder = ["project_details", "entity_hierarchy", "automatic_tagging", "annotators", "project_options"]
+
+// Retrieve the data for the form page requested.
+// If no form page is requested, retrieve the data from the latest form page that the user has submitted.
+module.exports.getFormPage = async function(req, res) {
+  var wip = await WipProject.getUserWip(req.user);
+  var formPage = req.query.formPage;
+  console.log(formPage, "<<");
+  console.log(wip);
+
+  // If the form page is not valid (i.e. appears in the below list), send an error.
+  if(formPage && formPageOrder.indexOf(formPage) === -1) {
+    return res.send(500);
+  }
+
+  if(!formPage) {
+    formPage = wip.latest_form_page;
+  } else {
+    wip.latest_form_page = formPage;
+    wip = await wip.save();  
+  }
+  console.log(wip);
+
+  console.log("form page:", formPage);
+
+  var response = {};
+  switch(formPage) {
+    case 'project_details': {
+      response = {
+        data: {
+          project_name: wip.project_name,
+          project_description: wip.project_description,
+          file_metadata: wip.fileMetadataToArray() || null,
+          upload_form_has_error: false,
+        }
+      }
+      break;
+    }
+    case 'entity_hierarchy': {
+      var hierarchy = ch.txt2json(ch.slash2txt(wip.category_hierarchy), wip.category_hierarchy).children;
+      console.log(hierarchy);
+      response = {
+        data: {
+          entity_hierarchy: hierarchy,
+        }
+      }
+      break;
+    }
+  }
+  
+  response.latest_form_page = formPage;
+  console.log(response);
+  return res.send(response);
+
+  
+}
+
+module.exports.submitFormPage = async function(req, res) {  
   var wip = await WipProject.getUserWip(req.user);
   var formPage = req.query.formPage;
   var data = req.body;
@@ -138,10 +200,14 @@ module.exports.submitProjectData = async function(req, res) {
 	  }
 	  case 'dataset': {
 	  	wip = await wip.deleteDocumentsAndMetadataAndSave();
+
 	  	return uploadDataset(req, res, wip);
 	  	break;
 	  }
 	  case 'entity_hierarchy': {
+
+      saved_wip = await wip.updateCategoryHierarchy(data.entity_hierarchy);
+      console.log("saved wip", saved_wip)
 	  	console.log('entity')
 		break;
 	  }
@@ -157,7 +223,7 @@ module.exports.submitProjectData = async function(req, res) {
 }
 
 // Clear the specified data, e.g. reset the category hierarchy or the title/description etc.
-module.exports.clearProjectData = async function(req, res) {
+module.exports.clearFormPage = async function(req, res) {
 	var wip = await WipProject.getUserWip(req.user);
 
 }

@@ -342,7 +342,8 @@ class ModifiableCategoryHierarchy extends Component {
     if(!_.isEqual(prevState.items, this.state.items) && this.state.items.length > 0) {      
       this.props.setModified(this.state.items);
     }
-    if(!_.isEqual(prevProps.items, this.props.items) && !_.isEqual(prevProps.preset, this.props.preset)) {
+    //if(!_.isEqual(prevProps.items, this.props.items) && !_.isEqual(prevProps.preset, this.props.preset)) {
+    if(!_.isEqual(prevProps.items, this.props.items) && _.isEqual(prevState.items, this.state.items)) {
       this.setState({
         openedItems: new Set(),
         items: this.props.items,
@@ -533,6 +534,7 @@ class ModifiableCategoryHierarchy extends Component {
   render() {
     var items       = this.state.items;
     var openedItems = this.state.openedItems;
+
 
     return (
       <div id="category-hierarchy-tree" className="table-form display-only" >

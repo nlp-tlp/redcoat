@@ -133,6 +133,7 @@ class NewProjectView extends Component {
         saving: this.state.saving,
         toggleFormHelp: this.toggleFormHelp.bind(this),
         errorPaths: getErrorPathsSet(this.state.formErrors),
+        data: this.state.data,
 
       }
     }).bind(this);
@@ -144,6 +145,8 @@ class NewProjectView extends Component {
       // data: {
       //   entity_hierarchy: { children: [], },
       // },
+
+      data: {},
 
       // Store JSON objects for each form page:
       // name: the name of the page
@@ -160,9 +163,8 @@ class NewProjectView extends Component {
           savedFileMetadata: null,
           uploadFormHasError: false,
           component: () => <NewProjectDetails
-            data={this.state.formPages[PROJECT_DETAILS].data}
-            savedFileMetadata={this.state.formPages[PROJECT_DETAILS].savedFileMetadata}
-            uploadFormHasError={this.state.formPages[PROJECT_DETAILS].uploadFormHasError}
+            //data={this.state.formPages[PROJECT_DETAILS].data}
+            //uploadFormHasError={this.state.formPages[PROJECT_DETAILS].uploadFormHasError}
             updateFormPageData={this.updateFormPageData.bind(this, "Project details & data")}
             { ... sharedProps() } />       
         },
@@ -172,7 +174,7 @@ class NewProjectView extends Component {
           saved: false,
           data: null,
           component: () => <NewProjectEntityHierarchy
-            entity_hierarchy={this.state.formPages[ENTITY_HIERARCHY].data ? this.state.formPages[1].data.children : []}  
+            //entity_hierarchy={this.state.formPages[ENTITY_HIERARCHY].data ? this.state.formPages[1].data.children : []}  
             hierarchyPresets={["Named Entity Recognition (NER)", "Fine-grained Entity Recognition (FIGER)", "Maintenance"]}
             updateFormPageData={this.updateFormPageData.bind(this, "Entity hierarchy")}
             { ... sharedProps() }/>
@@ -185,7 +187,7 @@ class NewProjectView extends Component {
           saved: false,
           data: null,
           component: () => <NewProjectAutomaticTagging
-            data={this.state.formPages[AUTOMATIC_TAGGING].data}
+          
             { ... sharedProps() }/>
         },
         {
@@ -194,7 +196,7 @@ class NewProjectView extends Component {
           saved: false,
           data: null,
           component: () => <NewProjectAnnotators
-            data={this.state.formPages[ANNOTATORS].data}
+            //data={this.state.formPages[ANNOTATORS].data}
             { ... sharedProps() }/>
         },
         {
@@ -203,7 +205,7 @@ class NewProjectView extends Component {
           saved: false,
           data: null,
           component: () => <NewProjectProjectOptions
-            data={this.state.formPages[PROJECT_OPTIONS].data} { ... sharedProps() }/>
+           { ... sharedProps() }/>
         },
       ],
 
@@ -229,30 +231,47 @@ class NewProjectView extends Component {
   }
 
   componentDidMount() {
+
+    this.queryAPI(true);
+
     //this.updateCurrentFormPageIndex();
   }
 
-  // Save the previous state of the given form page.
-  updateFormPageData(page, data, options) {
-    var formPages = this.state.formPages;
+  // Save the state of the given form page.
+  async updateFormPageData(page, data, options) {
+    //var formPages = this.state.formPages;
     console.log(page, data);
 
-    if(page === 'Project details & data') {
-      formPages[PROJECT_DETAILS].data = data;
-      if(options.reset_form) {
-        formPages[PROJECT_DETAILS].savedFileMetadata = null;
-        formPages[PROJECT_DETAILS].uploadFormHasError = false;
-      }     
-      
+    // await this.setState({
+    //   data: data,
+    // })
+    if(options && options.reset_form) {
+      await this.setState({
+        data: {...this.state.data, file_metadata: null, upload_form_has_error: false}
+      })
     }
 
-    if(page === "Entity hierarchy") {      
-      formPages[ENTITY_HIERARCHY].data = { children: data };    
-      console.log(formPages[ENTITY_HIERARCHY].data)  
-    }
+    // if(page === 'Project details & data') {
+      
+    //   if(options.reset_form) {
+    //     await this.setState({
+    //       data: {...this.state.data, savedFileMetadata: null, uploadFormHasError: false}
+    //     })
+
+    //     //formPages[PROJECT_DETAILS].savedFileMetadata = null;
+    //     //formPages[PROJECT_DETAILS].uploadFormHasError = false;
+    //   }     
+      
+    // }
+
+    // if(page === "Entity hierarchy") {      
+    //   await this.setState({data: data}    
+    //   console.log(formPages[ENTITY_HIERARCHY].data)  
+    // }
 
     this.setState({
-      formPages: formPages,
+      data: data,
+      //formPages: formPages,
       wasModified: true,
       isSaved: false,
 
@@ -260,6 +279,32 @@ class NewProjectView extends Component {
   }
 
 
+  async queryAPI(firstLoad) {
+    if(firstLoad) {
+      formPage = '';
+    } else {
+      var formPage = '?formPage=' +this.getFormPagePathname();      
+    }
+    
+    var d = await _fetch('http://localhost:3000/api/projects/new/get' + formPage, 'GET', this.props.setErrorCode);
+
+    if(firstLoad) {
+      var latestFormPage = d.latest_form_page;
+      for(var i = 0; i < this.state.formPages.length; i++) {
+        if(this.state.formPages[i].pathname === latestFormPage) {
+          var latestFormPageIndex = i;
+          break;
+        }
+      }
+    } else {
+      var latestFormPageIndex = this.state.currentFormPageIndex;
+    }
+    
+    this.setState({
+      data: d.data,
+      currentFormPageIndex: latestFormPageIndex,
+    });
+  }
 
   // Update the form page index when this component's location is updated (i.e. a route change).
   componentDidUpdate(prevProps) {    
@@ -289,16 +334,16 @@ class NewProjectView extends Component {
     })
     // do something
     var formPath = this.getFormPagePathname();
-    var data = this.state.formPages[this.state.currentFormPageIndex].data;
+    var data = this.state.data;
 
-
+    console.log("THIS STATE DATA IS ", data);
     if(this.state.currentFormPageIndex === PROJECT_DETAILS) {
       
       // Upload name/desc first
       var d = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=' + formPath, 'POST', this.props.setErrorCode, data);
 
       // Don't save the dataset again if it has not changed
-      if(!d.errors && !this.state.formPages[PROJECT_DETAILS].savedFileMetadata) {
+      if(!d.errors && !this.state.data.file_metadata) {
 
         // Then upload the dataset
         var formData = new FormData();
@@ -337,14 +382,14 @@ class NewProjectView extends Component {
 
 
 
-
+      console.log(data, ',,,')
       if(this.state.currentFormPageIndex === ENTITY_HIERARCHY) {
-        data = json2slash(data);
+        data = json2slash({children: data.entity_hierarchy});
       }
 
 
       console.log("data", data);
-      var d = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=' + formPath, 'POST', this.props.setErrorCode, data);
+      var d = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=' + formPath, 'POST', this.props.setErrorCode, {entity_hierarchy: data});
 
     }
 
@@ -397,6 +442,7 @@ class NewProjectView extends Component {
       wasModified: false,
       isSaved: true,
     });
+    this.queryAPI();
 
     window.scrollTo({
       top: 0,
@@ -415,6 +461,7 @@ class NewProjectView extends Component {
       isSaved: false,
 
     });
+    this.queryAPI();
 
     window.scrollTo({
       top: 0,

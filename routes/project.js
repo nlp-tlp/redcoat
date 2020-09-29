@@ -76,9 +76,11 @@ router.post('/:id/comments/submit', verifyUserInProject, projectController.submi
 router.post('/invitations/:id/accept', projectController.acceptInvitation);
 router.post('/invitations/:id/decline', projectController.declineInvitation);
 
-router.get('/new', newProjectController.getWipProject);
-router.post('/new/submit', newProjectController.submitProjectData);
-router.post('/new/clear' , newProjectController.clearProjectData);
+//router.get('/new', newProjectController.getWipProject);
+
+router.get('/new/get' , newProjectController.getFormPage);
+router.post('/new/submit', newProjectController.submitFormPage);
+router.post('/new/clear' , newProjectController.clearFormPage);
 
 
 

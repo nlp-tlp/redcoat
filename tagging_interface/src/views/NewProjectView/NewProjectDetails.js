@@ -30,24 +30,25 @@ class FileUploadForm extends Component {
   }
 
   render() {
+    console.log(this.props.file_metadata)
     return (
       <div className="upload-form-container">
-        <div className={"upload-form " + (this.props.savedFileMetadata ? "saved" : "")  + (this.props.hasError ? "error" : "")}>
+        <div className={"upload-form " + (this.props.file_metadata ? "saved" : "")  + (this.props.hasError ? "error" : "")}>
 
-          <input required={!this.props.savedFileMetadata} type="file" id="upload-dataset" name="upload-dataset" onChange={(e) => this.updateFile(e)}/>
+          <input required={!this.props.file_metadata} type="file" id="upload-dataset" name="upload-dataset" onChange={(e) => this.updateFile(e)}/>
           <label htmlFor="upload-dataset">
 
             { this.props.saving
             ? <span className="center"><i className="form-icon fa fa-cog fa-spin"></i>Uploading...</span>
             : (this.props.hasError              
               ? <span className="center"><i className="form-icon fa fa-times"></i>An error occurred while uploading<br/><em>{this.state.filename}</em>.</span>
-              : (this.props.savedFileMetadata 
+              : (this.props.file_metadata 
                 ? (
                     <span>
                       
-                      <span className="center"><em>{this.props.savedFileMetadata[0][1]}</em> uploaded successfully.</span>
+                      <span className="center"><em>{this.props.file_metadata[0][1]}</em> uploaded successfully.</span>
                       <table className="file-metadata">
-                        { this.props.savedFileMetadata.slice(1, this.props.savedFileMetadata.length).map((item, index) => 
+                        { this.props.file_metadata.slice(1, this.props.file_metadata.length).map((item, index) => 
                           <tr><td>{item[0]}:</td><td>{item[1]}</td></tr>                    
                         )}
                       </table>
@@ -82,6 +83,8 @@ class NewProjectDetails extends Component {
         project_name: '',
         project_description: '',  
         dataset: null,
+        file_metadata: null,
+        upload_form_has_error: false
       },
     }
     this.justMounted = true; // Set to false on first update
@@ -89,15 +92,25 @@ class NewProjectDetails extends Component {
 
 
   componentDidMount() {
-    if(this.props.data) {
-      console.log('modified 1')
-      this.setState({
-        data: this.props.data,
-      })
-    }
+    // if(this.props.data) {
+    //   console.log('modified 111')
+    //   this.setState({
+    //     data: this.props.data,
+    //   }, () => {
+    //     console.log(this.state.data, this.props.data, "<<")
+    //   })
+    // }
   }
 
   componentDidUpdate(prevProps, prevState) {
+    if(!_.isEqual(this.props.data, this.state.data) && _.isEqual(prevState.data, this.state.data)) {
+      this.setState({
+        data: this.props.data,
+      });
+    }
+
+
+
     if(!this.justMounted && !_.isEqual(prevState.data, this.state.data)) {
       this.props.updateFormPageData(this.state.data, { reset_form: false });
     }   
@@ -143,7 +156,7 @@ class NewProjectDetails extends Component {
       </div>
     )
 
-
+    console.log(this.props.file_metadata);
     return (
       <div>
 
@@ -175,10 +188,10 @@ class NewProjectDetails extends Component {
             
 
             <FileUploadForm 
-              saving={this.props.saving && !this.props.savedFileMetadata}
+              saving={this.props.saving && !this.props.data.file_metadata}
               hasError={this.props.uploadFormHasError}
               updateFile={this.updateDataset.bind(this)}
-              savedFileMetadata={this.props.savedFileMetadata}
+              file_metadata={this.props.data.file_metadata}
 
             />
           </div>

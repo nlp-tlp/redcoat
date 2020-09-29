@@ -1432,7 +1432,7 @@
 	}
 	textarea {
 		border-radius: 4px;
-		font-size: 16px;
+		font-size: 15px;
 		border-width: 1px;
 		border-color: #ccc;
 		height: 70px;
@@ -1440,8 +1440,11 @@
 		width: 100%;
 		margin-right: 10px;
 		display: block;
+		box-sizing: border-box;
+		padding: 10px;
 		&:focus {
 			border-color: lighten($button-blue, 6);
+			outline: none !important;
 		}
 	}
 	.comment-right.margin-right {

@@ -88,6 +88,13 @@ var WipProjectSchema = new Schema({
   overlap: cf.fields.overlap,
 
 
+  // The latest form page (i.e. the latest one yet to be saved) for this WIP project.
+  latest_form_page: {
+    type: String,
+    enum: ["project_details", "entity_hierarchy", "automatic_tagging", "annotators", "project_options"],
+    default: "project_details",
+  },
+
   // A simple field to keep track of whether the user clicked 'distribute myself' on the form. (is not passed on to Project)
   distribute_self: {
     type: String,
@@ -122,9 +129,7 @@ WipProjectSchema.methods.updateNameAndDesc = async function(project_name, projec
     await t.validate();
     
   } catch(err) {
-    logger.error(err);
     var relevantErrors = new Array();
-    console.log('---')
     for(var error in err.errors) {
       var path = err.errors[error].path;
       var message = err.errors[error].message;
@@ -143,7 +148,29 @@ WipProjectSchema.methods.updateNameAndDesc = async function(project_name, projec
   return Promise.resolve(saved);
 }
 
+WipProjectSchema.methods.updateCategoryHierarchy = async function(category_hierarchy) {
+  var t = this;
+  t.category_hierarchy = category_hierarchy;
+  console.log(category_hierarchy, "x<<")
+  try {
+    await t.validate();
+  } catch(err) {
+    if(err && err.errors && err.errors.category_hierarchy) {
+      t.category_hierarchy = [];
+      var relevantErrors = new Array();
+      for(var error in err.errors) {
+        var path = err.errors[error].path;
+        var message = err.errors[error].message;
+        relevantErrors.push({message: message, path: path});
+      }
 
+      return Promise.reject(relevantErrors)
+    }
+  }
+  var saved = await t.save();
+  console.log("Saved", saved);
+  return Promise.resolve(saved);
+}
 
 
 
@@ -241,7 +268,7 @@ WipProjectSchema.methods.fileMetadataToArray = function() {
   for(var k in stringy) {  
     arr.push([k, stringy[k]]);
   }
-  return arr;
+  return arr.length > 0 ? arr : null;
 }
 
 

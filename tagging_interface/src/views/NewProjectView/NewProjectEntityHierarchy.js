@@ -15,7 +15,10 @@ class NewProjectEntityHierarchy extends Component {
     super(props);
 
     this.state = {
-      entity_hierarchy: [],
+      data: {
+        entity_hierarchy: [],
+      },
+      
       selectedPreset: "None",
       hierarchyModified: false,
       hierarchyModifiedPreset: null,
@@ -24,28 +27,38 @@ class NewProjectEntityHierarchy extends Component {
 
     this.selectLabelRef = React.createRef();
     this.selectRef = React.createRef();
+    this.justMounted = true;
   }
 
   componentDidMount() {
     
-    if(this.props.prevState) {
-      console.log("Loading state:", this.props.prevState)
-      this.setState(this.props.prevState);
-    } else {
-      this.setState({
-        entity_hierarchy: this.props.entity_hierarchy,
-        selectedPreset: "None",
-      });
-    }
+    // if(this.props.prevState) {
+    //   console.log("Loading state:", this.props.prevState)
+    //   this.setState(this.props.prevState);
+    // } else {
+    //   this.setState({
+    //     entity_hierarchy: this.props.entity_hierarchy,
+    //     selectedPreset: "None",
+    //   });
+    // }
   }
 
-  // componentDidUpdate(prevProps, prevState) {
-  //   if(!_.isEqual(prevState.entity_hierarchy, this.state.entity_hierarchy)) {
-  //     this.props.saveData(this.state.entity_hierarchy);      
-  //   }    
-  // }
+  componentDidUpdate(prevProps, prevState) {
 
-  setModified(entity_hierarchy) {
+    if(!_.isEqual(this.props.data, this.state.data) && _.isEqual(prevState.data, this.state.data)) {
+     this.setState({
+      data: { ...this.props.data}
+     });            
+    } 
+
+    if(!this.justMounted && !_.isEqual(this.state.data, prevState.data)) {
+      this.props.updateFormPageData(this.state.data); 
+    }    
+    this.justMounted = false; 
+
+  }
+
+  async setModified(entity_hierarchy) {
     if(this.state.selectedPreset === "None") {
       var modifiedPresetName = "Custom"
     } else {
@@ -54,14 +67,18 @@ class NewProjectEntityHierarchy extends Component {
     }
 
     //console.log('modified')
-    this.props.updateFormPageData(entity_hierarchy);
+    
 
-    this.setState({
-      entity_hierarchy: entity_hierarchy,
+    await this.setState({
+      data: {
+        entity_hierarchy: entity_hierarchy,
+      },
 
       hierarchyModified: true,
       hierarchyModifiedPreset: modifiedPresetName,
-    })
+    });
+
+    this.props.updateFormPageData(this.state.data);
   }
 
   changePreset(e) {
@@ -76,7 +93,9 @@ class NewProjectEntityHierarchy extends Component {
     this.selectRef.current.blur();
 
     this.setState({
-      entity_hierarchy: hierarchy,
+      data: {
+        entity_hierarchy: hierarchy,
+      },
       selectedPreset: value,
       hierarchyModified: false,
     }, () => {
@@ -89,6 +108,7 @@ class NewProjectEntityHierarchy extends Component {
   }
 
   render() {
+    console.log(this.state.data.entity_hierarchy);
 
     var help = (<div>
         <h2>Entity Hierarchy</h2>
@@ -113,7 +133,7 @@ class NewProjectEntityHierarchy extends Component {
 
         <div className="category-hierarchy-wrapper min-height">
         <ModifiableCategoryHierarchy
-              items={ this.state.entity_hierarchy }  
+              items={ this.state.data.entity_hierarchy }  
               preset={this.state.selectedPreset}                       
               visible={true}   
               limitHeight={true}
