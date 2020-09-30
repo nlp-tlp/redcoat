@@ -53,6 +53,13 @@ class NewProjectEntityHierarchy extends Component {
 
   componentDidUpdate(prevProps, prevState) {
 
+
+    if(!_.isEqual(this.props.data, this.state.data) && !_.isEqual(prevState.data, this.state.data)) {
+      this.props.updateFormPageData(this.state.data, { reset_form: false });            
+    }
+
+
+
     // if(!_.isEqual(this.props.data, this.state.data) && _.isEqual(prevState.data, this.state.data)) {
     //  this.setState({
     //   data: { ...this.props.data}
@@ -65,25 +72,36 @@ class NewProjectEntityHierarchy extends Component {
     // } 
   }
 
-  async setModified(entity_hierarchy) {
-    if(this.state.preset_is_modified) {
-      this.props.updateFormPageData(this.state.data);
-      return;
-    }
-    // if(this.state.selectedPreset === "None") {
-    //   var modifiedPresetName = "Custom"
-    // } else {
-    //   var modifiedPresetName = hierarchyPresets[this.state.selectedPreset]['name'];
-    //   modifiedPresetName += " (modified)";
-    // }
+  async markModified() {
 
-    //console.log('modified')
-    
-
+    if(this.state.preset_is_modified) { this.props.markModified(); return }
     await this.setState({
-      data: { ...this.state.data, hierarchy_preset: this.state.data.hierarchy_preset === "None" ? "Custom" : (this.state.data.hierarchy_preset + " (modified)")},
+      data: {...this.state.data, 
+        hierarchy_preset: this.state.data.hierarchy_preset === "None"
+          ? "Custom"
+          : (this.state.data.hierarchy_preset + (this.state.data.hierarchy_preset.endsWith(" (modified)") ? ("") : " (modified)"))
+
+      },
       preset_is_modified: true,
     });
+
+    return Promise.resolve();
+  }
+
+  async updateHierarchy(entity_hierarchy) {
+    // if(this.state.preset_is_modified) {
+    //   this.props.updateFormPageData(this.state.data);
+    //   return;
+    // }
+
+    
+    console.log(entity_hierarchy[0], "X")
+    await this.setState({
+      data: { ...this.state.data,
+              entity_hierarchy: entity_hierarchy, } //...this.state.data,
+    });
+    await this.markModified();
+
     console.log(this.state.data.hierarchy_preset);
     this.props.updateFormPageData(this.state.data);
 
@@ -150,6 +168,19 @@ class NewProjectEntityHierarchy extends Component {
       return preset['name']// + " (" + preset['entities'].length + " entity classes)";
     }
 
+    function getErrorLines(errors) {
+      var names = new Set();
+      if(!errors) return names;
+      for(var err of errors) {
+        var msg = err.message;
+        var name = msg.match(/\((".*)"\)/g)[0] || '';
+        names.add(name.slice(2, name.length - 2))
+      }
+      return names;
+    }
+
+    var errorEntityNames = getErrorLines(this.props.errors);
+    // console.log(errorEntityNames)
 
     return (
       <div>
@@ -174,7 +205,9 @@ class NewProjectEntityHierarchy extends Component {
               preset={this.state.selectedPreset}                       
               visible={true}   
               limitHeight={true}
-              setModified={this.setModified.bind(this)}
+              updateHierarchy={this.updateHierarchy.bind(this)}
+              markModified={this.markModified.bind(this)}
+              errorEntityNames={errorEntityNames}
         />
         }
         </div>

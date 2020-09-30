@@ -29,13 +29,29 @@ class Category extends Component {
     super(props);
     this.state = {
       isHovered: false,
+      name: '',
     }
     this.nameInputRef = React.createRef();
+
+    this.changeNameTimeoutFn = null;
+    this.nameCanUpdateTimeoutFn = null;
+    this.nameCanUpdate = true; // Whether the name can be updated via props
   }
 
   componentDidMount() {
     if(this.props.item.name.length === 0) {
       this.nameInputRef.current.focus();
+    }
+    this.setState({
+      name: this.props.item.name.slice(),
+    })
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if((prevProps.item.name !== this.state.name) && (prevState.name === this.state.name) && this.nameCanUpdate) {
+      this.setState({
+        name: this.props.item.name.slice(),
+      })
     }
   }
 
@@ -45,6 +61,28 @@ class Category extends Component {
     })
   }
 
+  nameCanUpdate() {
+    this.nameCanUpdate = true;
+  }
+
+  // The parent component will only update 1 second after the user stops typing.
+  itemNameChangeX(e, path) {
+    var name = e.target.value;
+
+    //console.log(e, path);
+    this.setState({
+      name: name,
+    }, () => {
+      if(this.changeNameTimeoutFn) window.clearTimeout(this.changeNameTimeoutFn);
+      this.changeNameTimeoutFn = window.setTimeout( this.props.itemNameChange, 1000, name, path);
+
+      this.nameCanUpdate = false;
+      if(this.nameCanUpdateTimeoutFn) window.clearTimeout(this.nameCanUpdateTimeoutFn);      
+      this.nameCanUpdateTimeoutFn = window.setTimeout( this.nameCanUpdate, 1000);
+
+    });
+    //this.props.itemNameChange(e, path)
+  }
   render() {
     var item = this.props.item;
     var index = this.props.index;
@@ -107,7 +145,9 @@ class Category extends Component {
 
         <span className={"category-name" + (hasHotkey ? " has-hotkey" :"") + (modifiable ? " modifiable" :"") + (this.props.hotkeyChain === hotkeyStr ? " hotkey-active" : "")}
               data-hotkey-id={hotkeyStr} onClick={this.props.applyTag ? () => this.props.applyTag(this.props.item.full_name) : null}>
-            { modifiable ? <input required className={item.name.length === 0 ? "empty" : ""} placeholder="(no name)" ref={this.nameInputRef} maxLength={50} value={item.name} onChange={(e) => this.props.itemNameChange(e, path)} /> : item.name}
+            { modifiable ? <input required className={item.name.length === 0 ? "empty" : (this.props.errorEntityNames && this.props.errorEntityNames.has(item.full_name) ? " error" : "")}
+                placeholder="(no name)" ref={this.nameInputRef} maxLength={50}
+                value={this.state.name} onChange={(e) => this.itemNameChangeX(e, path)} /> : item.name}
         </span>
         
         </span>
@@ -116,7 +156,7 @@ class Category extends Component {
           {modifiable ? <input maxLength={100} value={item.description || ""} onChange={(e) => this.props.itemDescChange(e, path)} placeholder="(no description)"/> : (item.description || "") }
         </span>}
         </span>
-        { modifiable && <span className="delete-button-container"><span className="delete-button" onClick={() => this.props.deleteItem(path)} onMouseEnter={() => this.setHovered(true)} onMouseLeave={() => this.setHovered(false)}><i className="fa fa-trash"></i></span></span>}
+        { modifiable && <span className="delete-button-container"><span className="delete-button" onClick={() => {this.setHovered(false); this.props.deleteItem(path)}} onMouseEnter={() => this.setHovered(true)} onMouseLeave={() => this.setHovered(false)}><i className="fa fa-trash"></i></span></span>}
       </span>      
     )
 
@@ -328,6 +368,7 @@ class ModifiableCategoryHierarchy extends Component {
     this.state = {
       items: [],
       openedItems: new Set(),   
+      errorEntityNames: new Set(),
     }
   }
 
@@ -338,24 +379,35 @@ class ModifiableCategoryHierarchy extends Component {
   }
   componentDidUpdate(prevProps, prevState) {
 
+
+
     if(!_.isEqual(this.props.items, this.state.items) && _.isEqual(prevState.items, this.state.items)) {
      this.setState({
       items: this.props.items,
       openedItems: new Set(),
-     });            
+      errorEntityNames: this.props.errorEntityNames,
+     });      
     } 
 
-    if(!_.isEqual(this.props.items, this.state.items) && !_.isEqual(prevState.items, this.state.items)) {
-      //this.props.updateFormPageData(this.state.data);
-      this.props.setModified(this.state.items);
-    } 
+    if(this.props.errorEntityNames !== this.state.errorEntityNames) {
+      this.setState({
+        errorEntityNames: this.props.errorEntityNames,
+      })
+    }
+
+
+
+    // if(!_.isEqual(this.props.items, this.state.items) && !_.isEqual(prevState.items, this.state.items)) {
+    //   //this.props.updateFormPageData(this.state.data);
+    //   this.props.updateHierarchy(this.state.items);
+    // } 
   }
 
 
   // componentDidUpdate(prevProps, prevState) {
     
   //   if(!_.isEqual(prevState.items, this.state.items) && this.state.items.length > 0) {      
-  //     this.props.setModified(this.state.items);
+  //     this.props.updateHierarchy(this.state.items);
   //   }
   //   //if(!_.isEqual(prevProps.items, this.props.items) && !_.isEqual(prevProps.preset, this.props.preset)) {
   //   if(!_.isEqual(prevProps.items, this.props.items) && _.isEqual(prevState.items, this.state.items)) {
@@ -382,7 +434,7 @@ class ModifiableCategoryHierarchy extends Component {
 
 
   // When the user has finished dragging a category, determine the new item order and save this order to the state.
-  onDragEnd(result) {
+  async onDragEnd(result) {
     // dropped outside the list
     if (!result.destination) {
       return;
@@ -395,10 +447,12 @@ class ModifiableCategoryHierarchy extends Component {
       result.destination.index
     );
 
-    this.setState({
-      items: [ ...items],
-    })
-    
+    //this.props.updateHierarchy(items);
+    await this.setState({
+      items: items,
+    });
+    console.log(this.state.items[0])
+    this.props.updateHierarchy(this.state.items)
   }
 
 
@@ -407,7 +461,7 @@ class ModifiableCategoryHierarchy extends Component {
   newItem(path) {
 
     var items = this.state.items;
-
+    console.log(this.state.items);
 
     if(path.length > 0) {
       var currentItems = items;
@@ -448,17 +502,20 @@ class ModifiableCategoryHierarchy extends Component {
     this.setState({
       items: items,
     }, () => {
-      console.log('created new item')
-      this.props.setModified(this.state.items);
+      this.props.markModified();
+      console.log('created new item', items)
+      //this.props.updateHierarchy(this.state.items);
     });
   }
 
   // Change the name of an item.
   // This is possible via the path, which is the path of indexes of the item name to be changed e.g. 
   // [0, 1] means the first item in the tree, and then the second item inside that one.
-  itemNameChange(e, path) {
+  itemNameChange(name, path) {
+    console.log(name, path);
+    var t0 = performance.now()
 
-    var newName = e.target.value;
+    var newName = name;
 
     var items = this.state.items;
     var currentItems = items;
@@ -486,12 +543,20 @@ class ModifiableCategoryHierarchy extends Component {
     item.full_name = full_name_s.join('/');
 
     if(open) openedItems.add(item.full_name);
+    console.log('end')
+    
+    var t1 = performance.now()    
+    console.log(t1-t0)
 
     this.setState({
       items: items,
       openedItems: openedItems,
     }, () => {
-      this.props.setModified(this.state.items);
+      var t1 = performance.now()
+      console.log(t1-t0)
+      this.props.markModified();
+
+      //his.props.updateHierarchy(this.state.items);
     });
   }
 
@@ -509,11 +574,11 @@ class ModifiableCategoryHierarchy extends Component {
     // Update the item name
     var item = currentItems[path[path.length - 1]];    
     item.description = newDesc;
-
     this.setState({
-      items: [ ...items],
+      items: items,
     }, () => {
-      this.props.setModified(this.state.items);
+      this.props.markModified();
+      //this.props.updateHierarchy(this.state.items);
     })
 
   }
@@ -545,16 +610,15 @@ class ModifiableCategoryHierarchy extends Component {
       items: items,
       openedItems: openedItems,
     })
-    
-    console.log('setting')
-    this.props.setModified(this.state.items);
+    this.props.markModified();
+    //this.props.updateHierarchy(this.state.items);
   }
 
 
   render() {
+    console.log('rendering')
     var items       = this.state.items;
     var openedItems = this.state.openedItems;
-
 
     return (
       <div id="category-hierarchy-tree" className="table-form display-only" >
@@ -589,6 +653,7 @@ class ModifiableCategoryHierarchy extends Component {
                     itemDescChange={this.itemDescChange.bind(this)}
                     deleteItem={this.deleteItem.bind(this)}
                     newItem={this.newItem.bind(this)}
+                    errorEntityNames={this.state.errorEntityNames}
 
                     path={[index]}
                   />

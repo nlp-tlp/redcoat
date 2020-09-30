@@ -3,7 +3,7 @@ var logger = require('config/winston');
 var mongoose = require('mongoose');
 var shortid = require('shortid')
 
-var hv = require('public/javascripts/shared/hierarchy_validator');
+var hv = require('./hierarchy_validator');
 
 DOCUMENT_GROUP_TOTAL_MAXCOUNT = 11000; // Number of groups that can be in a project.
 

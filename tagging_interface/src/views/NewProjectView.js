@@ -132,8 +132,11 @@ class NewProjectView extends Component {
         loading: this.state.loading,
         saving: this.state.saving,
         toggleFormHelp: this.toggleFormHelp.bind(this),
+        errors: this.state.formErrors,
         errorPaths: getErrorPathsSet(this.state.formErrors),
         data: this.state.data,
+        markModified: this.markModified.bind(this),
+
 
       }
     }).bind(this);
@@ -231,16 +234,23 @@ class NewProjectView extends Component {
     //this.updateCurrentFormPageIndex();
   }
 
+  markModified() {
+    this.setState({
+      wasModified: true,
+      isSaved: false,
+    });
+  }
+
   // Save the state of the given form page.
   async updateFormPageData(page, data, options) {
     //var formPages = this.formPages;
-    console.log(page, data);
+    //console.log(page, data);
 
     // await this.setState({
     //   data: data,
     // })
     if(options && options.reset_form) {
-      console.log('hello')
+      //console.log('hello')
       await this.setState({
         data: {...data, file_metadata: null},
         wasModified: true,
@@ -248,7 +258,6 @@ class NewProjectView extends Component {
       });
       return;
     }
-
 
     this.setState({
       data: data,
@@ -283,7 +292,7 @@ class NewProjectView extends Component {
     } else {
       var latestFormPageIndex = this.state.currentFormPageIndex;
     }
-    console.log(d, d.is_saved, "<<<");
+    //console.log(d, d.is_saved, "<<<");
     
     this.setState({
       data: d.data,
@@ -327,78 +336,48 @@ class NewProjectView extends Component {
 
     console.log("THIS STATE DATA IS ", data);
     if(this.state.currentFormPageIndex === PROJECT_DETAILS) {
-      
 
       // Upload name/desc first
-      var d = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=' + formPath, 'POST', this.props.setErrorCode, data);
-      
-
+      var response = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=' + formPath, 'POST', this.props.setErrorCode, data);
 
       // Don't save the dataset again if it has not changed
-      if(!d.errors && !this.state.data.file_metadata) {
-
-
+      if(!response.errors && !this.state.data.file_metadata) {
 
         // Then upload the dataset
         var formData = new FormData();
         formData.append('file', data.dataset);
 
-        var d = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=dataset', 'POST', this.props.setErrorCode, formData, true);
-        console.log(this.state.data, "<Sss")
+        var response = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=dataset', 'POST', this.props.setErrorCode, formData, true);
 
-
-
-
-        if(d.errors) {
-
-          //fp[PROJECT_DETAILS].uploadFormHasError = true;
-          this.setState({
-            formErrors: d.errors,
-            isModified: false,
-            isSaved: false,
+        if(response.errors) {
+          return this.renderWithErrors(response.errors);
+        } else {
+          return this.setState({
+            data: {...this.state.data, file_metadata: response.details },
+            formErrors: null,
+            isSaved: true,
             saving: false,
-          });     
-          console.log(d.errors, "<<");     
-          return;
+          });
         }
-
-
-
-        //fp[PROJECT_DETAILS].savedFileMetadata = d.details;
-        console.log(d.details);
-        this.setState({
-          data: {...this.state.data, file_metadata: d.details },
-          saving: false,
-        })
-
       }
 
 
 
 
-    } else {
+    } else if(this.state.currentFormPageIndex === ENTITY_HIERARCHY) {
 
-
-
-      console.log(data, ',,,')
       if(this.state.currentFormPageIndex === ENTITY_HIERARCHY) {
         data = { entity_hierarchy: json2slash({children: data.entity_hierarchy}), hierarchy_preset: data.hierarchy_preset };
       }
-
-
-      console.log("data", data);
-      var d = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=' + formPath, 'POST', this.props.setErrorCode, data);
-
+      var response = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=' + formPath, 'POST', this.props.setErrorCode, data);
     }
 
-    console.log(d);
-    if(d.errors) {
-      this.setState({
-        formErrors: d.errors,
-        isModified: false,
-        isSaved: false,
-        saving: false,
-      })
+
+
+    console.log(response);
+
+    if(response.errors) {
+      this.renderWithErrors(response.errors);
     } else {
       this.setState({
         formErrors: null,
@@ -408,10 +387,21 @@ class NewProjectView extends Component {
     }
     return null;
 
-    
+  }
 
-
-
+  renderWithErrors(errors) {
+    this.setState({
+      formErrors: errors,
+      isModified: false,
+      isSaved: false,
+      saving: false,
+    }, () => {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: 'smooth'
+      });
+    });
   }
 
 
@@ -513,7 +503,7 @@ class NewProjectView extends Component {
   }
 
   render() {
-    console.log(this.state.data);
+    //console.log(this.state.data);
 
     var lastPage = this.state.currentFormPageIndex === (this.formPages.length - 1);
 

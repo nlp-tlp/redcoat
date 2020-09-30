@@ -129,7 +129,7 @@ async function uploadDataset(req, res, wip) {
 async function clearFormPage(wip, formPage) {
   switch(formPage) {
     case 'project_details': {
-
+      
       break;
     }
     case 'entity_hierarchy': {
@@ -159,6 +159,7 @@ module.exports.getFormPage = async function(req, res) {
   if(!formPage) {
     formPage = wip.latest_form_page;
   } else {
+    // If requesting a page prior to the latest form page, clear the WIP Project's data for the later form page
     if(formPageOrder.indexOf(formPage) < formPageOrder.indexOf(wip.latest_form_page)) {
       wip = await clearFormPage(wip, wip.latest_form_page);
     }

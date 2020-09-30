@@ -316,7 +316,7 @@
 					&::placeholder {
 						color: rgba(0, 0, 0, 0.35);
 					}
-					&.empty {
+					&.empty, &.error {
 						border: 2px solid $primary-red;
 						background: rgba($primary-red, 0.1);
 						&:hover {
