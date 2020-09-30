@@ -94,6 +94,10 @@ main.new-project {
 		pointer-events: none;
 		opacity: 0.75;
 	}
+	.loading {
+		pointer-events: none;
+		opacity: 0.75;
+	}
 	.saved {
 		background: darken($primary-green, 4);
 		&:hover {
@@ -108,7 +112,7 @@ main.new-project {
 	font-size: 15px;
 	border-radius: 3px;
 	margin-bottom: 30px;
-	border: 2px solid #eee;
+	border: 2px solid #ccc;
 	overflow: hidden;
 	//transition: max-height 0.2s ease, padding 0.2s ease, border-width 0.2s ease, margin 0.2s ease, opacity 0.2s ease;
 	transition: opacity 0.3s ease;
@@ -130,6 +134,9 @@ main.new-project {
 		margin-bottom: 0;
 		opacity: 0;
 	}
+}
+.form-loading {
+	background: rgba(0, 0, 0, 0.05);
 }
 .form-errors {
 	border-color: rgba(darken($primary-red, 15), 0.75);
@@ -326,7 +333,7 @@ form.errors {
   }
 }
 
-form.saving {
+form.saving, form.loading {
 	pointer-events: none;
 	input, .upload-form label {
 		opacity: 0.8;

@@ -15,7 +15,7 @@ class NewCategoryButton extends Component {
     return (
       <li className="new-category">
         <span className="inner-container">
-          <span className={"category-name" + (this.props.disabled ? " disabled" : "")} onClick={this.props.newItem} ><i class="fa fa-plus"></i>New Category</span>
+          <span className={"category-name" + (this.props.disabled ? " disabled" : "")} onClick={this.props.newItem} ><i className="fa fa-plus"></i>New Category</span>
         </span>
       </li>
     )
@@ -336,20 +336,35 @@ class ModifiableCategoryHierarchy extends Component {
       items: this.props.items,
     })
   }
-
   componentDidUpdate(prevProps, prevState) {
-    
-    if(!_.isEqual(prevState.items, this.state.items) && this.state.items.length > 0) {      
+
+    if(!_.isEqual(this.props.items, this.state.items) && _.isEqual(prevState.items, this.state.items)) {
+     this.setState({
+      items: this.props.items,
+      openedItems: new Set(),
+     });            
+    } 
+
+    if(!_.isEqual(this.props.items, this.state.items) && !_.isEqual(prevState.items, this.state.items)) {
+      //this.props.updateFormPageData(this.state.data);
       this.props.setModified(this.state.items);
-    }
-    //if(!_.isEqual(prevProps.items, this.props.items) && !_.isEqual(prevProps.preset, this.props.preset)) {
-    if(!_.isEqual(prevProps.items, this.props.items) && _.isEqual(prevState.items, this.state.items)) {
-      this.setState({
-        openedItems: new Set(),
-        items: this.props.items,
-      });
-    }
+    } 
   }
+
+
+  // componentDidUpdate(prevProps, prevState) {
+    
+  //   if(!_.isEqual(prevState.items, this.state.items) && this.state.items.length > 0) {      
+  //     this.props.setModified(this.state.items);
+  //   }
+  //   //if(!_.isEqual(prevProps.items, this.props.items) && !_.isEqual(prevProps.preset, this.props.preset)) {
+  //   if(!_.isEqual(prevProps.items, this.props.items) && _.isEqual(prevState.items, this.state.items)) {
+  //     this.setState({
+  //       openedItems: new Set(),
+  //       items: this.props.items,
+  //     });
+  //   }
+  // }
 
   toggleCategory(full_name) {
     var openedItems = this.state.openedItems;    
@@ -391,7 +406,7 @@ class ModifiableCategoryHierarchy extends Component {
   // Create a new item at the specified path.
   newItem(path) {
 
-    var items = [...this.state.items];
+    var items = this.state.items;
 
 
     if(path.length > 0) {
@@ -432,6 +447,9 @@ class ModifiableCategoryHierarchy extends Component {
     
     this.setState({
       items: items,
+    }, () => {
+      console.log('created new item')
+      this.props.setModified(this.state.items);
     });
   }
 
@@ -442,7 +460,7 @@ class ModifiableCategoryHierarchy extends Component {
 
     var newName = e.target.value;
 
-    var items = this.state.items.slice();
+    var items = this.state.items;
     var currentItems = items;
     for(var i = 0; i < path.length - 1; i++) {
       var index = path[i];
@@ -481,7 +499,7 @@ class ModifiableCategoryHierarchy extends Component {
   itemDescChange(e, path) {
     var newDesc = e.target.value;
 
-    var items = [...this.state.items];
+    var items = this.state.items;
     var currentItems = items;
     for(var i = 0; i < path.length - 1; i++) {
       var index = path[i];
@@ -501,9 +519,9 @@ class ModifiableCategoryHierarchy extends Component {
   }
 
   // Delete the item at the specified path.
-  deleteItem(path) {
+  async deleteItem(path) {
 
-    var items = [...this.state.items];
+    var items = this.state.items;
     var currentItems = items;
     if(path.length > 1) {
       for(var i = 0; i < path.length - 1; i++) {
@@ -523,11 +541,13 @@ class ModifiableCategoryHierarchy extends Component {
     currentItems.splice(path[path.length - 1], 1);
     if(currentItems.length === 0 && path.length > 1) { delete deleteRef.children; }
 
-    this.setState({
+    await this.setState({
       items: items,
       openedItems: openedItems,
     })
     
+    console.log('setting')
+    this.props.setModified(this.state.items);
   }
 
 

@@ -58,6 +58,8 @@ var WipProjectSchema = new Schema({
 
   category_hierarchy: cf.fields.category_hierarchy,
 
+  category_hierarchy_preset: cf.fields.category_hierarchy_preset, // The preset the user selected for the category hierarchy
+
   // An array of all of the labels in the category hierarchy.
   //valid_labels: cf.fields.valid_labels,
 
@@ -148,10 +150,12 @@ WipProjectSchema.methods.updateNameAndDesc = async function(project_name, projec
   return Promise.resolve(saved);
 }
 
-WipProjectSchema.methods.updateCategoryHierarchy = async function(category_hierarchy) {
+WipProjectSchema.methods.updateCategoryHierarchy = async function(category_hierarchy, hierarchy_preset) {
   var t = this;
   t.category_hierarchy = category_hierarchy;
-  console.log(category_hierarchy, "x<<")
+  t.category_hierarchy_preset = hierarchy_preset;
+
+  console.log(hierarchy_preset, '<xx<')
   try {
     await t.validate();
   } catch(err) {

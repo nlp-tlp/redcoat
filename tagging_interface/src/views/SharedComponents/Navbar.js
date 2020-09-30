@@ -16,7 +16,7 @@ class Navbar extends Component {
         <div className="navbar-left">
           <div id="logo">
             <Link to="/">             
-              <img src={logo}/> <span class="text">Redcoat</span>         
+              <img src={logo}/> <span className="text">Redcoat</span>         
             </Link>
           </div>
           { this.props.user && 

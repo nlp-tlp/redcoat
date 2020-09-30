@@ -138,8 +138,53 @@ class NewProjectView extends Component {
       }
     }).bind(this);
 
+    this.formPages = [
+        {
+          name: "Project details & data",
+          pathname: "project_details",
+
+          component: () => <NewProjectDetails
+            //data={this.formPages[PROJECT_DETAILS].data}
+            //uploadFormHasError={this.formPages[PROJECT_DETAILS].uploadFormHasError}
+            updateFormPageData={this.updateFormPageData.bind(this, "Project details & data")}
+            { ... sharedProps() } />       
+        },
+        {
+          name: "Entity hierarchy",
+          pathname: "entity_hierarchy",
+
+          component: () => <NewProjectEntityHierarchy
+            //entity_hierarchy={this.formPages[ENTITY_HIERARCHY].data ? this.formPages[1].data.children : []}  
+            hierarchyPresets={["Named Entity Recognition (NER)", "Fine-grained Entity Recognition (FIGER)", "Maintenance"]}
+            updateFormPageData={this.updateFormPageData.bind(this, "Entity hierarchy")}
+            { ... sharedProps() }/>
+        },
+
+
+        {
+          name: "Automatic tagging",
+          pathname: "automatic_tagging",
+          component: () => <NewProjectAutomaticTagging
+          
+            { ... sharedProps() }/>
+        },
+        {
+          name: "Annotators",
+          pathname: "annotators",
+          component: () => <NewProjectAnnotators
+            //data={this.formPages[ANNOTATORS].data}
+            { ... sharedProps() }/>
+        },
+        {
+          name: "Project options",
+          pathname: "project_options",
+          component: () => <NewProjectProjectOptions
+           { ... sharedProps() }/>
+        },
+    ]
+
     this.state = {
-      loading: false,
+      
 
       // Pass the data down to the form pages.
       // data: {
@@ -153,70 +198,19 @@ class NewProjectView extends Component {
       // pathname: The url of the page
       // ready: Whether the user is able to navigate to this page yet
       // saved: Whether this page has been saved
-      formPages: [
-        {
-          name: "Project details & data",
-          pathname: "project_details",
-          saved: false,
-          data: null,  
-
-          savedFileMetadata: null,
-          uploadFormHasError: false,
-          component: () => <NewProjectDetails
-            //data={this.state.formPages[PROJECT_DETAILS].data}
-            //uploadFormHasError={this.state.formPages[PROJECT_DETAILS].uploadFormHasError}
-            updateFormPageData={this.updateFormPageData.bind(this, "Project details & data")}
-            { ... sharedProps() } />       
-        },
-        {
-          name: "Entity hierarchy",
-          pathname: "entity_hierarchy",
-          saved: false,
-          data: null,
-          component: () => <NewProjectEntityHierarchy
-            //entity_hierarchy={this.state.formPages[ENTITY_HIERARCHY].data ? this.state.formPages[1].data.children : []}  
-            hierarchyPresets={["Named Entity Recognition (NER)", "Fine-grained Entity Recognition (FIGER)", "Maintenance"]}
-            updateFormPageData={this.updateFormPageData.bind(this, "Entity hierarchy")}
-            { ... sharedProps() }/>
-        },
-
-
-        {
-          name: "Automatic tagging",
-          pathname: "automatic_tagging",
-          saved: false,
-          data: null,
-          component: () => <NewProjectAutomaticTagging
-          
-            { ... sharedProps() }/>
-        },
-        {
-          name: "Annotators",
-          pathname: "annotators",
-          saved: false,
-          data: null,
-          component: () => <NewProjectAnnotators
-            //data={this.state.formPages[ANNOTATORS].data}
-            { ... sharedProps() }/>
-        },
-        {
-          name: "Project options",
-          pathname: "project_options",
-          saved: false,
-          data: null,
-          component: () => <NewProjectProjectOptions
-           { ... sharedProps() }/>
-        },
-      ],
+      currentFormPageIndex: null,
 
       formErrors: null,
       formErrorShake: false, // Set to true when a front-end form error happens
 
-      currentFormPageIndex: 0,
+      loading: true,
+      saving: false,
 
       wasModified: false, // Whether the currently displayed form has been modified
       isSaved: false, // Whether the currently displayed form has been saved
+
       formHelpContent: null, // The content currently appearing in the modal. null if modal is not being displayed.
+
       verifyBack: false, // Whether or not the confirmation window is showing (do you want to go back?)
     }
 
@@ -239,59 +233,49 @@ class NewProjectView extends Component {
 
   // Save the state of the given form page.
   async updateFormPageData(page, data, options) {
-    //var formPages = this.state.formPages;
+    //var formPages = this.formPages;
     console.log(page, data);
 
     // await this.setState({
     //   data: data,
     // })
     if(options && options.reset_form) {
+      console.log('hello')
       await this.setState({
-        data: {...this.state.data, file_metadata: null, upload_form_has_error: false}
-      })
+        data: {...data, file_metadata: null},
+        wasModified: true,
+        isSaved: false,
+      });
+      return;
     }
 
-    // if(page === 'Project details & data') {
-      
-    //   if(options.reset_form) {
-    //     await this.setState({
-    //       data: {...this.state.data, savedFileMetadata: null, uploadFormHasError: false}
-    //     })
-
-    //     //formPages[PROJECT_DETAILS].savedFileMetadata = null;
-    //     //formPages[PROJECT_DETAILS].uploadFormHasError = false;
-    //   }     
-      
-    // }
-
-    // if(page === "Entity hierarchy") {      
-    //   await this.setState({data: data}    
-    //   console.log(formPages[ENTITY_HIERARCHY].data)  
-    // }
 
     this.setState({
       data: data,
       //formPages: formPages,
       wasModified: true,
       isSaved: false,
-
-    })
+    });
   }
 
 
   async queryAPI(firstLoad) {
+    await this.setState({
+      loading: true,
+      data: {},
+    })
     if(firstLoad) {
       formPage = '';
     } else {
       var formPage = '?formPage=' +this.getFormPagePathname();      
     }
     
-    var d = await _fetch('http://localhost:3000/api/projects/new/get' + formPage, 'GET', this.props.setErrorCode);
+    var d = await _fetch('http://localhost:3000/api/projects/new/get' + formPage, 'GET', this.props.setErrorCode, false, false, 555);
 
     if(firstLoad) {
       var latestFormPage = d.latest_form_page;
-      for(var i = 0; i < this.state.formPages.length; i++) {
-        if(this.state.formPages[i].pathname === latestFormPage) {
+      for(var i = 0; i < this.formPages.length; i++) {
+        if(this.formPages[i].pathname === latestFormPage) {
           var latestFormPageIndex = i;
           break;
         }
@@ -299,10 +283,15 @@ class NewProjectView extends Component {
     } else {
       var latestFormPageIndex = this.state.currentFormPageIndex;
     }
+    console.log(d, d.is_saved, "<<<");
     
     this.setState({
       data: d.data,
+      isSaved: d.is_saved,
       currentFormPageIndex: latestFormPageIndex,
+      wasModified: false,
+      //isSaved: true,
+      loading: false,
     });
   }
 
@@ -321,7 +310,7 @@ class NewProjectView extends Component {
   }
 
   getFormPagePathname() {
-    return this.state.formPages[this.state.currentFormPageIndex].pathname;
+    return this.formPages[this.state.currentFormPageIndex].pathname;
   }
 
   async submitFormPage(e) {
@@ -339,24 +328,31 @@ class NewProjectView extends Component {
     console.log("THIS STATE DATA IS ", data);
     if(this.state.currentFormPageIndex === PROJECT_DETAILS) {
       
+
       // Upload name/desc first
       var d = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=' + formPath, 'POST', this.props.setErrorCode, data);
+      
+
 
       // Don't save the dataset again if it has not changed
       if(!d.errors && !this.state.data.file_metadata) {
+
+
 
         // Then upload the dataset
         var formData = new FormData();
         formData.append('file', data.dataset);
 
         var d = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=dataset', 'POST', this.props.setErrorCode, formData, true);
+        console.log(this.state.data, "<Sss")
 
-        var fp = this.state.formPages;
+
+
 
         if(d.errors) {
-          fp[PROJECT_DETAILS].uploadFormHasError = true;
+
+          //fp[PROJECT_DETAILS].uploadFormHasError = true;
           this.setState({
-            formPages: fp,
             formErrors: d.errors,
             isModified: false,
             isSaved: false,
@@ -366,10 +362,12 @@ class NewProjectView extends Component {
           return;
         }
 
-        fp[PROJECT_DETAILS].savedFileMetadata = d.details;
+
+
+        //fp[PROJECT_DETAILS].savedFileMetadata = d.details;
         console.log(d.details);
         this.setState({
-          formPages: fp,
+          data: {...this.state.data, file_metadata: d.details },
           saving: false,
         })
 
@@ -384,12 +382,12 @@ class NewProjectView extends Component {
 
       console.log(data, ',,,')
       if(this.state.currentFormPageIndex === ENTITY_HIERARCHY) {
-        data = json2slash({children: data.entity_hierarchy});
+        data = { entity_hierarchy: json2slash({children: data.entity_hierarchy}), hierarchy_preset: data.hierarchy_preset };
       }
 
 
       console.log("data", data);
-      var d = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=' + formPath, 'POST', this.props.setErrorCode, {entity_hierarchy: data});
+      var d = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=' + formPath, 'POST', this.props.setErrorCode, data);
 
     }
 
@@ -430,17 +428,16 @@ class NewProjectView extends Component {
     if(this.state.currentFormPageIndex === 0) return;
 
     // Reset form data
-    var formPages = this.state.formPages;
-    formPages[this.state.currentFormPageIndex].data = null;
+    //var d = await _fetch('http://localhost:3000/api/projects/new/clear?formPage=' + this.getFormPagePathname(), 'GET', this.props.setErrorCode, false, false, 333);
+    //console.log(d);
 
     var prevIndex = this.state.currentFormPageIndex - 1;
-    //this.props.history.push(this.state.formPages[prevIndex]);
+    //this.props.history.push(this.formPages[prevIndex]);
     await this.setState({
       verifyBack: false,
-      formPages: formPages,
-      currentFormPageIndex: prevIndex,
-      wasModified: false,
-      isSaved: true,
+      currentFormPageIndex: prevIndex,      
+      loading: true,
+      isSaved: false,
     });
     this.queryAPI();
 
@@ -453,13 +450,12 @@ class NewProjectView extends Component {
 
   // Go to the next form page.
   async gotoNextFormPage() {
-    if(this.state.currentFormPageIndex === (this.state.formPages.length - 1)) return;
+    if(this.state.currentFormPageIndex === (this.formPages.length - 1)) return;
     var nextIndex = this.state.currentFormPageIndex + 1;
     await this.setState({
       currentFormPageIndex: nextIndex,
-      wasModified: false,
+      loading: true,
       isSaved: false,
-
     });
     this.queryAPI();
 
@@ -480,19 +476,20 @@ class NewProjectView extends Component {
   // If this page was not saved, return null instead.
   // getPrevState(pageName) {
   //   var formIndex = -1;
-  //   for(var i in this.state.formPages) {
-  //     if(this.state.formPages[i].name === pageName) {
+  //   for(var i in this.formPages) {
+  //     if(this.formPages[i].name === pageName) {
   //       formIndex = i;
   //       break;
   //     }
   //   }
-  //   return this.state.formPages[i].saved ? this.prevStates[pageName] : null;
+  //   return this.formPages[i].saved ? this.prevStates[pageName] : null;
   // }
 
   // Verify that the user wants to go back to the previous page.
   verifyBack() {
     var wasModified = this.state.wasModified;
-    if(!wasModified) {
+    var isSaved = this.state.isSaved;
+    if(!wasModified && !isSaved) {
       this.gotoPrevFormPage();
       return;
     }
@@ -512,16 +509,16 @@ class NewProjectView extends Component {
   }
 
   renderFormPage(index) {
-    return this.state.formPages[index].component();
+    return this.formPages[index].component();
   }
 
   render() {
+    console.log(this.state.data);
 
-
-    var lastPage = this.state.currentFormPageIndex === (this.state.formPages.length - 1);
+    var lastPage = this.state.currentFormPageIndex === (this.formPages.length - 1);
 
     return (
-      <form id="new-project-form" className={(this.state.formErrors ? "errors" : "") + (this.state.formErrorShake ? "shake" : "") + (this.state.saving ? " saving" : "")} ref={this.ref} onSubmit={this.state.isSaved ? null : (e) => this.submitFormPage(e)}  >
+      <form id="new-project-form" className={(this.state.formErrors ? "errors" : "") + (this.state.formErrorShake ? "shake" : "") + (this.state.saving ? " saving" : "") + (this.state.loading ? " loading" : "")} ref={this.ref} onSubmit={this.state.isSaved ? null : (e) => this.submitFormPage(e)}  >
 
         <Modal 
            isOpen={this.state.formHelpContent || this.state.verifyBack ? true : false}
@@ -553,40 +550,44 @@ class NewProjectView extends Component {
         
         <header className="new-project-header">
           <div className="container flex-container">
-            { this.state.formPages.map((page, index) => 
-              <NewProjectHeaderItem name={page.name} pathname={page.pathname} saved={page.saved} active={index === this.state.currentFormPageIndex} ready={this.state.currentFormPageIndex >= index || this.state.isSaved && index === this.state.currentFormPageIndex + 1}/>
+            { this.formPages.map((page, index) => 
+              <NewProjectHeaderItem name={page.name} pathname={page.pathname} key={index} saved={page.saved} active={index === this.state.currentFormPageIndex} ready={this.state.currentFormPageIndex >= index || this.state.isSaved && index === this.state.currentFormPageIndex + 1}/>
             )}            
           </div>
         </header>
         <main className="container new-project">
 
-          <div className="new-project-form-body">
-          <TransitionGroup className="transition-group">
-            <CSSTransition
-            key={this.state.currentFormPageIndex}
-            timeout={{ enter: 400, exit:400 }}
-            classNames="fade"
-            >
-              
-              <section className={"route-section" + (!this.state.loading ? " loaded" : "")}>
+            <div className="new-project-form-body">
+            <TransitionGroup className="transition-group">
+              <CSSTransition
+              key={this.state.currentFormPageIndex}
+              timeout={{ enter: 400, exit:400 }}
+              classNames="fade"
+              >
+                
+                <section className={"route-section"}>
 
-                  <div className={"form-notice form-success " + (this.state.isSaved ? "" : "hidden")}><i className="fa fa-check"></i>This page has been saved.</div>
+                    <div className={"form-notice form-loading " + (this.state.loading ? "" : "hidden")}><i className="fa fa-cog fa-spin"></i>Loading...</div>
 
-                  <div className={"form-notice form-errors " + (this.state.formErrors ? "" : "hidden")}>
-                    <i className="fa fa-times"></i>Please fix the following errors before saving:
-                    <ul>
-                    { this.state.formErrors && this.state.formErrors.map((err, index) => 
-                      <li>{err.message}</li>
-                    )}
-                    { !this.state.formErrors && <li></li>}
-                    </ul>
-                  </div>
-                  
-                  { this.renderFormPage(this.state.currentFormPageIndex) }
-              </section>
-            </CSSTransition>
-          </TransitionGroup>
-          </div>          
+                    <div className={"form-notice form-success " + (this.state.isSaved ? "" : "hidden")}><i className="fa fa-check"></i>This page is saved.</div>
+
+                    <div className={"form-notice form-errors " + (this.state.formErrors ? "" : "hidden")}>
+                      <i className="fa fa-times"></i>Please fix the following errors before saving:
+                      <ul>
+                      { this.state.formErrors && this.state.formErrors.map((err, index) => 
+                        <li key={index}>{err.message}</li>
+                      )}
+                      { !this.state.formErrors && <li></li>}
+                      </ul>
+                    </div>
+                    
+                    { !this.state.loading && this.renderFormPage(this.state.currentFormPageIndex) }
+                </section>
+              </CSSTransition>
+            </TransitionGroup>
+
+            </div>      
+             
         </main> 
         <div className="new-project-submit-row">
           <div className="container">
@@ -627,7 +628,7 @@ export default NewProjectView;
 <Route path="/projects/new/entity-hierarchy" render={() =>
                     <NewProjectEntityHierarchy loading={this.state.loading}
 
-                      entity_hierarchy={this.state.formPages[ENTITY_HIERARCHY].data ? this.state.formPages[1].data.children : []}  
+                      entity_hierarchy={this.formPages[ENTITY_HIERARCHY].data ? this.formPages[1].data.children : []}  
 
                       hierarchyPresets={["Named Entity Recognition (NER)", "Fine-grained Entity Recognition (FIGER)", "Maintenance"]}
                       toggleFormHelp={this.toggleFormHelp.bind(this)} 
@@ -641,21 +642,21 @@ export default NewProjectView;
                   <Route path="/projects/new/automatic-tagging" render={() =>
                     <NewProjectAutomaticTagging loading={this.state.loading}
                       setModified={this.setModified.bind(this)}
-                      data={this.state.formPages[AUTOMATIC_TAGGING].data}
+                      data={this.formPages[AUTOMATIC_TAGGING].data}
                       toggleFormHelp={this.toggleFormHelp.bind(this)} />} /> 
                   <Route path="/projects/new/annotators" render={() =>
                     <NewProjectAnnotators loading={this.state.loading}
                       setModified={this.setModified.bind(this)}
-                      data={this.state.formPages[ANNOTATORS].data}
+                      data={this.formPages[ANNOTATORS].data}
                       toggleFormHelp={this.toggleFormHelp.bind(this)} />} />
                   <Route path="/projects/new/project-options" render={() =>
                     <NewProjectProjectOptions loading={this.state.loading}
                       setModified={this.setModified.bind(this)}
-                      data={this.state.formPages[PROJECT_OPTIONS].data}
+                      data={this.formPages[PROJECT_OPTIONS].data}
                       toggleFormHelp={this.toggleFormHelp.bind(this)} />} />
                   <Route exact path="/projects/new" render={() =>
                     <NewProjectDetails loading={this.state.loading}
-                      data={this.state.formPages[PROJECT_DETAILS].data}
+                      data={this.formPages[PROJECT_DETAILS].data}
                       toggleFormHelp={this.toggleFormHelp.bind(this)} 
                       //prevState={ this.getPrevState('Project details & data')}
                       updateFormPageData={this.updateFormPageData.bind(this, "Project details & data")}

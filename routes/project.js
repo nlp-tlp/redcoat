@@ -80,7 +80,7 @@ router.post('/invitations/:id/decline', projectController.declineInvitation);
 
 router.get('/new/get' , newProjectController.getFormPage);
 router.post('/new/submit', newProjectController.submitFormPage);
-router.post('/new/clear' , newProjectController.clearFormPage);
+//router.get('/new/clear' , newProjectController.clearFormPage);
 
 
 

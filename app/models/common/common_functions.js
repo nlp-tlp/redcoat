@@ -592,6 +592,12 @@ module.exports = {
       validate: categoryHierarchyValidation
     },
 
+    category_hierarchy_preset: {
+      type: String,
+      maxlength: 100,
+      default: "Custom",
+    },
+
     valid_labels: {
       type: [String]
     },
