@@ -37,7 +37,7 @@ function validateFileType(file, path) {
   return null;  
 }
 
-async function uploadDataset(req, res, wip, path) {
+async function uploadDataset(req, res, wip, path, formPage, formPageProgress) {
 	var form = new formidable.IncomingForm({"maxFileSize": MAX_FILESIZE_MB * 1024 * 1024}); // 25mb
 
 	form.parse(req);
@@ -118,39 +118,53 @@ async function uploadDataset(req, res, wip, path) {
     });
 
     // log any errors that occur
-    form.on('error', function(errors) {
+    form.on('error', async function(errors) {
       //console.log(errors,'xxx');
-        if(!responded) {
+      if(!responded) {
 
-          if(!Array.isArray(errors)) {
-          	if(errors.message.substr(0, 20) == 'maxFileSize exceeded') {
-            	errors = {message: "The file was too large. Please ensure it is less than " + MAX_FILESIZE_MB + "mb."};
-          	}
-          	errors = [errors];
+        if(!Array.isArray(errors)) {
+        	if(errors.message.substr(0, 20) == 'maxFileSize exceeded') {
+          	errors = {message: "The file was too large. Please ensure it is less than " + MAX_FILESIZE_MB + "mb."};
+        	}
+        	errors = [errors];
 	      }
 	      for(var err of errors) {
 	      	err.message = err.message;
 	      	err.path = path;
 	      }
           
-          console.log(errors, "<<");
-          
-          res.send({ "success": false, "errors": errors });
-          res.end();
-          responded = true;          
-        }   
+        console.log(errors, "<<");
+
+        wip.form_page_progress[formPage] = "error";
+        await wip.save();
+        formPageProgress = wip.getFormPageProgressArray();
+
+        var response = { "success": false, "errors": errors, form_page_progress: formPageProgress }
+        console.log(response, "< THIS IS IT");
+        
+        res.send(response);
+        res.end();
+        responded = true;          
+      }   
     });
 
     // once all the files have been uploaded, send a response to the client
-    form.on('end_uploading', function() {
+    form.on('end_uploading', async function() {
       if(!responded){
         if(path === "dataset") {
           var metadata = wip.fileMetadataToArray();
         } else {
           metadata = wip.automaticTaggingDictionaryMetadataToArray();
-        }        
+        }     
 
-        res.send({'success': true, details: metadata });
+        wip.form_page_progress[formPage] = "saved";
+        await wip.save();
+        formPageProgress = wip.getFormPageProgressArray();
+
+        var response = {'success': true, details: metadata, form_page_progress: formPageProgress };
+
+        console.log(response);
+        res.send(response);
       }
     });
 
@@ -186,6 +200,35 @@ async function clearFormPage(wip, formPage) {
 }
 
 var formPageOrder = ["project_details", "entity_hierarchy", "automatic_tagging", "annotators", "project_options"]
+PROJECT_DETAILS = 0;
+ENTITY_HIERARCHY = 1;
+AUTOMATIC_TAGGING = 2;
+ANNOTATORS = 3;
+PROJECT_OPTIONS = 4;
+
+// Check the status of a particular form page.
+function checkStatus(formPage, wip) {
+  var saved;
+  switch(formPage) {
+    case 'project_details': {
+      var metadataArray = wip.fileMetadataToArray() || null;
+      saved = (wip.project_name && wip.project_description && metadataArray) ? true : false;
+      break;
+    }
+    case 'entity_hierarchy': {
+      saved = (wip.category_hierarchy.length > 0) ? true : false;
+      break;
+    }
+    case 'automatic_tagging': {
+      var use_automatic_tagging = ((wip.automatic_tagging === undefined || wip.automatic_tagging === null) ? "not-defined" : (wip.automatic_tagging ? "yes" : "no"));
+      saved = (use_automatic_tagging !== "not-defined");
+      break;
+    }
+  }
+  return saved ? "saved" : "not_started";
+}
+
+
 
 // Retrieve the data for the form page requested.
 // If no form page is requested, retrieve the data from the latest form page that the user has submitted.
@@ -203,10 +246,12 @@ module.exports.getFormPage = async function(req, res) {
   if(!formPage) {
     formPage = wip.latest_form_page;
   } else {
+
+
     // If requesting a page prior to the latest form page, clear the WIP Project's data for the later form page
-    if(formPageOrder.indexOf(formPage) < formPageOrder.indexOf(wip.latest_form_page)) {
-      wip = await clearFormPage(wip, wip.latest_form_page);
-    }
+    // if(formPageOrder.indexOf(formPage) < formPageOrder.indexOf(wip.latest_form_page)) {
+    //   wip = await clearFormPage(wip, wip.latest_form_page);
+    // }
 
     wip.latest_form_page = formPage;
     wip = await wip.save();  
@@ -226,7 +271,6 @@ module.exports.getFormPage = async function(req, res) {
           project_description: wip.project_description,
           file_metadata: metadataArray,          
         },
-        is_saved: (wip.project_name && wip.project_description && metadataArray) ? true : false,
       }
       break;
     }
@@ -238,7 +282,6 @@ module.exports.getFormPage = async function(req, res) {
           entity_hierarchy: hierarchy || [],
           hierarchy_preset: wip.category_hierarchy_preset || "None",
         },
-        is_saved: (wip.category_hierarchy.length > 0) ? true : false,
       }
       console.log("response", response)
       break;
@@ -253,12 +296,19 @@ module.exports.getFormPage = async function(req, res) {
           use_automatic_tagging: use_automatic_tagging,
           file_metadata: metadataArray, 
         },
-        is_saved: use_automatic_tagging !== "not-defined", 
       }
     }
   }
   
   response.latest_form_page = formPage;
+
+
+  var formPageProgress = wip.getFormPageProgressArray();
+  var formPageIndex = formPageOrder.indexOf(formPage);
+
+  response.is_saved = formPageProgress[formPageIndex] === "saved" ? true : false;
+  response.form_page_progress = formPageProgress;
+
   console.log(response);
   return res.send(response);
 
@@ -272,6 +322,14 @@ module.exports.submitFormPage = async function(req, res) {
   var saved_wip;
   console.log("req.body is ", req.body);
 
+  // If the form page is not valid (i.e. appears in the below list), send an error.
+  if(formPage && formPageOrder.indexOf(formPage) === -1) {
+    return res.send(500);
+  }
+
+  var formPageProgress = wip.getFormPageProgressArray();
+  console.log('fpp', formPageProgress)
+
   try {
 	switch(formPage) {
 	  case 'project_details': {	  	
@@ -279,25 +337,33 @@ module.exports.submitFormPage = async function(req, res) {
 		  saved_wip = await wip.updateNameAndDesc(data.project_name, data.project_description);
 
 
-		
-		  console.log("Saved wip:", saved_wip, saved_wip.project_name)
-      console.log(data.project_name, data.project_description);	  		
+	
+		  //console.log("Saved wip:", saved_wip, saved_wip.project_name)
+      //console.log(data.project_name, data.project_description);	  		
 		break;
 	  }
 	  case 'dataset': {
-      console.log('datasetttt')
+      //console.log('datasetttt')
 	  	wip = await wip.deleteDocumentsAndMetadataAndSave();
 
 
 
-	  	return uploadDataset(req, res, wip, 'dataset');
+	  	return uploadDataset(req, res, wip, 'dataset', formPage, formPageProgress);
 	  	break;
 	  }
 	  case 'entity_hierarchy': {
-      console.log(data, "<<<<<<<<")
+      // Reset the automatic tagging form
+
+      if(formPageProgress[AUTOMATIC_TAGGING] === "saved") {
+        wip = await clearFormPage(wip, 'automatic_tagging');
+        wip.form_page_progress['automatic_tagging'] = "requires_attention";
+      }
+      
+
+      console.log(data, "<<<<<<<<", formPageProgress[AUTOMATIC_TAGGING])
       saved_wip = await wip.updateCategoryHierarchy(data.entity_hierarchy, data.hierarchy_preset);
-      console.log("saved wip", saved_wip)
-	  	console.log('entity')
+      //console.log("saved wip", saved_wip)
+	  	//console.log('entity')
 		  break;
 	  }
     case 'automatic_tagging': {
@@ -307,7 +373,7 @@ module.exports.submitFormPage = async function(req, res) {
 
       if(!data.clear_automatic_tagging) {
         // Input should be a file
-        return uploadDataset(req, res, wip, 'automatic_tagging');
+        return uploadDataset(req, res, wip, 'automatic_tagging', formPage, formPageProgress);
 
 
       }
@@ -317,13 +383,23 @@ module.exports.submitFormPage = async function(req, res) {
     }
 	}
   } catch(errors) {
-  	console.log('eessse', errors, ',,');
-  	return res.send({"errors": [errors]});
+    wip.form_page_progress[formPage] = "error";
+  	await wip.save();
+    var formPageProgress = wip.getFormPageProgressArray();
+    return res.send({"errors": [errors], form_page_progress: formPageProgress});
   }
 
+  wip.form_page_progress[formPage] = "saved";
+  await wip.save();
+  formPageProgress = wip.getFormPageProgressArray();
 
-  
-  res.send({errors: null})
+  var response = {
+    errors: null,
+    form_page_progress: formPageProgress
+  }
+
+  console.log(response)
+  res.send(response)
 }
 
 

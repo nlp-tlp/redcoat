@@ -104,6 +104,35 @@ var WipProjectSchema = new Schema({
     default: "undecided"
   },
 
+
+  form_page_progress: {
+    project_details: {
+      type: String,
+      enum: ["not_started", "saved", "error", "needs_attention"],
+      default: "not_started",
+    },
+    entity_hierarchy: {
+      type: String,
+      enum: ["not_started", "saved", "error", "needs_attention"],
+      default: "not_started",
+    },
+    automatic_tagging: {
+      type: String,
+      enum: ["not_started", "saved", "error", "needs_attention"],
+      default: "not_started",
+    },
+    annotators: {
+      type: String,
+      enum: ["not_started", "saved", "error", "needs_attention"],
+      default: "not_started",
+    },
+    project_options: {
+      type: String,
+      enum: ["not_started", "saved", "error", "needs_attention"],
+      default: "not_started",
+    },
+  }
+
 }, {
   timestamps: { 
     createdAt: "created_at",
@@ -119,6 +148,23 @@ WipProjectSchema.statics.getUserWip = async function(user) {
   var wip = await WipProject.findOne( { user_id : user._id });
   return Promise.resolve(wip);
 }
+
+
+
+
+var formPageOrder = ["project_details", "entity_hierarchy", "automatic_tagging", "annotators", "project_options"]
+  // Get the form page progress, i.e. an array of either not_started, saved, error, needs_attention
+  // depending on the status of each page in the form.
+WipProjectSchema.methods.getFormPageProgressArray = function() {
+  var wip = this;
+  var formPageProgress = ['not_started', 'not_started', 'not_started', 'not_started', 'not_started'];
+  for(var i = 0; i < formPageOrder.length; i++) {
+    formPageProgress[i] = wip.form_page_progress[formPageOrder[i]]; //checkStatus(formPageOrder[i], wip);
+  }
+  return formPageProgress;
+}
+
+
 
 WipProjectSchema.methods.updateNameAndDesc = async function(project_name, project_description) {
   var t = this;

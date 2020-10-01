@@ -80,7 +80,13 @@ class NewProjectHeaderItem extends Component {
 
   render() {
     return (
-      <div className={"item " + (this.props.active ? "active": "") + (this.props.ready ? "" : " disabled")}><div className="inner">{this.props.name}</div></div>
+      <div className={"item " + (this.props.active ? "active": "") + (this.props.ready ? "" : " disabled")}>
+        <div className="inner">{this.props.name}
+        {this.props.pageProgress === "saved" && <i className="fa fa-check"></i>}
+        {this.props.pageProgress === "error" && <i className="fa fa-times"></i>}
+        {this.props.pageProgress === "requires_attention" && <i className="fa fa-warning"></i>}
+        </div>
+      </div>
     )
   }
 }
@@ -163,6 +169,14 @@ class NewProjectView extends Component {
         },
     ]
 
+    // Store the dependencies between form pages (in reverse), e.g.
+    // automatic_tagging depends on entity_hierarchy. If entity_hierarchy is changed, automatic_tagging is reset.
+    this.formPageDependencies = {
+      "entity_hierarchy": ["automatic_tagging", AUTOMATIC_TAGGING],
+      "project_details": ["project_options", PROJECT_OPTIONS],
+      "annotators": ["project_options", PROJECT_OPTIONS],
+    }
+
     this.state = {
       
 
@@ -192,6 +206,10 @@ class NewProjectView extends Component {
       formHelpContent: null, // The content currently appearing in the modal. null if modal is not being displayed.
 
       verifyBack: false, // Whether or not the confirmation window is showing (do you want to go back?)
+
+
+      formPageProgress: ["not_started", "not_started", "not_started", "not_started", "not_started"], // Store the progress of each form page
+
     }
 
     // Store the previous states of each form so that the API does not need to be queried when going back and forth between
@@ -260,9 +278,14 @@ class NewProjectView extends Component {
     
     var d = await _fetch('http://localhost:3000/api/projects/new/get' + formPage, 'GET', this.props.setErrorCode, false, false, 555);
 
+
+
+    var formPageProgress = this.state.formPageProgress;
+
     if(firstLoad) {
       var latestFormPage = d.latest_form_page;
       for(var i = 0; i < this.formPages.length; i++) {
+        
         if(this.formPages[i].pathname === latestFormPage) {
           var latestFormPageIndex = i;
           break;
@@ -271,6 +294,12 @@ class NewProjectView extends Component {
     } else {
       var latestFormPageIndex = this.state.currentFormPageIndex;
     }
+
+
+    formPageProgress = d.form_page_progress;
+
+
+    
     //console.log(d, d.is_saved, "<<<");
     
     this.setState({
@@ -280,6 +309,7 @@ class NewProjectView extends Component {
       wasModified: false,
       //isSaved: true,
       loading: false,
+      formPageProgress: formPageProgress,
     });
   }
 
@@ -329,7 +359,7 @@ class NewProjectView extends Component {
         var response = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=dataset', 'POST', this.props.setErrorCode, formData, true);
 
         if(response.errors) {
-          return this.renderWithErrors(response.errors);
+          return this.renderWithErrors(response);
         } else {
           return this.setState({
             data: {...this.state.data, file_metadata: response.details },
@@ -349,6 +379,7 @@ class NewProjectView extends Component {
         data = { entity_hierarchy: json2slash({children: data.entity_hierarchy}), hierarchy_preset: data.hierarchy_preset };
       }
       var response = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=' + formPath, 'POST', this.props.setErrorCode, data);
+
     } else if(this.state.currentFormPageIndex === AUTOMATIC_TAGGING) {
       // Then upload the dataset
 
@@ -360,13 +391,14 @@ class NewProjectView extends Component {
 
 
         if(response.errors) {
-          return this.renderWithErrors(response.errors);
+          return this.renderWithErrors(response);
         } else {
           return this.setState({
-            data: {...this.state.data, file_metadata: response.details },
+            data: {...this.state.data, file_metadata: response.details },            
             formErrors: null,
             isSaved: true,
             saving: false,
+            formPageProgress: response.form_page_progress,
           }, () => {
             console.log(this.state.data, "X)");
           });
@@ -386,24 +418,37 @@ class NewProjectView extends Component {
     console.log(response);
 
     if(response.errors) {
-      this.renderWithErrors(response.errors);
+      this.renderWithErrors(response);
     } else {
+      console.log("rRR", response.form_page_progress)
+
       this.setState({
+        formPageProgress: response.form_page_progress,
         formErrors: null,
         isSaved: true,
         saving: false,
+      }, () => {
+        console.log(this.state.formPageProgress)
       })
     }
     return null;
 
   }
 
-  renderWithErrors(errors) {
+  renderWithErrors(response) {
+    console.log("Response", response)
+    var errors = response.errors;
+    var formPageProgress = response.form_page_progress;
+
+    //var formPageProgress = this.state.formPageProgress;
+    //formPageProgress[this.state.currentFormPageIndex] = "error";
+    console.log(formPageProgress, "XX")
     this.setState({
       formErrors: errors,
       isModified: false,
       isSaved: false,
       saving: false,
+      formPageProgress: formPageProgress,
     }, () => {
       window.scrollTo({
         top: 0,
@@ -487,9 +532,10 @@ class NewProjectView extends Component {
 
   // Verify that the user wants to go back to the previous page.
   verifyBack() {
+
     var wasModified = this.state.wasModified;
     var isSaved = this.state.isSaved;
-    if(!wasModified && !isSaved) {
+    if(!wasModified || isSaved) {
       this.gotoPrevFormPage();
       return;
     }
@@ -517,6 +563,8 @@ class NewProjectView extends Component {
 
     var lastPage = this.state.currentFormPageIndex === (this.formPages.length - 1);
 
+    if(this.state.currentFormPageIndex) var formPath = this.getFormPagePathname();
+
     return (
       <form id="new-project-form" className={(this.state.formErrors ? "errors" : "") + (this.state.formErrorShake ? "shake" : "") + (this.state.saving ? " saving" : "") + (this.state.loading ? " loading" : "")} ref={this.ref} onSubmit={this.state.isSaved ? null : (e) => this.submitFormPage(e)}  >
 
@@ -531,7 +579,7 @@ class NewProjectView extends Component {
           {
             this.state.verifyBack
             ? <div>
-                <p>Going back to the previous page will reset this form. Are you sure?</p>
+                <p>You have unsaved changes. Are you sure you want to go back to the previous page?</p>
                 <div className="verify-back-row">
                   <button className="annotate-button grey-button" onClick={() => this.setState({ verifyBack: false })}>No</button>
                   <button className="annotate-button grey-button" onClick={() => this.gotoPrevFormPage()}>Yes</button>
@@ -551,7 +599,12 @@ class NewProjectView extends Component {
         <header className="new-project-header">
           <div className="container flex-container">
             { this.formPages.map((page, index) => 
-              <NewProjectHeaderItem name={page.name} pathname={page.pathname} key={index} saved={page.saved} active={index === this.state.currentFormPageIndex} ready={this.state.currentFormPageIndex >= index || this.state.isSaved && index === this.state.currentFormPageIndex + 1}/>
+              <NewProjectHeaderItem name={page.name}
+                pathname={page.pathname}
+                key={index}
+                pageProgress={this.state.formPageProgress[index]}
+                active={index === this.state.currentFormPageIndex}
+                ready={this.state.currentFormPageIndex >= index || this.state.isSaved && index === this.state.currentFormPageIndex + 1}/>
             )}            
           </div>
         </header>
@@ -569,7 +622,14 @@ class NewProjectView extends Component {
 
                     <div className={"form-notice form-loading " + (this.state.loading ? "" : "hidden")}><i className="fa fa-cog fa-spin"></i>Loading...</div>
 
-                    <div className={"form-notice form-success " + (this.state.isSaved ? "" : "hidden")}><i className="fa fa-check"></i>This page is saved.</div>
+                    <div className={"form-notice form-success " + (this.state.isSaved ? "" : "hidden")}><i className="fa fa-check"></i>This page is saved.
+                      
+
+                    </div>
+
+                    <div className={"form-notice form-warning " + (!this.state.loading && this.state.formPageProgress[this.state.currentFormPageIndex] === "requires_attention" ? "" : "hidden")}><i className="fa fa-warning"></i>This form was reset by a previous form. Please fill it in again to continue.</div>
+
+                    <div className={"form-notice small-margin-top form-warning " + (this.state.isSaved && this.formPageDependencies[formPath] && this.state.formPageProgress[this.formPageDependencies[formPath][1]] === "saved" ? "" : "hidden")}><i className="fa fa-warning"></i>Modifying the form below will reset the {formPath && this.formPageDependencies[formPath] && this.formPageDependencies[formPath][0] && this.formPageDependencies[formPath][0].replace("_", " ")} form.</div>
 
                     <div className={"form-notice form-errors " + (this.state.formErrors ? "" : "hidden")}>
                       <i className="fa fa-times"></i>Please fix the following errors before saving:

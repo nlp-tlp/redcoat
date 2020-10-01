@@ -23,8 +23,7 @@ header.new-project-header {
 
 			}
 
-			i.fa-check {
-				color: darken($primary-green, 6);
+			i {
 				margin-left: 7px;
 
 			}
@@ -134,6 +133,12 @@ main.new-project {
 		margin-bottom: 0;
 		opacity: 0;
 	}
+	.save-warning {
+		margin-top: 4px;
+		i {
+			transform: translate(0, 0);
+		}
+	}
 }
 .form-loading {
 	background: rgba(0, 0, 0, 0.05);
@@ -142,17 +147,24 @@ main.new-project {
 	border-color: rgba(darken($primary-red, 15), 0.75);
 	background: rgba($primary-red, 0.12);	
 	color: darken($primary-red, 35);
-	i {
-		color: darken($primary-red, 20);
-	}
 }
 .form-success {
 	border-color: rgba($primary-green, 0.25);
 	background: rgba($primary-green, 0.12);
 	color: darken($primary-green, 35);
-	i {
-		color: darken($primary-green, 10);
-	}
+
+}
+
+
+
+.form-warning {
+	border-color: rgba(darken($primary-gold, 7), 0.35);
+	background: rgba($primary-gold, 0.12);
+
+}
+
+.small-margin-top {
+	margin-top: -20px;
 }
 
 .annotate-button.new-project-button {
@@ -430,4 +442,17 @@ body.ReactModal__Body--open #app {
 	align-items: center;
 	justify-content: center;
 
+}
+
+
+.new-project, .new-project-header {
+	i.fa-check {
+	color: darken($primary-green, 10);
+	}
+	i.fa-times {
+		color: darken($primary-red, 20);
+	}
+	i.fa-warning {
+		color: darken($primary-gold, 7);
+	}
 }
