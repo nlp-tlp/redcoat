@@ -43,9 +43,7 @@ async function uploadDataset(req, res, wip, path, formPage, formPageProgress) {
 	form.parse(req);
 
 	var responded = false;
-	console.log(wip, 'heello')
-	
-	console.log(wip, 'hello')
+	console.log('-------------------------------------------------------------------')
 
 	form.on('file', function(field, file) {
       filename = file.name;
@@ -57,8 +55,9 @@ async function uploadDataset(req, res, wip, path, formPage, formPageProgress) {
         this.emit('error', [{ message: fileError }]);
         return;
       }
-
       var str = fs.readFileSync(file.path, 'utf-8');
+
+      console.log('foundfipe')
       if(path === "dataset") {
 
         // Tokenize the file with the WipProject.        
@@ -92,7 +91,6 @@ async function uploadDataset(req, res, wip, path, formPage, formPageProgress) {
         });
       } else if(path === "automatic_tagging") {
 
-        console.log('ehre')
         // Turn the file into an automatic tagging dictionary via the model method.
         wip.createAutomaticTaggingDictionaryFromString(str, function(err, automaticTaggingDictionary) {
           //console.log(err, automaticTaggingDictionary, "XXX")
@@ -161,7 +159,7 @@ async function uploadDataset(req, res, wip, path, formPage, formPageProgress) {
         await wip.save();
         formPageProgress = wip.getFormPageProgressArray();
 
-        var response = {'success': true, details: metadata, form_page_progress: formPageProgress };
+        var response = {'success': true, file_metadata: metadata, form_page_progress: formPageProgress };
 
         console.log(response);
         res.send(response);
@@ -187,7 +185,6 @@ async function clearFormPage(wip, formPage) {
       break;
     }
     case 'automatic_tagging': {
-      console.log('hello')
       wip = await wip.deleteDictionaryAndMetadataAndSave();
       wip.automatic_tagging = null;
       
@@ -207,26 +204,26 @@ ANNOTATORS = 3;
 PROJECT_OPTIONS = 4;
 
 // Check the status of a particular form page.
-function checkStatus(formPage, wip) {
-  var saved;
-  switch(formPage) {
-    case 'project_details': {
-      var metadataArray = wip.fileMetadataToArray() || null;
-      saved = (wip.project_name && wip.project_description && metadataArray) ? true : false;
-      break;
-    }
-    case 'entity_hierarchy': {
-      saved = (wip.category_hierarchy.length > 0) ? true : false;
-      break;
-    }
-    case 'automatic_tagging': {
-      var use_automatic_tagging = ((wip.automatic_tagging === undefined || wip.automatic_tagging === null) ? "not-defined" : (wip.automatic_tagging ? "yes" : "no"));
-      saved = (use_automatic_tagging !== "not-defined");
-      break;
-    }
-  }
-  return saved ? "saved" : "not_started";
-}
+// function checkStatus(formPage, wip) {
+//   var saved;
+//   switch(formPage) {
+//     case 'project_details': {
+//       var metadataArray = wip.fileMetadataToArray() || null;
+//       saved = (wip.project_name && wip.project_description && metadataArray) ? true : false;
+//       break;
+//     }
+//     case 'entity_hierarchy': {
+//       saved = (wip.category_hierarchy.length > 0) ? true : false;
+//       break;
+//     }
+//     case 'automatic_tagging': {
+//       var use_automatic_tagging = ((wip.automatic_tagging === undefined || wip.automatic_tagging === null) ? "not-defined" : (wip.automatic_tagging ? "yes" : "no"));
+//       saved = (use_automatic_tagging !== "not-defined");
+//       break;
+//     }
+//   }
+//   return saved ? "saved" : "not_started";
+// }
 
 
 
@@ -235,12 +232,12 @@ function checkStatus(formPage, wip) {
 module.exports.getFormPage = async function(req, res) {
   var wip = await WipProject.getUserWip(req.user);
   var formPage = req.query.formPage;
-  console.log(formPage, "<<");
+  console.log("Form page:", formPage, "<<");
   console.log(wip);
 
   // If the form page is not valid (i.e. appears in the below list), send an error.
   if(formPage && formPageOrder.indexOf(formPage) === -1) {
-    return res.send(500);
+    return res.status(500).send({error: "Form page does not exist"});
   }
 
   if(!formPage) {
@@ -301,10 +298,16 @@ module.exports.getFormPage = async function(req, res) {
   }
   
   response.latest_form_page = formPage;
+  
+  var formPageIndex = formPageOrder.indexOf(formPage);
+
+  if(wip.form_page_progress[formPage] === "not_started") {
+    wip.form_page_progress[formPage] = "started";
+    await wip.save();
+  }
 
 
   var formPageProgress = wip.getFormPageProgressArray();
-  var formPageIndex = formPageOrder.indexOf(formPage);
 
   response.is_saved = formPageProgress[formPageIndex] === "saved" ? true : false;
   response.form_page_progress = formPageProgress;
@@ -323,8 +326,8 @@ module.exports.submitFormPage = async function(req, res) {
   console.log("req.body is ", req.body);
 
   // If the form page is not valid (i.e. appears in the below list), send an error.
-  if(formPage && formPageOrder.indexOf(formPage) === -1) {
-    return res.send(500);
+  if(formPage && formPageOrder.indexOf(formPage) === -1 && formPage !== "dataset") {
+    return res.status(500).send({error: "Form page does not exist"});
   }
 
   var formPageProgress = wip.getFormPageProgressArray();
@@ -347,8 +350,8 @@ module.exports.submitFormPage = async function(req, res) {
 	  	wip = await wip.deleteDocumentsAndMetadataAndSave();
 
 
-
-	  	return uploadDataset(req, res, wip, 'dataset', formPage, formPageProgress);
+	  	uploadDataset(req, res, wip, 'dataset', formPage, formPageProgress);
+      return
 	  	break;
 	  }
 	  case 'entity_hierarchy': {

@@ -523,6 +523,8 @@ class ModifiableCategoryHierarchy extends Component {
     function userStoppedModifying() {
       this.setState({
         userIsModifying: false,
+      }, () => {
+        this.props.userIsModifying(false)
       })
     }
 
@@ -533,6 +535,8 @@ class ModifiableCategoryHierarchy extends Component {
 
     this.setState({
       userIsModifying: true,
+    }, () => {
+      this.props.userIsModifying(true);
     })
   }
 

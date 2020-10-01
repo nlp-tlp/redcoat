@@ -52,7 +52,7 @@ async function _fetch(url, method, setErrorCode, postBody=null, fileUpload=false
   }
 
   var response = await fetch(url, fetchConf) // TODO: move localhost out
-  
+  console.log(response,'<repos')
   if(response.status !== 200) {
     var errorCode = parseInt(response.status)
     setErrorCode(errorCode);

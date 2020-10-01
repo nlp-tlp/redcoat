@@ -31,6 +31,8 @@ class FileUploadForm extends Component {
       file: e.target.files[0],
       filename: e.target.files[0].name,
       errorCleared: true,
+    }, () => {
+      this.props.updateFile(this.state.file);
     });
   }
 

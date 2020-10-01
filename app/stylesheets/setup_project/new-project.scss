@@ -70,6 +70,10 @@ main.new-project {
 .new-project-submit-row {
 	background: #d3d3d3;
 	padding: 30px 0;
+	&.disabled .container {
+		opacity: 0.75;
+		pointer-events: none;
+	}
 	.container {
 		display: flex;
 		justify-content: space-between;
@@ -265,6 +269,11 @@ form.errors {
 	}
 }
 
+.form-group .upload-form-container .upload-form label table.file-metadata {
+	td:first-child {
+		width: 65%;
+	}
+}
 .upload-form-container {	
 	margin-top: 36px;
 	.upload-form input {
@@ -289,6 +298,7 @@ form.errors {
 		color: rgba(0, 0, 0, 0.7);
 		cursor: pointer;
 		font-weight: bold;
+
 		&:focus {
 			outline: none !important;
 		}
@@ -312,13 +322,14 @@ form.errors {
 			padding: 0;
 			width: 100%;
 			margin-top: 20px;
+
 			td {
 				padding: 0 10px;
 				font-weight: normal;
-				width: 50%;
 				&:first-child {
 					font-weight: bold;
 					text-align: right;
+					
 
 					
 				}
@@ -454,5 +465,11 @@ body.ReactModal__Body--open #app {
 	}
 	i.fa-warning {
 		color: darken($primary-gold, 7);
+	}
+}
+
+.new-project .project-page-table {
+	td {
+		padding: 8px 16px;
 	}
 }

@@ -223,6 +223,7 @@ class NewProjectEntityHierarchy extends Component {
                 updateHierarchy={this.updateHierarchy.bind(this)}
                 markModified={this.markModified.bind(this)}
                 errorEntityNames={errorEntityNames}
+                userIsModifying={this.props.userIsModifying}
           />
         }
         </div>

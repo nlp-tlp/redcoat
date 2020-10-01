@@ -18,8 +18,61 @@ import {json2slash} from 'views/NewProjectView/functions/hierarchy_helpers'
 Modal.setAppElement('body');
 
 
+function generateEmptyTable() {
+  var n = 15;
+  var arr = new Array(n).fill(0);
+  
+
+  function stringOfRandomLength(minlen, maxlen) {
+    var s = '';
+    for(var i = 0; i < minlen + Math.floor(Math.random() * maxlen); i++) {
+      s += 'x';
+    }
+    return s;
+  }
+
+  return (
+    <table className="project-page-table">
+      <tbody>
+       { arr.map((x, i) => 
+        <tr> 
+          <td><span className="inner"><span className="st">{stringOfRandomLength(30, 70)}</span></span></td>
+          <td><span className="inner"><span className="st">{stringOfRandomLength(30, 70)}</span></span></td>
+        </tr>
+      ) }
+    </tbody>
+  </table>
+  )  
+}
 
 
+class FormLoadingSkeleton extends Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    return (
+      <div>
+        <h2><span className="st st-darker">Empty form hello</span></h2>
+        { this.props.page === "entity_hierarchy" && 
+          <div>
+            <div className="form-group no-padding">
+              <label><span className="st st-darker">Preset</span></label>
+              <select className="st">
+                <option>Hello</option>
+              </select>
+            </div>
+            <div className="category-hierarchy-wrapper">
+              { generateEmptyTable() }
+            </div>
+          </div>
+        }
+      </div>
+
+    )
+  }
+}
+ 
 class NewProjectAnnotators extends Component {
   constructor(props) {
     super(props);
@@ -121,6 +174,8 @@ class NewProjectView extends Component {
         data: this.state.data,
         markModified: this.markModified.bind(this),
         updateFormPageData: this.updateFormPageData.bind(this),
+        userIsModifying: this.userIsModifying.bind(this),
+
 
 
       }
@@ -207,6 +262,7 @@ class NewProjectView extends Component {
 
       verifyBack: false, // Whether or not the confirmation window is showing (do you want to go back?)
 
+      userIsModifying: false, // Whether the user is making a modification (to disable the save button). Only used for the hierarchy
 
       formPageProgress: ["not_started", "not_started", "not_started", "not_started", "not_started"], // Store the progress of each form page
 
@@ -233,6 +289,12 @@ class NewProjectView extends Component {
     this.setState({
       wasModified: true,
       isSaved: false,
+    });
+  }
+
+  userIsModifying(b) {
+    this.setState({
+      userIsModifying: b,
     });
   }
 
@@ -276,7 +338,7 @@ class NewProjectView extends Component {
       var formPage = '?formPage=' +this.getFormPagePathname();      
     }
     
-    var d = await _fetch('http://localhost:3000/api/projects/new/get' + formPage, 'GET', this.props.setErrorCode, false, false, 555);
+    var d = await _fetch('http://localhost:3000/api/projects/new/get' + formPage, 'GET', this.props.setErrorCode, false, false, firstLoad ? 0 : 555);
 
 
 
@@ -298,7 +360,7 @@ class NewProjectView extends Component {
 
     formPageProgress = d.form_page_progress;
 
-
+    console.log(d, "RES")
     
     //console.log(d, d.is_saved, "<<<");
     
@@ -343,42 +405,35 @@ class NewProjectView extends Component {
     var formPath = this.getFormPagePathname();
     var data = this.state.data;
 
+    var post_url = 'http://localhost:3000/api/projects/new/submit?formPage='
+
     console.log("THIS STATE DATA IS ", data);
+
+    // Project details is a bit different - we need to upload the details first and then upload the dataset afterwards
+    // This is because formidable (in the backend) seems to require the file to be the entire post body, so it has to be 
+    // done separately from other data.
     if(this.state.currentFormPageIndex === PROJECT_DETAILS) {
 
       // Upload name/desc first
-      var response = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=' + formPath, 'POST', this.props.setErrorCode, data);
+      var response = await _fetch(post_url + 'project_details', 'POST', this.props.setErrorCode, data);
+
 
       // Don't save the dataset again if it has not changed
       if(!response.errors && !this.state.data.file_metadata) {
 
+        console.log(data.dataset,'xxxx')
         // Then upload the dataset
         var formData = new FormData();
         formData.append('file', data.dataset);
 
-        var response = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=dataset', 'POST', this.props.setErrorCode, formData, true);
-
-        if(response.errors) {
-          return this.renderWithErrors(response);
-        } else {
-          return this.setState({
-            data: {...this.state.data, file_metadata: response.details },
-            formErrors: null,
-            isSaved: true,
-            saving: false,
-          });
-        }
+        var response = await _fetch(post_url + 'dataset', 'POST', this.props.setErrorCode, formData, true);
       }
-
-
-
 
     } else if(this.state.currentFormPageIndex === ENTITY_HIERARCHY) {
 
-      if(this.state.currentFormPageIndex === ENTITY_HIERARCHY) {
-        data = { entity_hierarchy: json2slash({children: data.entity_hierarchy}), hierarchy_preset: data.hierarchy_preset };
-      }
-      var response = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=' + formPath, 'POST', this.props.setErrorCode, data);
+      // Convert the JSON tree into 'slash' notation before sending to the back end.
+      data = { entity_hierarchy: json2slash({children: data.entity_hierarchy}), hierarchy_preset: data.hierarchy_preset };      
+      var response = await _fetch(post_url + 'entity_hierarchy', 'POST', this.props.setErrorCode, data);
 
     } else if(this.state.currentFormPageIndex === AUTOMATIC_TAGGING) {
       // Then upload the dataset
@@ -387,27 +442,11 @@ class NewProjectView extends Component {
         var formData = new FormData();
         formData.append('file', data.dataset);
 
-        var response = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=automatic_tagging', 'POST', this.props.setErrorCode, formData, true);
+        var response = await _fetch(post_url + 'automatic_tagging', 'POST', this.props.setErrorCode, formData, true);
 
-
-        if(response.errors) {
-          return this.renderWithErrors(response);
-        } else {
-          return this.setState({
-            data: {...this.state.data, file_metadata: response.details },            
-            formErrors: null,
-            isSaved: true,
-            saving: false,
-            formPageProgress: response.form_page_progress,
-          }, () => {
-            console.log(this.state.data, "X)");
-          });
-        }
-
-
-
+      // If there was no dataset (i.e. "no" was selected), clear the automatic tagging
       } else {
-        var response = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=automatic_tagging', 'POST', this.props.setErrorCode, { clear_automatic_tagging: true });
+        var response = await _fetch(post_url + 'automatic_tagging', 'POST', this.props.setErrorCode, { clear_automatic_tagging: true });
       }
       
 
@@ -415,21 +454,23 @@ class NewProjectView extends Component {
 
 
 
-    console.log(response);
+    console.log("Response: ", response);
 
     if(response.errors) {
       this.renderWithErrors(response);
     } else {
-      console.log("rRR", response.form_page_progress)
-
-      this.setState({
-        formPageProgress: response.form_page_progress,
+      var updated_data = this.state.data;
+      if(response.file_metadata) {
+        updated_data.file_metadata = response.file_metadata;
+      }
+      return this.setState({
+        data: updated_data,
         formErrors: null,
         isSaved: true,
         saving: false,
-      }, () => {
-        console.log(this.state.formPageProgress)
-      })
+        formPageProgress: response.form_page_progress,
+      });
+        
     }
     return null;
 
@@ -555,6 +596,7 @@ class NewProjectView extends Component {
   }
 
   renderFormPage(index) {
+    if(this.formPages[index] === undefined) return <FormLoadingSkeleton/>
     return this.formPages[index].component();
   }
 
@@ -604,7 +646,7 @@ class NewProjectView extends Component {
                 key={index}
                 pageProgress={this.state.formPageProgress[index]}
                 active={index === this.state.currentFormPageIndex}
-                ready={this.state.currentFormPageIndex >= index || this.state.isSaved && index === this.state.currentFormPageIndex + 1}/>
+                ready={this.state.formPageProgress[index] !== "not_started"}/>
             )}            
           </div>
         </header>
@@ -642,6 +684,8 @@ class NewProjectView extends Component {
                     </div>
                     
                     { !this.state.loading && this.renderFormPage(this.state.currentFormPageIndex) }
+                    { this.state.loading && <FormLoadingSkeleton page={formPath}/> }
+                   
                 </section>
               </CSSTransition>
             </TransitionGroup>
@@ -649,7 +693,7 @@ class NewProjectView extends Component {
             </div>      
              
         </main> 
-        <div className="new-project-submit-row">
+        <div className={"new-project-submit-row" + (this.state.userIsModifying ? " disabled" : "")}>
           <div className="container">
             <button type="button" onClick={() => this.verifyBack()} className={"annotate-button new-project-button grey-button" + (this.state.currentFormPageIndex === 0 ? " disabled" : "")}><i className="fa fa-chevron-left"></i>Back</button>
             
