@@ -150,6 +150,10 @@
 	> ul:not(.dragging) li:hover span.drag-handle {
 		opacity: 1;
 	}
+	> ul.drag-disabled li:hover span.drag-handle {
+		opacity: 0;
+		pointer-events: none;
+	}
 
 	ul {
 		box-sizing: border-box;

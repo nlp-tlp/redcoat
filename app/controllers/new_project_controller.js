@@ -21,8 +21,23 @@ var MAX_FILESIZE_MB = 10;
 
 var ch = require('./helpers/category_hierarchy_helpers')
 
+function validateFileType(file, path) {
+  var validFile = false;
+  var fileType = file.type;
+  var fileName = file.name;
+  if(path === "dataset") {
+    if(fileType !== "text/plain") {
+      return "File must be a plain text file.";
+    }
+  } else if(path === "automatic_tagging") {
+    if(!fileName.endsWith('.csv')) {
+      return "File must be a CSV file.";
+    }
+  }
+  return null;  
+}
 
-async function uploadDataset(req, res, wip) {
+async function uploadDataset(req, res, wip, path) {
 	var form = new formidable.IncomingForm({"maxFileSize": MAX_FILESIZE_MB * 1024 * 1024}); // 25mb
 
 	form.parse(req);
@@ -37,28 +52,23 @@ async function uploadDataset(req, res, wip) {
       var f = this;  
       console.log("FILENAME", filename);
 
-      // Ensure filetype is correct
-      var fileType = file.type;        
-      if (fileType != 'text/plain') {
-
-        this.emit('error', [{ message: "File must be a plain text file." }]);
+      var fileError = validateFileType(file, path);
+      if(fileError) {
+        this.emit('error', [{ message: fileError }]);
         return;
-        //return Promise.reject([{message: "poopy", path: "datasets"}]);
       }
-      
-      // Tokenize the file with the WipProject.
+
       var str = fs.readFileSync(file.path, 'utf-8');
-      wip.createDocumentsFromString(str, function(err, numberOfLines, numberOfTokens) {
+      if(path === "dataset") {
 
-        if(err) { 
-          f.emit('error', err.errors.documents);
-          fs.unlink(file.path, (err) => {
-            if (err) throw err;
-          });
-        } else {
+        // Tokenize the file with the WipProject.        
+        wip.createDocumentsFromString(str, function(err, numberOfLines, numberOfTokens) {
 
-          // numberOfLines = wip_project.documents.length;
-          // numberOfTokens = [].concat.apply([], wip_project.documents).length;
+          if(err) { 
+            f.emit('error', err.errors.documents);
+            fs.unlink(file.path, (err) => { if (err) throw err; });
+            return;
+          }
 
           wip.setFileMetadata({
             "Filename": filename ,
@@ -76,20 +86,40 @@ async function uploadDataset(req, res, wip) {
                 if (err) throw err;
               });
 
-              //console.log("New Documents (first 3):", wip_project.documents.slice(0, 3));              
-              //numberOfLines = wip_project.documents.length;
-              //numberOfTokens = [].concat.apply([], wip_project.documents).length;
-
-
               f.emit('end_uploading'); // Only send out signal once the WipProject has been updated.
             }
+          });          
+        });
+      } else if(path === "automatic_tagging") {
+
+        console.log('ehre')
+        // Turn the file into an automatic tagging dictionary via the model method.
+        wip.createAutomaticTaggingDictionaryFromString(str, function(err, automaticTaggingDictionary) {
+          //console.log(err, automaticTaggingDictionary, "XXX")
+          if(err) {
+            console.log("ERROR,", err);
+            f.emit('error', {message: err});
+            return;
+          }
+
+          wip.automatic_tagging_dictionary = automaticTaggingDictionary;
+
+          wip.setAutomaticTaggingDictionaryMetadata({
+                "Filename": filename ,
+                "Number of rows":  Object.keys(automaticTaggingDictionary).length,
           });
-        }
-      });
+
+          wip.automatic_tagging = true;
+          wip.save(function(err, wip) {
+            f.emit('end_uploading');
+          });
+        });
+      }
     });
 
     // log any errors that occur
     form.on('error', function(errors) {
+      //console.log(errors,'xxx');
         if(!responded) {
 
           if(!Array.isArray(errors)) {
@@ -100,12 +130,10 @@ async function uploadDataset(req, res, wip) {
 	      }
 	      for(var err of errors) {
 	      	err.message = err.message;
-	      	err.path = 'dataset';
+	      	err.path = path;
 	      }
-
           
           console.log(errors, "<<");
-
           
           res.send({ "success": false, "errors": errors });
           res.end();
@@ -116,12 +144,18 @@ async function uploadDataset(req, res, wip) {
     // once all the files have been uploaded, send a response to the client
     form.on('end_uploading', function() {
       if(!responded){
-        res.send({'success': true, details: wip.fileMetadataToArray() });
+        if(path === "dataset") {
+          var metadata = wip.fileMetadataToArray();
+        } else {
+          metadata = wip.automaticTaggingDictionaryMetadataToArray();
+        }        
+
+        res.send({'success': true, details: metadata });
       }
     });
 
 
-  return;
+  return Promise.resolve();
 }
 
 // Clear the data for the WIP project at the given formPage.
@@ -135,9 +169,19 @@ async function clearFormPage(wip, formPage) {
     case 'entity_hierarchy': {
       wip.category_hierarchy = [];
       wip.category_hierarchy_preset = "None";
+      wip = await wip.save();
+      break;
+    }
+    case 'automatic_tagging': {
+      console.log('hello')
+      wip = await wip.deleteDictionaryAndMetadataAndSave();
+      wip.automatic_tagging = null;
+      
+      break;
     }
   }
-  wip = await wip.save();
+  await wip.save();
+  console.log(wip);
   return Promise.resolve(wip);
 }
 
@@ -199,6 +243,19 @@ module.exports.getFormPage = async function(req, res) {
       console.log("response", response)
       break;
     }
+    case 'automatic_tagging': {
+
+      var metadataArray = wip.automaticTaggingDictionaryMetadataToArray() || null;
+      var use_automatic_tagging = ((wip.automatic_tagging === undefined || wip.automatic_tagging === null) ? "not-defined" : (wip.automatic_tagging ? "yes" : "no"));
+
+      response = {
+        data: {
+          use_automatic_tagging: use_automatic_tagging,
+          file_metadata: metadataArray, 
+        },
+        is_saved: use_automatic_tagging !== "not-defined", 
+      }
+    }
   }
   
   response.latest_form_page = formPage;
@@ -233,7 +290,7 @@ module.exports.submitFormPage = async function(req, res) {
 
 
 
-	  	return uploadDataset(req, res, wip);
+	  	return uploadDataset(req, res, wip, 'dataset');
 	  	break;
 	  }
 	  case 'entity_hierarchy': {
@@ -243,10 +300,25 @@ module.exports.submitFormPage = async function(req, res) {
 	  	console.log('entity')
 		  break;
 	  }
+    case 'automatic_tagging': {
+      console.log(data, "XXX");
+
+      saved_wip = await wip.deleteDictionaryAndMetadataAndSave();
+
+      if(!data.clear_automatic_tagging) {
+        // Input should be a file
+        return uploadDataset(req, res, wip, 'automatic_tagging');
+
+
+      }
+
+
+      break;
+    }
 	}
   } catch(errors) {
-  	console.log('eee', errors, ',,');
-  	return res.send({"errors": errors});
+  	console.log('eessse', errors, ',,');
+  	return res.send({"errors": [errors]});
   }
 
 

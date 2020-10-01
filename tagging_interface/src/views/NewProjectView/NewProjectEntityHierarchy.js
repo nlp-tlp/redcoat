@@ -19,6 +19,8 @@ class NewProjectEntityHierarchy extends Component {
         entity_hierarchy: [],
         hierarchy_preset: "None",
       },
+
+      loading: false,
       
       
       preset_is_modified: false,
@@ -88,6 +90,7 @@ class NewProjectEntityHierarchy extends Component {
     return Promise.resolve();
   }
 
+  // Update the hierarchy. Called after dragging
   async updateHierarchy(entity_hierarchy) {
     // if(this.state.preset_is_modified) {
     //   this.props.updateFormPageData(this.state.data);
@@ -133,6 +136,15 @@ class NewProjectEntityHierarchy extends Component {
     }
 
     var value = e.target.value;
+
+    // Set loading to force an unmount of the modifiable hierarchy
+    this.setState({
+      loading: true,
+    }, (e) => {
+
+
+
+
     var preset = getPreset(value);
     console.log(preset.entities);
     console.log(preset.hierarchy);
@@ -143,6 +155,7 @@ class NewProjectEntityHierarchy extends Component {
         entity_hierarchy: preset.hierarchy,
         hierarchy_preset: preset.name,
       },
+      loading: false,
       preset_is_modified: false,
     }, () => {
       this.props.updateFormPageData(this.state.data);
@@ -152,6 +165,8 @@ class NewProjectEntityHierarchy extends Component {
         behavior: 'smooth'
       });
     })
+
+    });
   }
 
   render() {
@@ -199,16 +214,16 @@ class NewProjectEntityHierarchy extends Component {
         }
 
         <div className="category-hierarchy-wrapper min-height">
-        {!this.props.loading && 
-        <ModifiableCategoryHierarchy
-              items={ this.state.data.entity_hierarchy || [] }  
-              preset={this.state.selectedPreset}                       
-              visible={true}   
-              limitHeight={true}
-              updateHierarchy={this.updateHierarchy.bind(this)}
-              markModified={this.markModified.bind(this)}
-              errorEntityNames={errorEntityNames}
-        />
+        {!this.props.loading && !this.state.loading &&  
+          <ModifiableCategoryHierarchy
+                items={ this.state.data.entity_hierarchy || [] }  
+                preset={this.state.selectedPreset}                       
+                visible={true}   
+                limitHeight={true}
+                updateHierarchy={this.updateHierarchy.bind(this)}
+                markModified={this.markModified.bind(this)}
+                errorEntityNames={errorEntityNames}
+          />
         }
         </div>
 

@@ -276,6 +276,7 @@ form.errors {
 		width: 100%;
 		color: rgba(0, 0, 0, 0.7);
 		cursor: pointer;
+		font-weight: bold;
 		&:focus {
 			outline: none !important;
 		}
@@ -301,8 +302,11 @@ form.errors {
 			margin-top: 20px;
 			td {
 				padding: 0 10px;
+				font-weight: normal;
+				width: 50%;
 				&:first-child {
 					font-weight: bold;
+					text-align: right;
 
 					
 				}
@@ -383,7 +387,7 @@ body.ReactModal__Body--open #app {
 		outline: none !important;
 	}
 	min-height: 400px;
-	width: 600px;
+	width: 800px;
 	h2 {
 		margin: 0;
 		border-bottom: 1px solid #ddd;

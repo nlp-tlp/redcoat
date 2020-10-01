@@ -223,15 +223,18 @@ WipProjectSchema.methods.deleteDocumentsAndMetadataAndSave = async function(next
 
 }
 
-WipProjectSchema.methods.deleteDictionaryAndMetadataAndSave = function(next) {
+WipProjectSchema.methods.deleteDictionaryAndMetadataAndSave = async function() {
+
   var t = this;
+  console.log(t, 'xx');
   delete t.automatic_tagging_dictionary;
   delete t.automatic_tagging_dictionary_metadata;
   t.automatic_tagging_dictionary = {};
   t.automatic_tagging_dictionary_metadata = {};
-  t.save(function(err, wipp) {
-    next(err, wipp);
-  })
+  t.automatic_tagging = false;
+  t = await t.save();
+  console.log(t, "< this is T");
+  return Promise.resolve(t);
 }
 
 
@@ -276,14 +279,15 @@ WipProjectSchema.methods.fileMetadataToArray = function() {
 }
 
 
+
 // Converts this wip_project's automatic tagging dictionary metadata to an array that can be displayed on a form in order.
 WipProjectSchema.methods.automaticTaggingDictionaryMetadataToArray = function() {
   arr = [];
   var stringy = JSON.parse(JSON.stringify(this.automatic_tagging_dictionary_metadata));
   for(var k in stringy) {  
-    arr.push({ [k]: stringy[k] });
+    arr.push([k, stringy[k] ]);
   }
-  return arr;
+  return arr.length > 0 ? arr : null;
 }
 
 
@@ -403,9 +407,9 @@ WipProjectSchema.methods.createAutomaticTaggingDictionaryFromString = function(s
   t.buildAndValidateAutomaticTaggingDictionary(d, t.category_hierarchy, function(err, automaticTaggingDictionary) {
     console.log(err, "eee")
     if(err != null) {
-      t.deleteDictionaryAndMetadataAndSave(function() {
+      //t.deleteDictionaryAndMetadataAndSave(function() {
         return done(err);
-      })
+      //})
       
     } else {
         return done(null, automaticTaggingDictionary);

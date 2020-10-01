@@ -7,6 +7,7 @@ import Error404Page from 'views/Errors/Error404Page';
 
 import NewProjectDetails from 'views/NewProjectView/NewProjectDetails';
 import NewProjectEntityHierarchy from 'views/NewProjectView/NewProjectEntityHierarchy';
+import NewProjectAutomaticTagging from 'views/NewProjectView/NewProjectAutomaticTagging';
 
 import NewProjectFormHelpIcon from 'views/NewProjectView/NewProjectFormHelpIcon';
 
@@ -17,29 +18,6 @@ import {json2slash} from 'views/NewProjectView/functions/hierarchy_helpers'
 Modal.setAppElement('body');
 
 
-
-class NewProjectAutomaticTagging extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-
-    var help = (<div>
-        <h2>Automatic Tagging</h2>
-        <p>Redcoat can automatically annotate terms according to a dictionary, helping to save annotation time. These annotations can be adjusted by your annotators when necessary.</p>
-      </div>
-    )
-
-
-    return (
-      <div>
-        <h2>Automatic Tagging <NewProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(help)} /></h2>
-        <p>Redcoat can automatically annotate terms according to a dictionary, helping to save annotation time. These annotations can be adjusted by your annotators when necessary.</p>
-      </div>
-    )
-  }
-}
 
 
 class NewProjectAnnotators extends Component {
@@ -136,6 +114,7 @@ class NewProjectView extends Component {
         errorPaths: getErrorPathsSet(this.state.formErrors),
         data: this.state.data,
         markModified: this.markModified.bind(this),
+        updateFormPageData: this.updateFormPageData.bind(this),
 
 
       }
@@ -149,7 +128,6 @@ class NewProjectView extends Component {
           component: () => <NewProjectDetails
             //data={this.formPages[PROJECT_DETAILS].data}
             //uploadFormHasError={this.formPages[PROJECT_DETAILS].uploadFormHasError}
-            updateFormPageData={this.updateFormPageData.bind(this, "Project details & data")}
             { ... sharedProps() } />       
         },
         {
@@ -159,7 +137,6 @@ class NewProjectView extends Component {
           component: () => <NewProjectEntityHierarchy
             //entity_hierarchy={this.formPages[ENTITY_HIERARCHY].data ? this.formPages[1].data.children : []}  
             hierarchyPresets={["Named Entity Recognition (NER)", "Fine-grained Entity Recognition (FIGER)", "Maintenance"]}
-            updateFormPageData={this.updateFormPageData.bind(this, "Entity hierarchy")}
             { ... sharedProps() }/>
         },
 
@@ -242,7 +219,7 @@ class NewProjectView extends Component {
   }
 
   // Save the state of the given form page.
-  async updateFormPageData(page, data, options) {
+  async updateFormPageData(data, options) {
     //var formPages = this.formPages;
     //console.log(page, data);
 
@@ -264,6 +241,8 @@ class NewProjectView extends Component {
       //formPages: formPages,
       wasModified: true,
       isSaved: false,
+    }, () => {
+      console.log(this.state.data);
     });
   }
 
@@ -370,6 +349,36 @@ class NewProjectView extends Component {
         data = { entity_hierarchy: json2slash({children: data.entity_hierarchy}), hierarchy_preset: data.hierarchy_preset };
       }
       var response = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=' + formPath, 'POST', this.props.setErrorCode, data);
+    } else if(this.state.currentFormPageIndex === AUTOMATIC_TAGGING) {
+      // Then upload the dataset
+
+      if(data.dataset) {
+        var formData = new FormData();
+        formData.append('file', data.dataset);
+
+        var response = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=automatic_tagging', 'POST', this.props.setErrorCode, formData, true);
+
+
+        if(response.errors) {
+          return this.renderWithErrors(response.errors);
+        } else {
+          return this.setState({
+            data: {...this.state.data, file_metadata: response.details },
+            formErrors: null,
+            isSaved: true,
+            saving: false,
+          }, () => {
+            console.log(this.state.data, "X)");
+          });
+        }
+
+
+
+      } else {
+        var response = await _fetch('http://localhost:3000/api/projects/new/submit?formPage=automatic_tagging', 'POST', this.props.setErrorCode, { clear_automatic_tagging: true });
+      }
+      
+
     }
 
 
@@ -428,6 +437,7 @@ class NewProjectView extends Component {
       currentFormPageIndex: prevIndex,      
       loading: true,
       isSaved: false,
+      formErrors: null,
     });
     this.queryAPI();
 
