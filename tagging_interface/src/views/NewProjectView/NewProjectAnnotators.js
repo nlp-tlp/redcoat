@@ -180,6 +180,10 @@ class NewProjectAnnotators extends Component {
     var help = (<div>
         <h2>Annotators</h2>
         <p>Please specify the annotators of this project.</p>
+        <p>You can search for annotators by username via the left-side window. Click "add" to add them to this project. An invitation to join your project will be sent to them once the project is created.</p>
+        <p>You can also enter an email address into the search bar. If no account with the email address exists, you can still them as an annotator - Redcoat will send them an invitation to register and join your project once your project has been created.</p>
+        <p>If no search term has been entered, Redcoat will suggest annotators for you based on your recent projects.</p>
+        <p>You can remove annotators using the trash icon in the right-side window. At present you cannot remove yourself from the annotation task.</p>
       </div>
     )
 

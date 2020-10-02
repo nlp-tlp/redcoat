@@ -79,7 +79,7 @@ class NewProjectDetails extends Component {
         
         <ul>
           <li><b>Raw data</b>: The dataset must be saved as a .txt file. Each token within your data must be separated by a space, and each document must be on a new line.</li>
-          <li><b>Already labelled data</b>: The dataset must be saved as a .json file, in the same format as Redcoat annotation files.</li>
+          <li>(Coming soon): <b>Already labelled data</b>: The dataset must be saved as a .json file, in the same format as Redcoat annotation files.</li>
         </ul>
         
       </div>

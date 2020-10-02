@@ -650,9 +650,9 @@ module.exports = {
 
     category_hierarchy_permissions: {
       type: String,
-      enum: ["full_permission", "create_edit_only", "no_modification"],
+      enum: ["not_defined", "full_permission", "create_edit_only", "no_modification"],
       required: true,
-      default: "no_modification"
+      //default: "not_defined",
     },
 
 		user_ids: {

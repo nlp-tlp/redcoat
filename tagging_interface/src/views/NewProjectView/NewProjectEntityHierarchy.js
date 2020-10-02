@@ -175,7 +175,7 @@ class NewProjectEntityHierarchy extends Component {
     var help = (<div>
         <h2>Entity Hierarchy</h2>
         <p>Please define your entity hierarchy.</p>
-        <p>You may create new categories by entering them in the form below. To specify a parent category, place a space before the child category. The categories are visualised in the Category Hierarchy, which you may also use to create your hierarchy if you prefer. You may also select from a list of presets, such as the standard 4-class Named Entity Recognition model.</p>
+        <p>You may create new categories by entering them in the form below. You may also select from a list of presets, such as the standard 4-class Named Entity Recognition model.</p>
       </div>
     )
 

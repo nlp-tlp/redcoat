@@ -340,6 +340,18 @@ module.exports.getFormPage = async function(req, res) {
       }
       break;
     }
+    case 'project_options': {
+      //wip.category_hierarchy_permissions = undefined;
+      //var hierarchy_permissions
+      response = {
+        data: {
+          hierarchy_permissions: wip.category_hierarchy_permissions || "",
+          overlap: wip.overlap,
+          num_users: wip.user_emails.length,
+        }
+      }
+
+    }
   }
   
   response.latest_form_page = formPage;
