@@ -774,6 +774,13 @@ section.form-section {
 	}
 }
 
+
+@keyframes animatedBackground {
+	from { background-position: 0 0; }
+	to { background-position: 1000% 0; }
+}
+
+
 .annotate-button {
 	margin-right: 60px;
 	margin-top: -15px;
@@ -822,6 +829,19 @@ section.form-section {
 		&:hover {
 			background: rgba(0, 0, 0, 0.25);
 		}
+	}
+	&.gold-stripey-button {
+		background: rgb(255, 174, 0);
+		background-image: url($base_url + 'images/stripes-black-trans-50.png');
+		animation: animatedBackground 300s linear infinite !important;
+		text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+		&:hover {
+			background: lighten(rgb(255, 174, 0), 10);
+			background-image: url($base_url + 'images/stripes-black-trans-50.png');
+			
+		}
+	
+
 	}
 	&.disabled {
 		opacity: 0.35;
@@ -993,3 +1013,31 @@ section.form-section {
 
 
 
+.delete-hover {
+	background: lighten($primary-red, 30) !important;
+	span.inner-container {
+		background: none;
+	}
+	
+}
+
+span.delete-button-container {
+	width: 40px;
+	display: flex;
+	align-items: center;
+	opacity: 0.2;
+	span.delete-button {
+		cursor: pointer;
+		border-radius: 4px;
+		padding: 0 8px;
+
+		&:hover {
+			background: $primary-red;
+			
+			color: white;
+		}
+		&:active {
+			transform: translate(0, 1px);
+		}
+	}
+}

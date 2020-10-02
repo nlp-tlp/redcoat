@@ -101,8 +101,8 @@ var UserSchema = new Schema({
 
   
   
-  recent_projects: {
-    type: [RecentProject],
+  recent_projects: { // Stores ids of recent projects that the user has viewed
+    type: [String],
     index: false
   },
 
@@ -222,29 +222,54 @@ UserSchema.methods.getRecentProjects = function(done) {
 
 // Add a project to this user's "recent_projects" array.
 // If it is already there, update the date.
-UserSchema.methods.addProjectToRecentProjects = function(proj, done) {
+UserSchema.methods.addProjectToRecentProjects = async function(proj) {
   t = this;
   //console.log(t, proj);
 
-  User.update(
-    { _id: t._id, "recent_projects.project_id": proj._id },
-    { $set: 
-      { "recent_projects.$.date": Date.now() }
-    }, function(err) {
-      console.log(err);
+  var recent_projects = t.recent_projects;
+  for(var i in recent_projects) {
+    var p_id = recent_projects[i];
+    if(p_id === proj._id) {
+      
+      recent_projects.splice(i, 1);
+      break;
     }
-  )
+    
+  }
 
-  User.update(
-    { _id: t._id, "recent_projects.project_id": { "$ne": proj._id } },
-    { $push:
-      { recent_projects:
-        { project_id: proj._id, project_name: proj.project_name }
-      }
-    }, function(err) {      
-    console.log(err)
-    done(err);
-  });
+  recent_projects.push(proj._id);
+
+  // If greater than 20 projects, remove the first one (i.e. the least recent);
+  if(recent_projects.length > 20) {
+    recent_projects.splice(0, 1);
+  }
+
+  t.recent_projects = recent_projects;
+  await t.save();
+
+  console.log(t.recent_projects);
+
+
+  // await User.update(
+  //   { _id: t._id, "recent_projects.project_id": proj._id },
+  //   { $set: 
+  //     { "recent_projects.$.date": Date.now() }
+  //   }
+  // )
+
+  // try {
+  //   await User.update(
+  //   { _id: t._id, "recent_projects.project_id": { "$ne": proj._id } },
+  //   { $push:
+  //     { recent_projects:
+  //       { project_id: proj._id, project_name: proj.project_name }
+  //     }
+  //   }
+  //   )
+  // } catch(err) {
+  //   console.log(err);
+  // }
+  return Promise.resolve();
 }
 
 

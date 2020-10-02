@@ -29,13 +29,7 @@
 
 #category-hierarchy-tree.table-form ul li {
 	
-	&.delete-hover {
-		background: lighten($primary-red, 30) !important;
-		span.inner-container {
-			background: none;
-		}
-		
-	}
+
 
 	&:hover span.inner-container .delete-button-container {
 		opacity: 1;
@@ -59,27 +53,7 @@
 		span.right {
 			width: 70%;
 		}
-		span.delete-button-container {
-
-			width: 40px;
-			display: flex;
-			align-items: center;
-			opacity: 0.2;
-			span.delete-button {
-				cursor: pointer;
-				border-radius: 4px;
-				padding: 0 8px;
-
-				&:hover {
-					background: $primary-red;
-					
-					color: white;
-				}
-				&:active {
-					transform: translate(0, 1px);
-				}
-			}
-		}
+		
 	}
 	span.open-button {
 		margin-top: 9px;

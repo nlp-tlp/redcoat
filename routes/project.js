@@ -80,7 +80,7 @@ router.post('/invitations/:id/decline', isLoggedIn, projectController.declineInv
 
 router.get('/new/get' , isLoggedIn, newProjectController.getFormPage);
 
-router.get('/new/searchUsers' , isLoggedIn, newProjectController.searchUsers);
+router.get('/new/searchUsers', isLoggedIn, newProjectController.searchUsers);
 
 router.post('/new/submit', isLoggedIn, newProjectController.submitFormPage);
 //router.get('/new/clear' , newProjectController.clearFormPage);

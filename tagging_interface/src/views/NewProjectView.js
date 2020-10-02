@@ -9,6 +9,7 @@ import NewProjectDetails from 'views/NewProjectView/NewProjectDetails';
 import NewProjectEntityHierarchy from 'views/NewProjectView/NewProjectEntityHierarchy';
 import NewProjectAutomaticTagging from 'views/NewProjectView/NewProjectAutomaticTagging';
 import NewProjectAnnotators from 'views/NewProjectView/NewProjectAnnotators';
+import NewProjectProjectOptions from 'views/NewProjectView/NewProjectProjectOptions';
 
 import NewProjectFormHelpIcon from 'views/NewProjectView/NewProjectFormHelpIcon';
 
@@ -75,33 +76,7 @@ class FormLoadingSkeleton extends Component {
 }
 
 
-class NewProjectProjectOptions extends Component {
-  constructor(props) {
-    super(props);
-  }
 
-  render() {
-    var help = (<div>
-        <h2>Project Options</h2>
-        <p>Please specify the options of this project.
-          <ul>
-            <li><b>Overlap</b>: The number of times each document will be annotated.</li>
-            <li><b>Hierarchy permissions</b>: Whether your users can modify the hierarchy during annotation.</li>
-          </ul>
-
-        </p>
-      </div>
-    )
-
-
-    return (
-      <div>
-        <h2>Project Options <NewProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(help)} /></h2>
-        <p></p>
-      </div>
-    )
-  }
-}
 
 
 
@@ -432,6 +407,9 @@ class NewProjectView extends Component {
       }
       
 
+    } else if(this.state.currentFormPageIndex === ANNOTATORS) {
+      console.log(data);
+      var response = await _fetch(post_url + 'annotators', 'POST', this.props.setErrorCode, data);
     }
 
 
@@ -570,6 +548,7 @@ class NewProjectView extends Component {
       currentFormPageIndex: formPageIndex,
       loading: true,
       isSaved: false,
+      formErrors: null,
       verifyFormPageChange: false,
     });
     this.queryAPI();
@@ -718,10 +697,10 @@ class NewProjectView extends Component {
             <button type="button" onClick={() => this.verifyFormPageChange((this.state.currentFormPageIndex - 1))} className={"annotate-button new-project-button grey-button" + (this.state.currentFormPageIndex === 0 ? " disabled" : "")}><i className="fa fa-chevron-left"></i>Back</button>
             
 
-            { lastPage && <button onClick={() => this.submitFormPage()} className="annotate-button new-project-button">Create project</button> }
+           
 
 
-            { !lastPage && 
+           
             <div className="buttons-right">
 
               <button type={this.state.isSaved ? "button": "submit"} 
@@ -735,9 +714,9 @@ class NewProjectView extends Component {
                         {this.state.saving ? "Saving" : "Save" + (this.state.isSaved ? 'd' : '')}
               </button>
 
-              <button type="button" onClick={() => this.verifyFormPageChange(this.state.currentFormPageIndex + 1)}  className={"annotate-button new-project-button " + (this.state.isSaved ? "" : "disabled")}>Next<i className="fa fa-chevron-right after"></i></button>
+              <button type="button" onClick={() => this.verifyFormPageChange(this.state.currentFormPageIndex + 1)}  className={"annotate-button new-project-button " + (this.state.isSaved ? "" : "disabled") + (lastPage ? " gold-stripey-button" : "")}>{lastPage ? "Create Project" : "Next"}{!lastPage && <i className="fa fa-chevron-right after"></i>}</button>
 
-              </div> }
+              </div> 
           </div>
         </div>
        
@@ -745,7 +724,7 @@ class NewProjectView extends Component {
     )
   }
 }
-
+//  { lastPage && <button onClick={() => this.submitFormPage()} className="annotate-button new-project-button">Create project</button> }
 export default NewProjectView;
 
 /*

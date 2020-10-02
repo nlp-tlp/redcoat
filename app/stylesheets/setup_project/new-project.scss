@@ -1,7 +1,7 @@
 header.new-project-header {
 	background: #d3d3d3;
 
-
+	user-select: none;
 	color: #222;
 	div.flex-container {
 		display: flex;
@@ -459,7 +459,7 @@ body.ReactModal__Body--open #app {
 
 .new-project, .new-project-header {
 	i.fa-check {
-	color: darken($primary-green, 10);
+		color: darken($primary-green, 10);
 	}
 	i.fa-times {
 		color: darken($primary-red, 20);
@@ -558,6 +558,9 @@ table.annotators-table {
 		}
 
 		.annotator {
+			&:hover .delete-button-container {
+				opacity: 1;
+			}
 
 			display: flex;
 			align-items: center;
@@ -590,12 +593,26 @@ table.annotators-table {
 			
 		}
 	}
-	button {
+	.annotate-button {
+		font-size: 13px;
 		margin-right: 0;
 		padding: 13px 10px;
 		min-width: 120px;
 		margin-top: 0;
 		margin-left: 10px;
+		&.user-added {
+			pointer-events: none;
+			background: rgba(0, 0, 0, 0);
+			box-shadow: none;
+			opacity: 0.8;			
+			color: #888;
+			//color: darken($primary-green, 5);
+			i {
+				//color: darken($primary-green, 5);
+				color: #888;
+
+			}
+		}
 	}
 	.input-row {
 		display: flex;
@@ -616,3 +633,188 @@ table.annotators-table {
 	
 	}	
 }	
+
+.loading-prevent-action {
+	opacity: 0.8;
+	pointer-events: none;
+}
+
+
+
+
+
+
+
+div.input-range-group {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid #ddd;
+	margin-top: 15px;
+	padding-bottom: 20px;
+	background: #f4f4f4;
+	.disabled-message {
+		display: none;
+		text-align: center;
+		color: #555;
+		width: 100%;
+		position: absolute;
+		.havent-started {
+			display: block;
+		}
+		.inapplicable {
+			display: none;
+		}
+	}
+	.inner {
+		width: 100%;
+	}
+	&.disabled {
+		.disabled-message {
+			display: block;
+
+		}
+		.inner {
+			opacity: 0.08;
+			filter: blur(2px);
+			pointer-events: none;
+			user-select: none;
+		}
+	}
+	&#final-submission-box:not(.disabled) {
+		border: 1px solid rgba(0, 0, 0, 0);
+	}
+
+}
+
+div.input-range-summary {
+	text-align: center;
+	margin-top: 10px;
+	p {
+		padding: 10px 0;
+		margin: 0;
+
+		color: #444;
+	}
+	p.small {
+
+		font-size: 0.8em;
+	}
+	p span:not(.plural) {
+		font-weight: bold;
+	}
+}
+div.input-range-container {
+	width: 100%;
+	padding: 0 30px;
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	> .left, > .right {
+		width: 5%;
+		text-align: center;
+		user-select: none;
+	}
+	> input[type=range] {
+		width: 90%;
+	}
+}
+
+input[type=range] {
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin: 18px 0;
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #ddd;
+}
+input[type=range]:focus {
+  outline: none;
+  border: 2px solid #ddd;
+}
+input[type=range]:active {
+  border: 2px solid $primary-orange;
+}
+
+
+// Webkit
+
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 8.4px;
+  cursor: pointer;
+  animate: 0.2s;
+  background: #f2f2f2;
+  // background: #3071a9;
+
+}
+input[type=range]::-webkit-slider-thumb {
+  height: 42px;
+  width: 24px;
+  background: lighten($primary-orange, 4);
+  border: 2px solid darken($primary-orange, 10);
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -17px;
+}
+input[type=range]:focus::-webkit-slider-runnable-track {
+  background: #eee;
+}
+
+
+// Firefox
+
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 8.4px;
+  cursor: pointer;
+  animate: 0.2s;
+  background: #f2f2f2;
+  // background: #3071a9;
+}
+input[type=range]::-moz-range-thumb {
+  border: 1px solid #000000;
+  height: 36px;
+  width: 16px;
+  background: lighten($primary-orange, 4);
+  border: 2px solid darken($primary-orange, 10);
+  cursor: pointer;
+}
+
+// IE
+
+input[type=range]::-ms-track {
+  width: 100%;
+  height: 8.4px;
+  cursor: pointer;
+  animate: 0.2s;
+  background: transparent;
+  border-color: transparent;
+  border-width: 16px 0;
+  color: transparent;
+}
+input[type=range]::-ms-fill-lower {
+  background: #2a6495;
+  border: 0.2px solid #010101;
+  border-radius: 2.6px;
+}
+input[type=range]::-ms-fill-upper {
+  background: #3071a9;
+  border: 0.2px solid #010101;
+  border-radius: 2.6px;
+}
+input[type=range]::-ms-thumb {
+  border: 1px solid #000000;
+  height: 36px;
+  width: 16px;
+  border-radius: 3px;
+  background: #ffffff;
+  cursor: pointer;
+}
+input[type=range]:focus::-ms-fill-lower {
+  background: #3071a9;
+}
+input[type=range]:focus::-ms-fill-upper {
+  background: #367ebd;
+}

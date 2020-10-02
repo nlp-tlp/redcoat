@@ -96,7 +96,11 @@ async function uploadDataset(req, res, wip, path, formPage, formPageProgress) {
           //console.log(err, automaticTaggingDictionary, "XXX")
           if(err) {
             console.log("ERROR,", err);
-            f.emit('error', {message: err});
+            wip.automatic_tagging = undefined;
+            wip.save(function() {
+              f.emit('error', {message: err});
+            })
+            
             return;
           }
 
@@ -311,8 +315,6 @@ module.exports.getFormPage = async function(req, res) {
     case 'annotators': {
 
       var user_emails = wip.user_emails;
-      user_emails.push('poopy@poop.com');
-      console.log('user emails:', user_emails);
       var users = [];
       for(var email of user_emails) {
         var u = await User.findOne({email: email}).select('username profile_icon email_address docgroups_annotated created_at').lean();
@@ -328,11 +330,12 @@ module.exports.getFormPage = async function(req, res) {
         
         users.push(u);
       }
-      console.log(users[1], 'zzz')
+      var suggestedUsers = await getSuggestedUsers(req.user);
 
       response = {
         data: {
           users: users,
+          suggested_users: suggestedUsers,
         }
       }
       break;
@@ -425,8 +428,20 @@ module.exports.submitFormPage = async function(req, res) {
 
       break;
     }
+    case 'annotators': {
+      var user_emails = [];
+      for(var user_obj of data.users) {    
+        var u = await User.findById({_id: mongoose.Types.ObjectId(user_obj._id)});    
+        user_emails.push(u.email);
+      }
+      wip.user_emails = user_emails;
+      await wip.save();
+      break;
+    }
 	}
   } catch(errors) {
+    logger.error(errors, "<<<<")
+    console.log(errors, "<<<<");
     wip.form_page_progress[formPage] = "error";
   	await wip.save();
     var formPageProgress = wip.getFormPageProgressArray();
@@ -446,25 +461,64 @@ module.exports.submitFormPage = async function(req, res) {
   res.send(response)
 }
 
+var select_fields = 'created_at username profile_icon docgroups_annotated';
+
+
+// Retrieve suggested users based on the user's recent projects.
+// Used on the Anntotions form page.
+async function getSuggestedUsers(user) {
+
+  var thisUser = await User.findById({_id: user._id}).lean();
+  //var users = await thisUser.getRelatedAnnotators();
+  var suggestedUsers = [];
+  var suggestedUserIds = new Set([user._id.toString()]);
+  console.log(thisUser.recent_projects, "<<");
+
+  var recentProjectIds = thisUser.recent_projects;
+  for(var p_id of recentProjectIds) {
+    var proj = await Project.findById(p_id);
+    var active_user_ids = proj.user_ids.active;
+    for(var u_id of active_user_ids) {
+      u_id = u_id.toString();
+      if(!suggestedUserIds.has(u_id)) {
+        var u = await User.findById({ _id: u_id }).select(select_fields).lean();
+        suggestedUserIds.add(u_id);
+        suggestedUsers.push(u)
+      }
+    }
+  }
+
+  for(var user of suggestedUsers) {
+    user.docgroups_annotated = user.docgroups_annotated.length;
+    user.is_registered = true;
+  }
+  //var response = {users: suggestedUsers};
+  //console.log(response);
+  return Promise.resolve(suggestedUsers)
+}
+
+
+
 
 // A function that is called when filling out the 'add new annotator' form when the user enters a search term.
 module.exports.searchUsers = async function(req, res) {
-
-  var select_fields = 'created_at username profile_icon email_address docgroups_annotated';
-
+  
   var response = {};
 
   var searchTerm = req.query.searchTerm;
   var isEmail = req.query.isEmail;
+  var users;
+
 
   if(!searchTerm || searchTerm.length === 0) {
-    res.send({users: []})
+    return res.send({users: []});        
   }
 
+
   if(isEmail === "true") {
-    var users = await User.find({email: searchTerm}).select(select_fields).lean();
+    users = await User.find({email: searchTerm}).select(select_fields).lean();
   } else {
-    var users = await User.find({username: { $regex: searchTerm, $options: "i" }}).select(select_fields).limit(20).lean();
+    users = await User.find({username: { $regex: searchTerm, $options: "i" }}).select(select_fields).limit(20).lean();
   }
   
 

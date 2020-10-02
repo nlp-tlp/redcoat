@@ -36,23 +36,48 @@ class NewProjectAnnotators extends Component {
       data: {
         users: [],
       },
+      loading: true,
+      showingSuggestions: false,
       userSearchResults: null,
+      userSuggestions: [],
       searchTerm: '',
     }
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     console.log('x', this.props.data);
-    this.setState({
+
+    await this.setState({
       data: this.props.data,
-      userSearchResults: null,
+    });
+    
+    // var recentUsers = await this.queryRecentUsers();
+
+    var suggestedUsers = this.props.data.suggested_users;
+    this.setState({
+      loading: false,
+      data: this.props.data,
+      userSuggestions: suggestedUsers,
+      userSearchResults: suggestedUsers.length > 0 ? suggestedUsers : null,
+      showingSuggestions: suggestedUsers.length > 0 ? true : false,
     });
   }
 
+  // async queryRecentUsers() {
+  //   var d = await _fetch('http://localhost:3000/api/projects/new/getSuggestedUsers', 'GET', this.props.setErrorCode, false, false, 200);
+  //   return Promise.resolve(d.users);
+  // }
+
   async queryAPI() {
+    await this.setState({
+      loading: true,
+    })
     if(this.state.searchTerm.length === 0) {
+      
       this.setState({
-        userSearchResults: null,
+        loading: false,
+        userSearchResults: this.state.userSuggestions.length > 0 ? this.state.userSuggestions : null,
+        showingSuggestions: this.state.userSuggestions.length > 0 ? true : false,
       })
       return;
     }
@@ -70,7 +95,9 @@ class NewProjectAnnotators extends Component {
       }];
     }
     this.setState({
+      loading: false,
       userSearchResults: result,
+      showingSuggestions: false,
     });
   }
 
@@ -94,6 +121,60 @@ class NewProjectAnnotators extends Component {
     }
   }
 
+  // Check whether the specified user has been added to this.state.data.users.
+  alreadyAddedUser(user) {
+    for(var u of this.state.data.users) {
+      if(user.username && u.username === user.username) {
+        return true;
+      }
+      if(user.email && u.email === user.email) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Remove the user at the specified index
+  removeUser(index) {
+    var users = [...this.state.data.users];
+    users.splice(index, 1);
+    this.setState({
+      data: {
+        ...this.state.data,
+        users: users,
+      }
+    }, () => this.props.updateFormPageData(this.state.data));
+  }
+
+  // Adds the user to this.state.data.users (i.e. puts them in the table on the right).
+  addUser(user) {
+    var users = [...this.state.data.users];
+    users.push(user);
+
+    this.setState({
+      data: {
+        ...this.state.data,
+        users: users,
+      }
+    }, () => this.props.updateFormPageData(this.state.data));
+
+    return null;
+
+
+  }
+
+
+  // Highlight the row at the specified index via the delete-hover class (makes it go red).
+  deleteHighlightRow(index) {
+    document.getElementById("annotator-num-" + index).classList.add('delete-hover');
+  }
+  // Remove the highlighting.
+  removeHighlightRow() {
+    var eles = document.getElementsByClassName("annotator");
+    for(var ele of eles) {
+      ele.classList.remove("delete-hover");
+    }
+  }
 
   render() {
     var help = (<div>
@@ -110,7 +191,7 @@ class NewProjectAnnotators extends Component {
 
 
     */
-    console.log(this.state.data.users, this.state.userSearchResults);
+    //console.log(this.state.data.users, this.state.userSearchResults, this.state.searchTerm.length);
 
     return (
       <div>
@@ -123,12 +204,12 @@ class NewProjectAnnotators extends Component {
         <div className="flex-columns flex-columns-2">
 
 
-          <div className="flex-column flex-column-33">
+          <div className={"flex-column flex-column-33" + (this.state.loading ? " loading-prevent-action" : "")}>
 
 
 
             <div className="annotators-box">
-              <div className="annotators-box-header">Add new annotator</div>
+              <div className="annotators-box-header">Annotator lookup</div>
               <div className="annotators-box-body">
                 <div className="input-row">
                   <input id="annotator-name"
@@ -144,7 +225,7 @@ class NewProjectAnnotators extends Component {
                 <div className="annotators-box-list search-results">
 
                     { this.state.userSearchResults === null && 
-                      <div className="not-searched-yet">Enter a search term above to search for annotators.</div>
+                      <div className="not-searched-yet">Enter a username or email address above to search for annotators.</div>
                     }
 
                     { (this.state.userSearchResults && this.state.userSearchResults.length === 0) &&
@@ -153,12 +234,23 @@ class NewProjectAnnotators extends Component {
 
                     { (this.state.userSearchResults && this.state.userSearchResults.length > 0) &&
                       <div className="search-results-found">
-                        <h4>Search results ({this.state.userSearchResults.length})</h4>
+
+                        { this.state.showingSuggestions
+                          ? <h4>Suggestions ({this.state.userSearchResults.length})</h4>
+                          : <h4>Search results ({this.state.userSearchResults.length})</h4>
+                        }
+
+
                         
                         { this.state.userSearchResults.map((user, index) => 
                           <div className="annotator search-result">
                               <UserDetails user={user}/>
-                              <button className="annotate-button" type="button">Add <i className="right fa fa-chevron-right"></i></button>
+                              {
+                                this.alreadyAddedUser(user)
+                                ? <div className="annotate-button user-added">Added<i className="right fa fa-check"></i></div>
+                                : <div className="annotate-button" onClick={this.addUser.bind(this, user)}>Add <i className="right fa fa-chevron-right"></i></div>
+                              }
+                              
                           </div>                
                         )}
                       
@@ -176,14 +268,22 @@ class NewProjectAnnotators extends Component {
 
           <div className="flex-column flex-column-66">
             <div className="annotators-box">
-              <div className="annotators-box-header">Annotators</div>
+              <div className="annotators-box-header">Annotators to invite</div>
               <div className="annotators-box-body">
 
                 <div className="annotators-box-list ">
 
                   { this.state.data.users.map((user, index) => 
-                      <div className="annotator">
+                      <div className="annotator" id={"annotator-num-" + index}>
                         <UserDetails user={user}/>
+                        { index > 0 && 
+                        <span className="delete-button-container"><span className="delete-button" 
+                              onClick={this.removeUser.bind(this, index)}
+                              onMouseEnter={() => this.deleteHighlightRow(index)} onMouseLeave={this.removeHighlightRow}
+
+
+                              ><i className="fa fa-trash"></i></span></span>
+                        }
                       </div>
                   )}
                 </div>

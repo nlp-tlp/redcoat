@@ -540,6 +540,10 @@ module.exports.getProjectDetails = async function(req, res) {
   var id = req.params.id;
 
   var proj = await Project.findOne({ _id: id});
+
+  var user = req.user;
+  await user.addProjectToRecentProjects(proj);
+
   var data = await proj.getDetails();
   var numDocsAnnotatedByUser = await proj.getDocumentsAnnotatedByUserCount(req.user);
   var userAnnotationsRequired = await proj.getDocumentsPerUser();
