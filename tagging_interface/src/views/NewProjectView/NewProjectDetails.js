@@ -96,6 +96,7 @@ class NewProjectDetails extends Component {
             <div className={"form-group" + (this.props.errorPaths.has("project_name") ? " error" : "") }>
               <label>Project name</label>
               <input required
+                     onKeyDown={(e)=> e.keyCode == 13 ? e.preventDefault(): ''}
                      maxLength={100}
                      placeholder="Project name"
                      value={this.state.data.project_name}

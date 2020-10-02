@@ -73,13 +73,16 @@ router.get('/:id/download_combined_annotations', verifyUserOwnsProject, projectC
 
 router.post('/:id/comments/submit', verifyUserInProject, projectController.submitComment);
 
-router.post('/invitations/:id/accept', projectController.acceptInvitation);
-router.post('/invitations/:id/decline', projectController.declineInvitation);
+router.post('/invitations/:id/accept', isLoggedIn, projectController.acceptInvitation);
+router.post('/invitations/:id/decline', isLoggedIn, projectController.declineInvitation);
 
 //router.get('/new', newProjectController.getWipProject);
 
-router.get('/new/get' , newProjectController.getFormPage);
-router.post('/new/submit', newProjectController.submitFormPage);
+router.get('/new/get' , isLoggedIn, newProjectController.getFormPage);
+
+router.get('/new/searchUsers' , isLoggedIn, newProjectController.searchUsers);
+
+router.post('/new/submit', isLoggedIn, newProjectController.submitFormPage);
 //router.get('/new/clear' , newProjectController.clearFormPage);
 
 

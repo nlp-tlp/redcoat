@@ -8,6 +8,7 @@ import Error404Page from 'views/Errors/Error404Page';
 import NewProjectDetails from 'views/NewProjectView/NewProjectDetails';
 import NewProjectEntityHierarchy from 'views/NewProjectView/NewProjectEntityHierarchy';
 import NewProjectAutomaticTagging from 'views/NewProjectView/NewProjectAutomaticTagging';
+import NewProjectAnnotators from 'views/NewProjectView/NewProjectAnnotators';
 
 import NewProjectFormHelpIcon from 'views/NewProjectView/NewProjectFormHelpIcon';
 
@@ -72,28 +73,6 @@ class FormLoadingSkeleton extends Component {
     )
   }
 }
- 
-class NewProjectAnnotators extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    var help = (<div>
-        <h2>Annotators</h2>
-        <p>Please specify the annotators of this project.</p>
-      </div>
-    )
-
-
-    return (
-      <div>
-        <h2>Annotators <NewProjectFormHelpIcon onClick={() => this.props.toggleFormHelp(help)} /></h2>
-        <p></p>
-      </div>
-    )
-  }
-}
 
 
 class NewProjectProjectOptions extends Component {
@@ -133,7 +112,7 @@ class NewProjectHeaderItem extends Component {
 
   render() {
     return (
-      <div className={"item " + (this.props.active ? "active": "") + (this.props.ready ? "" : " disabled")}>
+      <div onClick={this.props.gotoFormPage} className={"item " + (this.props.active ? "active": "") + (this.props.ready ? "" : " disabled")}>
         <div className="inner">{this.props.name}
         {this.props.pageProgress === "saved" && <i className="fa fa-check"></i>}
         {this.props.pageProgress === "error" && <i className="fa fa-times"></i>}
@@ -260,7 +239,8 @@ class NewProjectView extends Component {
 
       formHelpContent: null, // The content currently appearing in the modal. null if modal is not being displayed.
 
-      verifyBack: false, // Whether or not the confirmation window is showing (do you want to go back?)
+      verifyFormPageChange: false, // Whether or not the confirmation window is showing (do you want to go back?)
+      nextPageAfterVerification: 0, // The next page after verification complete
 
       userIsModifying: false, // Whether the user is making a modification (to disable the save button). Only used for the hierarchy
 
@@ -312,6 +292,8 @@ class NewProjectView extends Component {
         data: {...data, file_metadata: null},
         wasModified: true,
         isSaved: false,
+      }, () => {
+        console.log(this.state.data, "<data")
       });
       return;
     }
@@ -438,7 +420,7 @@ class NewProjectView extends Component {
     } else if(this.state.currentFormPageIndex === AUTOMATIC_TAGGING) {
       // Then upload the dataset
 
-      if(data.dataset) {
+      if(data.use_automatic_tagging === "yes") {
         var formData = new FormData();
         formData.append('file', data.dataset);
 
@@ -517,38 +499,46 @@ class NewProjectView extends Component {
     //console.log(d);
 
     var prevIndex = this.state.currentFormPageIndex - 1;
-    //this.props.history.push(this.formPages[prevIndex]);
-    await this.setState({
-      verifyBack: false,
-      currentFormPageIndex: prevIndex,      
-      loading: true,
-      isSaved: false,
-      formErrors: null,
-    });
-    this.queryAPI();
 
-    window.scrollTo({
-      top: 0,
-      left: 0,
-    });
+    this.gotoFormPage(prevIndex);
+    //this.props.history.push(this.formPages[prevIndex]);
+    // await this.setState({
+    //   verifyFormPageChange: false,
+    //   currentFormPageIndex: prevIndex,      
+    //   loading: true,
+    //   isSaved: false,
+    //   formErrors: null,
+    // });
+    // this.queryAPI();
+
+    // window.scrollTo({
+    //   top: 0,
+    //   left: 0,
+    // });
   
   }
 
   // Go to the next form page.
   async gotoNextFormPage() {
+
+
+
     if(this.state.currentFormPageIndex === (this.formPages.length - 1)) return;
     var nextIndex = this.state.currentFormPageIndex + 1;
-    await this.setState({
-      currentFormPageIndex: nextIndex,
-      loading: true,
-      isSaved: false,
-    });
-    this.queryAPI();
 
-    window.scrollTo({
-      top: 0,
-      left: 0,
-    });
+    this.gotoFormPage(nextIndex);
+
+    // await this.setState({
+    //   currentFormPageIndex: nextIndex,
+    //   loading: true,
+    //   isSaved: false,
+    // });
+    // this.queryAPI();
+
+    // window.scrollTo({
+    //   top: 0,
+    //   left: 0,
+    // });
   }
 
   // Close the modal, setting formHelpContent to null.
@@ -571,17 +561,41 @@ class NewProjectView extends Component {
   //   return this.formPages[i].saved ? this.prevStates[pageName] : null;
   // }
 
+  // Jump to the form page at the specified index (e.g. 0 = project details)
+  async gotoFormPage(formPageIndex) {
+
+
+    
+    await this.setState({
+      currentFormPageIndex: formPageIndex,
+      loading: true,
+      isSaved: false,
+      verifyFormPageChange: false,
+    });
+    this.queryAPI();
+    window.scrollTo({
+      top: 0,
+      left: 0,
+    });
+  
+
+    // this.setState({
+    //   verifyFormPageChange: true,
+    // });
+  }
+
   // Verify that the user wants to go back to the previous page.
-  verifyBack() {
+  verifyFormPageChange(nextIndex) {
 
     var wasModified = this.state.wasModified;
     var isSaved = this.state.isSaved;
     if(!wasModified || isSaved) {
-      this.gotoPrevFormPage();
+      this.gotoFormPage(nextIndex);
       return;
     }
     this.setState({
-      verifyBack: true,
+      verifyFormPageChange: true,     
+      nextPageAfterVerification: nextIndex, 
     });
   }
 
@@ -611,20 +625,25 @@ class NewProjectView extends Component {
       <form id="new-project-form" className={(this.state.formErrors ? "errors" : "") + (this.state.formErrorShake ? "shake" : "") + (this.state.saving ? " saving" : "") + (this.state.loading ? " loading" : "")} ref={this.ref} onSubmit={this.state.isSaved ? null : (e) => this.submitFormPage(e)}  >
 
         <Modal 
-           isOpen={this.state.formHelpContent || this.state.verifyBack ? true : false}
+           isOpen={this.state.formHelpContent || this.state.verifyFormPageChange ? true : false}
            contentLabel="Hello there"
            onRequestClose={this.handleCloseModal.bind(this)}
-           className={"modal" + (this.state.verifyBack ? " verify-back" : "")}
+           className={"modal" + (this.state.verifyFormPageChange ? " verify-back" : "")}
            overlayClassName="modal-overlay"
            app={this.ref}
+
         >
           {
-            this.state.verifyBack
+            this.state.verifyFormPageChange
             ? <div>
-                <p>You have unsaved changes. Are you sure you want to go back to the previous page?</p>
+                <p>You have unsaved changes. {
+                  this.state.nextPageAfterVerification === (this.state.currentFormPage - 1)
+                  ? "Are you sure you want to go back to the previous page?"
+                  : "Are you sure you want to jump to this page?" }
+                  </p>
                 <div className="verify-back-row">
-                  <button className="annotate-button grey-button" onClick={() => this.setState({ verifyBack: false })}>No</button>
-                  <button className="annotate-button grey-button" onClick={() => this.gotoPrevFormPage()}>Yes</button>
+                  <button className="annotate-button grey-button" onClick={() => this.setState({ verifyFormPageChange: false })}>No</button>
+                  <button className="annotate-button" onClick={() => this.gotoFormPage(this.state.nextPageAfterVerification)}>Yes</button>
                 </div>
               </div>
             : this.state.formHelpContent
@@ -642,6 +661,7 @@ class NewProjectView extends Component {
           <div className="container flex-container">
             { this.formPages.map((page, index) => 
               <NewProjectHeaderItem name={page.name}
+                gotoFormPage={this.verifyFormPageChange.bind(this, index)}
                 pathname={page.pathname}
                 key={index}
                 pageProgress={this.state.formPageProgress[index]}
@@ -695,7 +715,7 @@ class NewProjectView extends Component {
         </main> 
         <div className={"new-project-submit-row" + (this.state.userIsModifying ? " disabled" : "")}>
           <div className="container">
-            <button type="button" onClick={() => this.verifyBack()} className={"annotate-button new-project-button grey-button" + (this.state.currentFormPageIndex === 0 ? " disabled" : "")}><i className="fa fa-chevron-left"></i>Back</button>
+            <button type="button" onClick={() => this.verifyFormPageChange((this.state.currentFormPageIndex - 1))} className={"annotate-button new-project-button grey-button" + (this.state.currentFormPageIndex === 0 ? " disabled" : "")}><i className="fa fa-chevron-left"></i>Back</button>
             
 
             { lastPage && <button onClick={() => this.submitFormPage()} className="annotate-button new-project-button">Create project</button> }
@@ -715,7 +735,7 @@ class NewProjectView extends Component {
                         {this.state.saving ? "Saving" : "Save" + (this.state.isSaved ? 'd' : '')}
               </button>
 
-              <button type="button" onClick={() => this.gotoNextFormPage()}  className={"annotate-button new-project-button " + (this.state.isSaved ? "" : "disabled")}>Next<i className="fa fa-chevron-right after"></i></button>
+              <button type="button" onClick={() => this.verifyFormPageChange(this.state.currentFormPageIndex + 1)}  className={"annotate-button new-project-button " + (this.state.isSaved ? "" : "disabled")}>Next<i className="fa fa-chevron-right after"></i></button>
 
               </div> }
           </div>

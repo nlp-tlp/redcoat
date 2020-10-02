@@ -287,13 +287,13 @@ WipProjectSchema.methods.deleteDictionaryAndMetadataAndSave = async function() {
 
 
 // Validates that the user_id field is unique.
-WipProjectSchema.methods.verifyUserIdIsUnique = function(next) {
-  WipProject.findWipByUserId(this.user_id, function(err, wip_project) {
-    if(err) { return next(err); }
-    if(wip_project) { return next(new Error("Another user already owns this WIP Project.")) }
-    else { return next(); }
-  })
-}
+// WipProjectSchema.methods.verifyUserIdIsUnique = function(next) {
+//   WipProject.findWipByUserId(this.user_id, function(err, wip_project) {
+//     if(err) { return next(err); }
+//     if(wip_project) { return next(new Error("Another user already owns this WIP Project.")) }
+//     else { return next(); }
+//   })
+// }
 
 // Sets the metadata of this wip_project based on a nested js object.
 WipProjectSchema.methods.setFileMetadata = function(md) {
@@ -713,36 +713,42 @@ WipProjectSchema.pre('validate', function(next) {
 
 WipProjectSchema.pre('save', function(next) {
   var t = this;
-
+  console.log('isdjiasoidjasodisa')
   // 1. Validate admin exists
   var User = require('./user')
   t.verifyAssociatedExists(User, t.user_id, function(err, user) {
     if(err) { next(err); return }
+    console.log(t.isNew, "XXX")
 
-    if (t.isNew) t.author = user.username;   // Set author field if new project
+    
+    if (t.isNew) {
+      t.author = user.username;   // Set author field if new project
+      t.user_emails = [user.email];
+      console.log(t.user_emails, "<XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+    }
 
     // 2. Remove invalid and duplicate emails.
     t.removeInvalidAndDuplicateEmails(user.email, function() {
       
       // 3. Verify that no other WIP Project has the same user_id as this one (only one WIP Project per user), provided this is a new WIP Project.
-      if (t.isNew) {
-        t.verifyUserIdIsUnique(function(err) {
-          next(err);
-        })
-      } else {
+      // if (t.isNew) {
+      //   t.verifyUserIdIsUnique(function(err) {
+      //     next(err);
+      //   })
+      // } else {
 
-          // Ensure user_id hasn't been modified.
-          if (t.isModified('user_id')) {
-            next(new Error("user_id must remain the same as it was when the WIP Project was created."))
-          } else {
-            // If there were no errors in the category hierarchy, update the category metadata.
-            //if((t.errors && t.errors.category_hierarchy === undefined) || !t.errors) {
-            t.updateCategoryMetadata();
-            //}
-            next(err);            
-            
-          }
-      }
+        // Ensure user_id hasn't been modified.
+        // if (t.isModified('user_id')) {
+        //   next(new Error("user_id must remain the same as it was when the WIP Project was created."))
+        // } else {
+          // If there were no errors in the category hierarchy, update the category metadata.
+          //if((t.errors && t.errors.category_hierarchy === undefined) || !t.errors) {
+          t.updateCategoryMetadata();
+          //}
+          next(err);            
+          
+        // }
+      // }
     });
     
 

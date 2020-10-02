@@ -231,9 +231,21 @@ PROJECT_OPTIONS = 4;
 // If no form page is requested, retrieve the data from the latest form page that the user has submitted.
 module.exports.getFormPage = async function(req, res) {
   var wip = await WipProject.getUserWip(req.user);
+
+
+  if(!wip) {
+    // Create a new wip!
+    wip = new WipProject({ user_id: req.user._id });
+    wip = await wip.save();
+  }
+
+
   var formPage = req.query.formPage;
   console.log("Form page:", formPage, "<<");
   console.log(wip);
+
+  // var kill = await WipProject.findOne({_id: wip._id}).remove();
+  // console.log(kill, "XXX");
 
   // If the form page is not valid (i.e. appears in the below list), send an error.
   if(formPage && formPageOrder.indexOf(formPage) === -1) {
@@ -294,6 +306,36 @@ module.exports.getFormPage = async function(req, res) {
           file_metadata: metadataArray, 
         },
       }
+      break;
+    }
+    case 'annotators': {
+
+      var user_emails = wip.user_emails;
+      user_emails.push('poopy@poop.com');
+      console.log('user emails:', user_emails);
+      var users = [];
+      for(var email of user_emails) {
+        var u = await User.findOne({email: email}).select('username profile_icon email_address docgroups_annotated created_at').lean();
+        if(!u) {
+          u = {};
+          u.is_registered = false;
+          u.email = email;
+
+        } else {
+          u.is_registered = true;
+          u.docgroups_annotated = u.docgroups_annotated.length;
+        }
+        
+        users.push(u);
+      }
+      console.log(users[1], 'zzz')
+
+      response = {
+        data: {
+          users: users,
+        }
+      }
+      break;
     }
   }
   
@@ -370,7 +412,6 @@ module.exports.submitFormPage = async function(req, res) {
 		  break;
 	  }
     case 'automatic_tagging': {
-      console.log(data, "XXX");
 
       saved_wip = await wip.deleteDictionaryAndMetadataAndSave();
 
@@ -405,6 +446,37 @@ module.exports.submitFormPage = async function(req, res) {
   res.send(response)
 }
 
+
+// A function that is called when filling out the 'add new annotator' form when the user enters a search term.
+module.exports.searchUsers = async function(req, res) {
+
+  var select_fields = 'created_at username profile_icon email_address docgroups_annotated';
+
+  var response = {};
+
+  var searchTerm = req.query.searchTerm;
+  var isEmail = req.query.isEmail;
+
+  if(!searchTerm || searchTerm.length === 0) {
+    res.send({users: []})
+  }
+
+  if(isEmail === "true") {
+    var users = await User.find({email: searchTerm}).select(select_fields).lean();
+  } else {
+    var users = await User.find({username: { $regex: searchTerm, $options: "i" }}).select(select_fields).limit(20).lean();
+  }
+  
+
+  for(var user of users) {
+    user.docgroups_annotated = user.docgroups_annotated.length;
+    user.is_registered = true;
+  }
+
+  console.log('users:', users);
+  res.send({users: users});
+
+}
 
 // Retrieve the work in progress project for the current user.
 module.exports.getWipProject = async function(req, res) {

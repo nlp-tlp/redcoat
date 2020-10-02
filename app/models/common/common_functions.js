@@ -495,7 +495,7 @@ module.exports = {
       var emails_set = Array.from(new Set(this.user_emails));
       var valid_emails = [];
       for(var i = 0; i < emails_set.length; i++) {
-        if(emails_set[i] == user_email) continue;
+        //if(emails_set[i] == user_email) continue;
         if(validateEmailRegex(emails_set[i]) && emails_set[i].length <= 254) {
           if(i < USERS_PER_PROJECT_MAXCOUNT)
             valid_emails.push(emails_set[i]);

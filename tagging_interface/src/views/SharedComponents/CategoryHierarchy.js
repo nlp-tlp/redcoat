@@ -154,7 +154,7 @@ class Category extends Component {
 
         <span className={"category-name" + (hasHotkey ? " has-hotkey" :"") + (modifiable ? " modifiable" :"") + (this.props.hotkeyChain === hotkeyStr ? " hotkey-active" : "")}
               data-hotkey-id={hotkeyStr} onClick={this.props.applyTag ? () => this.props.applyTag(this.props.item.full_name) : null}>
-            { modifiable ? <input required className={this.state.name.length === 0 ? "empty" : (this.props.errorEntityNames && this.props.errorEntityNames.has(item.full_name) ? " error" : "")}
+            { modifiable ? <input required onKeyDown={(e)=> e.keyCode == 13 ? e.preventDefault(): ''} className={this.state.name.length === 0 ? "empty" : (this.props.errorEntityNames && this.props.errorEntityNames.has(item.full_name) ? " error" : "")}
                 placeholder="(no name)" ref={this.nameInputRef} maxLength={50}
                 value={this.state.name} onChange={(e) => this.itemNameChange(e, path)} /> : item.name}
         </span>
@@ -162,7 +162,7 @@ class Category extends Component {
         </span>
         <span className="right">
         { <span className={"description" + (modifiable ? " modifiable" : "")}>
-          {modifiable ? <input maxLength={100} value={item.description || ""} onChange={(e) => this.props.itemDescChange(e, path)} placeholder="(no description)"/> : (item.description || "") }
+          {modifiable ? <input maxLength={100} onKeyDown={(e)=> e.keyCode == 13 ? e.preventDefault(): ''} value={item.description || ""} onChange={(e) => this.props.itemDescChange(e, path)} placeholder="(no description)"/> : (item.description || "") }
         </span>}
         </span>
         { modifiable && <span className="delete-button-container"><span className="delete-button" onClick={() => {this.setHovered(false); this.props.deleteItem(path)}} onMouseEnter={() => this.setHovered(true)} onMouseLeave={() => this.setHovered(false)}><i className="fa fa-trash"></i></span></span>}

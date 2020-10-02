@@ -662,6 +662,7 @@ blockquote {
 	.vertical-align-top {
 		align-self: start;
 	}
+
 	&.flex-columns-2 {
 		justify-content: top;
 		align-items: initial;
@@ -677,7 +678,16 @@ blockquote {
 			}
 
 		}
+		.flex-column-33 {
+			width: 33.333333%;
+			padding-right: 15px;
+		}
+		.flex-column-66 {
+			width: 66.666667%;
+			padding-left: 15px;
+		}
 	}
+
 }
 
 
@@ -785,6 +795,10 @@ section.form-section {
 	user-select: none;
 	i {
 		margin-right: 15px;
+		&.right {
+			margin-right: 0;
+			margin-left: 15px;
+		}
 	}
 	&:hover {
 		background: lighten($button-blue, 10);
