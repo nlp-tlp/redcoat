@@ -197,6 +197,8 @@ app.use(function(req, res, next) {
 
   if(req.user) console.log("loeegged in as user:", req.user.username);
 
+
+
   res.locals.base_url = BASE_URL;
   
   res.locals.user = req.user;
@@ -227,15 +229,14 @@ app.use(function(req, res, next) {
   // Can comment this out if you aren't developing the react app via localhost:4000.
   if (app.get('env') === 'development' && debugMode) {
 
-    User.findOne({username: "test"}, function(err, user) {
+    User.findOne({username: "test2"}, function(err, user) {
 
       
       req.login(user, function(err) {
 
-
         //const token = jwt.sign(user, 'your_jwt_secret');
         //console.log(token);
-        return proceed(req, res, next);
+        return next(null, req, res);
       });
 
     });
@@ -254,27 +255,24 @@ app.use(function(req, res, next) {
   //   })
   // }
 
-  function proceed(req, res, next) {
-    req.user.getProjectInvitations(function(err, invitations) {
-        res.locals.project_invitations = invitations;
-        //console.log("Invitations:", invitations)
+  // async function proceed(req, res, next) {
+  //   var invitations = await req.user.getProjectInvitations();
+  //   res.locals.project_invitations = invitations;
+  //   //console.log("Invitations:", invitations)
 
-        req.user.getRecentProjects(function(err, recent_projects) {
+  //   req.user.getRecentProjects(function(err, recent_projects) {
 
-          res.locals.recent_projects = recent_projects;
-          //console.log("Recent projects:", res.locals.recent_projects);
+  //     res.locals.recent_projects = recent_projects;
+  //       //console.log("Recent projects:", res.locals.recent_projects);
 
 
-          
-          next(null, req, res);
-
-        });
         
-      });
-  }
+  //     next(null, req, res);
+  //   });      
+  // }
 
   if(req.user) {
-    proceed(req, res, next);    
+    next(req, res, next);    
   } else {
     next(null, req, res);
   }
@@ -343,37 +341,37 @@ app.all('*', homepageController.index);
 
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('The requested URL (' + req.path + ') was not found.');
-  logger.error(err.message);
-  err.status = 404;
-  next(err);
-});
+// app.use(function(req, res, next) {
+//   var err = new Error('The requested URL (' + req.path + ') was not found.');
+//   logger.error(err.message);
+//   err.status = 404;
+//   next(err);
+// });
 
 
 // error handlers
 
 // development error handler
 // will print stacktrace
-if (app.get('env') === 'development') {
-  app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    res.render('error', {
-      message: err.message,
-      error: err
-    });
-  });
-}
+// if (app.get('env') === 'development') {
+//   app.use(function(err, req, res, next) {
+//     res.status(err.status || 500);
+//     res.render('error', {
+//       message: err.message,
+//       error: err
+//     });
+//   });
+// }
 
 // production error handler
 // no stacktraces leaked to user
-app.use(function(err, req, res, next) {
-  res.status(err.status || 500);
-  res.render('error', {
-    message: err.message,
-    error: {}
-  });
-});
+// app.use(function(err, req, res, next) {
+//   res.status(err.status || 500);
+//   res.render('error', {
+//     message: err.message,
+//     error: {}
+//   });
+// });
 
 // var patterns = '*.jade *.css *.less *.styl *.scss *.sass *.png *.jpeg *.jpg *.gif *.webp *.svg';
  

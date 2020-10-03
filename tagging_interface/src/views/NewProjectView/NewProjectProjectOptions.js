@@ -12,30 +12,39 @@ class NewProjectProjectOptions extends Component {
     }
   }
 
+
   componentDidMount() {
     this.setState({
       data: this.props.data,
     })
-    //this.props.updateFormPageData(this.state.data);
   }
 
-  changeOverlap(e) {
+  async changeOverlap(e) {
     var value = e.target.value;
-    this.setState({
+    await this.setState({
       data: {...this.state.data, overlap: value}
     })
+    this.props.updateFormPageData(this.state.data);
+  }
+
+  async setPermissions(e) {
+    var value = e.target.value;
+    await this.setState({
+      data: {...this.state.data, hierarchy_permissions: value}
+    })
+    this.props.updateFormPageData(this.state.data);
   }
 
   render() {
     var help = (<div>
         <h2>Project Options</h2>
-        <p>Please specify the options of this project.
-          <ul>
-            <li><b>Hierarchy permissions</b>: If allowed, your annotators will be able to add categories as they appear, or delete ones that aren not relevant. This option is useful if you aren't sure whether your category hierarchy covers every possible category in your dataset. </li>
-            <li><b>Overlap</b>: The number of times each document will be annotated. More overlap can result in a more robust set of results, but requires longer annotation time. You can mark your project as "complete" at any time.</li>            
-          </ul>
+        <p>Please specify the options of this project.</p>
+        <ul>
+          <li><b>Hierarchy permissions</b>: If allowed, your annotators will be able to add categories as they appear, or delete ones that aren not relevant. This option is useful if you aren't sure whether your category hierarchy covers every possible category in your dataset. </li>
+          <li><b>Overlap</b>: The number of times each document will be annotated. More overlap can result in a more robust set of results, but requires longer annotation time. You can mark your project as "complete" at any time.</li>            
+        </ul>
 
-        </p>
+        
       </div>
     )
 
@@ -48,7 +57,7 @@ class NewProjectProjectOptions extends Component {
 
         <div className="form-group">
           <label>To what extent should annotators be able to modify the category hierarchy?</label>
-          <select value={this.state.data.hierarchy_permissions} required>
+          <select value={this.state.data.hierarchy_permissions} required onChange={(e) => this.setPermissions(e)}>
             <option disabled hidden value="">Click to select</option>
             <option value="no_modification">No modifications allowed.</option>
             <option value="create_edit_only">Annotators can create new categories.</option>
@@ -58,7 +67,14 @@ class NewProjectProjectOptions extends Component {
         <div className="form-group" style={{'margin-top': '40px'}}>
 
           <label>How many times should a document be annotated before annotation is considered complete?</label>
-          <div className="input-range-group">
+          <div className={"input-range-group" + (num_users === 1 ? " disabled" : "")}>
+            { num_users === 1 && 
+              <div className="disabled-message">
+                <span className="inapplicable">
+                  This option is inapplicable because you are the only annotator.
+                </span>
+              </div>
+            }
             <div className="inner">
               <div className="input-range-summary">
                 <p><span className="num">{overlap}</span> annotation{overlap > 1 ? "s" : ""}/document<br/></p>

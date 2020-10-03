@@ -195,11 +195,11 @@ UserSchema.methods.getRecentProjects = function(done) {
        }
     },
     { $unwind: "$recent_projects" },
-    {
-      $sort: {
-        "recent_projects.date": -1
-      }
-    },
+    // {
+    //   $sort: {
+    //     "recent_projects.date": -1
+    //   }
+    // },
     {
       $replaceRoot: { newRoot: "$recent_projects"}
     },
@@ -274,11 +274,11 @@ UserSchema.methods.addProjectToRecentProjects = async function(proj) {
 
 
 // Get all project invitations of the user.
-UserSchema.methods.getProjectInvitations = function(done) {
+UserSchema.methods.getProjectInvitations = async function() {
 
   var ProjectInvitation = require('./project_invitation');
   var t = this;
-  ProjectInvitation.aggregate([
+  invitations = await ProjectInvitation.aggregate([
     { $match: { user_email: t.email }},
     { $lookup: {
         from: "projects",
@@ -305,11 +305,8 @@ UserSchema.methods.getProjectInvitations = function(done) {
         inviting_user_username: "$inviting_user.username",
       }
     }    
-  ], function(err, invitations) {
-    //invitations['project_name'] = invitations['project_name'][0]
-    //invitations['inviting_user_username'] = invitations['inviting_user_username'][0];
-    done(err, invitations);
-  });
+  ]);
+  return Promise.resolve(invitations);
 }
 
 // Todo: Get all projects this user is the admin of.

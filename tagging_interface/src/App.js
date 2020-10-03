@@ -281,6 +281,44 @@ class App extends Component {
 
   }
 
+  async acceptInvitation(index) {
+    console.log('accept')
+    var invitations = this.state.user.project_invitations;
+
+    invitations[index].pending = true;
+    await this.setState({
+      invitations: invitations,
+    });
+    
+    var invitation_id = invitations[index]._id;
+    var d = await _fetch('http://localhost:3000/api/projects/invitations/' + invitation_id + '/accept', 'POST', this.setErrorCode, {}, null, 555);
+
+    invitations[index].accepted = true;
+    invitations[index].pending = false;
+    this.setState({
+      invitations: invitations,
+    });
+  }
+
+  async declineInvitation(index) {
+    console.log('decline')
+    var invitations = this.state.user.project_invitations;
+
+    invitations[index].pending = true;
+    await this.setState({
+      invitations: invitations,
+    });
+    
+    var invitation_id = invitations[index]._id;
+    var d = await _fetch('http://localhost:3000/api/projects/invitations/' + invitation_id + '/decline', 'POST', this.setErrorCode, {}, null, 555);
+
+    invitations[index].declined = true;
+    invitations[index].pending = false;
+    this.setState({
+      invitations: invitations,
+    });
+  }
+
   // When mounted, determine the logged in user.
   componentWillMount() {
     this.getUserData();      
@@ -305,7 +343,7 @@ class App extends Component {
           {!this.state.loading && 
 
             <div className="fade-in">
-              <Navbar user={this.state.user} loading={this.state.loading} />  
+              <Navbar user={this.state.user} loading={this.state.loading} acceptInvitation={this.acceptInvitation.bind(this)} declineInvitation={this.declineInvitation.bind(this)} />  
 
               {!this.state.errorCode && <Switch>
               <PrivateRoute user={this.state.user} path="/projects/:id/tagging" render={(p) => 

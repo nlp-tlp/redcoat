@@ -137,7 +137,12 @@ async function uploadDataset(req, res, wip, path, formPage, formPageProgress) {
           
         console.log(errors, "<<");
 
-        wip.form_page_progress[formPage] = "error";
+        if(formPage === "dataset") {
+          wip.form_page_progress['project_details'] = "error";
+        } else {
+          wip.form_page_progress[formPage] = "error";
+        }
+        
         await wip.save();
         formPageProgress = wip.getFormPageProgressArray();
 
@@ -193,6 +198,10 @@ async function clearFormPage(wip, formPage) {
       wip.automatic_tagging = null;
       
       break;
+    }
+    case 'project_options': {
+      wip.category_hierarchy_permissions = undefined;
+      wip.overlap = 1;
     }
   }
   await wip.save();
@@ -420,7 +429,7 @@ module.exports.submitFormPage = async function(req, res) {
       }
       
 
-      console.log(data, "<<<<<<<<", formPageProgress[AUTOMATIC_TAGGING])
+      //console.log(data, "<<<<<<<<", formPageProgress[AUTOMATIC_TAGGING])
       saved_wip = await wip.updateCategoryHierarchy(data.entity_hierarchy, data.hierarchy_preset);
       //console.log("saved wip", saved_wip)
 	  	//console.log('entity')
@@ -429,6 +438,8 @@ module.exports.submitFormPage = async function(req, res) {
     case 'automatic_tagging': {
 
       saved_wip = await wip.deleteDictionaryAndMetadataAndSave();
+
+      
 
       if(!data.clear_automatic_tagging) {
         // Input should be a file
@@ -441,6 +452,12 @@ module.exports.submitFormPage = async function(req, res) {
       break;
     }
     case 'annotators': {
+
+      if(formPageProgress[PROJECT_OPTIONS] === "saved") {
+        wip = await clearFormPage(wip, 'project_options');
+        wip.form_page_progress['project_options'] = "requires_attention";
+      }
+
       var user_emails = [];
       for(var user_obj of data.users) {    
         var u = await User.findById({_id: mongoose.Types.ObjectId(user_obj._id)});    
@@ -448,6 +465,15 @@ module.exports.submitFormPage = async function(req, res) {
       }
       wip.user_emails = user_emails;
       await wip.save();
+      break;
+    }
+    case 'project_options': {
+      var hierarchy_permissions = data.hierarchy_permissions;
+      var overlap = data.overlap;
+      wip.category_hierarchy_permissions = hierarchy_permissions;
+      wip.overlap = overlap;
+      await wip.save();
+
       break;
     }
 	}
@@ -473,8 +499,41 @@ module.exports.submitFormPage = async function(req, res) {
   res.send(response)
 }
 
-var select_fields = 'created_at username profile_icon docgroups_annotated';
+// Final submission of form (i.e. the Create Project button).
+module.exports.submitFormPageFinal = async function(req, res) {  
+  var wip = await WipProject.getUserWip(req.user);
 
+  //return res.send({errors: [{message: "Something bad happened"}]})
+  try {
+
+    var result = await wip.convertToProject();
+  } catch(err) {
+    return res.send({errors: [err]});
+  }
+  
+  var project = result.project;
+  var failed_invitations = result.failed_invitations;
+
+  // TODO: Have a secondary 'err' just related to invitation errors, as they are sent out AFTER the project is created.
+  // if(err) {
+  //   console.log(err);
+  //   res.render("temp-render-form", {err: err });
+  //   return;
+  // } else if(failed_invitations.length > 0) { // Invitation err occurs when the invitations weren't sent out.
+  //   var invitations_err = "The following invitations failed to send: <br/>" + failed_invitations.join("<br/>");
+  //   invitations_err += "<br/>This is most likely due to our email service running out of available quota. Please consider contacting these annotators to let them know your project is ready for annotation."
+  //   res.render("temp-render-form", {err: invitations_err });
+  //   return;
+  // } {
+  //   res.redirect(BASE_URL + 'projects#' + project._id);
+  // }
+
+  res.send({success: true, failed_invitations: failed_invitations, project_id: project._id})
+
+}
+
+
+var select_fields = 'created_at username profile_icon docgroups_annotated';
 
 // Retrieve suggested users based on the user's recent projects.
 // Used on the Anntotions form page.

@@ -6,7 +6,6 @@
 }
 
 nav#navbar {
-
 	position: fixed;
 	top: 0px;
 	width: 100%;
@@ -212,10 +211,10 @@ nav .dropdown-menu.invitations {
 					font-weight: bold;
 					color: black;
 				}
-				span.invite-form-accepted, span.invite-form-declined {
-					display: none;
+				div.invite-form-accepted, div.invite-form-declined {
 					margin-top: 20px;
 					margin-bottom: 5px;
+					padding: 0px 0;
 					&.show {
 						display: block;
 					}
@@ -229,15 +228,15 @@ nav .dropdown-menu.invitations {
 						}
 					}
 				}
-				span.invite-form-loading {
-					display: none;
+				div.invite-form-loading {
 					margin-top: 20px;
 					margin-bottom: 5px;
+					padding: 0px 0;
 					&.show {
 						display: block;
 					}
 				}
-				form.invite-form {
+				div.invite-form {
 					&.hide {
 						display: none;
 					}

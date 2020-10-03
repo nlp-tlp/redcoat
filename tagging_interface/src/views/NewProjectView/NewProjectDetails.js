@@ -84,7 +84,7 @@ class NewProjectDetails extends Component {
         
       </div>
     )
-    console.log(this.state.data);
+    //console.log(this.state.data);
     return (
       <div>
 

@@ -10,6 +10,7 @@ var Project = require("./project")
 
 var Document = require("./document")
 //var FrequentTokens = require("./frequent_tokens")
+var User = require('app/models/user');
 
 
 var ProjectInvitation = require("./project_invitation")
@@ -554,148 +555,112 @@ WipProjectSchema.methods.getDocuments = function(done) {
 }
 
 // Convert this WipProject to a Project and delete the WipProject.
-WipProjectSchema.methods.convertToProject = function(done) {
+WipProjectSchema.methods.convertToProject = async function() {
   var t = this;
 
   logger.debug('hello');
 
-  // Initialise the new Project
-  var p = new Project();
+
 
   // Ensure WIP Project validates correctly before proceeding (the user will be prompted to fix their form if it's not valid)
-  t.validate(function(err) {
-    if(err) { return done(err); }
+  try {
+    await t.validate()
+  } catch(err) {
+    return Promise.reject(err);
+  }
 
-    // Determine the fields shared between WipProject and Project so that they may be copied from one to the other.
-    var WipProjectSchemaPaths = new Set();
-    var ProjectSchemaPaths    = new Set();
+  // Initialise the new Project
+  var p = new Project();
+  
+  // Determine the fields shared between WipProject and Project so that they may be copied from one to the other.
+  var WipProjectSchemaPaths = new Set();
+  var ProjectSchemaPaths    = new Set();
 
-    for(var k in WipProject.schema.paths) {
-      WipProjectSchemaPaths.add(k.split(".")[0]); // The split is done primarily for file_metadata, which doesn't work without it.
+  for(var k in WipProject.schema.paths) {
+    WipProjectSchemaPaths.add(k.split(".")[0]); // The split is done primarily for file_metadata, which doesn't work without it.
+  }
+
+  for(var k in Project.schema.paths) {
+    ProjectSchemaPaths.add(k.split(".")[0]);
+  }
+  var sharedFields = [... WipProjectSchemaPaths].filter(x => ProjectSchemaPaths.has(x)); // The set intersection.
+
+  p.user_id = t.user_id;
+  p.project_name = t.project_name;
+
+  // Copy all of the relevant fields over.
+  for(var i = 0; i < sharedFields.length; i++) {
+    var k = sharedFields[i];
+    p[k] = t[k];
+  }
+  
+
+  var documents = await Document.find({ project_id: t._id});
+
+  if(documents.length === 0) {
+    // This seems the most appropriate place for the error. It can't be done in pre-save because wip_project and project should be saveable without any doc groups.
+    return Promise.reject({message: "Please ensure the project has at least one document."});
+  } else if(documents.length > cf.DOCUMENT_GROUP_TOTAL_MAXCOUNT) {
+    return Promise.reject({message: "A project may only have up to " + cf.DOCUMENT_GROUP_TOTAL_MAXCOUNT + " documents."});
+  }
+
+  var user_emails = t.user_emails;
+  var inviting_user_id = t.user_id;
+
+  var user = await User.findById(t.user_id);
+  var inviting_user_name = user.username;
+  var inviting_user_email = user.email;
+  
+  // Save the new project
+  var project = await p.save()
+  
+  
+  
+
+  // Now that the project has been created, create and send out the ProjectInvitations.
+  console.log("Creating invitations");
+  // A recursive function that iterates over the wip_project's user_emails and calls ProjectInvitation's "createInvitation" method for each.
+  // failed_invitations is an array of invitation objects that failed to save.
+  // function createInvitations(user_emails, failed_invitations, next) {
+  //   if(user_emails.length == 0) return next(failed_invitations);
+  //   var u = user_emails.pop();
+  //   ProjectInvitation.createInvitation(project._id, u, inviting_user_id, project.project_name, inviting_user_name, function(invitations_err) {
+  //     if(invitations_err != null) {
+  //       failed_invitations.push(u);
+  //     }
+  //     //if(invitations_err) return next(invitations_err);
+  //     createInvitations(user_emails, failed_invitations, next);
+  //   });
+  // }
+
+  failed_invitations = [];
+  for(var u_e of user_emails) {
+    if(u_e === inviting_user_email) continue;
+    try {
+      await ProjectInvitation.createInvitation(project._id, u_e, inviting_user_id, project.project_name, inviting_user_name);
+    } catch(err) {
+      console.log(err ,'z');
+      failed_invitations.push(u_e);
     }
+  }
 
-    for(var k in Project.schema.paths) {
-      ProjectSchemaPaths.add(k.split(".")[0]);
-    }
-    var sharedFields = [... WipProjectSchemaPaths].filter(x => ProjectSchemaPaths.has(x)); // The set intersection.
+  var result = {
+    project: project,
+    failed_invitations: failed_invitations,
+  }      
 
-    p.user_id = t.user_id;
-    p.project_name = t.project_name;
-
-    // Copy all of the relevant fields over.
-    for(var i = 0; i < sharedFields.length; i++) {
-      var k = sharedFields[i];
-      p[k] = t[k];
-    }
-
-
+  if(failed_invitations.length === 0) {
+    console.log("Project creation successful, removing WIP Project.")
     
-    t.getDocuments(function(err, document_groups) {
+  } else {
+    console.log("Failed invitations:", failed_invitations);
+  }
 
-      if(err) { return done(err); }
+  await t.remove(); // Remove this WIP Project if everything was OK.
+  console.log("removed")
+  return Promise.resolve(result);
 
-      // var docgroupsToCreate = [];
-      // var removeIds = []; // A list of ids of wipdocumentgroups to be removed
-
-      // for(var i = 0; i < wip_document_groups.length; i++) {
-      //   var w = wip_document_groups[i];
-      //   docgroupsToCreate.push(new Document( { project_id : w.wip_project_id, documents: w.documents, _id: w._id } ));
-      //   removeIds.push(w._id);
-      // }
-
-      if(document_groups.length == 0) {
-        // This seems the most appropriate place for the error. It can't be done in pre-save because wip_project and project should be saveable without any doc groups.
-        return done(new Error("Please ensure the project has at least one document group."));
-      } else if(document_groups.length > cf.DOCUMENT_GROUP_TOTAL_MAXCOUNT) {
-        return done(new Error("A project may only have up to " + cf.DOCUMENT_GROUP_TOTAL_MAXCOUNT + " document groups."));
-      }
-
-      // var f = new FrequentTokens();
-
-      // var tokens = document_groups[0].documents[0];
-
-      // for(var i = 0; i < document_groups.length; i++) {
-      //   for(var j = 0; j < document_groups[i].documents.length; j++) {
-      //     for(var k = 0; k < document_groups[i].documents[j].length; k++) {
-      //       f.addToken(document_groups[i].documents[j][k].toLowerCase(), ["person", "org", "loc", "misc", null][Math.floor(Math.random() * 5)])
-      //     }
-      //   }
-      // }
-
-
-
-      // var tokens = [];
-      // for(var i = 0; i < (document_groups.length > 5 ? 5 : document_groups.length); i++) {
-      //   var nd = document_groups[i].documents[0].length;
-      //   for(var j = 0; j < nd; j++) {
-      //     if(document_groups[i].documents[0][j] == "Tibet") {
-      //       console.log("TIBET")
-      //     }
-
-      //     f.tokens[document_groups[i].documents[0][j]] = {category: null, frequency: 0, total: 0}
-   
-      //   }
-      // }
-
-      // Document.collection.insert(docgroupsToCreate, function(err, docgroups) {
-      // f.save(function(err, ft) {
-
-        // console.log(Object.keys(f.tokens).length, "tokens total.")
-
-        // var ff = FrequentTokens.aggregate( [{
-        //   $match: {
-        //    token: "Tibet",
-        //    category: true,
-        //   }
-        // }], function(ee, eee) {
-        //   console.log(">>>", ee, eee);
-        // })
-
-      //p.frequent_tokens = ft._id;
-      // Save the project
-
-      var user_emails = t.user_emails;
-      var inviting_user_id = t.user_id;
-      var User = require('app/models/user');
-      User.findById(t.user_id, function(err, user) {
-        var inviting_user_name = user.username;
-        console.log(inviting_user_name)
-        p.save(function(err, project) {
-          if(err) { return done(err) }
-          // Remove this WIP Project after completion. (also removes all associated wip document groups via cascade)
-          t.remove(function(err) {
-            if(err) { done(err); return; }
-
-            // Now that the project has been created, create and send out the ProjectInvitations.
-            console.log("Creating invitations");
-            // A recursive function that iterates over the wip_project's user_emails and calls ProjectInvitation's "createInvitation" method for each.
-            // failed_invitations is an array of invitation objects that failed to save.
-            function createInvitations(user_emails, failed_invitations, next) {
-              if(user_emails.length == 0) return next(failed_invitations);
-              var u = user_emails.pop();
-              ProjectInvitation.createInvitation(project._id, u, inviting_user_id, project.project_name, inviting_user_name, function(invitations_err) {
-                if(invitations_err != null) {
-                  failed_invitations.push(u);
-                }
-                //if(invitations_err) return next(invitations_err);
-                createInvitations(user_emails, failed_invitations, next);
-              });
-            }
-
-
-            createInvitations(user_emails, [], function(failed_invitations) {
-              console.log("Failed invites:", failed_invitations)
-              done(null, failed_invitations, project);
-            });        
-
-          });  
-        });
-
-      });
-    });
-
-  });
-  // });
+// });
 }
 
 
@@ -715,7 +680,6 @@ WipProjectSchema.pre('save', function(next) {
   var t = this;
   console.log('isdjiasoidjasodisa')
   // 1. Validate admin exists
-  var User = require('./user')
   t.verifyAssociatedExists(User, t.user_id, function(err, user) {
     if(err) { next(err); return }
     console.log(t.isNew, "XXX")

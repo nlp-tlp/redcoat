@@ -83,6 +83,8 @@ router.get('/new/get' , isLoggedIn, newProjectController.getFormPage);
 router.get('/new/searchUsers', isLoggedIn, newProjectController.searchUsers);
 
 router.post('/new/submit', isLoggedIn, newProjectController.submitFormPage);
+
+router.post('/new/submitFinal', isLoggedIn, newProjectController.submitFormPageFinal);
 //router.get('/new/clear' , newProjectController.clearFormPage);
 
 

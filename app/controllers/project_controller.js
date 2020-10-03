@@ -24,11 +24,9 @@ module.exports.getProjects = async function(req, res) {
   console.log('a')
   try {
     var data = await Project.getInvolvedProjectData(req.user);
-    console.log(data);
-    console.log('b')
+    //console.log(data);
     res.send(data);
   } catch(err) {
-    console.log('err');
     res.send(err);
     logger.error(err);
   }
@@ -626,32 +624,26 @@ module.exports.modifyHierarchy = function(req, res) {
 
 
 // POST: Accept an invitation.
-// TODO: Refactor using async await and connect it up to the interface again
-module.exports.acceptInvitation = function(req, res) {
+module.exports.acceptInvitation = async function(req, res) {
   var invitation_id = req.params.id;
-
-  // TODO: Verify user is same as user_email in ProjectInvitation object
-  ProjectInvitation.findById(invitation_id, function(err, invitation) {
-    if(err) { return res.send("error"); }
-    invitation.acceptInvitation(function(err) {
-      if(err) { return res.send("error"); }
-      res.send({success: true});
-    });    
-  });  
+  try {
+    var invitation = await ProjectInvitation.findById(invitation_id)
+    await invitation.acceptInvitation()
+  } catch(err) {
+    return res.send(500)
+  }
+  res.send({success: true});
 }
 
 // POST: Decline an invitation.
-// TODO: Refactor using async await and connect it up to the interface again
-module.exports.declineInvitation = function(req, res) {
+module.exports.declineInvitation = async function(req, res) {
   var invitation_id = req.params.id;
-  // TODO: Verify user is same as user_email in ProjectInvitation object
-  ProjectInvitation.findById(invitation_id, function(err, invitation) {
-    if(err) { return res.send("error"); }
-    invitation.declineInvitation(function(err) {
-      if(err) { return res.send("error"); }
-      res.send({success: true});
-    });    
-  });
+  try {
+    var invitation = await ProjectInvitation.findById(invitation_id)
+    await invitation.declineInvitation()
+  } catch(err) {
+    return res.send(500)
+  }
+  res.send({success: true});
 }
-
 

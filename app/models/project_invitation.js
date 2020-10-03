@@ -48,10 +48,13 @@ var ProjectInvitationSchema = new Schema({
 
 
 // Create a ProjectInvitation and send it to the user_email via a transactional email service.
-ProjectInvitationSchema.statics.createInvitation = function(project_id, user_email, inviting_user_id, project_name, inviting_user_name, next) {
+ProjectInvitationSchema.statics.createInvitation = async function(project_id, user_email, inviting_user_id, project_name, inviting_user_name) {
+
+
+
   var invitation = new ProjectInvitation({ project_id: project_id, inviting_user_id: inviting_user_id, user_email: user_email});
 
-  console.log(invitation, "<<<<<>>>>")
+  
 
   // var apiInstance = new SibApiV3Sdk.SMTPApi();
   // var templateId = 3; // Number | Id of the template
@@ -71,75 +74,57 @@ ProjectInvitationSchema.statics.createInvitation = function(project_id, user_ema
     },
   };
 
+  try {
+    var invitation = await invitation.save();  
+  } catch(err) {
+    console.log(err, 'XXX');
+  }
+  console.log(invitation, "<<<<<>>>>")
 
-  invitation.save(function(err, invitation) { 
-    if(err) return next(err);
-    console.log("saved invite:", err, invitation)
-    next(err, invitation);
+  try {
+    var result = await sgMail.send(msg)
+    console.log("Sent invite to:", user_email, " result:", result)
+    return Promise.resolve();
+  } catch(err) {
+    return Promise.reject(err);
+  }
+    // await apiInstance.sendTemplate(templateId, sendEmail).then(function(data) {
+    //   console.log('API called successfully. Returned data: ' + data);
+    // }, function(err) {
+    //   console.error(err);
+    //   next(err);
 
-    sgMail.send(msg, function(err, result) {
-	console.log(err)
-     if(err) return next(err);
-     next(err, invitation);
+    // });
 
-      apiInstance.sendTemplate(templateId, sendEmail).then(function(data) {
-        console.log('API called successfully. Returned data: ' + data);
-      }, function(err) {
-        console.error(err);
-        next(err);
-
-      });
-   });
-  }); 
 }
 
 
 
 // Accept the invitation and add this user to the project's user_ids.active field.
 // Delete the invitation afterwards.
-ProjectInvitationSchema.methods.acceptInvitation = function(next) {
+ProjectInvitationSchema.methods.acceptInvitation = async function(next) {
   var t = this;
-  User.findOne({ email: t.user_email }, function(err, user) {
-    if(err) return next(err);
-    Project.update(
-      { "_id": t.project_id },
-      { $addToSet: { "user_ids.active": user._id } },
-      function(err) {
-        console.log("<<", err)
-        if(err) return next(err);
-        //return next(err); //TODO: remove this so it works normally (after testing it)
-
-        t.remove(function(err) {
-          if(err) return next(err);
-          next();
-        })
-      }
-    );
-  });
+  var user = await User.findOne({ email: t.user_email });
+  var proj = await Project.update(
+    { "_id": t.project_id },
+    { $addToSet: { "user_ids.active": user._id } },    
+  );
+  await t.remove()
+  Promise.resolve();
 }
 
 
 // Accept the invitation and add this user to the project's user_ids.active field.
 // Delete the invitation afterwards.
-ProjectInvitationSchema.methods.declineInvitation = function(next) {
+ProjectInvitationSchema.methods.declineInvitation = async function(next) {
   var t = this;
-  User.findOne({ email: t.user_email }, function(err, user) {
-    if(err) return next(err);
-    Project.update(
-      { "_id": t.project_id },
-      { $addToSet: { "user_ids.declined": user._id } },
-      function(err) {
-        console.log("<<", err)
-        if(err) return next(err);
-        //return next(err); //TODO: remove this so it works normally (after testing it)
-
-        t.remove(function(err) {
-          if(err) return next(err);
-          next();
-        })
-      }
-    );
-  });
+  var user = await User.findOne({ email: t.user_email });
+  var proj = await Project.update(
+    { "_id": t.project_id },
+    { $addToSet: { "user_ids.declined": user._id } },    
+  );
+  await t.remove()
+  Promise.resolve();
 }
 
 

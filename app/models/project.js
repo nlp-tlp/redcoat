@@ -478,6 +478,8 @@ ProjectSchema.methods.getInvitationsTableData = async function(next) {
     //console.log("pending", pending_users)
   var all_users = project_users
   all_users[0].pending_invitations = pending_users
+
+  console.log(all_users, 'zzzzzzzzzzzzzzzzzz');
   //console.log(",,,,,,,,,,,,,,,,,,,", all_users[0])
   return Promise.resolve(all_users[0]);
 
@@ -1381,7 +1383,8 @@ ProjectSchema.methods.getAnnotationsChartData = async function(done) {
   
   if(results.length === 0) return Promise.resolve([]);
 
-  var annotationsChartData = new Array(parseInt(results[0]._id.times_annotated)).fill(0);
+  console.log(annotationsChartData, "Xxxxxxxxxxxxxxxxxxxxxxxxxx")
+  var annotationsChartData = new Array(parseInt(t.overlap + 1)).fill(0);
   for(var i in results) {
     var result = results[i];
     annotationsChartData[result._id.times_annotated] = result.count;

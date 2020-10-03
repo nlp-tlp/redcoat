@@ -14,14 +14,25 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 /* GET Actions */
 
 
-exports.userData = function(req, res, next) {
+exports.userData = async function(req, res, next) {
   if(req.user) console.log("logged in as user:", req.user.username);
-  res.send({
+  console.log('bingu')
+  var invitations = await req.user.getProjectInvitations();
+
+
+
+  var response = {
     user: req.user ? {
       username: req.user ? req.user.username : null,
       profile_icon: req.user ? req.user.profile_icon : null,
+      project_invitations: invitations,
     } : null
-  });
+  }
+  if(invitations.length > 0) {
+    console.log(invitations[0])
+  }
+  //console.log(response.user.project_invitations);
+  res.send(response);
 }
 
 

@@ -2,14 +2,42 @@ import React from "react";
 import { Link, Switch, Route, withRouter } from "react-router-dom";
 import {Component} from 'react';
 import logo from 'favicon.png'
+import $ from 'jquery';
 
 import ProfileIcon from './ProfileIcon';
 
 const BASE_URL = "/"
 
+//  $("#invitations-menu > *").click(function(e) {
+//    $invitationsButton.focus();
+//  });
+
 // The navbar, which appears at the top of the page.
 class Navbar extends Component {
+
+  constructor(props) {
+    super(props);
+  }
+
+
+  componentDidUpdate() {
+    // Make sure the invitations menu stays open when clicking a child of it
+    // Probably better to do this without jquery but oh well
+    $("#invitations-menu > *").prop('onclick', null).off('click');
+    $("#invitations-menu > *").click(function(e) {
+      $("#invitations-button").focus();
+    });
+  }
+
+ 
+
   render() {
+    var invitations = this.props.user.project_invitations;
+    var outstandingInvitationNum = 0;
+    for(var inv of invitations) {
+      if(!inv.accepted && !inv.declined) outstandingInvitationNum++;
+    }
+
 
     return (
       <nav id="navbar">
@@ -33,9 +61,68 @@ class Navbar extends Component {
         <div className="navbar-centre"></div>
         <div className="navbar-right">
 
+          { this.props.user && 
+
+            <div className={"dropdown-menu invitations" + (outstandingInvitationNum === 0 ? " inactive": "")} id="invitations-menu">
+              <button id="invitations-button"><i className="fa fa-envelope"></i>{outstandingInvitationNum > 0 && <span className="invites-count" id="invites-count">{outstandingInvitationNum}</span>}</button>
+
+              { invitations.length > 0 ? 
+
+                <ul className="dropdown-menu-items">
+                {invitations.map((invite, index) => 
+
+                  <li key={index}>
+                    <span className="invite">
+                      <span className="link">{invite.inviting_user_username}</span> has invited you to annotate <span className="link">{invite.project_name}</span>.
+
+                      { !invite.accepted && !invite.declined && !invite.pending &&
+                        <div className="invite-form">
+                          <button className="accept" onClick={() => this.props.acceptInvitation(index)}>Accept</button>
+                          <button className="decline" onClick={() => this.props.declineInvitation(index)}>Decline</button>
+                        </div>                        
+                      }
+                      {
+                        invite.pending && 
+                        <div className="invite-form-loading">
+                          <span><i className="fa fa-cog fa-spin"></i>&nbsp;Loading...</span>
+                        </div>
+                      }
+
+                      { invite.accepted && 
+
+                        <div className="invite-form-accepted">
+                          <span><i className="fa fa-check"></i>&nbsp;Invitation accepted! <Link to={"" + BASE_URL + "projects/" + invite.project_id + "/dashboard"}>(Go to project)</Link></span>
+                        </div>
+                      }
+                      { invite.declined && 
+                      <div className="invite-form-declined">
+                        <span><i className="fa fa-close"></i>&nbsp;Invitation declined.</span>
+                      </div>
+                      }
+                    </span>
+                  </li>
+                  
+
+                 )
+
+                }
+                </ul>
+
+                :
+                <ul className="dropdown-menu-items">
+                  <li><span className="invite">You have no active invitations.</span></li>
+                </ul>
+              }
+
+            </div>
+
+
+          }
 
 
           { this.props.user &&
+
+
 
             <div className="dropdown-menu">
               <button className="flex"><ProfileIcon user={this.props.user}/><span>Logged in as {this.props.user.username}</span></button>

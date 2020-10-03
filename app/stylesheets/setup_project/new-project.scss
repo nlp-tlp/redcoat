@@ -439,6 +439,13 @@ body.ReactModal__Body--open #app {
 
 		}
 	}
+	.creating-new-project {
+		text-align: center;
+		padding: 40px 40px;
+		i {
+			margin-right: 10px;
+		}
+	}
 
 }
 
@@ -659,12 +666,7 @@ div.input-range-group {
 		color: #555;
 		width: 100%;
 		position: absolute;
-		.havent-started {
-			display: block;
-		}
-		.inapplicable {
-			display: none;
-		}
+
 	}
 	.inner {
 		width: 100%;

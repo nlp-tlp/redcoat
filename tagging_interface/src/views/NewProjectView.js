@@ -217,6 +217,12 @@ class NewProjectView extends Component {
       verifyFormPageChange: false, // Whether or not the confirmation window is showing (do you want to go back?)
       nextPageAfterVerification: 0, // The next page after verification complete
 
+      verifySubmitNewProjectForm: false, // Whether the user is ready to submit the new project
+      creatingNewProject: false, // Whether the project is currently being created
+      creatingNewProjectErrors: null, // Any errors that appear when trying to create the new project
+      creatingNewProjectSuccess: false,
+      newlyCreatedProjectId: null, // Set when project is created
+
       userIsModifying: false, // Whether the user is making a modification (to disable the save button). Only used for the hierarchy
 
       formPageProgress: ["not_started", "not_started", "not_started", "not_started", "not_started"], // Store the progress of each form page
@@ -408,9 +414,11 @@ class NewProjectView extends Component {
       
 
     } else if(this.state.currentFormPageIndex === ANNOTATORS) {
-      console.log(data);
       var response = await _fetch(post_url + 'annotators', 'POST', this.props.setErrorCode, data);
+    } else if(this.state.currentFormPageIndex === PROJECT_OPTIONS) {
+      var response = await _fetch(post_url + 'project_options', 'POST', this.props.setErrorCode, data);
     }
+
 
 
 
@@ -521,6 +529,7 @@ class NewProjectView extends Component {
 
   // Close the modal, setting formHelpContent to null.
   handleCloseModal() {
+    if(this.state.creatingNewProject) return;
     this.setState({
       formHelpContent: null,
     })
@@ -578,6 +587,44 @@ class NewProjectView extends Component {
     });
   }
 
+  verifySubmitNewProjectForm() {
+    this.setState({
+      creatingNewProjectErrors: null,
+      verifySubmitNewProjectForm: true,
+    });
+  }
+
+  async submitNewProjectForm() {
+    console.log("SUBMITTING");
+
+    await this.setState({
+      creatingNewProject: true,
+
+    })
+
+    var response = await _fetch('http://localhost:3000/api/projects/new/submitFinal', 'POST', this.props.setErrorCode, {}, false, 1000);
+    if(response.errors) {
+
+      console.log(response);
+      this.setState({
+        creatingNewProjectErrors: response.errors,
+        //creatingNewProject: false,
+        //verifySubmitNewProjectForm: false,
+      })
+      return;
+    }
+
+
+
+    this.setState({
+      newlyCreatedProjectId: response.project_id,
+      creatingNewProjectSuccess: true,
+      creatingNewProjectErrors: null,
+      creatingNewProject: false,
+      verifySubmitNewProjectForm: false,
+    })
+  }
+
   // Shake the form when the save button is pressed. This applies the 'shake' class to the form, which will
   // shake any inputs marked as invalid in the front end. (i.e. inputs that are required but empty will shake).
   async shakeForm() {
@@ -593,21 +640,36 @@ class NewProjectView extends Component {
     return this.formPages[index].component();
   }
 
+  checkFormIsComplete() {
+    console.log(this.state.formPageProgress);
+    for(var fp of this.state.formPageProgress) {
+      if(fp !== "saved") {
+        return false;
+      }
+    }
+    return true;
+  }
+
   render() {
     //console.log(this.state.data);
 
+    var formIsComplete = this.checkFormIsComplete();
     var lastPage = this.state.currentFormPageIndex === (this.formPages.length - 1);
 
     if(this.state.currentFormPageIndex) var formPath = this.getFormPagePathname();
+
+    if(this.state.creatingNewProjectSuccess) {
+      return <Redirect to={"/projects/" + this.state.newlyCreatedProjectId + "/dashboard"}/>
+    }
 
     return (
       <form id="new-project-form" className={(this.state.formErrors ? "errors" : "") + (this.state.formErrorShake ? "shake" : "") + (this.state.saving ? " saving" : "") + (this.state.loading ? " loading" : "")} ref={this.ref} onSubmit={this.state.isSaved ? null : (e) => this.submitFormPage(e)}  >
 
         <Modal 
-           isOpen={this.state.formHelpContent || this.state.verifyFormPageChange ? true : false}
+           isOpen={this.state.formHelpContent || this.state.verifyFormPageChange || this.state.verifySubmitNewProjectForm ? true : false}
            contentLabel="Hello there"
            onRequestClose={this.handleCloseModal.bind(this)}
-           className={"modal" + (this.state.verifyFormPageChange ? " verify-back" : "")}
+           className={"modal" + (this.state.verifyFormPageChange || this.state.verifySubmitNewProjectForm ? " verify-back" : "")}
            overlayClassName="modal-overlay"
            app={this.ref}
 
@@ -625,7 +687,36 @@ class NewProjectView extends Component {
                   <button className="annotate-button" onClick={() => this.gotoFormPage(this.state.nextPageAfterVerification)}>Yes</button>
                 </div>
               </div>
-            : this.state.formHelpContent
+            : (this.state.verifySubmitNewProjectForm
+              ? ( this.state.creatingNewProject
+                ? 
+                  <div>
+                    { !this.state.creatingNewProjectErrors && <div className="creating-new-project"><i className="fa fa-cog fa-spin"></i>Creating new project...</div>}
+                    
+                    { this.state.creatingNewProjectErrors && 
+                      <div>
+                        <div className="form-notice form-errors">
+                          <i className="fa fa-times"></i>An unexpected error occured:
+                          <ul>
+                            {this.state.creatingNewProjectErrors.map((err, index) =>
+                              <li>{err.message || JSON.stringify(err)}</li>
+                            )}
+                          </ul>                          
+                        </div>                      
+                        <button className="annotate-button grey-button" onClick={() => this.setState({ creatingNewProjectErrors: null, creatingNewProject: false, verifySubmitNewProjectForm: false })}><i className="fa fa-chevron-left"></i>Back</button>
+                      </div>
+                    }
+                  </div>
+                : <div>
+                    <p>Are you ready to create the project?</p>
+                    <div className="verify-back-row">
+                      <button className="annotate-button grey-button" onClick={() => this.setState({ verifySubmitNewProjectForm: false })}>No</button>
+                      <button className="annotate-button gold-stripey-button" onClick={() => this.submitNewProjectForm()}>Create Project</button>
+                    </div> 
+                  </div>
+                )
+              : this.state.formHelpContent
+              )
           }
         </Modal>
 
@@ -714,8 +805,12 @@ class NewProjectView extends Component {
                         {this.state.saving ? "Saving" : "Save" + (this.state.isSaved ? 'd' : '')}
               </button>
 
-              <button type="button" onClick={() => this.verifyFormPageChange(this.state.currentFormPageIndex + 1)}  className={"annotate-button new-project-button " + (this.state.isSaved ? "" : "disabled") + (lastPage ? " gold-stripey-button" : "")}>{lastPage ? "Create Project" : "Next"}{!lastPage && <i className="fa fa-chevron-right after"></i>}</button>
+              {lastPage 
+                ? <button type="button" onClick={() => this.verifySubmitNewProjectForm()}  className={"annotate-button new-project-button gold-stripey-button " + ((this.state.isSaved && formIsComplete) ? "" : "disabled")}>Create Project</button>
+                :
+                 <button type="button" onClick={() => this.verifyFormPageChange(this.state.currentFormPageIndex + 1)}  className={"annotate-button new-project-button " + (this.state.isSaved ? "" : "disabled")}>Next<i className="fa fa-chevron-right after"></i></button>
 
+              }
               </div> 
           </div>
         </div>
