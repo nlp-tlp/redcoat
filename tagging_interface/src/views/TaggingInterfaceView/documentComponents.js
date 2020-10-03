@@ -143,7 +143,7 @@ class Sentence extends Component {
   // Scroll to this sentence if it receives a new selection.
   // https://stackoverflow.com/questions/442404/retrieve-the-position-x-y-of-an-html-element-relative-to-the-browser-window
   componentDidUpdate(prevProps, prevState) {
-    if(prevProps.selections.length === 0 && this.props.selections.length > 0) {
+    if((this.props.selections) && (prevProps.selections.length === 0 && this.props.selections.length > 0)) {
 
       var element = this.sentenceRef.current;
       var bodyRect = document.body.getBoundingClientRect(),

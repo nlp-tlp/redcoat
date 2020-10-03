@@ -5,8 +5,8 @@ import logo from 'favicon.png'
 import $ from 'jquery';
 
 import ProfileIcon from './ProfileIcon';
+import BASE_URL from 'globals/base_url';
 
-const BASE_URL = "/"
 
 //  $("#invitations-menu > *").click(function(e) {
 //    $invitationsButton.focus();
@@ -43,7 +43,7 @@ class Navbar extends Component {
       <nav id="navbar">
         <div className="navbar-left">
           <div id="logo">
-            <Link to="/">             
+            <Link to={BASE_URL}>             
               <img src={logo}/> <span className="text">Redcoat</span>         
             </Link>
           </div>

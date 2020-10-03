@@ -4,7 +4,7 @@ import {Component} from 'react';
 import $ from 'jquery';
 import { findDOMNode } from 'react-dom';
 import { Link } from 'react-router-dom'
-
+import BASE_URL from 'globals/base_url';
 //const ReactDragListView = require('react-drag-listview');
 
 import _ from 'underscore';
@@ -29,7 +29,6 @@ import Error403Page from 'views/Errors/Error403Page';
 import Error404Page from 'views/Errors/Error404Page';
 
 
-const BASE_URL = "/"
 
 // Config for all API fetch requests
 const fetchConfigGET = {
@@ -1708,7 +1707,7 @@ class TaggingInterfaceView extends Component {
 
               <div className="project-card">
                 <div>
-                  <div className={"project-name" + (!this.props.projectTitle ? " st" : "")} style={{'display': 'block'}}><Link to={"/projects/" + this.props.project_id + "/dashboard"}>{this.props.projectTitle ? this.props.projectTitle : "xxxxxxxx"}</Link></div>
+                  <div className={"project-name" + (!this.props.projectTitle ? " st" : "")} style={{'display': 'block'}}><Link to={BASE_URL + "projects/" + this.props.project_id + "/dashboard"}>{this.props.projectTitle ? this.props.projectTitle : "xxxxxxxx"}</Link></div>
                   <div className={"project-creator" + (!this.props.projectAuthor ? " st" : "")} style={{'display': 'block'}}>Created by <span className="creator-name">{this.props.projectAuthor ? this.props.projectAuthor : "xxxxxxxx"}</span></div>
                 </div>
               </div>

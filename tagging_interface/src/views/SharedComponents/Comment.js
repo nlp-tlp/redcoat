@@ -1,6 +1,6 @@
 import React from 'react';
 import {Component} from 'react';
-
+import BASE_URL from 'globals/base_url';
 import formatDate from 'functions/formatDate'
 import { Link } from 'react-router-dom'
 
@@ -22,7 +22,7 @@ class Comment extends Component {
           {!this.props.hideDocumentString && 
             <blockquote className="comment-document st">
               <span className="document-string">{this.props.document_string}</span>
-              <Link to={"/projects/" + this.props.project_id + "/annotations/curation?docId=" + this.props.document_id}><i class="fa fa-external-link"></i></Link>
+              <Link to={BASE_URL + "projects/" + this.props.project_id + "/annotations/curation?docId=" + this.props.document_id}><i class="fa fa-external-link"></i></Link>
             </blockquote>}
           <div className="comment-text st st-block">{this.props.text}</div>
           

@@ -4,6 +4,7 @@ import './stylesheets/stylesheet.scss';
 import {Component} from 'react';
 
 import { Redirect, Link, BrowserRouter, Route, Switch } from 'react-router-dom'
+import BASE_URL from 'globals/base_url';
 
 import getCookie from './functions/getCookie';
 
@@ -89,7 +90,7 @@ class ProjectListTemplate extends Component {
         <header className="bg-header">
             <div id="header-project-details" className="title">
               <h1>{this.props.pageTitle}</h1>
-              <div class="right"><Link className="button" to="/projects/new"><i class="fa fa-plus-circle"></i>New project</Link></div>
+              <div class="right"><Link className="button" to={BASE_URL + "projects/new"}><i class="fa fa-plus-circle"></i>New project</Link></div>
             </div>
           </header>
         <main className="container">

@@ -1,5 +1,6 @@
 import React from "react";
 import {Component} from "react";
+import BASE_URL from 'globals/base_url';
 
 import { Redirect, Link, BrowserRouter, Route, Switch, withRouter } from 'react-router-dom'
 import { TransitionGroup, CSSTransition } from "react-transition-group";
@@ -85,7 +86,7 @@ class HomeViewRegister extends Component {
               <input id="password_confirmation" type="password" name="password_confirmation" required="required" placeholder="Password confirmation"/>
             </div>
             <div class="buttons">
-              <div><Link class="back-button" to="/"><i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back</Link></div>
+              <div><Link class="back-button" to={BASE_URL}><i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back</Link></div>
               <div>
                 <input type="submit" value="Register"/>
               </div>
@@ -195,9 +196,9 @@ class HomeViewLogin extends Component {
             <div>
               <label>Password</label>
               <input type="password" name="password" required="required" placeholder="Password" value={this.state.password} onChange={this.handlePasswordChange.bind(this)} />
-            </div><Link class="forgot-password-link" to="/forgot_password">Forgot password?</Link>
+            </div><Link class="forgot-password-link" to={BASE_URL + "forgot_password"}>Forgot password?</Link>
             <div class="buttons">
-              <div><Link class="back-button" to="/"><i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back</Link></div>
+              <div><Link class="back-button" to={BASE_URL}><i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back</Link></div>
               <div>
                 <input type="submit" value="Login"/>
               </div>
@@ -229,7 +230,7 @@ class HomeViewForgotPassword extends Component {
               <input type="email" name="email" placeholder="Email" required="required" autoFocus="autofocus"/>
             </div>
             <div class="buttons">
-              <div><Link class="back-button" to="/login"><i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back</Link></div>
+              <div><Link class="back-button" to={BASE_URL + "login"}><i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back</Link></div>
               <div>
                 <input type="submit" value="Reset password"/>
               </div>
@@ -251,12 +252,12 @@ class HomeViewMain extends Component {
       <div className="HomeView-main">
         <h1 id="h1-welcome" data-content="Redcoat">Redcoat</h1>
         <h2 id="h2-byline" data-content="Collaborative Annotation Tool">Collaborative Annotation Tool</h2>
-        <div class="buttons"><Link to="/register">
+        <div class="buttons"><Link to={BASE_URL + "register"}>
             <div class="button" id="register-button">
               <h2>
                Register
               </h2>
-            </div></Link><Link to="/login">
+            </div></Link><Link to={BASE_URL + "login"}>
             <div class="button" id="login-button">
               <h2>
                 Login

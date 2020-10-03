@@ -195,7 +195,7 @@ app.use(function(req, res, next) {
 
   
 
-  if(req.user) console.log("loeegged in as user:", req.user.username);
+  if(req.user) console.log("logged in as user:", req.user.username);
 
 
 
@@ -229,7 +229,7 @@ app.use(function(req, res, next) {
   // Can comment this out if you aren't developing the react app via localhost:4000.
   if (app.get('env') === 'development' && debugMode) {
 
-    User.findOne({username: "test2"}, function(err, user) {
+    User.findOne({username: "test"}, function(err, user) {
 
       
       req.login(user, function(err) {

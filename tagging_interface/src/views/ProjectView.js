@@ -5,6 +5,7 @@ import { Redirect, Link, BrowserRouter, Route, Switch, withRouter } from 'react-
 import { TransitionGroup, CSSTransition } from "react-transition-group";
 import {Bar, Line, HorizontalBar } from 'react-chartjs-2';
 
+import BASE_URL from 'globals/base_url';
 import _fetch from 'functions/_fetch'
 
 import { defaults } from 'react-chartjs-2'
@@ -611,7 +612,7 @@ class ProjectDashboard extends Component {
           </div>
           </div>
 
-          <Link to={"/projects/" + this.props.project_id + "/tagging"} className="annotate-button"><i class="fa fa-pencil"></i>Annotate<div className="subtitle">{this.props.data.userDocsAnnotated}/{this.props.data.userAnnotationsRequired} complete</div></Link>
+          <Link to={BASE_URL + "projects/" + this.props.project_id + "/tagging"} className="annotate-button"><i class="fa fa-pencil"></i>Annotate<div className="subtitle">{this.props.data.userDocsAnnotated}/{this.props.data.userAnnotationsRequired} complete</div></Link>
 
         </div>
 
@@ -748,7 +749,7 @@ class ProjectViewSidenav extends Component {
       <nav id="project-view-sidenav">
         <div className="project-card">
           <div className="project-title-creator">
-            <div className={"project-name" + (!this.props.projectTitle ? " st" : "")} style={{'display': 'block'}}><Link to={"/projects/" + this.props.project_id + "/dashboard"}>{this.props.projectTitle ? this.props.projectTitle : "xxxxxxxx"}</Link></div>
+            <div className={"project-name" + (!this.props.projectTitle ? " st" : "")} style={{'display': 'block'}}><Link to={BASE_URL + "projects/" + this.props.project_id + "/dashboard"}>{this.props.projectTitle ? this.props.projectTitle : "xxxxxxxx"}</Link></div>
             <div className={"project-creator" + (!this.props.projectAuthor ? " st" : "")} style={{'display': 'block'}}>Created by <span className="creator-name">{this.props.projectAuthor ? this.props.projectAuthor : "xxxxxxxx"}</span></div>
           </div>
         </div>
@@ -789,7 +790,7 @@ class ProjectViewSidenavSubmenu extends Component {
     var open = this.props.view[0] === pathName;
     return (
       <li className={"submenu-header" + (this.props.view[0] === pathName ? " active" : "")}>
-        <Link to={"/projects/" + this.props.project_id + "/" + pathName +"/" + firstChildPathName} ><i className={"fa fa-" + this.props.icon}></i>{ this.props.name }</Link>
+        <Link to={BASE_URL + "projects/" + this.props.project_id + "/" + pathName +"/" + firstChildPathName} ><i className={"fa fa-" + this.props.icon}></i>{ this.props.name }</Link>
         <ul className={"submenu" + (open ? " open" : "")}>
         {this.props.menuItems.map((item, index) => <ProjectViewSidenavButton project_id={this.props.project_id} view={this.props.view} name={item.name} parentPath={pathName} icon={item.icon}/>)}
         </ul>
@@ -809,7 +810,7 @@ class ProjectViewSidenavButton extends Component {
     if(this.props.parentPath) pathName = this.props.parentPath + "/" + pathName;
     return (
       <li className={this.props.view.join('/') === pathName ? "active" : ""}>
-        <Link to={"/projects/" + this.props.project_id + "/" + pathName}>
+        <Link to={BASE_URL + "projects/" + this.props.project_id + "/" + pathName}>
         <i className={"fa fa-" + this.props.icon}></i>{ this.props.name }
         </Link>
 

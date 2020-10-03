@@ -1,9 +1,9 @@
 import React from 'react';
 import {Component} from 'react';
 import { Link } from 'react-router-dom'
+import BASE_URL from 'globals/base_url';
 import formatDate  from 'functions/formatDate';
 import { PieChart } from 'react-minimal-pie-chart';
-
 import _fetch from 'functions/_fetch';
 
 
@@ -156,7 +156,7 @@ class ProjectListView extends Component {
 
 
                 <div className="name-desc-row">
-                  <div className="project-name"><Link to={'/projects/' + project._id + '/dashboard'}>{ project.name}</Link></div>
+                  <div className="project-name"><Link to={BASE_URL + 'projects/' + project._id + '/dashboard'}>{ project.name}</Link></div>
                   {project.description && <div className="project-description">{ project.description }</div> }
                   <div className="project-creator">Created by <span className="creator-name">{ project.creator }</span></div>
                 </div>
