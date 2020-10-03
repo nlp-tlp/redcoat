@@ -68,12 +68,12 @@ class AnnotationsTable extends Component {
   }
 
   async downloadAnnotationsOfUser(user) {
-    var url = ("http://localhost:3000/api/projects/" + this.props.project_id + "/download_annotations/" + user._id);
+    var url = ("projects/" + this.props.project_id + "/download_annotations/" + user._id);
     await _fetch(url, 'GET', this.props.setErrorCode, null, false, 0, true, 'annotations-' + user.username + '.json');
   }
 
   async downloadCombinedAnnotations() {
-    var url = ("http://localhost:3000/api/projects/" + this.props.project_id + "/download_combined_annotations");
+    var url = ("projects/" + this.props.project_id + "/download_combined_annotations");
     await _fetch(url, 'GET', this.props.setErrorCode, null, false, 0, true, 'annotations-combined.json');
   }
 
@@ -957,7 +957,7 @@ class ProjectView extends Component {
     var t = this;
 
     try { 
-      var d = await _fetch('http://localhost:3000/api/projects/' + this.props.project_id, 'GET', this.props.setErrorCode, 555)
+      var d = await _fetch('projects/' + this.props.project_id, 'GET', this.props.setErrorCode, 555)
 
       if(d.dashboard.activityChartData) d.dashboard.activityChartData = setActivityChartStyles(d.dashboard.activityChartData);
       t.setState({

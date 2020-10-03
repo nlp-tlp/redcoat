@@ -1196,6 +1196,41 @@ class TaggingInterfaceView extends Component {
   // This function should be called when one of those keys is pressed.
   moveSelectionVertically(direction) {
     console.log("Moving", direction) // TODO: Make this move up and down
+
+    var selections = this.state.selections;
+
+    var newSelections = this.getEmptySelectionsArray();
+
+    var mostRecentSelectionText;
+
+    
+    // Move all selections in the specified direction (up or down)
+    for(var i = 0; i < selections.length; i++) {
+      for(var j = 0; j < selections[i].length; j++) {
+
+        var selection = selections[i][j];
+        var x;
+
+        if(direction === "up") {     
+          var x = -1;
+          if(i === 0) x = 0;
+
+        } else if (direction === "down") {          
+
+          var x = 1;
+          if(i === selections.length - 1) x = 0;
+        }
+        newSelections[i + x] = [{
+          wordStartIndex: 0,
+          wordEndIndex: 0
+        }]
+        mostRecentSelectionText = this.state.documents[i + x].slice(0, 1).join(' ');
+      }
+    }
+    this.setState({
+      selections: newSelections,
+      mostRecentSelectionText: mostRecentSelectionText
+    });
   }
 
   // Move the selection in the specified direction ('left', 'right').

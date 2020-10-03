@@ -40,6 +40,8 @@ async function wait(ms) {
 // Todo: fix the args... but to do that I'd have to change all calls of this :()
 async function _fetch(url, method, setErrorCode, postBody=null, fileUpload=false, delay=0, fileDownload=false, fileDownloadName=null) {
 
+  var api_url = "http://localhost:3000/api/";
+
   var fetchConf = {... fetchConfig[method] };
   if(method === "POST") {
     if(!postBody) throw new Error("Cannot POST without post body");
@@ -53,7 +55,7 @@ async function _fetch(url, method, setErrorCode, postBody=null, fileUpload=false
     }    
   }
 
-  var response = await fetch(url, fetchConf) // TODO: move localhost out
+  var response = await fetch(api_url + url, fetchConf) // TODO: move localhost out
   console.log(response,'<resp')
   if(response.status !== 200) {
     var errorCode = parseInt(response.status)

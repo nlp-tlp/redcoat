@@ -83,7 +83,7 @@ class Word extends Component {
       }
     }
 
-    console.log(output);
+    //console.log(output);
     return ReactHtmlParser(output);
   }
 
@@ -128,7 +128,7 @@ class Word extends Component {
 class Sentence extends Component {
   constructor(props) {
     super(props);
-
+    this.sentenceRef = React.createRef();
   }
 
   // Call the updateSelections function of the parent of this component (i.e. TaggingInterface), with this sentence's index included.
@@ -140,10 +140,23 @@ class Sentence extends Component {
     this.props.deleteTag(this.props.index, wordIndex, entityClass);
   }
 
+  // Scroll to this sentence if it receives a new selection.
+  // https://stackoverflow.com/questions/442404/retrieve-the-position-x-y-of-an-html-element-relative-to-the-browser-window
+  componentDidUpdate(prevProps, prevState) {
+    if(prevProps.selections.length === 0 && this.props.selections.length > 0) {
 
+      var element = this.sentenceRef.current;
+      var bodyRect = document.body.getBoundingClientRect(),
+          elemRect = element.getBoundingClientRect(),
+          offset   = elemRect.top - bodyRect.top;
 
-
-  
+       window.scrollTo({
+        top: offset - 200,
+        left: 0,
+        behavior: 'smooth',
+      });
+    }
+  }
 
   render() {
 
@@ -164,9 +177,10 @@ class Sentence extends Component {
     }
 
 
+
     if(this.props.displayOnly) {
       return (
-        <div className={"sentence-inner" + (this.props.displayOnly ? " display-only" : "")}>
+        <div className={"sentence-inner" + (this.props.displayOnly ? " display-only" : "")} ref={this.sentenceRef}>
           { this.props.words.map((word, i) => 
             <Word key={i}
                   index={i}
@@ -186,7 +200,7 @@ class Sentence extends Component {
 
 
     return (
-      <div className="sentence-inner">
+      <div className="sentence-inner" ref={this.sentenceRef}>
         { this.props.words.map((word, i) => 
           <Word key={i}
                 index={i}

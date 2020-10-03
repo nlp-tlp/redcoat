@@ -236,7 +236,7 @@ class App extends Component {
 
   async getUserData() {
 
-    var d = await _fetch('http://localhost:3000/api/users/userData', 'GET', this.setErrorCode.bind(this), 555)
+    var d = await _fetch('users/userData', 'GET', this.setErrorCode.bind(this), 555)
 
     await this.setState({
       user: d.user,
@@ -263,7 +263,7 @@ class App extends Component {
       //loggingOut: true,
     });
     
-    var d = await _fetch('http://localhost:3000/api/users/logout', 'GET', this.setErrorCode.bind(this));
+    var d = await _fetch('users/logout', 'GET', this.setErrorCode.bind(this));
 
     this.setState({
       user: null,
@@ -291,7 +291,7 @@ class App extends Component {
     });
     
     var invitation_id = invitations[index]._id;
-    var d = await _fetch('http://localhost:3000/api/projects/invitations/' + invitation_id + '/accept', 'POST', this.setErrorCode, {}, null, 555);
+    var d = await _fetch('projects/invitations/' + invitation_id + '/accept', 'POST', this.setErrorCode, {}, null, 555);
 
     invitations[index].accepted = true;
     invitations[index].pending = false;

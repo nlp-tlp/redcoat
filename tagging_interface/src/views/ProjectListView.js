@@ -80,7 +80,7 @@ class ProjectListView extends Component {
   async componentWillMount() {
     this.props.setProject(null, null); // Reset the current project in the sidenav
 
-    var d = await _fetch('http://localhost:3000/api/projects/', 'GET', this.props.setErrorCode, 1)
+    var d = await _fetch('projects/', 'GET', this.props.setErrorCode, 1)
 
     this.setState({
       data: d,

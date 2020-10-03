@@ -301,7 +301,7 @@ class NewProjectView extends Component {
       var formPage = '?formPage=' +this.getFormPagePathname();      
     }
     
-    var d = await _fetch('http://localhost:3000/api/projects/new/get' + formPage, 'GET', this.props.setErrorCode, false, false, firstLoad ? 0 : 555);
+    var d = await _fetch('projects/new/get' + formPage, 'GET', this.props.setErrorCode, false, false, firstLoad ? 0 : 555);
 
 
 
@@ -368,7 +368,7 @@ class NewProjectView extends Component {
     var formPath = this.getFormPagePathname();
     var data = this.state.data;
 
-    var post_url = 'http://localhost:3000/api/projects/new/submit?formPage='
+    var post_url = 'projects/new/submit?formPage='
 
     console.log("THIS STATE DATA IS ", data);
 
@@ -481,7 +481,7 @@ class NewProjectView extends Component {
     if(this.state.currentFormPageIndex === 0) return;
 
     // Reset form data
-    //var d = await _fetch('http://localhost:3000/api/projects/new/clear?formPage=' + this.getFormPagePathname(), 'GET', this.props.setErrorCode, false, false, 333);
+    //var d = await _fetch('projects/new/clear?formPage=' + this.getFormPagePathname(), 'GET', this.props.setErrorCode, false, false, 333);
     //console.log(d);
 
     var prevIndex = this.state.currentFormPageIndex - 1;
@@ -602,7 +602,7 @@ class NewProjectView extends Component {
 
     })
 
-    var response = await _fetch('http://localhost:3000/api/projects/new/submitFinal', 'POST', this.props.setErrorCode, {}, false, 1000);
+    var response = await _fetch('projects/new/submitFinal', 'POST', this.props.setErrorCode, {}, false, 1000);
     if(response.errors) {
 
       console.log(response);

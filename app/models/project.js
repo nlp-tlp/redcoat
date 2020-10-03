@@ -677,8 +677,12 @@ ProjectSchema.methods.getAnnotationsOfUserForProject = async function(user) {
 
   var annotationsJSON = [];
   for(var doc of docs) {
-    var aj = DocumentAnnotation.toMentionsJSON(doc.labels, doc.tokens);
+    var aj = {};
     aj.doc_idx = doc.document_index;
+    var x = DocumentAnnotation.toMentionsJSON(doc.labels, doc.tokens);
+    aj.tokens = x.tokens;
+    aj.mentions = x.mentions;
+    
     annotationsJSON.push(aj);
   }
 

@@ -1167,7 +1167,7 @@ body.taking-screenshot .save-to-png {
 	background: rgba(255, 255, 255, 0.7);
 	background-blend-mode: multiply;
 	background-image: url($base_url + 'images/stripes-black-trans-50.png');
-	animation: animatedBackground 20s linear infinite;
+	animation: animatedBackgroundA 20s linear infinite;
 	content: " ";
 }
 
@@ -1180,7 +1180,7 @@ body.taking-screenshot .save-to-png {
 
 
 
-@keyframes animatedBackground {
+@keyframes animatedBackgroundA {
 	from { background-position: 0 0; }
 	to { background-position: 200px 0; }
 }

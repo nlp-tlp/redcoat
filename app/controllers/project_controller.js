@@ -518,9 +518,12 @@ module.exports.downloadCombinedAnnotations = async function(req, res) {
     for(var l of ann.all_labels) {
       labels.push({labels: l})
     }
-    compiled_ann = Project.getCompiledAnnotation(ann.tokens, labels);
+    compiled_ann = {};
     compiled_ann.doc_idx = ann.document_index;
     compiled_ann.annotator_agreement = ann.annotator_agreement;
+    var x = Project.getCompiledAnnotation(ann.tokens, labels);  
+    compiled_ann.tokens = x.tokens;
+    compiled_ann.mentions = x.mentions;  
     compiled_anns.push(compiled_ann);
   }
 
