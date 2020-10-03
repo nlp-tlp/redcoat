@@ -110,7 +110,7 @@ class AnnotationsTable extends Component {
               <tr>
                 <td><div className="user-row"><ProfileIcon user={user}/>{user.username}</div></td>
                 <td>{user.num_annotations}</td>
-                <td><button className=" annotate-button" onClick={() => this.downloadAnnotationsOfUser(user)}><i className="fa fa-download"></i>Download</button></td>
+                <td><button className={"annotate-button" + (user.num_annotations === 0 ? " disabled" : "")} onClick={() => this.downloadAnnotationsOfUser(user)}><i className="fa fa-download"></i>Download</button></td>
               </tr>
 
             )}

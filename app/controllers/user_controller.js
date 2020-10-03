@@ -17,7 +17,8 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 exports.userData = async function(req, res, next) {
   if(req.user) console.log("logged in as user:", req.user.username);
   console.log('bingu')
-  var invitations = await req.user.getProjectInvitations();
+
+  if(req.user) var invitations = await req.user.getProjectInvitations();
 
 
 
@@ -28,9 +29,7 @@ exports.userData = async function(req, res, next) {
       project_invitations: invitations,
     } : null
   }
-  if(invitations.length > 0) {
-    console.log(invitations[0])
-  }
+
   //console.log(response.user.project_invitations);
   res.send(response);
 }
@@ -157,13 +156,17 @@ exports.login = async function(req, res, next) {
     }
 
 
-    req.logIn(user, function(err) {
-      console.log(user, "logged in!!!!!")
+    req.logIn(user, async function(err) {
+      //console.log(user, "logged in!!!!!")
+      var invitations = await user.getProjectInvitations();
+
+
       var response = {
-          username: user.username,
-          profile_icon: user.profile_icon
+        username: user.username,
+        profile_icon: user.profile_icon,
+        project_invitations: invitations,        
       }
-      console.log(response);
+
       return res.send(response);
       //return res.redirect(BASE_URL + 'projects');
     });     

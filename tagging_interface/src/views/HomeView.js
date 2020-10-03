@@ -249,7 +249,7 @@ class HomeViewMain extends Component {
 
   render() {
     return (
-      <div className="HomeView-main">
+      <div className="homepage-main">
         <h1 id="h1-welcome" data-content="Redcoat">Redcoat</h1>
         <h2 id="h2-byline" data-content="Collaborative Annotation Tool">Collaborative Annotation Tool</h2>
         <div class="buttons"><Link to={BASE_URL + "register"}>
@@ -290,7 +290,7 @@ class HomeView extends Component {
           timeout={{ enter: 400, exit:400 }}
           classNames="fade"
           >
-            <section className="route-section HomeView-route-section">
+            <section className="route-section homepage-route-section">
              <Switch location={location}>
                  
                 <Route path="/login"    render={() => <HomeViewLogin setUserData={this.props.setUserData}/> } />     

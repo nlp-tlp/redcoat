@@ -32,10 +32,13 @@ class Navbar extends Component {
  
 
   render() {
-    var invitations = this.props.user.project_invitations;
-    var outstandingInvitationNum = 0;
-    for(var inv of invitations) {
-      if(!inv.accepted && !inv.declined) outstandingInvitationNum++;
+    
+    if(this.props.user && this.props.user.project_invitations) {
+      var invitations = this.props.user.project_invitations;
+      var outstandingInvitationNum = 0;
+      for(var inv of invitations) {
+        if(!inv.accepted && !inv.declined) outstandingInvitationNum++;
+      }
     }
 
 
@@ -66,7 +69,7 @@ class Navbar extends Component {
             <div className={"dropdown-menu invitations" + (outstandingInvitationNum === 0 ? " inactive": "")} id="invitations-menu">
               <button id="invitations-button"><i className="fa fa-envelope"></i>{outstandingInvitationNum > 0 && <span className="invites-count" id="invites-count">{outstandingInvitationNum}</span>}</button>
 
-              { invitations.length > 0 ? 
+              { this.props.user.project_invitations && invitations.length > 0 ? 
 
                 <ul className="dropdown-menu-items">
                 {invitations.map((invite, index) => 
@@ -138,7 +141,7 @@ class Navbar extends Component {
 
 
             <div className="dropdown-menu log-in">
-              <button>Not logged in</button>
+              <button>Not logged in&nbsp;&nbsp;<i className="fa fa-xs fa-chevron-down"></i></button>
               <ul className="dropdown-menu-items">
                 <li><Link to={"" + BASE_URL + "login"}>Login</Link></li>
                 <li><Link to={"" + BASE_URL + "register"}>Register</Link></li>

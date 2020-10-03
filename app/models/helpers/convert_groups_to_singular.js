@@ -1,3 +1,6 @@
+// A script to convert all document groups etc in the database to singular docs.
+// Only needs to be called once 
+
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost/redcoat-db-dev', function(err, db) {
   if(err) { console.log("\x1b[31m" + err.message); }

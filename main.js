@@ -271,11 +271,11 @@ app.use(function(req, res, next) {
   //   });      
   // }
 
-  if(req.user) {
-    next(req, res, next);    
-  } else {
-    next(null, req, res);
-  }
+  //if(req.user) {
+    next(null, req, res);    
+  //} else {
+  //  next(null, req, res);
+  //}
   
 })
 
@@ -351,17 +351,18 @@ app.all('*', homepageController.index);
 
 // error handlers
 
-// development error handler
-// will print stacktrace
-// if (app.get('env') === 'development') {
-//   app.use(function(err, req, res, next) {
-//     res.status(err.status || 500);
-//     res.render('error', {
-//       message: err.message,
-//       error: err
-//     });
-//   });
-// }
+//development error handler
+//will print stacktrace
+if (app.get('env') === 'development') {
+  app.use(function(err, req, res, next) {
+    console.log(err, "<<")
+    res.status(err.status || 500);
+    res.render('error', {
+      message: err.message,
+      error: err
+    });
+  });
+}
 
 // production error handler
 // no stacktraces leaked to user

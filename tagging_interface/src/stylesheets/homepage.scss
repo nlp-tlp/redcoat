@@ -37,6 +37,7 @@ div.letters-background {
 			margin-left: -70px;
 		}
 	}
+
 	h1#h1-welcome, h2#h2-byline  {
 		text-align: center;
 		//text-transform: uppercase;
@@ -50,11 +51,15 @@ div.letters-background {
 		text-shadow: 2px 2px rgba(darken(rgb(185, 12, 5), 30), 0.7);
 		margin-top: 0;
 	}
+	h1#h1-welcome {
+		//margin-top: -40px;
+	}
 	h2#h2-byline {
 		font-size: 27px;
 		margin-top: 10px;
 		margin-bottom: -20px;
 		text-transform: uppercase;
+		margin-bottom: 180px;
 	}
 	p {
 		color: #444;
@@ -106,4 +111,21 @@ article.features-list {
 	li.done {
 		text-decoration: line-through;
 	}
+}
+
+.HomeView-main .buttons {
+	margin-top: 80px;
+}
+.HomeView-main a {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-decoration: none !important;
+	margin-bottom: 30px;
+}
+.HomeView-main .button {
+	width: 35%;
+	margin: 0 auto;
+
+	text-align: center;
 }

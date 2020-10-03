@@ -358,7 +358,7 @@ class CurationInterface extends Component {
                   		<div className="comments-pane">
 
 				            <div className="comments-wrapper">
-				            	{ this.props.user && 
+				            	{ this.props.user && this.state.comments && 
 
 				            	<div className="comments-inner">
 
