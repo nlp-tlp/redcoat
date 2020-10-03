@@ -36,6 +36,7 @@ class InvitationsTable extends Component {
   }
 
   render() {
+    console.log(this.props.data.pending_invitations)
     return (
       <table className="project-page-table">
         <tbody>
@@ -59,7 +60,7 @@ class InvitationsTable extends Component {
             <td>
               <span className="inner">
                 <ProfileIcon user={user.profile_icon ? user : null}/>
-                <span>{user.email} {user.username ? ("(" + user.username + ")") : ""})</span>
+                <span>{user.email} {user.username ? ("(" + user.username + ")") : ""}</span>
               </span>
             </td>
           </tr>

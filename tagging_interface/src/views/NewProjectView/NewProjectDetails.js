@@ -99,7 +99,7 @@ class NewProjectDetails extends Component {
                      onKeyDown={(e)=> e.keyCode == 13 ? e.preventDefault(): ''}
                      maxLength={100}
                      placeholder="Project name"
-                     value={this.state.data.project_name}
+                     value={this.state.data.project_name || ''}
                      onChange={(e) => this.updateProjectName(e)}/>
             </div>
 
@@ -107,7 +107,7 @@ class NewProjectDetails extends Component {
               <label>Project description (optional)</label>
               <textarea maxLength={1000}
                         placeholder="Project description"
-                        value={this.state.data.project_description}
+                        value={this.state.data.project_description || ''}
                         onChange={(e) => this.updateProjectDescription(e)}/>
             </div>
 

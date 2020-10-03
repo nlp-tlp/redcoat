@@ -1734,3 +1734,79 @@
 		
 	}
 }
+
+#project-view main {
+	.annotations-table-container {
+		width: 100%;
+		margin: 0 auto;
+		box-shadow: 1px 1px 4px -3px rgba(0, 0, 0, 0.9);
+	}
+	table.annotations-table {
+
+		.annotate-button {
+			padding: 5px 10px;
+			font-size: 14px;
+			width: 120px;
+			min-width: 120px;
+			box-sizing: border-box;
+			margin: 0;
+		}
+		th {
+			text-align: left;
+			background: #fefefe;
+			padding: 10px;
+
+		}
+		th:first-child {
+			padding-left: 20px;
+		}
+		th:nth-child(2) {
+			text-align: center;
+		}
+		td {
+			text-align: center;
+			padding: 10px;
+		}
+		td:first-child {
+			width: 60%;
+			padding-left: 20px;
+		}
+		td:nth-child(2) {
+			width: 30%;
+			text-align: center;
+		}
+		td:last-child {
+			width: 100px;
+			padding-right: 20px;
+		}
+	}
+}
+.combined-annotations-download-box {
+	border: 2px solid #ddd;
+	background: #fefefe;
+	border-radius: 5px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 20px 10px;
+	
+	width: 80%;
+	margin: 0 auto;
+	margin-bottom: 40px;
+	span.number {
+		font-weight: bold;
+	}
+	div {
+		display: flex;
+		align-items: center;
+	}
+	button.annotate-button {
+		max-width: 120px;
+		padding: 5px 10px;
+		font-size: 14px;
+		width: 150px;
+		min-width: 150px;
+		margin: 0;
+		margin-left: 40px;
+	}
+}

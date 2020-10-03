@@ -451,8 +451,8 @@ ProjectSchema.methods.getInvitationsTableData = async function(next) {
       $project: {
         _id: "$user._id",
         username: "$user.username",
-        email: "$user_email",
-        profile_icon: 1,
+        email: "$user.email",
+        profile_icon: "$user.profile_icon",
       }
     },
     {
@@ -467,10 +467,22 @@ ProjectSchema.methods.getInvitationsTableData = async function(next) {
         preserveNullAndEmptyArrays: true
       }
     },
-    { $addFields: {
-        status: "Pending invitations"
+    {
+      $unwind: {
+        path: "$email",
+        preserveNullAndEmptyArrays: true
       }
-    }
+    },
+    {
+      $unwind: {
+        path: "$profile_icon",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    // { $addFields: {
+    //     status: "Pending invitations"
+    //   }
+    // }
   ]);
 
 
@@ -479,7 +491,6 @@ ProjectSchema.methods.getInvitationsTableData = async function(next) {
   var all_users = project_users
   all_users[0].pending_invitations = pending_users
 
-  console.log(all_users, 'zzzzzzzzzzzzzzzzzz');
   //console.log(",,,,,,,,,,,,,,,,,,,", all_users[0])
   return Promise.resolve(all_users[0]);
 
@@ -494,47 +505,32 @@ ProjectSchema.methods.getInvitationsTableData = async function(next) {
 
 // Uncomment this later
 
-// ProjectSchema.methods.getAnnotationsTableData = function(next) {
-//   var User = require('./user')
-//   var t = this;
-//   User.find({
-//       '_id': { $in: t.user_ids.active}
-//   }).select('username docgroups_annotated').lean().exec(function(err, users){
-//       function getUserData(userData, annotationsAvailable, users, next) {
-//         var u = users.pop()
-//         //userData.push(u);
-//         //userData['docgroups_annotated_count'] = u['docgroups_annotated'].length;
+ProjectSchema.methods.getAnnotationsTableData = async function() {
+  var User = require('./user')
+  var t = this;
+  var users = await User.find({
+      '_id': { $in: t.user_ids.active}
+  }).select('username profile_icon').lean();
 
-//         User.findById(u._id, function(err, user) {
-//           t.getDocumentsAnnotatedByUserCount(user, function(err, count) {
-//             u['docgroups_annotated_count'] = u['docgroups_annotated'].length * 10 // TODO: Change this to not be hardcoded to 10;
-//             u['docgroups_annotated_this_project_count'] = count;
-//             if(count > annotationsAvailable) { annotationsAvailable = count };
-//             u['project_owner'] = false;
-//             if(u['_id'].equals(t.user_id)) {
-//               u['project_owner'] = true;
-//             }
-//             u['download_link'] = {'project_id': t._id, 'user_id': u['_id'], 'enough_annotations': u['docgroups_annotated_this_project_count'] > 0};
-//             delete u['docgroups_annotated'];
-//             userData.push(u);
-            
+  var annotations = await DocumentAnnotation.distinct('document_id', {project_id: this._id})
+  var combined_annotations_available = annotations.length;
 
-//             if(users.length == 0) {
-//                next(err, userData, annotationsAvailable)
-//              } else {
-//               getUserData(userData, annotationsAvailable, users, next);
-//              }
-//           });
+  var data_users = [];
 
-//         });
-//       }
+  for(var user of users) {
 
-//       getUserData([], 0, users, function(err, userData, annotationsAvailable) {
-//         next(err, userData, annotationsAvailable);
-//       });      
-     
-//   });
-// }
+    var count = await t.getDocumentsAnnotatedByUserCount(user);
+
+    data_users.push({
+      _id: user._id,
+      username: user.username,
+      profile_icon: user.profile_icon,
+      num_annotations: count,
+    });
+  }
+
+  return Promise.resolve({users: data_users, combined_annotations_available: combined_annotations_available});
+}
 
 
 
@@ -554,31 +550,31 @@ ProjectSchema.methods.getCombinedAnnotations = async function(next) {
 
   // Javascript implementation of the 'zip' function.
   // https://gist.github.com/jonschlinkert/2c5e5cd8c3a561616e8572dd95ae15e3
-  function* zip(args) {
-    const iterators = args.map(x => x[Symbol.iterator]());
-    while (true) {
-      const current = iterators.map(x => x.next());
-      if (current.some(x => x.done)) {
-        break;
-      }
-      yield current.map(x => x.value);
-    }
-  }
+  // function* zip(args) {
+  //   const iterators = args.map(x => x[Symbol.iterator]());
+  //   while (true) {
+  //     const current = iterators.map(x => x.next());
+  //     if (current.some(x => x.done)) {
+  //       break;
+  //     }
+  //     yield current.map(x => x.value);
+  //   }
+  // }
 
   // Return the most frequent label in an array of labels.
   // https://codereview.stackexchange.com/questions/177962/find-the-most-common-number-in-an-array-of-numbers
-  function findMode(numbers) {
-      let counted = numbers.reduce((acc, curr) => { 
-          if (curr in acc) {
-              acc[curr]++;
-          } else {
-              acc[curr] = 1;
-          }
-          return acc;
-      }, {});
-      let mode = Object.keys(counted).reduce((a, b) => counted[a] > counted[b] ? a : b);
-      return mode;
-  }
+  // function findMode(numbers) {
+  //     let counted = numbers.reduce((acc, curr) => { 
+  //         if (curr in acc) {
+  //             acc[curr]++;
+  //         } else {
+  //             acc[curr] = 1;
+  //         }
+  //         return acc;
+  //     }, {});
+  //     let mode = Object.keys(counted).reduce((a, b) => counted[a] > counted[b] ? a : b);
+  //     return mode;
+  // }
 
   var t = this;
   //var Document = require('./document');
@@ -610,15 +606,24 @@ ProjectSchema.methods.getCombinedAnnotations = async function(next) {
       }
     },
     {
+      $unwind: "$document",
+    },
+    {
        $project: {
          _id: 1,
-         document_id: 1,
+         //document_id: 1,
          annotations: "$document_annotations",
-         tokens: { $arrayElemAt: ["$document.tokens", 0] },
+         tokens: "$document.tokens",
          document_index: "$document.document_index",
          all_labels: "$labels",
+         annotator_agreement: "$document.annotator_agreement",
        }
      },
+     // {
+     //  $sort: {
+     //    document_index: 1,
+     //  }
+     // }
      
     ]).allowDiskUse(true)
     
@@ -637,12 +642,12 @@ ProjectSchema.methods.getCombinedAnnotations = async function(next) {
 // }
 
 // TODO: Fix this for single docs
-ProjectSchema.methods.getAnnotationsOfUserForProject = function(user, next) {
+ProjectSchema.methods.getAnnotationsOfUserForProject = async function(user) {
   //DocumentAnnotation = require('./document_annotation')
   //Document = require('./document_group')
   var t = this;
 
-  DocumentAnnotation.aggregate([
+  var docs = await DocumentAnnotation.aggregate([
     {
       $match: {
         user_id: user._id,
@@ -651,31 +656,33 @@ ProjectSchema.methods.getAnnotationsOfUserForProject = function(user, next) {
     },
     {
       $lookup: {
-        from: "Documents",
-        localField: "document_group_id",
+        from: "documents",
+        localField: "document_id",
         foreignField: "_id",
-        as: "document_group"
+        as: "document"
       }
+    },
+    {
+      $unwind: "$document"    
     },
     {
       $project: {
         _id: 1,
         labels: 1,
-        documents: "$document_group.documents",
-        document_indexes: "$document_group.document_indexes",
-        document_group_display_name: "$document_group.display_name"
+        tokens: "$document.tokens",
+        document_index: "$document.document_index",        
       }
     }
-    ], function(err, docs) {
-      for(var i in docs) {
-        docs[i]["document_indexes"] = docs[i]["document_indexes"][0]
-        docs[i]["documents"] = docs[i]["documents"][0]; // Required to ensure docs and labels match up correctly
-        docs[i]["document_group_display_name"] = docs[i]["document_group_display_name"][0]; 
-      }
-      next(null, docs);
-    } );
+  ])
 
-  //next(null, user.username);
+  var annotationsJSON = [];
+  for(var doc of docs) {
+    var aj = DocumentAnnotation.toMentionsJSON(doc.labels, doc.tokens);
+    aj.doc_idx = doc.document_index;
+    annotationsJSON.push(aj);
+  }
+
+  return Promise.resolve(annotationsJSON);
 
 
 }
@@ -698,8 +705,8 @@ function* zip(args) {
 
 // Computes the compiled annotations for a list of annotations for a single document.
 // Input labels should be in BIO format (not converted to mention json).
-ProjectSchema.statics.getCompiledAnnotation = function(tokens, annotations, next) {
-
+ProjectSchema.statics.getCompiledAnnotation = function(tokens, annotations) {
+  //console.log(tokens, annotations, ",xx");
   console.log(annotations[0])
   var compiledAnnotation = {
     'tokens': tokens,
@@ -709,15 +716,12 @@ ProjectSchema.statics.getCompiledAnnotation = function(tokens, annotations, next
 
   var numUsers = annotations.length;
 
-
-
   // Labels required for majority (more than 50%)
   if(numUsers % 2 == 0) {
     var m = Math.ceil((numUsers / 2) + 0.0001);
   } else {
     var m = Math.ceil((numUsers / 2));
   }
-
 
   var zippedLabels = new Array(annotations[0].labels.length);
   for(var i = 0; i < zippedLabels.length; i++) {
@@ -825,133 +829,133 @@ ProjectSchema.statics.getCompiledAnnotation = function(tokens, annotations, next
 
 // Return a JSON array of entity typing-formatted annotations.
 // The annotations JSON should be in the format of 'getAnnotationsOfUserForProject' above.
-ProjectSchema.methods.getEntityTypingAnnotations = function(annotations,  next) {
+// ProjectSchema.methods.getEntityTypingAnnotations = function(annotations,  next) {
 
-  var mentions = [];
-  for(var i in annotations) {
-    for(var d in annotations[i]['documents']) {
+//   var mentions = [];
+//   for(var i in annotations) {
+//     for(var d in annotations[i]['documents']) {
 
-      var mention = {};
+//       var mention = {};
 
-      if(annotations[i]['document_indexes'] !== undefined) {
-        mention['doc_idx'] = annotations[i]['document_indexes'][d];
-      }
+//       if(annotations[i]['document_indexes'] !== undefined) {
+//         mention['doc_idx'] = annotations[i]['document_indexes'][d];
+//       }
 
-      mention['tokens'] = annotations[i]['documents'][d];
-      mention['mentions'] = [];
+//       mention['tokens'] = annotations[i]['documents'][d];
+//       mention['mentions'] = [];
 
-      var labels = [];
-      if(annotations[i].hasOwnProperty('labels')) {
-        labels = [annotations[i]['labels']]
-      } else if (annotations[i].hasOwnProperty('all_labels')) {
-        labels = annotations[i]['all_labels'];
-      }
-      //console.log("labels:", annotations[i]['labels'])
-      //console.log("all:", annotations[i]['all_labels'])
-      var numUsers = labels.length;
-      if(numUsers % 2 == 0) {
-        var m = Math.ceil((numUsers / 2) + 0.0001);
-      } else {
-        var m = Math.ceil((numUsers / 2));
-      }
-       // Labels required for majority (more than 50%)
-
-
-      var zipped_labels = [...zip( labels.map(function(x) { return x[d] })   )]
-
-      var mentionStart = -1;
-      var mentionEnd = -1;
-      var mentionLabels = new Set();
-
-      for(var l = 0; l < zipped_labels.length; l++) {
-        var currentMention = {};
-
-        var zl = zipped_labels[l];
-
-        // 1. Count number of markers
-        var marker_counts = {"B-": 0, "I-": 0, "": 0}
-        var label_counts  = {}
-        var majority_markers = new Set();
-        var majority_labels = new Set();
-        //console.log(zipped_labels[l])
+//       var labels = [];
+//       if(annotations[i].hasOwnProperty('labels')) {
+//         labels = [annotations[i]['labels']]
+//       } else if (annotations[i].hasOwnProperty('all_labels')) {
+//         labels = annotations[i]['all_labels'];
+//       }
+//       //console.log("labels:", annotations[i]['labels'])
+//       //console.log("all:", annotations[i]['all_labels'])
+//       var numUsers = labels.length;
+//       if(numUsers % 2 == 0) {
+//         var m = Math.ceil((numUsers / 2) + 0.0001);
+//       } else {
+//         var m = Math.ceil((numUsers / 2));
+//       }
+//        // Labels required for majority (more than 50%)
 
 
-        for(var idx in zl) {
-          var marker_name = zl[idx][0]
-          marker_counts[marker_name] += 1
-          if(marker_counts[marker_name] >= m) {
-            majority_markers.add(marker_name);
-          }
-          if(zl[idx][1] !== undefined) {
-            for(var label_idx in zl[idx][1]) {
-              var label_name = zl[idx][1][label_idx]
-              if(!label_counts.hasOwnProperty(label_name)) {
-                label_counts[label_name] = 0
-              }
-              label_counts[label_name] += 1
-              if(label_counts[label_name] >= m) {
-                majority_labels.add(label_name);
-              }
-            }
-          }          
-        }
+//       var zipped_labels = [...zip( labels.map(function(x) { return x[d] })   )]
+
+//       var mentionStart = -1;
+//       var mentionEnd = -1;
+//       var mentionLabels = new Set();
+
+//       for(var l = 0; l < zipped_labels.length; l++) {
+//         var currentMention = {};
+
+//         var zl = zipped_labels[l];
+
+//         // 1. Count number of markers
+//         var marker_counts = {"B-": 0, "I-": 0, "": 0}
+//         var label_counts  = {}
+//         var majority_markers = new Set();
+//         var majority_labels = new Set();
+//         //console.log(zipped_labels[l])
+
+
+//         for(var idx in zl) {
+//           var marker_name = zl[idx][0]
+//           marker_counts[marker_name] += 1
+//           if(marker_counts[marker_name] >= m) {
+//             majority_markers.add(marker_name);
+//           }
+//           if(zl[idx][1] !== undefined) {
+//             for(var label_idx in zl[idx][1]) {
+//               var label_name = zl[idx][1][label_idx]
+//               if(!label_counts.hasOwnProperty(label_name)) {
+//                 label_counts[label_name] = 0
+//               }
+//               label_counts[label_name] += 1
+//               if(label_counts[label_name] >= m) {
+//                 majority_labels.add(label_name);
+//               }
+//             }
+//           }          
+//         }
                 
 
-        //console.log(mentionLabels)
-        // 2.a If we are not in a mention, count B tags
-        if(mentionStart === -1) {
+//         //console.log(mentionLabels)
+//         // 2.a If we are not in a mention, count B tags
+//         if(mentionStart === -1) {
 
-          // 3.a If there are any majority labels (regardless of B- or I-), start a new mention
-          if(majority_labels.size > 0) {
-            mentionStart  = l;
-            mentionEnd    = l + 1;
-            mentionLabels = majority_labels;
-          }
+//           // 3.a If there are any majority labels (regardless of B- or I-), start a new mention
+//           if(majority_labels.size > 0) {
+//             mentionStart  = l;
+//             mentionEnd    = l + 1;
+//             mentionLabels = majority_labels;
+//           }
 
-        } else {
+//         } else {
 
-          // 2.b If we *are* in a mention, ensure that majority labels == the current mentionLabels.
+//           // 2.b If we *are* in a mention, ensure that majority labels == the current mentionLabels.
 
-          if(isSetsEqual(majority_labels, mentionLabels) && !majority_markers.has("B-")) {
+//           if(isSetsEqual(majority_labels, mentionLabels) && !majority_markers.has("B-")) {
 
-            mentionEnd += 1
-          } else {
+//             mentionEnd += 1
+//           } else {
 
-            // 2.c If the sets are not equal, the current mention ends.
-            mention['mentions'].push({ "start": mentionStart, "end": mentionEnd, "labels": Array.from(mentionLabels) });
-            mentionStart = -1;
-            mentionEnd   = -1;
-            mentionLabels = new Set();
+//             // 2.c If the sets are not equal, the current mention ends.
+//             mention['mentions'].push({ "start": mentionStart, "end": mentionEnd, "labels": Array.from(mentionLabels) });
+//             mentionStart = -1;
+//             mentionEnd   = -1;
+//             mentionLabels = new Set();
 
-            // Then, check for B- tags.
-            if(majority_markers.has("B-")) {
-              if(majority_labels.size > 0) {
-                mentionStart  = l;
-                mentionEnd    = l + 1;
-                mentionLabels = majority_labels;
-              }              
-            }
-          }
-        }
+//             // Then, check for B- tags.
+//             if(majority_markers.has("B-")) {
+//               if(majority_labels.size > 0) {
+//                 mentionStart  = l;
+//                 mentionEnd    = l + 1;
+//                 mentionLabels = majority_labels;
+//               }              
+//             }
+//           }
+//         }
         
-        // console.log(zl)
-        // console.log("Label counts:    ", label_counts)
-        // console.log("Marker counts:   ", marker_counts)
-        // console.log("Majority labels: ", majority_labels)
-        // console.log("Majority markers:", majority_markers)
-        // console.log('----')
+//         // console.log(zl)
+//         // console.log("Label counts:    ", label_counts)
+//         // console.log("Marker counts:   ", marker_counts)
+//         // console.log("Majority labels: ", majority_labels)
+//         // console.log("Majority markers:", majority_markers)
+//         // console.log('----')
 
-      }
-      // If at the end of the sentence and still in-mention, push that mention.
-      if(mentionStart > -1) {
-        mention['mentions'].push({ "start": mentionStart, "end": mentionEnd, "labels": Array.from(mentionLabels) });
-      }
+//       }
+//       // If at the end of the sentence and still in-mention, push that mention.
+//       if(mentionStart > -1) {
+//         mention['mentions'].push({ "start": mentionStart, "end": mentionEnd, "labels": Array.from(mentionLabels) });
+//       }
 
-      mentions.push(mention);
-    }
-  }
-  next(null, mentions);
-}
+//       mentions.push(mention);
+//     }
+//   }
+//   next(null, mentions);
+// }
 
 
 
@@ -1383,7 +1387,7 @@ ProjectSchema.methods.getAnnotationsChartData = async function(done) {
   
   if(results.length === 0) return Promise.resolve([]);
 
-  console.log(annotationsChartData, "Xxxxxxxxxxxxxxxxxxxxxxxxxx")
+  console.log(annotationsChartData, "z");
   var annotationsChartData = new Array(parseInt(t.overlap + 1)).fill(0);
   for(var i in results) {
     var result = results[i];
@@ -1659,6 +1663,9 @@ ProjectSchema.methods.getDetails = async function(done) {
 
 
     var invitationsTableData = await t.getInvitationsTableData();
+    var annotationsTableData = await t.getAnnotationsTableData();
+
+    console.log(annotationsTableData, 'xxxxxxxxxxxxxx')
 
     var data = {
       project_name: t.project_name,
@@ -1683,6 +1690,9 @@ ProjectSchema.methods.getDetails = async function(done) {
       },   
 
       invitationsTable: invitationsTableData,
+      
+      annotationsTable: annotationsTableData,
+
       // categoryHierarchy: {
       //   categories: t.category_hierarchy,
       // }

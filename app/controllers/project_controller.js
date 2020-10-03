@@ -473,61 +473,73 @@ module.exports.submitAnnotations = async function(req, res) {
 
 // GET: Download the annotations of the user. Sends the user a file.
 // TODO: This needs to be refactored and probably doesn't work atm
-module.exports.downloadAnnotationsOfUser = function(req, res) {
-  var User = require('app/models/user')
+module.exports.downloadAnnotationsOfUser = async function(req, res) {
   var proj_id = req.params.id;
   var user_id = req.params.user_id;
 
   
-
-  User.findById(user_id, function(err, user) {
+  console.log('hello')
+  var user = await User.findById(user_id)
     //console.log(user)
-    Project.findById(proj_id, function(err, proj) {
-      //console.log(err, proj)
-      if(!proj.user_id.equals(req.user._id)) {
-        return res.send("error");
-      }
-      proj.getAnnotationsOfUserForProject(user, function(err, annotations) {
-        proj.getEntityTypingAnnotations(annotations, function(err, et_annotations) {          
-          if(err) { return res.send("error"); }
+  var proj = await Project.findById(proj_id)
+    //console.log(err, proj)
 
-          res.type('.json');
-          res.setHeader('Content-type', "application/octet-stream");
-          res.set({"Content-Disposition":"attachment; filename=\"annotations-" + user.username + ".json\""});
-          var out = [];
-          for(var line in et_annotations) {
-            out.push(JSON.stringify(et_annotations[line]));
-          }
-          res.send(out.join('\n'));
-          //res.send(annotations);
-        });        
-      })
-    });
-  });
+  // // TODO: Check if user allowed to access this (is in project?)
+  // if(!proj.user_id.equals(req.user._id)) {
+  //   return res.status(403).send("error");
+  // }
+
+  var annotations = await proj.getAnnotationsOfUserForProject(user)
+
+  //proj.getEntityTypingAnnotations(annotations, function(err, et_annotations) {          
+
+  res.type('.json');
+  res.setHeader('Content-type', "application/octet-stream");
+  res.set({"Content-Disposition":"attachment; filename=\"annotations-" + user.username + ".json\""});
+  var out = [];
+  for(var line in annotations) {
+    out.push(JSON.stringify(annotations[line]));
+  }
+  res.send(out.join('\n'));
+
 }
 
 // GET: Download all combined annotations of all users for this project.
 // Sends the user a file.
 // TODO: This also needs to be refactored and probs doesn't work atm
-module.exports.downloadCombinedAnnotations = function(req, res) {
+module.exports.downloadCombinedAnnotations = async function(req, res) {
   var proj_id = req.params.id;
-  Project.findById(proj_id, function(err, proj) {
-    console.log(err);
-    proj.getCombinedAnnotations(function(err, annotations) {
-      if(err) return res.send(err);
-      proj.getEntityTypingAnnotations(annotations, function(err, et_annotations) {   
-        if(err) return res.send(err);
-        res.type('.txt');
-        res.setHeader('Content-type', "application/octet-stream");
-        res.set({"Content-Disposition":"attachment; filename=\"annotations-combined.json\""});
-        var out = [];
-        for(var line in et_annotations) {
-          out.push(JSON.stringify(et_annotations[line]));
-        }
-        res.send(out.join('\n'));
-      });
-    });
-  });
+  var proj = await Project.findById(proj_id)
+
+  var annotations = await proj.getCombinedAnnotations();
+  var compiled_anns = [];
+  for(var ann of annotations) {
+    var labels = [];
+    for(var l of ann.all_labels) {
+      labels.push({labels: l})
+    }
+    compiled_ann = Project.getCompiledAnnotation(ann.tokens, labels);
+    compiled_ann.doc_idx = ann.document_index;
+    compiled_ann.annotator_agreement = ann.annotator_agreement;
+    compiled_anns.push(compiled_ann);
+  }
+
+  // for(var doc of annotations) {
+  //   var aj = DocumentAnnotation.toMentionsJSON(doc.labels, doc.tokens);
+
+//if(err) return res.send(err);
+//proj.getEntityTypingAnnotations(annotations, function(err, et_annotations) {   
+  //if(err) return res.send(err);
+  res.type('.txt');
+  res.setHeader('Content-type', "application/octet-stream");
+  res.set({"Content-Disposition":"attachment; filename=\"annotations-combined.json\""});
+  var out = [];
+  for(var line in compiled_anns) {
+    out.push(JSON.stringify(compiled_anns[line]));
+  }
+  res.send(out.join('\n'));
+    //});
+ // });
 }
 
 

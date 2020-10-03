@@ -20,7 +20,7 @@ verifyUserOwnsProject = function(req, res, next) {
 
 	Project.findById(req.params.id, function(err, proj) {
 		if(err || proj === null) { return res.send("Error: Project does not exist")}
-		if(!proj.projectCreatedByUser(req.user._id)) return res.send("Error: user does not own project");
+		if(!proj.projectCreatedByUser(req.user._id)) return res.status(403).send("Error: user does not own project");
 		next();		
 	});
 }
@@ -67,8 +67,8 @@ router.post('/:id/tagging/submitAnnotations', verifyUserInProject, projectContro
 
 router.get('/:id/curation', verifyUserInProject, projectController.getCurationDocument);
 
-router.get('/:id/download_annotations/:user_id', verifyUserOwnsProject, projectController.downloadAnnotationsOfUser);
-router.get('/:id/download_combined_annotations', verifyUserOwnsProject, projectController.downloadCombinedAnnotations);
+router.get('/:id/download_annotations/:user_id', verifyUserInProject, projectController.downloadAnnotationsOfUser);
+router.get('/:id/download_combined_annotations', verifyUserInProject, projectController.downloadCombinedAnnotations);
 
 
 router.post('/:id/comments/submit', verifyUserInProject, projectController.submitComment);

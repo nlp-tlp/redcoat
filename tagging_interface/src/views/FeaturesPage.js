@@ -13,7 +13,7 @@ class FeaturesPage extends Component {
     return (
 	    <article className="features-list">
 
-	    	<h2>Version 2.0 - List of features (19 September 2020)</h2>
+	    	<h2>Version 2.0 alpha - List of features (3 October 2020)</h2>
 
 	    	<p>Redcoat underwent a significant revision for Version 2.0, bringing a wide array of new features including:</p>
 
@@ -64,6 +64,11 @@ class FeaturesPage extends Component {
 	    				<li>There is now a User profile page.</li>
 	    				<li>Users may customise their profile icon - the background, foreground and icon can be changed. These icons will appear on any comments the user makes on any projects.</li>
 	    			</ul>
+	    		</li>
+	    		<li><b>New project form</b>
+	    			<ul>
+	    				<li>The new project form is also remade in React - it is now based on form pages rather than one continuous form so the process of creating a new project is much better.</li>
+	    			</ul>	
 	    		</li>
 	    		<li><b>Other changes</b>
 	    			<ul>

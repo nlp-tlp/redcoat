@@ -18,9 +18,17 @@ import Error401Redirect from 'views/Errors/Error401Redirect';
 import Error403Page from 'views/Errors/Error403Page';
 import Error404Page from 'views/Errors/Error404Page';
 
+
+
 import CurationInterface from 'views/ProjectView/CurationInterface';
 
 import _ from 'underscore';
+
+
+
+import ProfileIcon from 'views/SharedComponents/ProfileIcon';
+
+
 const queryString = require('query-string');
 
 
@@ -53,6 +61,67 @@ const chartColours = [
 "#7B4B94",
 ];
 
+
+class AnnotationsTable extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  async downloadAnnotationsOfUser(user) {
+    var url = ("http://localhost:3000/api/projects/" + this.props.project_id + "/download_annotations/" + user._id);
+    await _fetch(url, 'GET', this.props.setErrorCode, null, false, 0, true, 'annotations-' + user.username + '.json');
+  }
+
+  async downloadCombinedAnnotations() {
+    var url = ("http://localhost:3000/api/projects/" + this.props.project_id + "/download_combined_annotations");
+    await _fetch(url, 'GET', this.props.setErrorCode, null, false, 0, true, 'annotations-combined.json');
+  }
+
+  render() {
+
+    return (
+
+      <main className="project-page">
+        <h2>Annotations</h2>
+        <div className="combined-annotations-download-box">
+
+          { this.props.data.combined_annotations_available === 0
+          ? <div>There are not yet any annotations available for download.</div>
+          : <div>
+            <strong>{this.props.data.combined_annotations_available} </strong>&nbsp;annotations are ready for download. <button className="annotate-button" onClick={() => this.downloadCombinedAnnotations()}><i className="fa fa-download"></i>Download all</button>
+          </div>
+          }
+
+
+        </div>
+        <div className="annotations-table-container">
+          <table id="annotations-table" className="project-page-table annotations-table">
+            <thead>
+              <tr>
+                <th>Annotator</th>
+                <th># Annotations</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+
+            { this.props.data.users.map((user, index) => 
+              <tr>
+                <td><div className="user-row"><ProfileIcon user={user}/>{user.username}</div></td>
+                <td>{user.num_annotations}</td>
+                <td><button className=" annotate-button" onClick={() => this.downloadAnnotationsOfUser(user)}><i className="fa fa-download"></i>Download</button></td>
+              </tr>
+
+            )}
+            </tbody>
+          </table>
+        </div>
+
+      </main>
+
+    )
+  }
+}
 
 // Couldn't find a good component for this online so I made my own. It visualises the 'annotations per doc' in the form of a 
 // waffle chart, which looks more or less like a heat map but without any labels. The data should be ordered in descending freq
@@ -891,7 +960,6 @@ class ProjectView extends Component {
       var d = await _fetch('http://localhost:3000/api/projects/' + this.props.project_id, 'GET', this.props.setErrorCode, 555)
 
       if(d.dashboard.activityChartData) d.dashboard.activityChartData = setActivityChartStyles(d.dashboard.activityChartData);
-
       t.setState({
         loading: false,
         data: d,
@@ -940,7 +1008,7 @@ class ProjectView extends Component {
                <Switch location={location}>
                   <Route path="/projects/:id/dashboard"           render={() => <ProjectDashboard loading={this.state.loading} data={this.state.data.dashboard} project_id={this.props.project_id} />} />     
                   <Route path="/projects/:id/annotations/curation"            render={() => <CurationInterface user={this.props.user} project_id={this.props.project_id} prevState={this.curationInterfaceState} saveState={this.setCurationInterfaceData.bind(this)} loading={this.state.loading} documentIdQuery={docId} setErrorCode={this.props.setErrorCode} />} />     
-                  <Route path="/projects/:id/annotations/download"            render={() => <EmptyThing {...this.state} />} />     
+                  <Route path="/projects/:id/annotations/download"            render={() => <AnnotationsTable user={this.props.user} project_id={this.props.project_id} data={this.state.data.annotationsTable ? this.state.data.annotationsTable : {users: [], num_combined_available: 0}} setErrorCode={this.props.setErrorCode} />} />     
                   <Route path="/projects/:id/entity-hierarchy"  render={() => <CategoryHierarchyPage loading={this.state.loading} data={this.state.data.categoryHierarchy} colourIndexes={this.state.data.dashboard.entityChartData ? this.state.data.dashboard.entityChartData.colourIndexes : null} />} />     
                   <Route path="/projects/:id/annotators"         render={() => <InvitationsPage data={this.state.data.invitationsTable ? this.state.data.invitationsTable : {}} loading={this.state.loading} />} />     
                   <Route path="/projects/:id/settings"            render={() => <EmptyThing {...this.state} />} />   

@@ -12,6 +12,7 @@
     "file-saver": "^2.0.2",
     "html2canvas": "^1.0.0-rc.7",
     "jquery-awesome-cursor": "^0.3.1",
+    "js-file-download": "^0.4.12",
     "react": "^16.13.1",
     "react-beautiful-dnd": "^13.0.0",
     "react-chartjs-2": "^2.10.0",
