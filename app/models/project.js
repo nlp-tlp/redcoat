@@ -197,6 +197,8 @@ ProjectSchema.methods.getCurationDocument = async function(pageNumber, sortBy, s
 
 
     var documentAnnotations = await DocumentAnnotation.find({document_id: doc._id}).sort({user_id: "asc"});
+    
+    
 
     var users = new Array();
 

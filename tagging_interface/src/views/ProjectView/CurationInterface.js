@@ -14,7 +14,7 @@ import ProfileIcon from 'views/SharedComponents/ProfileIcon';
 import {Word, Sentence} from 'views/TaggingInterfaceView/documentComponents';
 
 import formatDate  from 'functions/formatDate';
-
+import BASE_URL from 'globals/base_url';
 
 
 // Config for all API fetch requests
@@ -109,7 +109,7 @@ class CurationInterface extends Component {
 			}
 		})
 
-		var queryString = 'http://localhost:3000/api/projects/' + this.props.project_id + "/curation?pageNumber=" + this.state.pageNumber + "&sortBy=" + this.state.sortBy;
+		var queryString = 'https://nlp-tlp.org/redcoat/api/projects/' + this.props.project_id + "/curation?pageNumber=" + this.state.pageNumber + "&sortBy=" + this.state.sortBy;
 		if(this.state.searchTerm) {
 			queryString += "&searchTerm=" + this.state.searchTerm;
 		}
@@ -247,7 +247,7 @@ class CurationInterface extends Component {
 		  }),  
 		};
 
-		fetch('http://localhost:3000/api/projects/' + this.props.project_id + '/comments/submit', fetchConfigPOST) // TODO: move localhost out
+		fetch('https://nlp-tlp.org/redcoat/api/projects/' + this.props.project_id + '/comments/submit', fetchConfigPOST) // TODO: move localhost out
 		.then((response) => {
 	        if(response.status === 403) {
 	          throw new Error(403);

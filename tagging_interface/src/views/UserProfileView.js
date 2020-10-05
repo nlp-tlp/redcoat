@@ -5,6 +5,7 @@ import { TwitterPicker } from 'react-color';
 import { Link } from "react-router-dom";
 import getCookie from 'functions/getCookie'
 import _ from 'underscore';
+import BASE_URL from 'globals/base_url';
 
 // A list of icon options from FontAwesome that the user can choose from
 const iconOptions = [
@@ -68,7 +69,7 @@ class UserProfileView extends Component {
     this.setState({
       saving: true, 
     }, () => {
-      fetch('http://localhost:3000/api/users/set_profile_icon', fetchConfigPOST) // TODO: move localhost out
+      fetch('https://nlp-tlp.org/redcoat/api/users/set_profile_icon', fetchConfigPOST) // TODO: move localhost out
       .then((response) => {
         if(response.status !== 200) {
           throw new Error(response.status);

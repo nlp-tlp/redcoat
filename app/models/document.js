@@ -127,109 +127,49 @@ DocumentSchema.methods.updateAgreement = function(next) {
         next(err);     
       });
     }
-  });
+  });  
+}
 
 
+DocumentSchema.methods.updateAgreementAsync = async function(next) {
 
-  //   //   console.log("=====================================")
-  //   //   console.log("Calculating agreement");
+	var t = this;
 
-  //   //   var doc = t.tokens;
+	logger.info("Updating agreement for doc \"" + t.tokens.join(' ') + "\"");  
 
-  //   //   var all_document_labels = []; // All labels across each annotator for this document
+	var DocumentAnnotation = require('./document_annotation');
+	var dgas = await DocumentAnnotation.find({document_id: t._id})
 
-  //   //   var reliabilityData = {}; // { token: [annotator_1_class, annotator_2_class ...]}
+	var agreement_score = t.annotator_agreement;
+	console.log("Current agreement score:", agreement_score)
 
-  //   //   for(token_idx in doc) {
-  //   //     reliabilityData[token_idx] = new Array();
-  //   //   }
+	// If there's only one annotation for this docgroup so far, just set the agreement to null (e.g. it is not relevant)
+	if(dgas.length === 0) {
+		t.annotator_agreement = null;
+		return Promise.resolve();
+	}
+	if(dgas.length === 1) {
+	  t.annotator_agreement = null;
+	  return Promise.resolve();
+	} else {
+	// Otherwise, calculate the agreement score 
 
+	  var labels = new Array();
+	  for(var i in dgas) {
+		labels.push(dgas[i].labels);
 
-  //   //   for(var j in dgas) { // each dga is a document annotation, e.g. one per annotator
-  //   //     var dga = dgas[j];
+		
+	  }
 
-  //   //     for(token_idx in doc) {
-
-  //   //       var bioTagAndLabels = dgas[j].labels[token_idx];
-
-  //   //       //console.log("Token idx:", token_idx, "Labels:", bioTagAndLabels);
-
-  //   //       if(bioTagAndLabels.length === 1) { 
-  //   //         var labels = new Set();
-  //   //       } else {
-  //   //         var labels = new Set(bioTagAndLabels[1]); // Only score using the first tag for now, need a better metric!
-  //   //       }
-
-  //   //       reliabilityData[token_idx].push(labels);  
-
-  //   //     }
-  //   //   }        
-
-  //   //   //console.log(reliabilityData);
-
-  //   //   var kValue = 0.5;
-
-
-  //   //   var jaccardIndexes = [];
-  //   //   for(token_idx in reliabilityData) {
-
-  //   //     // Calculate union and intersect
-  //   //     var union = new Set();
-  //   //     var intersect = new Set();
-
-  //   //     // Get union
-  //   //     for(var annotator_idx in reliabilityData[token_idx]) {
-  //   //       var arr = Array.from(reliabilityData[token_idx][annotator_idx]);
-  //   //       for(var label_idx in arr) {
-  //   //         union.add(arr[label_idx]);              
-  //   //       }            
-  //   //     }
-
-       
-  //   //     // Convert reliability data from an array of sets into an array of arrays so that the intersect can be calculated
-  //   //     // (which is silly but it seems like the only way to do it in JS)
-  //   //     var reliabilityDataArr = [];
-  //   //     for(var ix in reliabilityData[token_idx]) {
-  //   //       reliabilityDataArr.push(Array.from(reliabilityData[token_idx][ix]))
-  //   //     }
-  //   //     var arr = reliabilityDataArr;
-  //   //     var intersect = arr[0].filter(v => arr.slice(1).every(a => a.includes(v)));
-
-
-  //   //     console.log("Labels:", reliabilityDataArr)
-  //   //     console.log("Intersect:", intersect);
-  //   //     console.log("Union:", union);
-
-  //   //     var jaccardIndex = union.size === 0 ? 0 : intersect.length / union.size; 
-
-  //   //     console.log("Jaccard index:", jaccardIndex, "\n")               
-  //   //     jaccardIndexes.push(jaccardIndex);
-  //   //   }
-
-
-  //   //   var agreementValue = jaccardIndexes.reduce((a, b) => a + b, 0) / jaccardIndexes.length;
-  //   //   console.log("Agreement value:", agreementValue, "\n");
-
-  //   //   t.annotator_agreement = agreementValue;
-
-  //   // } 
-  
-
-  //   console.log("New agreement score:", t.annotator_agreement)
-  //   t.markModified('annotator_agreement');
-  //   t.save(function(err, dg) {
-  //     //console.log(dg.annotator_agreement, "<<<<")
-  //     //console.log(dg, "<<<<")
-  //     //console.log("error:", err);
-  //     //next(err);
-  //     next(err);
-  //   });
-
-  //   //next();
-  // })
-
-
-
+	  var agreementValue = calculateAgreement(t.tokens, labels);
+	  t.annotator_agreement = agreementValue;
+	  t.markModified('annotator_agreement');
+	  await t.save();
+	  return Promise.resolve(agreementValue);
+	  //t.save(function(err, dg) {
+		//next(err);     
+	  //});
+	}
   
 }
 

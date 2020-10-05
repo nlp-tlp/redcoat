@@ -40,7 +40,7 @@ async function wait(ms) {
 // Todo: fix the args... but to do that I'd have to change all calls of this :()
 async function _fetch(url, method, setErrorCode, postBody=null, fileUpload=false, delay=0, fileDownload=false, fileDownloadName=null) {
 
-  var api_url = "http://localhost:3000/api/";
+  var api_url = "https://nlp-tlp.org/redcoat/api/";
 
   var fetchConf = {... fetchConfig[method] };
   if(method === "POST") {
@@ -48,10 +48,11 @@ async function _fetch(url, method, setErrorCode, postBody=null, fileUpload=false
     if(fileUpload) {
       fetchConf.body = postBody;
       delete fetchConf.headers;
+      fetchConf.headers = {'csrf-token' : csrfToken};
     } else {
 
       fetchConf.body = JSON.stringify(postBody);
-      fetchConf.headers['Content-Type'] = 'application/json';
+      fetchConf.headers['Content-Type'] = 'application/json';      
     }    
   }
 
@@ -72,7 +73,7 @@ async function _fetch(url, method, setErrorCode, postBody=null, fileUpload=false
   console.log(data)
   try {
     var d = JSON.parse(data);
-    await wait(delay);
+    //await wait(delay);
     return Promise.resolve(d); 
   } catch(err) {
     console.log(err);

@@ -742,7 +742,8 @@ class ProjectViewSidenav extends Component {
     var currentLocation = window.location.pathname;
 
 
-    var view = currentLocation.split('/').slice(3, currentLocation.split('/').length);
+	var c = currentLocation.slice(7, currentLocation.length);
+    var view = c.split('/').slice(3, c.split('/').length);
     console.log(view);
 
     return (
@@ -1007,12 +1008,12 @@ class ProjectView extends Component {
             >
               <section className={"route-section" + (!this.state.loading ? " loaded" : "")}>
                <Switch location={location}>
-                  <Route path="/projects/:id/dashboard"           render={() => <ProjectDashboard loading={this.state.loading} data={this.state.data.dashboard} project_id={this.props.project_id} />} />     
-                  <Route path="/projects/:id/annotations/curation"            render={() => <CurationInterface user={this.props.user} project_id={this.props.project_id} prevState={this.curationInterfaceState} saveState={this.setCurationInterfaceData.bind(this)} loading={this.state.loading} documentIdQuery={docId} setErrorCode={this.props.setErrorCode} />} />     
-                  <Route path="/projects/:id/annotations/download"            render={() => <AnnotationsTable user={this.props.user} project_id={this.props.project_id} data={this.state.data.annotationsTable ? this.state.data.annotationsTable : {users: [], num_combined_available: 0}} setErrorCode={this.props.setErrorCode} />} />     
-                  <Route path="/projects/:id/entity-hierarchy"  render={() => <CategoryHierarchyPage loading={this.state.loading} data={this.state.data.categoryHierarchy} colourIndexes={this.state.data.dashboard.entityChartData ? this.state.data.dashboard.entityChartData.colourIndexes : null} />} />     
-                  <Route path="/projects/:id/annotators"         render={() => <InvitationsPage data={this.state.data.invitationsTable ? this.state.data.invitationsTable : {}} loading={this.state.loading} />} />     
-                  <Route path="/projects/:id/settings"            render={() => <EmptyThing {...this.state} />} />   
+                  <Route path={BASE_URL + "projects/:id/dashboard"}           render={() => <ProjectDashboard loading={this.state.loading} data={this.state.data.dashboard} project_id={this.props.project_id} />} />     
+                  <Route path={BASE_URL + "projects/:id/annotations/curation" }           render={() => <CurationInterface user={this.props.user} project_id={this.props.project_id} prevState={this.curationInterfaceState} saveState={this.setCurationInterfaceData.bind(this)} loading={this.state.loading} documentIdQuery={docId} setErrorCode={this.props.setErrorCode} />} />     
+                  <Route path={BASE_URL + "projects/:id/annotations/download"}            render={() => <AnnotationsTable user={this.props.user} project_id={this.props.project_id} data={this.state.data.annotationsTable ? this.state.data.annotationsTable : {users: [], num_combined_available: 0}} setErrorCode={this.props.setErrorCode} />} />     
+                  <Route path={BASE_URL + "projects/:id/entity-hierarchy"}  render={() => <CategoryHierarchyPage loading={this.state.loading} data={this.state.data.categoryHierarchy} colourIndexes={this.state.data.dashboard.entityChartData ? this.state.data.dashboard.entityChartData.colourIndexes : null} />} />     
+                  <Route path={BASE_URL + "projects/:id/annotators"}         render={() => <InvitationsPage data={this.state.data.invitationsTable ? this.state.data.invitationsTable : {}} loading={this.state.loading} />} />     
+                  <Route path={BASE_URL + "projects/:id/settings"}            render={() => <EmptyThing {...this.state} />} />   
                   <Route             render={() => <Error404Page />} />   
                 </Switch>
               </section>

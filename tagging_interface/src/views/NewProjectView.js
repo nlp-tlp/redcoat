@@ -16,7 +16,7 @@ import NewProjectFormHelpIcon from 'views/NewProjectView/NewProjectFormHelpIcon'
 import _fetch from 'functions/_fetch';
 
 import {json2slash} from 'views/NewProjectView/functions/hierarchy_helpers'
-
+import BASE_URL from 'globals/base_url';
 Modal.setAppElement('body');
 
 
@@ -659,7 +659,7 @@ class NewProjectView extends Component {
     if(this.state.currentFormPageIndex) var formPath = this.getFormPagePathname();
 
     if(this.state.creatingNewProjectSuccess) {
-      return <Redirect to={"/projects/" + this.state.newlyCreatedProjectId + "/dashboard"}/>
+      return <Redirect to={BASE_URL + "projects/" + this.state.newlyCreatedProjectId + "/dashboard"}/>
     }
 
     return (

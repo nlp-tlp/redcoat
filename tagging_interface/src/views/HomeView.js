@@ -149,7 +149,7 @@ class HomeViewLogin extends Component {
 
       window.setTimeout( () => {
 
-        fetch('http://localhost:3000/api/users/login', fetchConfigPOST) // TODO: move localhost out
+        fetch('https://nlp-tlp.org/redcoat/api/users/login', fetchConfigPOST) // TODO: move localhost out
         .then(async (response) => {
           if(response.status !== 200) {
             var d = await response.json();
@@ -293,10 +293,10 @@ class HomeView extends Component {
             <section className="route-section homepage-route-section">
              <Switch location={location}>
                  
-                <Route path="/login"    render={() => <HomeViewLogin setUserData={this.props.setUserData}/> } />     
-                <Route path="/register" component={HomeViewRegister} />  
-                <Route path="/forgot_password" component={HomeViewForgotPassword} />  
-                <Route path="/"         component={HomeViewMain} />       
+                <Route path={BASE_URL + "login"}    render={() => <HomeViewLogin setUserData={this.props.setUserData}/> } />     
+                <Route path={BASE_URL + "register"} component={HomeViewRegister} />  
+                <Route path={BASE_URL + "forgot_password"} component={HomeViewForgotPassword} />  
+                <Route path={BASE_URL}         component={HomeViewMain} />       
                 
               </Switch>
             </section>

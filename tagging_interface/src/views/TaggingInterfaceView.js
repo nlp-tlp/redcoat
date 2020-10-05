@@ -931,7 +931,7 @@ class TaggingInterfaceView extends Component {
         firstLoad: firstLoad,
       }
     }, function() {
-      fetch('http://localhost:3000/api/projects/' + this.props.project_id + '/tagging/' + route, fetchConfigGET) // TODO: move localhost out
+      fetch('https://nlp-tlp.org/redcoat/api/projects/' + this.props.project_id + '/tagging/' + route, fetchConfigGET) // TODO: move localhost out
         .then((response) => {
             if(response.status !== 200) {
               var t = response.text();
@@ -1096,7 +1096,7 @@ class TaggingInterfaceView extends Component {
       }
     }, () => {
 
-      fetch('http://localhost:3000/api/projects/' + this.props.project_id + '/tagging/submitAnnotations', fetchConfigPOST) // TODO: move localhost out
+      fetch('https://nlp-tlp.org/redcoat/api/projects/' + this.props.project_id + '/tagging/submitAnnotations', fetchConfigPOST) // TODO: move localhost out
       .then((response) => {
         if(response.status !== 200) {          
           throw new Error(response.status); 
@@ -1563,7 +1563,7 @@ class TaggingInterfaceView extends Component {
       }),  
     };
 
-    fetch('http://localhost:3000/api/projects/' + this.props.project_id + '/comments/submit', fetchConfigPOST) // TODO: move localhost out
+    fetch('https://nlp-tlp.org/redcoat/api/projects/' + this.props.project_id + '/comments/submit', fetchConfigPOST) // TODO: move localhost out
     .then((response) => {
         if(response.status !== 200) {
           throw new Error(response.status); 

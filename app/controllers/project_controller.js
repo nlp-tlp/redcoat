@@ -307,6 +307,7 @@ module.exports.getCurationDocument = async function(req, res) {
     pageNumber = curationDoc.pageNumber;
 
     console.log("DOC:", doc);
+    console.log("anns:", documentAnnotations);
 
     //var orderedDocumentAnnotations = new Array(activeUserIds.length).fill(null);
     //for(var d of documentAnnotations) {
@@ -439,6 +440,7 @@ module.exports.submitAnnotations = async function(req, res) {
     try {
       await da.save();
     } catch(err) {
+      console.log(err, "<ERROR");
       return res.send({error: err});
     }    
   }

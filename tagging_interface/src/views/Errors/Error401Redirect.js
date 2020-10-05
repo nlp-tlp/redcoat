@@ -1,7 +1,7 @@
 import React from "react";
 import {Component} from "react";
 import { Redirect } from 'react-router-dom'
-
+import BASE_URL from 'globals/base_url';
 
 class Error401Redirect extends Component {
   constructor(props) {
@@ -14,7 +14,7 @@ class Error401Redirect extends Component {
 
   render() {
     return (
-      <Redirect to="/login"/>
+      <Redirect to={BASE_URL + "login"}/>
     )
   }
 }

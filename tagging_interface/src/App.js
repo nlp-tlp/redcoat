@@ -182,7 +182,7 @@ class Logout extends Component {
   }
 
   render() {
-    return (<Redirect to="/"/>)
+    return (<Redirect to={BASE_URL}/>)
   }
 }
 
@@ -347,7 +347,7 @@ class App extends Component {
               <Navbar user={this.state.user} loading={this.state.loading} acceptInvitation={this.acceptInvitation.bind(this)} declineInvitation={this.declineInvitation.bind(this)} />  
 
               {!this.state.errorCode && <Switch>
-              <PrivateRoute user={this.state.user} path="/projects/:id/tagging" render={(p) => 
+              <PrivateRoute user={this.state.user} path={BASE_URL + "projects/:id/tagging"} render={(p) => 
                 <TaggingInterfaceTemplate {...this.state} pageComponent={
                   <TaggingInterfaceView 
                     projectTitle={this.state.projectTitle}
@@ -364,12 +364,12 @@ class App extends Component {
                   />}
                 /> 
 
-              <PrivateRoute user={this.state.user} path="/projects/new" render={( ) =>
+              <PrivateRoute user={this.state.user} path={BASE_URL + "projects/new"} render={( ) =>
                 <NewProjectView setErrorCode={this.setErrorCode.bind(this)} /> }
               />  
 
 
-              <PrivateRoute user={this.state.user} path="/projects/:id" render={(p) => 
+              <PrivateRoute user={this.state.user} path={BASE_URL + "projects/:id"} render={(p) => 
                 <ProjectViewTemplate {...this.state} pageTitle="Project View" pageComponent={ 
                   <ProjectView
                     project_id={p.match.params.id}
@@ -387,7 +387,7 @@ class App extends Component {
                 />     
 
 
-              <PrivateRoute user={this.state.user} path="/projects" render={ () =>
+              <PrivateRoute user={this.state.user} path={BASE_URL + "projects"} render={ () =>
                 <ProjectListTemplate {...this.state} pageTitle="Projects"
          pageComponent={
                   <ProjectListView setProject={this.setProject.bind(this)} setErrorCode={this.setErrorCode.bind(this)}/> } />} />    
@@ -395,20 +395,20 @@ class App extends Component {
 
               
 
-              <PrivateRoute user={this.state.user} path="/profile"  render={( ) => 
+              <PrivateRoute user={this.state.user} path={BASE_URL + "profile"}  render={( ) => 
                 <MainTemplate {...this.state} pageTitle="User Profile" pageComponent={ 
                   <UserProfileView user={this.state.user} setUserProfileIcon={this.setUserProfileIcon.bind(this)} setErrorCode={this.setErrorCode.bind(this)}/> } />} />     
 
 
 
-              <Route path="/features" component={ () =>
+              <Route path={BASE_URL + "features"} component={ () =>
                 <MainTemplate {...this.state} pageTitle="Features" pageComponent={ 
                   <FeaturesPage/> } />} />     
               
-              <Route path="/logout" render={ () => <Logout logout={this.logout.bind(this)}/> } />
-              <Route path="/"   render={( ) =>            
+              <Route path={BASE_URL + "logout"} render={ () => <Logout logout={this.logout.bind(this)}/> } />
+              <Route path={BASE_URL}   render={( ) =>            
                   this.state.user && !this.state.loggingOut
-                  ? <Redirect to="/projects"/>
+                  ? <Redirect to={BASE_URL + "projects"}/>
                   : <HomeView setUserData={this.setUserData.bind(this)}/> }  />
               <Route                  render={( ) => 
                 <MainTemplate {...this.state} pageTitle="" pageComponent={ 
@@ -478,7 +478,7 @@ const PrivateRoute = ({ component: Component, ...rest }) => (
     var {user, ...other} = rest;
     return rest.user
       ? rest.render(p)
-      : <Redirect to='/login' />
+      : <Redirect to={BASE_URL + 'login'} />
   
   }
   } />
