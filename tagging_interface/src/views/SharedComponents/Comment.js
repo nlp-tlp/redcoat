@@ -38,6 +38,14 @@ class CommentInput extends Component {
     this.state = {
       comment: '',
     }
+    this.inputRef = React.createRef();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if(prevProps.open != this.props.open && this.props.open) {
+      this.inputRef.current.focus();
+    }
+
   }
 
   onSubmit(e) {
@@ -70,7 +78,7 @@ class CommentInput extends Component {
           </div>
           <div className="comment-right margin-right">
             <div className="comment-text">
-              <textarea name="comment-input" className="comment-input" placeholder="Write a comment..." onChange={this.setComment.bind(this)} value={this.state.comment} maxlength="200" ></textarea>
+              <textarea ref={this.inputRef} name="comment-input" className="comment-input" placeholder="Write a comment..." onChange={this.setComment.bind(this)} value={this.state.comment} maxlength="10000" ></textarea>
 
 
 

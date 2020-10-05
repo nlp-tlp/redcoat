@@ -6,6 +6,7 @@ import { Redirect, Link, BrowserRouter, Route, Switch, withRouter } from 'react-
 import { TransitionGroup, CSSTransition } from "react-transition-group";
 import getCookie from 'functions/getCookie';
 
+import _fetch from 'functions/_fetch';
 
 var lipsumStr = "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc,";
 var lipsum = lipsumStr.split(". ")
@@ -73,7 +74,7 @@ class HomeViewRegister extends Component {
           <form action="/redcoat/register" method="post">
             <div>
               <label>Username</label>
-              <input type="text" name="username" autoFocus="autofocus" placeholder="Username"/>
+              <input type="text" name="username" autoFocus="autofocus" placeholder="Username" required="required"/>
             </div>
             <div>
               <label>Email</label>
@@ -121,61 +122,34 @@ class HomeViewLogin extends Component {
     })
   }
 
-  submitForm(e) {
+  async submitForm(e) {
     e.preventDefault();
     console.log(e);
-    const csrfToken = getCookie('csrf-token');
 
-    const fetchConfigPOST = {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'csrf-token': csrfToken,
-      },
-      dataType: "json",
-      body: JSON.stringify({
-        email: this.state.email,
-        password: this.state.password,
-      }),  
-      credentials: 'include',
-    };
+    var postBody = {
+      email: this.state.email,
+      password: this.state.password,
+    }
 
 
-    this.setState({
+
+    await this.setState({
       errorMessage: null,
       loading: true,
-    }, () => 
+    })
 
-      window.setTimeout( () => {
-
-        fetch('https://nlp-tlp.org/redcoat/api/users/login', fetchConfigPOST) // TODO: move localhost out
-        .then(async (response) => {
-          if(response.status !== 200) {
-            var d = await response.json();
-            throw new Error(d.message);      
-          }          
-          return response.text()
-        })
-        .then((data) => {
-          try {
-            var d = JSON.parse(data);
-          } catch(err) {
-            console.log(err, d);
-            throw new Error("An unexpected error has occured")
-          }
-          
-          this.props.setUserData(d);          
-        }).catch((err) => {
-          this.setState({
-            errorMessage: err.message,
-            password: '',
-            loading: false,
-          });
-        })
-      }, 1)
-    );
-
+    
+    var d = await _fetch('users/login', 'POST', this.props.setErrorCode, postBody);
+    console.log("D:", d);
+    if(!d.error) { // Not using status codes as they are intercepted by _fetch
+      this.props.setUserData(d); 
+    } else {      
+      this.setState({
+        errorMessage: d.error,
+        password: '',
+        loading: false,
+      });
+    }
   }
 
   render() {
@@ -224,7 +198,6 @@ class HomeViewForgotPassword extends Component {
         </div>
         <div class="body">
           <form action="/redcoat/forgot_password" method="post">
-            <input type="hidden" name="_csrf" value="oOFHs5QK-_YPdUWgNII3vfrQ_erXv2dwFmz8"/>
             <div>
               <label>Email</label>
               <input type="email" name="email" placeholder="Email" required="required" autoFocus="autofocus"/>
@@ -293,9 +266,9 @@ class HomeView extends Component {
             <section className="route-section homepage-route-section">
              <Switch location={location}>
                  
-                <Route path={BASE_URL + "login"}    render={() => <HomeViewLogin setUserData={this.props.setUserData}/> } />     
-                <Route path={BASE_URL + "register"} component={HomeViewRegister} />  
-                <Route path={BASE_URL + "forgot_password"} component={HomeViewForgotPassword} />  
+                <Route path={BASE_URL + "login"}    render={() => <HomeViewLogin setErrorCode={this.props.setErrorCode} setUserData={this.props.setUserData}/> } />     
+                <Route path={BASE_URL + "register"} render={() => <HomeViewRegister setErrorCode={this.props.setErrorCode} /> } />  
+                <Route path={BASE_URL + "forgot_password"} render={() => <HomeViewForgotPassword setErrorCode={this.props.setErrorCode} /> } />  
                 <Route path={BASE_URL}         component={HomeViewMain} />       
                 
               </Switch>

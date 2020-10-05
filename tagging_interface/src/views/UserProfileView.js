@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import getCookie from 'functions/getCookie'
 import _ from 'underscore';
 import BASE_URL from 'globals/base_url';
+import _fetch from 'functions/_fetch';
 
 // A list of icon options from FontAwesome that the user can choose from
 const iconOptions = [
@@ -51,43 +52,24 @@ class UserProfileView extends Component {
   }
 
   // Submit the changes (which are saved in the state) to the API.
-  saveChanges() {
+  async saveChanges() {
     var t = this;
     console.log('saving')
-    const csrfToken = getCookie('csrf-token');
-    const fetchConfigPOST = {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'csrf-token': csrfToken,
-      },
-      dataType: "json",
-      body: JSON.stringify(this.state.user.profile_icon),  
-    };
+
+    var postBody = this.state.user.profile_icon;
+
+    await this.setState({
+      saving: true, 
+    })
+
+    var d = await _fetch('users/set_profile_icon', 'POST', this.props.setErrorCode, postBody) // TODO: move localhost out
+        
+    t.props.setUserProfileIcon(d.profile_icon);
 
     this.setState({
-      saving: true, 
-    }, () => {
-      fetch('https://nlp-tlp.org/redcoat/api/users/set_profile_icon', fetchConfigPOST) // TODO: move localhost out
-      .then((response) => {
-        if(response.status !== 200) {
-          throw new Error(response.status);
-        }  
-        return response.text()
-      })
-      .then((data) => {
-
-        var d = JSON.parse(data);       
-        t.props.setUserProfileIcon(d.profile_icon);
-
-        this.setState({
-          saving: false,
-        });
-      }).catch((err) => {
-        this.props.setErrorCode(parseInt(err.message));
-      });
+      saving: false,
     });
+
   }
 
   // Set the foreground colour

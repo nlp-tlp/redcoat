@@ -409,7 +409,7 @@ class App extends Component {
               <Route path={BASE_URL}   render={( ) =>            
                   this.state.user && !this.state.loggingOut
                   ? <Redirect to={BASE_URL + "projects"}/>
-                  : <HomeView setUserData={this.setUserData.bind(this)}/> }  />
+                  : <HomeView setUserData={this.setUserData.bind(this)} setErrorCode={this.setErrorCode.bind(this)} /> }  />
               <Route                  render={( ) => 
                 <MainTemplate {...this.state} pageTitle="" pageComponent={ 
                   <Error404Page/> } />} /> />

@@ -136,13 +136,13 @@ exports.login = async function(req, res, next) {
   passport.authenticate('local', function(err, user, info) {
     if(err) {
       logger.err(err.stack);
-      return next(err);
+      return res.send({error: err.stack});
     }
     if(!user) { 
       var msg = info.message;
       logger.error(msg);
-      if(msg === "Password or username is incorrect") msg = "Username/email or password is incorrect"
-      res.status(401).send({message: msg});
+      if(msg === "Password or username is incorrect") msg = "Username/email or password is incorrect";
+      res.send({error: msg});
 
       return;
 

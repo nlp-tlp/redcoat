@@ -15,16 +15,7 @@ import {Word, Sentence} from 'views/TaggingInterfaceView/documentComponents';
 
 import formatDate  from 'functions/formatDate';
 import BASE_URL from 'globals/base_url';
-
-
-// Config for all API fetch requests
-const fetchConfigGET = {
-  method: 'GET',
-  headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json'
-  }
-};
+import _fetch from 'functions/_fetch';
 
 
 
@@ -109,7 +100,9 @@ class CurationInterface extends Component {
 			}
 		})
 
-		var queryString = 'https://nlp-tlp.org/redcoat/api/projects/' + this.props.project_id + "/curation?pageNumber=" + this.state.pageNumber + "&sortBy=" + this.state.sortBy;
+
+
+		var queryString = 'projects/' + this.props.project_id + "/curation?pageNumber=" + this.state.pageNumber + "&sortBy=" + this.state.sortBy;
 		if(this.state.searchTerm) {
 			queryString += "&searchTerm=" + this.state.searchTerm;
 		}
@@ -117,54 +110,39 @@ class CurationInterface extends Component {
 			queryString += "&documentId=" + this.state.documentIdQuery;
 		}
 
-		fetch(queryString, fetchConfigGET)
-		.then((response) => {
-	        if(response.status === 403) {
-	          throw new Error(403);
-	        } else if(response.status === 401) {
-	          throw new Error(401);
-	        } 
-	        return response.text()
-	    })
-      	.then((data) => {
-      		var d = JSON.parse(data);
+		var d = await _fetch(queryString, 'GET', this.props.setErrorCode);
 
-      		this.setState({
-      			documentId: d.documentId,
-      			tokens: d.tokens,
+  		this.setState({
+  			documentId: d.documentId,
+  			tokens: d.tokens,
 
-      			annotations: initAnnotationsArray([d.tokens], d.annotations, this.state.searchTerm, true), //fix
-      			compiledAnnotation: d.compiledAnnotation ? initAnnotationsArray([d.tokens], [d.compiledAnnotation], this.state.searchTerm, true)[0] : null, //fix
-      			comments: d.comments,
+  			annotations: initAnnotationsArray([d.tokens], d.annotations, this.state.searchTerm, true), //fix
+  			compiledAnnotation: d.compiledAnnotation ? initAnnotationsArray([d.tokens], [d.compiledAnnotation], this.state.searchTerm, true)[0] : null, //fix
+  			comments: d.comments,
 
-      			users: d.users,
-      			saveTimes: d.saveTimes,
+  			users: d.users,
+  			saveTimes: d.saveTimes,
 
-      			documentIdQuery: null,
+  			documentIdQuery: null,
 
-      			annotatorAgreement: d.annotatorAgreement,
+  			annotatorAgreement: d.annotatorAgreement,
 
-      			entityColourMap: this.initEntityColourMap(d.categoryHierarchy.children),
+  			entityColourMap: this.initEntityColourMap(d.categoryHierarchy.children),
 
-      			pageNumber: d.pageNumber,
-      			totalPages: d.totalPages,
+  			pageNumber: d.pageNumber,
+  			totalPages: d.totalPages,
 
-      			loading: {
-      				querying: false,
-      				saving: false,
-      			}
-      		}, () => { 
+  			loading: {
+  				querying: false,
+  				saving: false,
+  			}
+  		}, () => { 
 
-      			if(this.refreshDataFn) window.clearTimeout(this.refreshDataFn)
-      			this.refreshDataFn = window.setTimeout(this.queryAPI.bind(this), 3000)
+  			if(this.refreshDataFn) window.clearTimeout(this.refreshDataFn)
+  			this.refreshDataFn = window.setTimeout(this.queryAPI.bind(this), 3000)
 
 
-      		})
-      	}).catch((err) => {
-	        console.log(err.message);
-	        this.props.setErrorCode(parseInt(err.message));
-	    });;
-
+  		})
 
 
 	}
@@ -227,57 +205,27 @@ class CurationInterface extends Component {
 	}
 
 
-	submitComment(message, next) {
+	async submitComment(message, next) {
 		var t = this;
 		console.log("Message:", message);
 
 		const csrfToken = getCookie('csrf-token');
 
-		const fetchConfigPOST = {
-		  method: 'POST',
-		  headers: {
-		    'Accept': 'application/json',
-		    'Content-Type': 'application/json',
-		    'csrf-token': csrfToken,
-		  },
-		  dataType: "json",
-		  body: JSON.stringify({
+		var postBody = {
 		    text: message,
 		    documentId: this.state.documentId,
-		  }),  
-		};
+		}  
 
-		fetch('https://nlp-tlp.org/redcoat/api/projects/' + this.props.project_id + '/comments/submit', fetchConfigPOST) // TODO: move localhost out
-		.then((response) => {
-	        if(response.status === 403) {
-	          throw new Error(403);
-	        } else if(response.status === 401) {
-	          throw new Error(401);
-	        } 
-	        return response.text()
-	    })
-		.then((data) => {
-		  console.log(data);
-		  try { 
-		    var d = JSON.parse(data);		    
+		var d = await _fetch('projects/' + this.props.project_id + '/comments/submit', 'POST', this.props.setErrorCode, postBody);
 
-		    var comments = this.state.comments;
-		    comments.push(d.comment);
+	    var comments = this.state.comments;
+	    comments.push(d.comment);
 
-
-		    this.setState({
-		       comments: comments,
-		    }, () => {
-		    	next();
-		    	t.commentBoxRef.current.scrollTop = t.commentBoxRef.current.scrollHeight;
-		    });
-		  } catch(err) {
-		    console.log("ERROR:", err);
-		    next();
-		  }      
-		}).catch((err) => {
-	        console.log(err.message);
-	        this.props.setErrorCode(parseInt(err.message));
+	    this.setState({
+	       comments: comments,
+	    }, () => {
+	    	next();
+	    	t.commentBoxRef.current.scrollTop = t.commentBoxRef.current.scrollHeight;
 	    });
 
 	}
@@ -402,18 +350,25 @@ class CurationDocumentContainer extends Component {
           		<div className="document-wrapper">
 	          		<div className={"curation-document" + ((!this.props.specialName && !this.props.user) ? " not-yet-annotated" : "")}>
 
-	          			{ !this.props.specialName && 
-	          			<div className="user-row">
 
-	          				<ProfileIcon user={this.props.user}/><span className="username">{this.props.user && this.props.user.username}</span> 
-	          				<div className="save-time">Saved on {formatDate(this.props.saveTime)}</div>
+
+	          			{ !this.props.specialName && 
+	          			<div className="user-col">
+
+	          				<ProfileIcon user={this.props.user}/>
+
+	          				<div><div className="username">{this.props.user && this.props.user.username}</div> 
+	          				<div className="save-time">{formatDate(this.props.saveTime, {no_hours: true})}</div></div>
 	          			</div>
 	          			}
 	          			{ this.props.specialName && 
-	          				<div className="user-row">
-	          					<span className="username"><em>{this.props.specialName}</em><i class="fa fa-info-circle" title={this.props.specialDescription}></i></span>
+	          				<div className="user-col">
+	          					<div>
+	          					<div className="username"><em>{this.props.specialName}</em><i class="fa fa-info-circle" title={this.props.specialDescription}></i></div></div>
 	          				</div>
 	          			}
+
+
 		          		<div className="sentence display-only">		          		
 
 		              		<Sentence 

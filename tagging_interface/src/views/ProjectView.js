@@ -9,6 +9,8 @@ import BASE_URL from 'globals/base_url';
 import _fetch from 'functions/_fetch'
 
 import { defaults } from 'react-chartjs-2'
+import 'chartjs-plugin-datalabels';
+
 
 import { Comment } from 'views/SharedComponents/Comment';
 
@@ -365,6 +367,20 @@ class EntityFrequenciesChart extends Component {
         data={this.state.data.entityClasses}
         height={230}
         options={{
+          plugins: {
+            datalabels: {
+                display: true,
+                color: 'rgba(0, 0, 0, 0.8)',
+                anchor: 'end',
+                align: 'start',
+                offset: -20,
+             }
+          },
+          layout: {
+            padding: {
+              top: 15,
+            }
+          },
           responsive: true,
           maintainAspectRatio: false,
           legend: {
@@ -477,6 +493,11 @@ class ActivityChart extends Component {
         height={230}
         redraw
         options={{
+          plugins: {
+            datalabels: {
+                display: false,
+             }
+          },
           responsive: true,
           maintainAspectRatio: false,
           scales: {
@@ -742,7 +763,7 @@ class ProjectViewSidenav extends Component {
     var currentLocation = window.location.pathname;
 
 
-	var c = currentLocation.slice(7, currentLocation.length);
+	var c = currentLocation.slice(BASE_URL.length - 1, currentLocation.length);
     var view = c.split('/').slice(3, c.split('/').length);
     console.log(view);
 

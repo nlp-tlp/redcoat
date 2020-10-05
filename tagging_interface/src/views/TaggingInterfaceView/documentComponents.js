@@ -71,6 +71,8 @@ class Word extends Component {
     var text = this.props.text;
     var highlighting = this.props.highlighting;
 
+    console.log(this.props.highlighting, "<X")
+
     var output = '';
 
     for(var i = 0; i < text.length; i++) {
@@ -101,7 +103,6 @@ class Word extends Component {
     } else {
       var labels = '';
     }
-
     var text = this.props.text;
     if(this.props.highlighting) {
       text = this.getHighlightedWord();

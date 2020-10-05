@@ -16,7 +16,7 @@ ABBREVIATION_MAXLENGTH     = 20;
 
 MAX_DOC_GROUP_SIZE         = 100; // The max number of docs that can be requested by a user at a time
 
-COMMENT_MAXLENGTH = 200;
+COMMENT_MAXLENGTH = 10000;
 
 PROJECT_NAME_MAXLENGTH 				= 100;
 PROJECT_DESCRIPTION_MAXLENGTH = 500; // Max length of a project description.

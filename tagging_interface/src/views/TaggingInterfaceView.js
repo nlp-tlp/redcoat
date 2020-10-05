@@ -27,18 +27,12 @@ import initAnnotationsArray from 'views/TaggingInterfaceView/initAnnotationsArra
 import Annotation from 'views/TaggingInterfaceView/Annotation';
 import Error403Page from 'views/Errors/Error403Page';
 import Error404Page from 'views/Errors/Error404Page';
+import _fetch from 'functions/_fetch';
+
+import ClipboardItem from 'clipboard'
 
 
-
-// Config for all API fetch requests
-const fetchConfigGET = {
-  method: 'GET',
-  headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json'
-  }
-};
-
+const NUM_ENTITY_COLOURS = 12;
 
 // https://stackoverflow.com/questions/3169786/clear-text-selection-with-javascript
 function clearWindowSelection() {
@@ -160,6 +154,20 @@ class DocumentContainer extends Component {
     });
   }
 
+  // // https://stackoverflow.com/questions/59182747/react-how-to-copy-an-image-to-clipboard
+  // async copyToClipboard(pngBlob) {
+  //   try {
+  //     await navigator.clipboard.write([
+  //       new ClipboardItem({
+  //           'image/png': pngBlob
+  //       })
+  //     ]);
+  //     console.log("Image copied");
+  //   } catch (error) {
+  //       console.error(error);
+  //   }
+  // }
+
   // Saves this sentence to a PNG file. wow!
   saveToPng() {
     var t = this;
@@ -174,7 +182,9 @@ class DocumentContainer extends Component {
 
     domtoimage.toBlob(node, {bgcolor: '#fefefe'})
     .then(function(blob) {
+      // t.copyToClipboard(blob);
       saveAs(blob, "document-" + t.props.index + ".png"); 
+      
     });
 
   }
@@ -237,9 +247,9 @@ class DocumentContainer extends Component {
                 <div className="comments-wrapper">
                   <div className="comments-inner">
                     <div className="comments-even-more-inner" ref={this.commentBoxRef}>
-                      { this.props.comments.map((comment, i) => <Comment index={i} {...comment} hideDocumentString={true} />) }
+                      { this.props.comments.map((comment, i) => <Comment key={i} index={i} {...comment} hideDocumentString={true} />) }
                     </div>
-                    <CommentInput user_profile_icon={this.props.user.profile_icon} submitComment={this.submitComment.bind(this)}/>
+                    <CommentInput open={this.state.commentsOpen} user_profile_icon={this.props.user.profile_icon} submitComment={this.submitComment.bind(this)}/>
 
                   </div>
                 </div>
@@ -654,6 +664,14 @@ class TaggingInterfaceView extends Component {
         case 'Control': if(this.state.holdingCtrl) this.setState({ holdingCtrl: false }); break;
       }      
     });
+
+    var t = this;
+    window.onblur = function() {
+      t.setState({
+        holdingShift: false,
+        holdingCtrl: false,
+      })
+    }
   }
 
 
@@ -802,7 +820,7 @@ class TaggingInterfaceView extends Component {
     var entityColourMap = {}
     for(var ec_idx in categoryHierarchy) {
       var entityClass = categoryHierarchy[ec_idx];
-      entityColourMap[entityClass.name] = entityClass.colorId + 1;
+      entityColourMap[entityClass.name] = (entityClass.colorId % NUM_ENTITY_COLOURS)  + 1;
     }
     return entityColourMap;
   }
@@ -906,7 +924,7 @@ class TaggingInterfaceView extends Component {
 
   /* API calls */
 
-  queryAPI(firstLoad, pageNumber) {
+  async queryAPI(firstLoad, pageNumber) {
 
     var route;
     var searchTerm = this.state.searchTerm;
@@ -924,119 +942,94 @@ class TaggingInterfaceView extends Component {
 
 
 
-    this.setState({
+    await this.setState({
       loading: {
         querying: true,
         saving: false,
         firstLoad: firstLoad,
       }
-    }, function() {
-      fetch('https://nlp-tlp.org/redcoat/api/projects/' + this.props.project_id + '/tagging/' + route, fetchConfigGET) // TODO: move localhost out
-        .then((response) => {
-            if(response.status !== 200) {
-              var t = response.text();
-              console.log(t);
-              throw new Error(response.status); 
-            }              
-            return response.text()
-        })
-        .then((data) => {
-          //console.log("data:", data);
-          try { 
-            var d = JSON.parse(data);
-          } catch(err) {
-            alert(err);
-            return;
-          }
+    })
 
+    var d = await _fetch('projects/' + this.props.project_id + '/tagging/' + route, 'GET', this.props.setErrorCode)
+    if(d.tagging_complete) {
+      //console.log(d);
+      this.setState({
+        taggingCompletePage: true,
 
-          if(d.tagging_complete) {
-            //console.log(d);
-            this.setState({
-              taggingCompletePage: true,
+        pageNumber: d.pageNumber,
+        totalPages: d.totalPages,
+        totalPagesAvailable: d.totalPagesAvailable + 1,
 
-              pageNumber: d.pageNumber,
-              totalPages: d.totalPages,
-              totalPagesAvailable: d.totalPagesAvailable + 1,
+        changesMade: false,
+        recentlySaved: false,
 
-              changesMade: false,
-              recentlySaved: false,
+        loading: {
+          querying: false,
+          saving: false,
+        },
+      })
+      console.log(d)
+      return;
+    } 
 
-              loading: {
-                querying: false,
-                saving: false,
-              },
-            })
-            console.log(d)
-            return;
-          } 
+    
+    await this.setState(
+      {
 
-          
-          this.setState(
-            {
-
-              data: d,
-              
-              documents:   d.documents,
-              documentIds: d.documentIds,
-
-              documentAnnotationIds: d.documentAnnotationIds ? d.documentAnnotationIds : null, // Will only be present when querying existing annotations
-
-              confidences: this.initConfidencesArray(d.documents),
-              annotations: initAnnotationsArray(d.documents, d.automaticAnnotations),
-
-              comments:    d.comments,
-
-              categoryHierarchy: d.categoryHierarchy,
-
-              entityColourMap: this.initEntityColourMap(d.categoryHierarchy.children),
-              
-              selections: this.getEmptySelectionsArray(d.documents.length),
-              mostRecentSelectionText: null,
-
-              pageNumber: d.pageNumber,
-              totalPages: d.totalPages,
-              totalPagesAvailable: d.totalPagesAvailable,
-
-              docGroupLastModified: d.lastModified,
-              documentGroupAnnotationId: d.documentGroupAnnotationId, // Will be null if this doc group has not yet been annotated
-
-              changesMade: false,
-              recentlySaved: false,
-              loading: {
-                querying: false,
-                saving: false
-              },     
-              taggingCompletePage: false,         
-            }, () => { 
-
-              if(d.projectTitle && d.projectAuthor) {
-                this.props.setProject(d.projectTitle, d.projectAuthor)
-              }
-
-              // Initialise keybinds and mouse events only on the first API call.
-              if(firstLoad) {
-                this.initKeybinds();              
-                this.initHotkeyMap(this.state.categoryHierarchy.children);   
-              }
-
-              this.initMouseEvents();
-              this.clearWordJustification();    
-              this.justifyWords();    
-              this.selectFirstWord();
-
-
-              window.scrollTo(0, 0);
-            })
-        }).catch((err) => {
-          console.log(err.message);
-
-          this.props.setErrorCode(parseInt(err.message));
-
-        });
+        data: d,
         
+        documents:   d.documents,
+        documentIds: d.documentIds,
 
-    }.bind(this));
+        documentAnnotationIds: d.documentAnnotationIds ? d.documentAnnotationIds : null, // Will only be present when querying existing annotations
+
+        confidences: this.initConfidencesArray(d.documents),
+        annotations: initAnnotationsArray(d.documents, d.automaticAnnotations, this.state.searchTerm),
+
+        comments:    d.comments,
+
+        categoryHierarchy: d.categoryHierarchy,
+
+        entityColourMap: this.initEntityColourMap(d.categoryHierarchy.children),
+        
+        selections: this.getEmptySelectionsArray(d.documents.length),
+        mostRecentSelectionText: null,
+
+        pageNumber: d.pageNumber,
+        totalPages: d.totalPages,
+        totalPagesAvailable: d.totalPagesAvailable,
+
+        docGroupLastModified: d.lastModified,
+        documentGroupAnnotationId: d.documentGroupAnnotationId, // Will be null if this doc group has not yet been annotated
+
+        changesMade: false,
+        recentlySaved: false,
+        loading: {
+          querying: false,
+          saving: false
+        },     
+        taggingCompletePage: false,         
+      });
+
+
+    if(d.projectTitle && d.projectAuthor) {
+      this.props.setProject(d.projectTitle, d.projectAuthor)
+    }
+
+    // Initialise keybinds and mouse events only on the first API call.
+    if(firstLoad) {
+      this.initKeybinds();              
+      this.initHotkeyMap(this.state.categoryHierarchy.children);   
+    }
+
+    this.initMouseEvents();
+    this.clearWordJustification();    
+    this.justifyWords();    
+    this.selectFirstWord();
+
+
+    window.scrollTo(0, 0);
+
   }
 
   // Convert the annotations array into JSON.
@@ -1063,94 +1056,63 @@ class TaggingInterfaceView extends Component {
   // Submit the annotations of the document group that the user is currently looking at.
   // TODO: Maybe make it so that you can't save the annoations until the user has put all their confidences in?
   // Or perhaps do a check and pop a confirmation window up if they click save without doing anything to >= 1 document
-  submitAnnotations() {
+  async submitAnnotations() {
     if(this.state.recentlySaved) { return; } // If the user clicks on the green save button, provide them with the illusion that it is doing
                                              // something when in fact nothing actually happens. Prevents people from spam clicking the save and
                                              // calling the API 5000 times...
                                              // It's kind of like how google sheets allows you to press Ctrl + S despite it saving every action
                                              // automatically.
 
-    const csrfToken = getCookie('csrf-token');
-
     var annotationsJSON = this.annotationsToJSON();
 
-    const fetchConfigPOST = {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'csrf-token': csrfToken,
-      },
-      dataType: "json",
-      body: JSON.stringify({
-        documentIds: this.state.documentIds,
-        documentAnnotationIds: this.state.documentAnnotationIds,
-        labels: annotationsJSON
-      }),  
-    };
+    var postBody = {
+      documentIds: this.state.documentIds,
+      documentAnnotationIds: this.state.documentAnnotationIds,
+      labels: annotationsJSON
+    }
 
     this.setState({
       loading: {
         querying: false,
         saving: true,
       }
-    }, () => {
-
-      fetch('https://nlp-tlp.org/redcoat/api/projects/' + this.props.project_id + '/tagging/submitAnnotations', fetchConfigPOST) // TODO: move localhost out
-      .then((response) => {
-        if(response.status !== 200) {          
-          throw new Error(response.status); 
-        }              
-        return response.text()
-      })
-      .then((data) => {
-        try { 
-          var d = JSON.parse(data);
-
-          var documentAnnotationIds = d.documentAnnotationIds;
-
-          console.log("Submitted annotations OK");
-
-          // If the user is on the last page (i.e. the 'current group'), add one to the totalPages array so that the user can
-          // click 'Next' to go to the latest doc group.
-          if(this.state.pageNumber === this.state.totalPagesAvailable && !this.state.searchTerm) {
-            var newTotalPagesAvailable = this.state.totalPagesAvailable + 1;
-            this.setState({
-              showingProgressBar: true,
-            }, () => {
-              window.setTimeout(() => this.setState({
-                showingProgressBar: false,
-              }), 3000);
-            })
-
-          } else {
-            var newTotalPagesAvailable = this.state.totalPagesAvailable;
-          }
-
-          this.setState({
-             docGroupLastModified: Date.now(),
-
-             totalPagesAvailable: newTotalPagesAvailable,       
-
-             documentAnnotationIds: documentAnnotationIds,
-
-             changesMade: false,
-             recentlySaved: true,
-             loading: {
-              querying: false,
-              saving: false
-             }
-          });
-        } catch(err) {
-          console.log("ERROR:", err);
-          alert(data);
-        }
-        
-      }).catch((err) => {
-        console.log(err.message);
-        this.props.setErrorCode(parseInt(err.message));
-      });;
     })
+
+    var d = await _fetch('projects/' + this.props.project_id + '/tagging/submitAnnotations', 'POST', this.props.setErrorCode, postBody) // TODO: move localhost out
+    var documentAnnotationIds = d.documentAnnotationIds;
+
+    console.log("Submitted annotations OK");
+
+    // If the user is on the last page (i.e. the 'current group'), add one to the totalPages array so that the user can
+    // click 'Next' to go to the latest doc group.
+    if(this.state.pageNumber === this.state.totalPagesAvailable && !this.state.searchTerm) {
+      var newTotalPagesAvailable = this.state.totalPagesAvailable + 1;
+      this.setState({
+        showingProgressBar: true,
+      }, () => {
+        window.setTimeout(() => this.setState({
+          showingProgressBar: false,
+        }), 3000);
+      })
+
+    } else {
+      var newTotalPagesAvailable = this.state.totalPagesAvailable;
+    }
+
+    this.setState({
+       docGroupLastModified: Date.now(),
+
+       totalPagesAvailable: newTotalPagesAvailable,       
+
+       documentAnnotationIds: documentAnnotationIds,
+
+       changesMade: false,
+       recentlySaved: true,
+       loading: {
+        querying: false,
+        saving: false
+       }
+    });
   }
 
   /* Mounting function */
@@ -1544,58 +1506,25 @@ class TaggingInterfaceView extends Component {
 
   /* Comments */
 
-  submitComment(message, documentIndex, next) {
+  async submitComment(message, documentIndex, next) {
     console.log("Message:", message, "Document index", documentIndex);
 
-    const csrfToken = getCookie('csrf-token');
+    var postBody = {
+      text: message,
+      documentId: this.state.documentIds[documentIndex],      
+    }
 
-    const fetchConfigPOST = {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'csrf-token': csrfToken,
-      },
-      dataType: "json",
-      body: JSON.stringify({
-        text: message,
-        documentId: this.state.documentIds[documentIndex],
-      }),  
-    };
+    console.log(this.state.documentIds[documentIndex],'xzzz');
 
-    fetch('https://nlp-tlp.org/redcoat/api/projects/' + this.props.project_id + '/comments/submit', fetchConfigPOST) // TODO: move localhost out
-    .then((response) => {
-        if(response.status !== 200) {
-          throw new Error(response.status); 
-        }              
-        return response.text()
-    })
-    .then((data) => {
-      console.log(data);
-      try { 
-        var d = JSON.parse(data);
-        
+    var d = await _fetch('projects/' + this.props.project_id + '/comments/submit', 'POST', this.props.setErrorCode, postBody) // TODO: move localhost out
+    console.log("Submitted comment OK");
 
-        console.log("Submitted comment OK");
+    var comments = this.state.comments;
+    comments[documentIndex].push(d.comment);
 
-        var comments = this.state.comments;
-        comments[documentIndex].push(d.comment);
-
-        this.setState({
-           comments: comments,
-        }, next);
-      } catch(err) {
-        console.log("ERROR:", err);
-      }      
-    }).catch((err) => {
-      console.log(err.message);
-
-      this.props.setErrorCode(parseInt(err.message));
-
-    });
-
-
-    
+    this.setState({
+       comments: comments,
+    }, next);    
   }
 
   /* Events */
@@ -1681,7 +1610,7 @@ class TaggingInterfaceView extends Component {
                   <DocumentContainer
                     key={i}
                     index={ i }
-                    displayIndex={( (this.state.pageNumber - 1) * 10 ) + i + 1  }
+                    displayIndex={( (this.state.pageNumber - 1) * this.state.docsPerPage ) + i + 1  }
                     words={doc}              
                     annotations={this.state.annotations[i]}  
                     comments={this.state.comments[i]}

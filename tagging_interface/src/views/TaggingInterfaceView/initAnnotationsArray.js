@@ -7,7 +7,7 @@ import Annotation from './Annotation';
 // oneDocument = whether this is only being passed one doc but multiple annotations i.e. curation interface
 function initAnnotationsArray(documents, automaticAnnotations, searchTerm, oneDocument) {
 
-
+  console.log(searchTerm, "<SEARCHTERM")
   console.log(documents)
   console.log(automaticAnnotations);
   console.log('---')
