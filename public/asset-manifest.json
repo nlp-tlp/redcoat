@@ -1,0 +1,24 @@
+{
+  "files": {
+    "main.css": "/redcoat/static/css/main.e6393388.chunk.css",
+    "main.js": "/redcoat/static/js/main.3b630afd.chunk.js",
+    "main.js.map": "/redcoat/static/js/main.3b630afd.chunk.js.map",
+    "runtime-main.js": "/redcoat/static/js/runtime-main.4dfa3ad0.js",
+    "runtime-main.js.map": "/redcoat/static/js/runtime-main.4dfa3ad0.js.map",
+    "static/js/2.bd8b4614.chunk.js": "/redcoat/static/js/2.bd8b4614.chunk.js",
+    "static/js/2.bd8b4614.chunk.js.map": "/redcoat/static/js/2.bd8b4614.chunk.js.map",
+    "index.html": "/redcoat/index.html",
+    "precache-manifest.5732841aa779558933b0a003afae06f0.js": "/redcoat/precache-manifest.5732841aa779558933b0a003afae06f0.js",
+    "service-worker.js": "/redcoat/service-worker.js",
+    "static/css/main.e6393388.chunk.css.map": "/redcoat/static/css/main.e6393388.chunk.css.map",
+    "static/js/2.bd8b4614.chunk.js.LICENSE.txt": "/redcoat/static/js/2.bd8b4614.chunk.js.LICENSE.txt",
+    "static/media/stylesheet.scss": "/redcoat/static/media/fontawesome-webfont.fee66e71.woff",
+    "static/media/redcoat-1-grey.png": "/redcoat/static/media/redcoat-1-grey.fd5c7c00.png"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.4dfa3ad0.js",
+    "static/js/2.bd8b4614.chunk.js",
+    "static/css/main.e6393388.chunk.css",
+    "static/js/main.3b630afd.chunk.js"
+  ]
+}

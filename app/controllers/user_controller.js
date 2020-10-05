@@ -66,7 +66,7 @@ exports.userData = async function(req, res, next) {
 // }
 
 // GET: Render the reset password page, called by clicking on the link sent via the reset password email.
-exports.reset_password = function(req, res) {
+/*exports.reset_password = function(req, res) {
   User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, function(err, user) {
     if(!user) {
       return res.render('users/forgot_password', {
@@ -81,6 +81,7 @@ exports.reset_password = function(req, res) {
     });
   });
 }
+*/
 
 // GET: The logout action.
 exports.logout = function(req, res) {

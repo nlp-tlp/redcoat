@@ -35,7 +35,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build && cd .. && cp -r tagging_interface/build/. public/redcoat/ && mv public/redcoat/index.html public/redcoat/app.html",
+    "build": "react-scripts build && cd .. && cp -r tagging_interface/build/. public/ && mv public/index.html public/app.html",
     "dev": "concurrently \"NODE_ENV=development PORT=3000 nodemon\" \" cd tagging_interface && PORT=3001 yarn start\"",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
