@@ -223,7 +223,7 @@ class DocumentContainer extends Component {
 
 
 
-          <div className={"document document-underneath" + (this.state.commentsOpen ? " open" : "")} ref={this.documentUnderneathRef}>
+          <div className={"document document-underneath" + (this.state.commentsOpen ? " open" : "")  + (this.props.comments.length > 0 ? " has-comment" : "")} ref={this.documentUnderneathRef}>
             <div className="sentence-index"></div>
             <div className="sentence">
 
@@ -233,7 +233,7 @@ class DocumentContainer extends Component {
                 <div className={"open-comments-button" + (this.props.comments.length > 0 ? " has-comment" : "")}>
                   <span className="inner" onClick={this.toggleOpenComments.bind(this)}>
                     <i className="fa fa-comment"></i>
-                    <span className="num-comments">{this.props.comments.length}</span>
+                    <span className="num-comments">{this.props.comments.length}{this.props.comments.length > 0 ? (" comment" + (this.props.comments.length > 1 ? "s" : "")) : ""}</span>
                   </span>            
                 </div> 
 

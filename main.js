@@ -231,7 +231,7 @@ app.use(function(req, res, next) {
 
     User.findOne({username: "test"}, function(err, user) {
 
-      
+      return next(null, req, res);
       req.login(user, function(err) {
 
         //const token = jwt.sign(user, 'your_jwt_secret');

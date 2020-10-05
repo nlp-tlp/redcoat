@@ -351,14 +351,19 @@ class CurationDocumentContainer extends Component {
 	          		<div className={"curation-document" + ((!this.props.specialName && !this.props.user) ? " not-yet-annotated" : "")}>
 
 
-
-	          			{ !this.props.specialName && 
+	          			{ !this.props.user && !this.props.specialName && 
+	          				<div className="user-col"></div>
+	          			}
+	          			{ !this.props.specialName && this.props.user && 
 	          			<div className="user-col">
 
 	          				<ProfileIcon user={this.props.user}/>
 
-	          				<div><div className="username">{this.props.user && this.props.user.username}</div> 
-	          				<div className="save-time">{formatDate(this.props.saveTime, {no_hours: true})}</div></div>
+
+	          				<div>
+	          					<div className="username">{this.props.user && this.props.user.username}</div> 
+	          					<div className="save-time" style={{'display': 'none'}}>{formatDate(this.props.saveTime, {no_hours: true})}</div>
+	          				</div>
 	          			</div>
 	          			}
 	          			{ this.props.specialName && 

@@ -601,6 +601,10 @@ body.taking-screenshot .save-to-png {
 		&.document-underneath {
 			background: rgba(255, 255, 255, 0.3);
 			transition: background 0.2s ease;
+
+			// &.has-comment {
+			// 	background: rgba(lighten($button-blue, 15), 0.45);
+			// }
 			.confidence-buttons {
 				background: none !important;
 			}
@@ -679,6 +683,11 @@ body.taking-screenshot .save-to-png {
 
 					&.has-comment {
 						color: rgba(0, 0, 0, 0.7);
+						background: $button-blue;
+						color: white;
+						&:hover {
+							background: lighten($button-blue, 5);
+						}
 					}
 					
 					i {

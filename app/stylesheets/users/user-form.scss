@@ -76,6 +76,10 @@
 	}
 	input[type="submit"] {
 	}
+	.form-notice {
+		font-size: 17px;
+		margin-bottom: 10px;
+	}
 	form {
 		fieldset {
 			padding: 0 25px;
@@ -96,8 +100,9 @@
 			&:focus {
 				outline: none;
 				border: 2px solid rgba(250, 185, 5, 0.8);
-				margin-bottom: 24px;
-				margin-top: -1px;
+				//margin-bottom: 24px;
+				//margin-top: -1px;
+				padding: 11px;
 			}
 		}
 		select {

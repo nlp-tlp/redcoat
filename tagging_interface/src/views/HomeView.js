@@ -2,9 +2,14 @@ import React from "react";
 import {Component} from "react";
 import BASE_URL from 'globals/base_url';
 
-import { Redirect, Link, BrowserRouter, Route, Switch, withRouter } from 'react-router-dom'
+import { Redirect, Link, BrowserRouter, Route, Switch, withRouter } from 'react-router-dom';
 import { TransitionGroup, CSSTransition } from "react-transition-group";
 import getCookie from 'functions/getCookie';
+
+import HomeViewLogin from 'views/HomeView/HomeViewLogin';
+import HomeViewRegister from 'views/HomeView/HomeViewRegister';
+import HomeViewForgotPassword from 'views/HomeView/HomeViewForgotPassword';
+import HomeViewResetPassword from 'views/HomeView/HomeViewResetPassword';
 
 import _fetch from 'functions/_fetch';
 
@@ -58,162 +63,7 @@ class LettersBackground extends Component {
   }
 }
 
-class HomeViewRegister extends Component {
-  constructor(props) {
-    super(props);
-  }
 
-  render() {
-    return (
-      <div class="user-form form-box">
-        <div class="header">
-          <h1>Register</h1>
-        </div>
-        <div class="body">
-          <div className="loading-message"><i className="fa fa-spinner fa-spin"></i>Loading...</div>
-          <form action="/redcoat/register" method="post">
-            <div>
-              <label>Username</label>
-              <input type="text" name="username" autoFocus="autofocus" placeholder="Username" required="required"/>
-            </div>
-            <div>
-              <label>Email</label>
-              <input type="email" name="email" placeholder="Email" required="required"/>
-            </div>
-            <div>
-              <label>Password</label>
-              <input id="password" type="password" name="password" placeholder="Password" required="required"/>
-              <label>Password confirmation</label>
-              <input id="password_confirmation" type="password" name="password_confirmation" required="required" placeholder="Password confirmation"/>
-            </div>
-            <div class="buttons">
-              <div><Link class="back-button" to={BASE_URL}><i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back</Link></div>
-              <div>
-                <input type="submit" value="Register"/>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-}
-
-class HomeViewLogin extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      email: '',
-      password: '',
-      error: null,
-      errorMessage: null,
-    }
-  }
-
-  handleUsernameChange(e) {
-    this.setState({
-      email: e.target.value,
-    })
-  }
-
-  handlePasswordChange(e) {
-    this.setState({
-      password: e.target.value,
-    })
-  }
-
-  async submitForm(e) {
-    e.preventDefault();
-    console.log(e);
-
-    var postBody = {
-      email: this.state.email,
-      password: this.state.password,
-    }
-
-
-
-    await this.setState({
-      errorMessage: null,
-      loading: true,
-    })
-
-    
-    var d = await _fetch('users/login', 'POST', this.props.setErrorCode, postBody);
-    console.log("D:", d);
-    if(!d.error) { // Not using status codes as they are intercepted by _fetch
-      this.props.setUserData(d); 
-    } else {      
-      this.setState({
-        errorMessage: d.error,
-        password: '',
-        loading: false,
-      });
-    }
-  }
-
-  render() {
-    return (
-      <div class={"user-form form-box" + (this.state.loading ? " loading" : "")}>
-        <div class="header">
-          <h1>Login</h1>
-        </div>
-        <div class="body">
-          <div className="loading-message"><i className="fa fa-spinner fa-spin"></i>Loading...</div>
-          { this.state.errorMessage && <div className="error-message"><span className="error">Error: </span>{this.state.errorMessage}.</div>}
-          
-          <form onSubmit={this.submitForm.bind(this)} method="post">
-            <div>
-              <label>Username or email</label>
-              <input type="text" name="email" autoFocus="autofocus" required="required" placeholder="Username or email" value={this.state.email} onChange={this.handleUsernameChange.bind(this)} />
-            </div>
-            <div>
-              <label>Password</label>
-              <input type="password" name="password" required="required" placeholder="Password" value={this.state.password} onChange={this.handlePasswordChange.bind(this)} />
-            </div><Link class="forgot-password-link" to={BASE_URL + "forgot_password"}>Forgot password?</Link>
-            <div class="buttons">
-              <div><Link class="back-button" to={BASE_URL}><i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back</Link></div>
-              <div>
-                <input type="submit" value="Login"/>
-              </div>
-            </div>
-          </form>
-
-        </div>
-      </div>
-    )
-  }
-}
-
-class HomeViewForgotPassword extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    return (
-      <div class="user-form form-box">
-        <div class="header">
-          <h1>Forgot Password</h1>
-        </div>
-        <div class="body">
-          <form action="/redcoat/forgot_password" method="post">
-            <div>
-              <label>Email</label>
-              <input type="email" name="email" placeholder="Email" required="required" autoFocus="autofocus"/>
-            </div>
-            <div class="buttons">
-              <div><Link class="back-button" to={BASE_URL + "login"}><i class="fa fa-chevron-left"></i>&nbsp;&nbsp; Back</Link></div>
-              <div>
-                <input type="submit" value="Reset password"/>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-}
 
 class HomeViewMain extends Component {
   constructor(props) {
@@ -266,9 +116,12 @@ class HomeView extends Component {
             <section className="route-section homepage-route-section">
              <Switch location={location}>
                  
-                <Route path={BASE_URL + "login"}    render={() => <HomeViewLogin setErrorCode={this.props.setErrorCode} setUserData={this.props.setUserData}/> } />     
-                <Route path={BASE_URL + "register"} render={() => <HomeViewRegister setErrorCode={this.props.setErrorCode} /> } />  
-                <Route path={BASE_URL + "forgot_password"} render={() => <HomeViewForgotPassword setErrorCode={this.props.setErrorCode} /> } />  
+                <Route path={BASE_URL + "login"}              render={() => <HomeViewLogin setErrorCode={this.props.setErrorCode} setUserData={this.props.setUserData}/> } />     
+                <Route path={BASE_URL + "register"}           render={() => <HomeViewRegister setErrorCode={this.props.setErrorCode} /> } />  
+                <Route path={BASE_URL + "forgot_password"}    render={() => <HomeViewForgotPassword setErrorCode={this.props.setErrorCode} /> } />  
+                <Route path={BASE_URL + "reset_password/:id"} render={(p) => <HomeViewResetPassword token={p.match.params.id} setErrorCode={this.props.setErrorCode} /> } />  
+                <Route exact path={BASE_URL + "reset_password"}     render={() => <Redirect to={BASE_URL}/> } />  
+
                 <Route path={BASE_URL}         component={HomeViewMain} />       
                 
               </Switch>
