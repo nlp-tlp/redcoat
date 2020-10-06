@@ -180,7 +180,7 @@ passport.deserializeUser(User.deserializeUser());
 
 
 
-var debugMode = false; // Set to true when running the react server (e.g. port 4000).
+var debugMode = true; // Set to true when running the react server (e.g. port 4000).
 
 
 var useCSRF = !debugMode; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.
@@ -231,7 +231,7 @@ app.use(function(req, res, next) {
 
     User.findOne({username: "test"}, function(err, user) {
 
-      return next(null, req, res);
+      //return next(null, req, res);
       req.login(user, function(err) {
 
         //const token = jwt.sign(user, 'your_jwt_secret');

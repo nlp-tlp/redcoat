@@ -20,6 +20,7 @@ import {Comment, CommentInput} from '../views/SharedComponents/Comment';
 import ControlBar from 'views/SharedComponents/ControlBar';
 
 import getCookie from 'functions/getCookie';
+import setCookie from 'functions/setCookie';
 
 import formatDate  from 'functions/formatDate';
 
@@ -154,12 +155,16 @@ class DocumentContainer extends Component {
     });
   }
 
-  // // https://stackoverflow.com/questions/59182747/react-how-to-copy-an-image-to-clipboard
+  // // // https://stackoverflow.com/questions/59182747/react-how-to-copy-an-image-to-clipboard
   // async copyToClipboard(pngBlob) {
+  //   //console.log(pngBlob)
+    
+
+  //   //console.log(x);
   //   try {
   //     await navigator.clipboard.write([
   //       new ClipboardItem({
-  //           'image/png': pngBlob
+  //           [pngBlob.type]: pngBlob
   //       })
   //     ]);
   //     console.log("Image copied");
@@ -179,6 +184,11 @@ class DocumentContainer extends Component {
       }
       return node;
     }
+
+    // domtoimage.toPng(node, {bgcolor: '#fefefe'})
+    // .then(function(png) {
+    //   t.copyToClipboard(png);
+    // })
 
     domtoimage.toBlob(node, {bgcolor: '#fefefe'})
     .then(function(blob) {
@@ -574,6 +584,9 @@ class TaggingInterfaceView extends Component {
       docsPerPage: 10, // The number of docs per page, can be changed by the user
 
       taggingCompletePage: false, // Set to true when the user is on the 'tagging complete' page.
+
+
+      savedCategoryHierarchyOrder: null, // Load the previous drag order from cookie if available on mount
 
     }    
   }
@@ -973,6 +986,16 @@ class TaggingInterfaceView extends Component {
     } 
 
     
+
+    try {
+      var savedCategoryHierarchyOrder = getCookie('hierarchy-order-' + this.props.project_id).split(',');
+    } catch(err) {
+      savedCategoryHierarchyOrder = null;
+    }
+
+    console.log(savedCategoryHierarchyOrder);
+    
+
     await this.setState(
       {
 
@@ -1008,7 +1031,9 @@ class TaggingInterfaceView extends Component {
           querying: false,
           saving: false
         },     
-        taggingCompletePage: false,         
+        taggingCompletePage: false,
+
+        savedCategoryHierarchyOrder: savedCategoryHierarchyOrder,         
       });
 
 
@@ -1119,7 +1144,9 @@ class TaggingInterfaceView extends Component {
 
   // When this component is mounted, call the API.
   // Set up the keybinds and mouseup event when done.
-  componentWillMount() {
+  componentDidMount() {
+
+
 
     // var pathname = window.location.pathname;
     // var project_id = pathname.split('/')[2];
@@ -1555,6 +1582,13 @@ class TaggingInterfaceView extends Component {
 
   }
 
+  // Save the drag settings of the hierarchy to a cookie so that when the page is reloaded, the drag settings are restored.
+  saveDragSettings(order) {
+    console.log(order);
+    var c = {}
+    setCookie('hierarchy-order-' + this.props.project_id, order, 10000);
+  }
+
   /* Rendering function */
 
 
@@ -1655,7 +1689,10 @@ class TaggingInterfaceView extends Component {
                 applyTag={this.applyTag.bind(this)}        
                 visible={!taggingCompletePage}      
                 draggable={true}
+                itemOrder={this.state.savedCategoryHierarchyOrder}
+                saveDragSettings={this.saveDragSettings.bind(this)}
               />
+             
             </div>      
           </div> }
    

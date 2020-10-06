@@ -254,6 +254,8 @@ class CategoryHierarchy extends Component {
                           // e.g. [0, 1, 3, 2]
       orderedItems: [],
       openedItems: new Set(),    // An set keep track of the items that have been open (indexed by name).
+
+      orderedByCookie: false, // Save whether the order has been loaded from cookie (only gets set once)
     }
     this.onDragEnd = this.onDragEnd.bind(this);
   }
@@ -262,10 +264,24 @@ class CategoryHierarchy extends Component {
   // (which defaults to ascending order e.g. 0, 1, 2, 3, 4 ...)
   componentDidUpdate(prevProps, prevState) {
     var itemOrder = setupItemOrder(this.props.items);
+
+  
+
     if(!_.isEqual(prevProps.items, this.props.items)) {
+
+      var orderedItems = this.props.items;
+      var orderedByCookie = this.state.orderedByCookie;
+
+      if(this.props.itemOrder && !orderedByCookie) {
+        if(this.props.itemOrder) itemOrder = this.props.itemOrder;
+        orderedItems = getOrderedItems(this.props.items, itemOrder);
+        orderedByCookie = true;
+      }
+
       this.setState({
+        orderedByCookie: orderedByCookie,
         openedItems: new Set(),
-        orderedItems: this.props.items,
+        orderedItems: orderedItems,
         itemOrder: itemOrder,
       });      
     }
@@ -273,6 +289,16 @@ class CategoryHierarchy extends Component {
 
   componentWillMount() {
     var itemOrder = setupItemOrder(this.props.items);
+    //console.log(this.props.itemOrder,' <XZXX')
+    
+
+    //var orderedItems = this.props.items;
+
+    //if(this.props.itemOrder) {
+    //  itemOrder = this.props.itemOrder;
+    //  orderedItems = getOrderedItems(this.props.items, itemOrder);
+    //}
+    //console.log(orderedItems);
 
     this.setState({
       openedItems: new Set(),
@@ -316,12 +342,15 @@ class CategoryHierarchy extends Component {
 
     var orderedItems = getOrderedItems(this.props.items, itemOrder)
 
-    this.props.initHotkeyMap(orderedItems, () =>
+    this.props.initHotkeyMap(orderedItems, () => {
       this.setState({
         itemOrder: itemOrder,
         orderedItems: orderedItems,
-      })
-    );
+      }, () => {
+        if(this.props.saveDragSettings) this.props.saveDragSettings(itemOrder);
+
+      });
+    });
   }
 
   
@@ -462,6 +491,7 @@ class ModifiableCategoryHierarchy extends Component {
       items: items,
     });
     this.props.updateHierarchy(this.state.items)
+    //if(this.props.saveDragSettings) this.props.saveDragSettings()
   }
 
 
