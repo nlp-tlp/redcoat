@@ -11,9 +11,7 @@ var DocumentAnnotation = require('./document_annotation');
 var Comment = require('./comment');
 var User = require("./user");
 
-
 var cf = require("./common/common_functions");
-var nanoid = require('nanoid');
 
 var moment = require('moment');
 

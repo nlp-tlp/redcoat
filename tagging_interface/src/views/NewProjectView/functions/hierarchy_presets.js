@@ -169,7 +169,37 @@ var hierarchyPresets = [
             "Abbreviation": "An abbreviated term",
             
       }
-    },    
+    },   
+    {
+      "name": "Maintenance work orders (v2)",
+      "entities": [
+            "Item",
+            "Activity",
+            "Location",
+            "Location/Absolute_loc",
+            "Location/Relative_loc",
+            "Time",
+            "Attribute",
+            "Attribute/Attribute_desc",
+            "Attribute/Attribute_value",
+            "Cardinality",
+            "Agent",
+            "Consumable_or_commodity",
+            "Consumable_or_commodity/Consumable",
+            "Consumable_or_commodity/Commodity",
+            "Consumable_or_commodity/Waste_biproduct",
+            "Negation",
+            "Observed_state",
+            "Specifier",
+            "Identifier",
+            "Identifier/Item_ID",
+            "Identifier/Make",
+            "Unsure",
+            "Typo",
+            "Abbreviation",
+            "Noise",
+      ]
+    },     
     {
       "name": "Mining accidents",
       "entities": [

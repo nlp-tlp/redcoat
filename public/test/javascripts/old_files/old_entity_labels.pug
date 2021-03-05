@@ -1,0 +1,388 @@
+
+	script.
+
+		var csrfToken   = "!{csrfToken}";
+		var wippid      = "!{wip_project_id}";
+		var safeToValidate = true;
+		var uploadingLabels = false;
+
+		var rowValidatingTimeout;
+
+
+
+		function uploadValidLabels() {
+
+			console.log("Uploading labels...");
+
+			uploadingLabels = true;
+
+			validLabelData = [];
+			for(var i = 0; i < validLabelObjs.length; i++) {
+				validLabelData.push({
+					label: validLabelObjs[i].label,
+					abbreviation: validLabelObjs[i].abbreviation,
+					color: validLabelObjs[i].color
+				});
+
+			}
+			console.log(validLabelData, "data")
+
+			var trs = $("#entity-categories-table tr");
+			rowValidatingTimeout = window.setTimeout(function() {
+				trs.addClass("row-validating");
+			}, 500);
+			
+
+
+			//console.log("Saved");
+			$.ajax(
+			{
+				url: 			'upload-validlabels',
+				type:			'POST',
+				data: 			{validLabelData},
+				dataType: 		"json",
+				headers: { 'csrf-token': csrfToken, 'wippid' : wippid },
+				complete: function()
+				{
+					//$form.removeClass( 'is-uploading' );
+				},
+				success: function( data )
+				{
+
+					$("#error-banner").removeClass("show");
+					//if($("#project-name-form input").val().length > 0) {
+					window.clearTimeout(rowValidatingTimeout);
+					
+
+					if(data.errors) {
+						console.log("hello", data)
+
+
+						if(safeToValidate) {
+							trs.removeClass("row-validating");
+							console.log(data.errors);
+
+
+							for(var i = 0; i < data.errors.length; i++) {
+
+								if(data.errors[i].length == 0) {
+									validLabelObjs[i].markAsValid();
+								} else {
+									validLabelObjs[i].markAsInvalid();
+									for(var j = 0; j < data.errors[i].length; j++) {
+										validLabelObjs[i].markError(data.errors[i][j].item_name, data.errors[i][j].message);
+									}
+									
+								}
+
+							}
+						} else {
+							safeToValidate = true;
+						}
+
+					}
+
+					else {
+
+						console.log("no errors")						
+						if(safeToValidate) {
+							trs.removeClass("row-validating");
+							for(var i = 0; i < validLabelObjs.length; i++) {
+								validLabelObjs[i].markAsValid();
+							}
+							$("#saved-notification-entity-categories").addClass("show");
+							$("#li-entity-categories").addClass("completed");
+							console.log("Safe to validate")
+						} else {
+							console.log("Not safe to validate (changed since pinged)")
+							window.clearTimeout(validlabelsTimeout);
+							validlabelsTimeout = window.setTimeout(uploadValidLabels, 1000);						
+							safeToValidate = true;
+						}
+
+
+					}
+
+					uploadingLabels = false;				
+				},
+				error: function()
+				{								
+					displayServerErrorBanner();
+				}
+			});	
+		}
+
+		function setValidLabelsTimeout() {			
+			$("#saved-notification-entity-categories").removeClass("show");
+			$("#li-entity-categories").removeClass("completed");	
+			if(uploadingLabels) 		
+				safeToValidate = false;		
+			window.clearTimeout(validlabelsTimeout);
+			validlabelsTimeout = window.setTimeout(uploadValidLabels, 1000);
+		}
+
+
+
+		// Valid Labels
+		var validlabelsTimeout;
+
+		
+
+
+
+		// Set up color palette
+		function chunk (arr, len) {
+		  var chunks = [],
+		      i = 0,
+		      n = arr.length;
+
+		  while (i < n) {
+		    chunks.push(arr.slice(i, i += len));
+		  }
+		  return chunks;
+		}
+		var colorInd = 0;
+		var colorList = ["#99FFCC", "#FFCCCC", "#CCCCFF", "#CCFF99", "#CCFFCC", "#CCFFFF", "#FFCC99", "#FFCCFF", "#FFFF99", "#FFFFCC", "#CCCC44", "#fbafff", "#ffbfaf", "#c6ffcb", "CC99FF", "#9999FF", "#FF99FF", "#FC9999", "#FBAFBA", "#C6FFFF"].reverse(); 
+		var colorPalette = chunk(colorList, 3);
+
+		
+
+		var MAX_VALID_LABELS = 20;
+
+		var $ect_tbody = $("#entity-categories-table tbody");
+		var labelId = 0;
+		var colorId = 0;
+		var validLabelObjs = new Array();
+
+
+
+		class ValidLabelInput {
+
+			constructor(label, abbreviation, color, id) {
+				labelId++;
+				colorId++;
+
+				var t = this;
+
+				this.label = label || "";
+				this.abbreviation = abbreviation || "";
+				this.color = color || colorList.pop();
+				this.originalColor = this.color;
+				this.colorInPalette = !color;
+				
+				var id = id || labelId;
+				this.id = id;				
+				this.valid = this.label != "";
+
+				validLabelObjs.push(t);
+
+				$ect_tbody.append(" \
+				<tr id=\"ec-tr-" + this.id + "\"> \
+					<td id=\"ec-valid-" + this.id + "\"><i class=\"fa fa-check\" title=\"This is a valid entity category.\"></i><i class=\"fa fa-close\" title=\"This is not a valid entity class.\"></i><i class=\"fa fa-spin fa-circle-o-notch\"></i></td> \
+					<td> \
+						<input id=\"ec-" + this.id + "-label\" maxlength=\"200\" value=\"" + this.label + "\"> \
+					</td> \
+					<td> \
+						<input id=\"ec-" + this.id + "-abbreviation\" maxlength=\"200\" value=\"" + this.abbreviation + "\"> \
+					</td> \
+					<td> \
+						<input id=\"ec-" + this.id + "-color\" type=\"color\"> \
+					</td> \
+					<td> \
+						<a id=\"ec-del-" + this.id  + "\" class=\"delete-button\" tabindex=\"-1\"><i class=\"fa fa-trash\"></i></a> \
+					</td> \
+				</tr> \
+				");
+
+				$("#ec-" + this.id + "-label").focus();
+
+				// Color picker from Spectrum
+				$("#ec-" + this.id + "-color").spectrum({
+					color: t.originalColor,
+					showPalette: true,
+					palette: colorPalette,
+					change: function() {
+						t.color = $(this).spectrum('get').toHexString();
+						$("#ec-tr-" + t.id).removeClass("valid-row");
+						$("#ec-tr-" + t.id).removeClass("error-row");
+						setValidLabelsTimeout();
+					}
+				});
+
+				// Clicking delete button will delete this row
+				$("#ec-del-" + this.id).on('click', function() {
+					t.unshiftColor();			
+					for(var i = 0; i < validLabelObjs.length; i++) {
+						if(validLabelObjs[i] == t) {
+							validLabelObjs.splice(i, 1);
+							break;
+						}
+					}
+					
+					$("#new-ec-button").removeClass("disabled");
+					$("#ec-tr-" + id).remove();
+					setValidLabelsTimeout();
+				});
+
+				
+				$("#ec-" + t.id + "-label").on('input', function() {
+					$(this).removeAttr("title");
+					t.label = $(this).val();
+					$(this).removeClass("has_error");
+					$("#ec-tr-" + t.id).removeClass("valid-row");
+					$("#ec-tr-" + t.id).removeClass("error-row");					
+					setValidLabelsTimeout();
+				});
+				$("#ec-" + t.id + "-abbreviation").on('input', function() {
+					$(this).removeAttr("title");
+					t.abbreviation = $(this).val();
+					$(this).removeClass("has_error");
+					$("#ec-tr-" + t.id).removeClass("valid-row");
+					$("#ec-tr-" + t.id).removeClass("error-row");
+					setValidLabelsTimeout();
+				});				
+
+
+
+
+			}
+
+			unshiftColor() {
+				if(this.colorInPalette)
+					colorList.unshift(this.originalColor);
+			}
+
+
+			// Deletes this label by clicking the trash button.
+			deleteLabel() {
+				$("#ec-del-" + this.id).click();
+			}
+
+			markAsValid() {
+				$("#ec-tr-" + this.id).addClass("valid-row");
+				$("#ec-tr-" + this.id).removeClass("error-row");
+			}
+			markAsInvalid() {
+				$("#ec-tr-" + this.id).removeClass("valid-row");
+				$("#ec-tr-" + this.id).removeClass("error-row");
+			}
+
+			markError(item_name, error_message) {
+				var field = $("#ec-" + this.id + "-" + item_name); 
+				if(field.val().length > 0) {
+					field.addClass("has_error");
+					field.prop('title', error_message);
+					$("#ec-tr-" + this.id).addClass("error-row");
+				}
+			}
+
+		}
+
+
+
+
+		var labelId = 0;
+		function createDefaultLabels() {
+			for(var i = 0; i < 4; i++) {
+				var vli = new ValidLabelInput();
+			}
+			setValidLabelsTimeout();
+		}
+
+		function createLabelsFromArray(arr) {
+			for(var i = 0; i < arr.length; i++) {
+				var vli = new ValidLabelInput(arr[i].label, arr[i].abbreviation, arr[i].color)
+				vli.markAsValid();
+			}
+
+			$("#saved-notification-entity-categories").addClass("show");
+			$("#li-entity-categories").addClass("completed");
+		}
+
+
+		function deleteAllLabels() {
+			for(var i = 0; i < validLabelObjs.length; i++) {
+				validLabelObjs[i].unshiftColor();
+			}
+			validLabelObjs = [];
+			$("#entity-categories-table tbody").empty();
+			
+		}
+
+		function create4NERLabels() {
+			var nerLabels = ["Person", "Organisation", "Location", "Miscellaneous"];
+			var nerAbbrev = ["PER", "ORG", "LOC", "MISC"];
+			for(var i = 0; i < 4; i++) {
+				var vli = new ValidLabelInput(nerLabels[i], nerAbbrev[i]);
+			}
+			// Validate the labels right after they're created.
+			setValidLabelsTimeout();
+		}
+
+
+
+		//create4NERLabels();
+
+
+		$("#new-ec-button").on('click', function(e) {
+			e.preventDefault();
+			setValidLabelsTimeout();
+			
+			var vli = new ValidLabelInput();
+			if(validLabelObjs.size == MAX_VALID_LABELS) {
+				$(this).addClass("disabled");
+
+			};
+			
+
+		});
+
+
+		$("#entity-categories-list-button").on("click", function() {			
+			deleteAllLabels();
+			createDefaultLabels();			
+			$("#entity-categories-list").slideDown(500)
+			$("#entity-categories-table input")[0].focus();
+			$("#entity-categories-ner-button").addClass("fade-out");			
+			$("#entity-categories-list-button").removeClass("fade-out");
+		});
+
+
+		$("#entity-categories-ner-button").on("click", function() {			
+			deleteAllLabels();
+			create4NERLabels();
+			$("#entity-categories-list").slideDown(500)
+			$("#entity-categories-table input")[0].focus();
+			$("#entity-categories-list-button").addClass("fade-out");			
+			$("#entity-categories-ner-button").removeClass("fade-out");
+		});
+
+
+
+	script.
+
+      
+
+		// Check whether valid_labels has already been created 
+		var existingValidLabels = !{valid_labels}
+
+		if(existingValidLabels && existingValidLabels.length > 0) {
+
+			// Check if using NER template
+			var isNER = (existingValidLabels.length == 4
+				&& existingValidLabels[0].label == "Person"
+				&& existingValidLabels[1].label == "Organisation"
+				&& existingValidLabels[2].label == "Location"
+				&& existingValidLabels[3].label == "Miscellaneous"
+			)
+			$("#entity-categories-list").slideDown(500)
+			if(isNER) {
+				$("#entity-categories-list-button").addClass("fade-out");			
+				$("#entity-categories-ner-button").removeClass("fade-out");			
+			} else {
+				$("#entity-categories-ner-button").addClass("fade-out");			
+				$("#entity-categories-list-button").removeClass("fade-out");
+			}
+
+			createLabelsFromArray(existingValidLabels);
+		}

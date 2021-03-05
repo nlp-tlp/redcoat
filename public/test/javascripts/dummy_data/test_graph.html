@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<head>
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet"> 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<meta charset="utf-8">
+<style>
+
+.node {
+  cursor: pointer;
+}
+
+.node circle {
+  fill: #fff;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+.node.unnamed {
+  /*outline: 1px dashed #ddd;*/
+}
+
+.node text {
+  font-size: 12px;
+  font-family: "Open Sans", sans-serif;
+}
+.node text:hover {
+  text-decoration: underline;
+}
+
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
+</style>
+<link rel="stylesheet" href="css/d3-context-menu.css" />
+<script src="d3/d3.min.js"></script>
+<script src="../jquery-3.2.1.min.js"></script>
+<script src="d3/d3-context-menu.js"></script>
+</head>
+<body>
+  <script src="../category-tree-visualisation.js"></script>
+</body>
+

@@ -573,7 +573,7 @@ async function getSuggestedUsers(user) {
 
 // A function that is called when filling out the 'add new annotator' form when the user enters a search term.
 module.exports.searchUsers = async function(req, res) {
-  
+  console.log('hello')
   var response = {};
 
   var searchTerm = req.query.searchTerm;
