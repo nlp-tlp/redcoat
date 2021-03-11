@@ -8,3 +8,4 @@ node_modules/
 app_env
 sendgrid.env
 db/tmp
+mongodb/

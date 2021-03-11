@@ -1,0 +1,25 @@
+version: "3.7"
+
+services:
+    redcoat:
+        image: redcoat:latest
+        container_name: redcoat_app
+        ports:
+            - "3000:3000"
+        expose:
+            - 3000
+        networks:
+            - redcoat
+        depends_on:
+            - redcoat_db
+    redcoat_db:
+        image: mongo
+        container_name: redcoat_db
+        volumes:
+            - ./mongodb/data:/data/db
+        ports:
+            - "27017:27017"
+        networks:
+            - redcoat
+networks:
+    redcoat:
