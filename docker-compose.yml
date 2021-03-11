@@ -16,10 +16,13 @@ services:
         image: mongo
         container_name: redcoat_db
         volumes:
-            - ./mongodb/data:/data/db
+            - nlpdata:/data/db
         ports:
             - "27017:27017"
         networks:
             - redcoat
 networks:
     redcoat:
+
+volumes:
+    nlpdata:
