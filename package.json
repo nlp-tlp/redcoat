@@ -66,7 +66,7 @@
     "passport": "^0.4.1",
     "passport-local-mongoose": "^5.0.1",
     "prompt": "^1.0.0",
-    "pug": "^2.0.4",
+    "pug": "^3.0.1",
     "rootpath": "^0.1.2",
     "serve-favicon": "^2.5.0",
     "shortid": "^2.2.15",
