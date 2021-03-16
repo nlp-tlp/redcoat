@@ -11,7 +11,8 @@ var LocalStrategy = require('passport-local').Strategy;
 var logger = require("./config/winston.js");
 var mongoose = require('mongoose')
 var BASE_URL = require('./config/base_url.js').base_url;
-mongoose.connect('mongodb://localhost/redcoat-db-dev', function(err, db) {
+var DB_CONN_STRING = require('./config/db_config.js').mongo_conn_string;
+mongoose.connect(DB_CONN_STRING, function(err, db) {
   if(err) { console.log("\x1b[31m" + err.message); }
 });
 var expressSanitizer = require('express-sanitizer');
@@ -20,7 +21,10 @@ var expressSanitizer = require('express-sanitizer');
 mongoose.connection.on('open', function() {
   var admin = mongoose.connection.db.admin();
   admin.serverStatus(function(err, info) {
-    if (err) return cb(err);
+    if (err) {
+        console.log(err);
+        return;
+    }
     var version = info.version//.split('.').map(function(n) { return parseInt(n, 10); });
     logger.info("MongoDB version: " + version);
     checkVersion(version.split('.').map(function(n) { return parseInt(n, 10); }))
