@@ -4,6 +4,8 @@ services:
     redcoat:
         image: redcoat:latest
         container_name: redcoat_app
+        env_file:
+            - api-key.env
         ports:
             - "3000:3000"
         expose:
