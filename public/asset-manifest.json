@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/redcoat/static/css/main.e6393388.chunk.css",
-    "main.js": "/redcoat/static/js/main.7f4daea5.chunk.js",
-    "main.js.map": "/redcoat/static/js/main.7f4daea5.chunk.js.map",
+    "main.js": "/redcoat/static/js/main.caa49d52.chunk.js",
+    "main.js.map": "/redcoat/static/js/main.caa49d52.chunk.js.map",
     "runtime-main.js": "/redcoat/static/js/runtime-main.4dfa3ad0.js",
     "runtime-main.js.map": "/redcoat/static/js/runtime-main.4dfa3ad0.js.map",
     "static/js/2.bd8b4614.chunk.js": "/redcoat/static/js/2.bd8b4614.chunk.js",
     "static/js/2.bd8b4614.chunk.js.map": "/redcoat/static/js/2.bd8b4614.chunk.js.map",
     "index.html": "/redcoat/index.html",
-    "precache-manifest.b761a508439e757a2a42d00e1077724e.js": "/redcoat/precache-manifest.b761a508439e757a2a42d00e1077724e.js",
+    "precache-manifest.84eb2bdad9188ece0479e893071793c6.js": "/redcoat/precache-manifest.84eb2bdad9188ece0479e893071793c6.js",
     "service-worker.js": "/redcoat/service-worker.js",
     "static/css/main.e6393388.chunk.css.map": "/redcoat/static/css/main.e6393388.chunk.css.map",
     "static/js/2.bd8b4614.chunk.js.LICENSE.txt": "/redcoat/static/js/2.bd8b4614.chunk.js.LICENSE.txt",
@@ -19,6 +19,6 @@
     "static/js/runtime-main.4dfa3ad0.js",
     "static/js/2.bd8b4614.chunk.js",
     "static/css/main.e6393388.chunk.css",
-    "static/js/main.7f4daea5.chunk.js"
+    "static/js/main.caa49d52.chunk.js"
   ]
 }

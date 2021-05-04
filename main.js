@@ -179,13 +179,17 @@ passport.deserializeUser(User.deserializeUser());
 // })
 
 
+var envi = process.env.NODE_ENV || 'development';
 
 var debugMode = true; // Set to true when running the react server (e.g. port 4000).
-
-
-var useCSRF = !debugMode; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.
+var useCSRF = false; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.
                      // When not running localhost:4000, this should be set to true.
-if(app.get('env') === 'production') useCSRF = true;
+                     
+
+if(envi === 'production') {
+	useCSRF = true;
+	debugMode = false;
+}
 
 
 if(useCSRF) app.use(csrf({ cookie: true }));
