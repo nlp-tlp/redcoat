@@ -547,7 +547,13 @@ async function getSuggestedUsers(user) {
 
   var recentProjectIds = thisUser.recent_projects;
   for(var p_id of recentProjectIds) {
+  	
     var proj = await Project.findById(p_id);
+   
+    if(!proj) {
+    	continue
+
+    }
     var active_user_ids = proj.user_ids.active;
     for(var u_id of active_user_ids) {
       u_id = u_id.toString();

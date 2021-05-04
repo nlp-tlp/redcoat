@@ -61,6 +61,7 @@ class NewProjectAnnotators extends Component {
       userSearchResults: suggestedUsers.length > 0 ? suggestedUsers : null,
       showingSuggestions: suggestedUsers.length > 0 ? true : false,
     });
+    this.props.updateFormPageData(this.state.data);
   }
 
   // async queryRecentUsers() {
@@ -85,7 +86,7 @@ class NewProjectAnnotators extends Component {
     var searchTerm = this.state.searchTerm
     var isEmail = strIsEmail(searchTerm);
 
-    var d = await _fetch('http://localhost:3000/api/projects/new/searchUsers?searchTerm=' + searchTerm + "&isEmail=" + isEmail, 'GET', this.props.setErrorCode, false, false, 200);
+    var d = await _fetch('projects/new/searchUsers?searchTerm=' + searchTerm + "&isEmail=" + isEmail, 'GET', this.props.setErrorCode, false, false, 200);
 
     var result = d.users;
     if(isEmail && d.users.length === 0) {

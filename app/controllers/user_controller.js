@@ -186,7 +186,7 @@ exports.forgot_password_submit = async function(req, res, next) {
   var user = await User.findOne({ email: req.body.email })
 
   if(user == null) {
-    msg = "No user with that email address exists";
+    var msg = "No user with that email address exists";
     return res.send({error: msg});
   }
  
@@ -195,7 +195,7 @@ exports.forgot_password_submit = async function(req, res, next) {
   var token = buf.toString('hex');
 
   // Send the token to the user via email.
-  const msg = {
+  var msg = {
     to: req.body.email,
     from: 'Redcoat@nlp-tools.org',
     fromname: "Redcoat - Collaborative Annotation Tool",
