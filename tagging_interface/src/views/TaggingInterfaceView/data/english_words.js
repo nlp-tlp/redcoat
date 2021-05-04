@@ -1,4 +1,5 @@
 const allEnglishWords = new Set([
+"a",
 "aa",
 "aardvark",
 "aargh",

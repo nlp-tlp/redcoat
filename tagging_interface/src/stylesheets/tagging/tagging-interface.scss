@@ -1168,10 +1168,21 @@ body.taking-screenshot .save-to-png {
 	}
 }
 
-.render-oov-highlight #sentence-tagging .sentence .word, #sentence-tagging .sentence .punctuation {
-	&.oov-highlight {
-		background: rgba(#ec273f, 0.1);
-	}
+.word-oov-highlight {
+	display: none;
+	position: absolute;
+	bottom: 3px;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+
+}
+.render-oov-highlight #sentence-tagging .sentence .word .word-oov-highlight, #sentence-tagging .sentence .punctuation .word-oov-highlight {
+	display: block;
+	background: url($base_url + 'images/squiggly.png') bottom repeat-x;
+	image-rendering: -webkit-optimize-contrast; 
+	
 }
 
 #sentence-tagging .sentence .punctuation {

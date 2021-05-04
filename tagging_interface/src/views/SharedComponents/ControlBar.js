@@ -224,10 +224,10 @@ class ControlBar extends Component {
           <DocumentSearchBar inSearchMode={this.props.inSearchMode} searchDocuments={this.props.searchDocuments} />
           
         </div>
-        <div className="highlight-oov-container" title="When checked, Out of Vocabulary (i.e. non-English) words will be highlighted in red.">
+        <div className="highlight-oov-container" title="When checked, Out of Vocabulary (i.e. non-English) words will be marked with a red underline.">
           <input name="highlight-oov" id="highlight-oov" type="checkbox" checked={this.props.renderOOVHighlight} onClick={this.props.toggleOOVHighlight} />
           <label for="highlight-oov"></label>
-           Highlight OOV
+           Underline OOV
         </div>
         <div className={"current-page-container" + (this.props.showingProgressBar ? " progress-bar-underneath" : "")}>
           { groupName }
