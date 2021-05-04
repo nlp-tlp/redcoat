@@ -191,6 +191,9 @@ if(envi === 'production') {
 	debugMode = false;
 }
 
+console.log("Use CSRF:   ", useCSRF);
+console.log("Debug Mode: ", debugMode);
+
 
 if(useCSRF) app.use(csrf({ cookie: true }));
 
