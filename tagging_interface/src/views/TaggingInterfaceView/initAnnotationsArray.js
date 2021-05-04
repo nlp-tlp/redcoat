@@ -42,7 +42,7 @@ function initAnnotationsArray(documents, automaticAnnotations, searchTerm, oneDo
    
 
       // If this word is not in the english words list, set the OOV highlighting to true
-      if(!allEnglishWords.has(token)) {
+      if(!allEnglishWords.has(token.toLowerCase())) {
         annotations[doc_idx][token_idx].setOOVHighlighting();
       }
 
