@@ -18,7 +18,8 @@ class Annotation {
     this.token = token;
     this.tokenIndex = tokenIndex;
     this.bioTag = "O";    
-    this.highlighting = null;
+    this.searchTermHighlighting = null;
+    this.hasOOVHighlighting = false;
   }
 
   // Adds the specified entityClass to this annotation.
@@ -135,8 +136,13 @@ class Annotation {
   }
 
   // Set the highlighting array (for search mode).
-  setHighlighting(startIdx, endIdx) {
-    this.highlighting = [startIdx, endIdx];
+  setSearchTermHighlighting(startIdx, endIdx) {
+    this.searchTermHighlighting = [startIdx, endIdx];
+  }
+
+  // Set the highlighting array (for search mode).
+  setOOVHighlighting() {
+    this.hasOOVHighlighting = true;
   }
 
   // Prints this annotation nicely to the console (for debugging).

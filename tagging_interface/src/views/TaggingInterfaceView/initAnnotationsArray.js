@@ -1,4 +1,5 @@
 import Annotation from './Annotation';
+import allEnglishWords from 'views/TaggingInterfaceView/data/english_words';
 
 // Sets up an array to store the annotations with the same length as docGroup.
 // Prepopulate the annotations array with the automaticAnnotations if available (after converting them to BIO).
@@ -11,6 +12,7 @@ function initAnnotationsArray(documents, automaticAnnotations, searchTerm, oneDo
   console.log(documents)
   console.log(automaticAnnotations);
   console.log('---')
+  console.log(allEnglishWords);
 
   var repeatedDocs = new Array();
   if(oneDocument) {
@@ -35,14 +37,21 @@ function initAnnotationsArray(documents, automaticAnnotations, searchTerm, oneDo
     var searchIdx = 0;
     for(var token_idx in documents[doc_idx]) {
       annotations[doc_idx][token_idx] = new Annotation(documents[doc_idx][token_idx], parseInt(token_idx));
+      var token = documents[doc_idx][token_idx];
+
+   
+
+      // If this word is not in the english words list, set the OOV highlighting to true
+      if(!allEnglishWords.has(token)) {
+        annotations[doc_idx][token_idx].setOOVHighlighting();
+      }
 
       // If a search term is present (i.e. user is in search mode), adjust the highlighting of the annotation
       // so that it displays the searched portion of the token differently        
-      if(searchTerm) {
-        var token = documents[doc_idx][token_idx];
+      if(searchTerm) {        
         var foundIdx = token.indexOf(searchTermArray[searchIdx]);
         if(foundIdx >= 0) {
-          annotations[doc_idx][token_idx].setHighlighting(foundIdx, foundIdx + searchTermArray[searchIdx].length - 1);
+          annotations[doc_idx][token_idx].setSearchTermHighlighting(foundIdx, foundIdx + searchTermArray[searchIdx].length - 1);
           searchIdx++;
         } else {
           searchIdx = 0;

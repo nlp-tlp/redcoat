@@ -69,18 +69,18 @@ class Word extends Component {
 
   getHighlightedWord() {
     var text = this.props.text;
-    var highlighting = this.props.highlighting;
+    var searchTermHighlighting = this.props.searchTermHighlighting;
 
-    console.log(this.props.highlighting, "<X")
+    console.log(this.props.searchTermHighlighting, "<X")
 
     var output = '';
 
     for(var i = 0; i < text.length; i++) {
-      if(i === highlighting[0]) {
+      if(i === searchTermHighlighting[0]) {
         output += '<span class="search-highlight">'
       }
       output += text[i];
-      if(i === highlighting[1]) {
+      if(i === searchTermHighlighting[1]) {
         output += '</span>'
       }
     }
@@ -104,15 +104,16 @@ class Word extends Component {
       var labels = '';
     }
     var text = this.props.text;
-    if(this.props.highlighting) {
+    if(this.props.searchTermHighlighting) {
       text = this.getHighlightedWord();
     }
 
+
     var wordColourClass = (hasLabel ? (" tag-" + getColourIdx(this.props.entityClasses[0], this.props.entityColourMap)) : "")
     return (
-      <span className={"word" + (this.props.selected ? " selected" : "") + tagClass}>
+      <span className={"word" + (this.props.selected ? " selected" : "") + (this.props.hasOOVHighlighting ? " oov-highlight" : "") + " " + tagClass}>
 
-        <span className={"word-inner" + wordColourClass + (this.props.highlighting ? " search-highlight" : "") } ref={this.wordInnerRef}
+        <span className={"word-inner" + wordColourClass + (this.props.searchTermHighlighting ? " search-highlight" : "") } ref={this.wordInnerRef}
               onMouseUp=  {() => this.props.updateSelections(this.props.index, 'up')}
               onMouseDown={() => this.props.updateSelections(this.props.index, 'down')}>
 
@@ -189,7 +190,8 @@ class Sentence extends Component {
                   entityClasses={this.props.annotations[i].entityClasses || []}
                   bioTag={this.props.annotations[i].bioTag}
                   entityColourMap={this.props.entityColourMap}
-                  highlighting={this.props.annotations[i].highlighting}
+                  searchTermHighlighting={this.props.annotations[i].searchTermHighlighting}
+                  hasOOVHighlighting={this.props.annotations[i].hasOOVHighlighting}
                   updateSelections={() => {return null}}
                   deleteTag={() => {return null}}
                   isLastInSpan={this.props.annotations[i].isLastInSpan()}
@@ -213,7 +215,8 @@ class Sentence extends Component {
                 updateSelections={this.updateSelections.bind(this)}
                 entityColourMap={this.props.entityColourMap}
                 deleteTag={this.deleteTag.bind(this)}
-                highlighting={this.props.annotations[i].highlighting}
+                searchTermHighlighting={this.props.annotations[i].searchTermHighlighting}
+                hasOOVHighlighting={this.props.annotations[i].hasOOVHighlighting}
 
 
           />)

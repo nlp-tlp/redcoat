@@ -190,6 +190,8 @@ class ControlBar extends Component {
 
   render() {
 
+
+
     var groupName = (
       <span className={"group-name"}>
         <span>Page <b>
@@ -220,7 +222,9 @@ class ControlBar extends Component {
         </div>
         <div className="filler-left">
           <DocumentSearchBar inSearchMode={this.props.inSearchMode} searchDocuments={this.props.searchDocuments} />
+          
         </div>
+        <div className="highlight-oov-container"><input type="checkbox" checked={this.props.renderOOVHighlight} onClick={this.props.toggleOOVHighlight} /> Highlight OOV</div>
         <div className={"current-page-container" + (this.props.showingProgressBar ? " progress-bar-underneath" : "")}>
           { groupName }
 

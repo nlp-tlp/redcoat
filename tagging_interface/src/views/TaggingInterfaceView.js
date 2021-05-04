@@ -24,6 +24,8 @@ import setCookie from 'functions/setCookie';
 
 import formatDate  from 'functions/formatDate';
 
+
+
 import initAnnotationsArray from 'views/TaggingInterfaceView/initAnnotationsArray';
 import Annotation from 'views/TaggingInterfaceView/Annotation';
 import Error403Page from 'views/Errors/Error403Page';
@@ -587,6 +589,8 @@ class TaggingInterfaceView extends Component {
 
 
       savedCategoryHierarchyOrder: null, // Load the previous drag order from cookie if available on mount
+
+      renderOOVHighlight: true, // Whether to render OOV words (non-English) differently
 
     }    
   }
@@ -1530,6 +1534,11 @@ class TaggingInterfaceView extends Component {
     });
   }
 
+  toggleOOVHighlight() {
+    this.setState({
+      renderOOVHighlight: !this.state.renderOOVHighlight,
+    })
+  }
 
   /* Comments */
 
@@ -1602,7 +1611,7 @@ class TaggingInterfaceView extends Component {
           {!this.state.error &&          
           <div id="tagging-interface" className={(this.state.loading.querying ? "loading" : "") + (taggingCompletePage ? " tagging-complete-page" : "")}>
 
-            <div id="tagging-container">
+            <div id="tagging-container" className={this.state.renderOOVHighlight ? "render-oov-highlight" : ""}>
               { taggingCompletePage && <TaggingCompletePage/>}
               <div id="sentence-tagging">
 
@@ -1636,6 +1645,9 @@ class TaggingInterfaceView extends Component {
                   loadNextPage={this.loadNextPage.bind(this)}
                   goToPage={this.goToPage.bind(this)}
                   setDocsPerPage={this.setDocsPerPage.bind(this)}
+
+                  renderOOVHighlight={this.state.renderOOVHighlight}
+                  toggleOOVHighlight={this.toggleOOVHighlight.bind(this)}
                 />
 
                 <DocumentContainerHeader/>
@@ -1679,7 +1691,9 @@ class TaggingInterfaceView extends Component {
               <HotkeyInfo 
                 chain={this.state.hotkeyChain}
                 entityClass={this.state.reverseHotkeyMap[this.state.hotkeyChain.join('')]}
-              />            
+              />
+
+
               
               <CategoryHierarchy
                 items={this.state.categoryHierarchy.children}
