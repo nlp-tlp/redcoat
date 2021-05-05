@@ -1182,7 +1182,8 @@ body.taking-screenshot .save-to-png {
 	display: block;
 	background: url($base_url + 'images/squiggly.png') bottom repeat-x;
 	image-rendering: -webkit-optimize-contrast; 
-	
+	image-rendering: pixelated;
+
 }
 
 #sentence-tagging .sentence .punctuation {

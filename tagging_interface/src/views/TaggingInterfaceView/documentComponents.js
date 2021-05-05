@@ -113,11 +113,11 @@ class Word extends Component {
     return (
       <span className={"word" + (this.props.selected ? " selected" : "") + " " + tagClass}>
 
-        { this.props.hasOOVHighlighting && <span className="word-oov-highlight"></span> }
+        
         <span className={"word-inner" + wordColourClass + (this.props.searchTermHighlighting ? " search-highlight" : "") } ref={this.wordInnerRef}
               onMouseUp=  {() => this.props.updateSelections(this.props.index, 'up')}
               onMouseDown={() => this.props.updateSelections(this.props.index, 'down')}>
-
+          { this.props.hasOOVHighlighting && <span className="word-oov-highlight"></span> }
           {text}
         </span>
         {labels}
