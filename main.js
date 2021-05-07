@@ -20,9 +20,6 @@ var passport = require('passport');
 // const ExtractJwt = require("passport-jwt").ExtractJwt;
 
 
-
-
-
 mongoose.connect('mongodb://localhost/redcoat-db-dev', function(err, db) {
   if(err) { console.log("\x1b[31m" + err.message); }
 });
@@ -47,17 +44,7 @@ function checkVersion(version) {
   }
 }
 
-
-
-
-// var flash = require('express-flash')
-
-  
-
 var User = require('./app/models/user');
-
-
-//var users = require('./routes/users');
 
 var sassMiddleware = require('node-sass-middleware');
 var path = require('path');
