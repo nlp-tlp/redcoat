@@ -35,6 +35,9 @@ module.exports.getProjects = async function(req, res) {
 // Automatically tag all tokens on the screen that appear in the dictionary.
 // Returns an array of [{ mentions: [] }, { mentions: [] }] (one mentions array per document)
 function runDictionaryTagging(documentGroup, dictionary) {
+  if(!dictionary) {
+    return [];
+  }
   // Build the automatic annotations based on the groupData.
   var automaticAnnotations = [];
 

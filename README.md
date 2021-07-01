@@ -53,7 +53,17 @@ If you have a Sendgrid account, and would like the server to be able to use your
 You'll then need to restart Redcoat (terminate the process and run `npm run production` again) for the changes to take effect.
 
 
+## Using Docker
 
+You can deploy the application using the provided docker-compose file. First, build the redcoat image, from the redcoat folder:
 
+```
+docker build -t redcoat:latest . 
+```
 
+Then:
+
+```
+docker-compose up -d
+```
 
