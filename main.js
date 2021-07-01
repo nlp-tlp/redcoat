@@ -13,7 +13,7 @@ var LocalStrategy = require('passport-local').Strategy;
 var logger = require("./config/winston.js");
 var mongoose = require('mongoose')
 var BASE_URL = require('./config/base_url.js').base_url;
-<<<<<<< HEAD
+
 
 
 var passport = require('passport');
@@ -21,7 +21,6 @@ var passport = require('passport');
 // const ExtractJwt = require("passport-jwt").ExtractJwt;
 
 
-mongoose.connect('mongodb://localhost/redcoat-db-dev', function(err, db) {
 
 var DB_CONN_STRING = require('./config/db_config.js').mongo_conn_string;
 mongoose.connect(DB_CONN_STRING, function(err, db) {
