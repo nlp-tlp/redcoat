@@ -179,6 +179,8 @@ var hierarchyPresets = [
             "Location/Absolute_loc",
             "Location/Relative_loc",
             "Time",
+            "Time/Absolute_time",
+            "Time/Relative_time",
             "Attribute",
             "Attribute/Attribute_desc",
             "Attribute/Attribute_value",
@@ -197,10 +199,12 @@ var hierarchyPresets = [
             "Identifier",
             "Identifier/Item_ID",
             "Identifier/Make",
+            "Suggest_tag",
             "Unsure",
             "Typo",
             "Abbreviation",
             "Noise",
+            "Privacy",
       ]
     },    
     {

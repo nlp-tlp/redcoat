@@ -1749,6 +1749,8 @@ ProjectSchema.statics.getInvolvedProjectData = async function(user) {
   } catch(err) {
     return Promise.reject("Could not search projects")
   }
+  
+
 
   var returnedProjects = [];
   var numCreatedByUser = 0;

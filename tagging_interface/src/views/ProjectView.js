@@ -627,10 +627,7 @@ class ProjectDashboard extends Component {
             <div className="name">Avg. agreement<span className="information" title="Average agreement is only calculated for documents with more than one annotation."><i class="fa fa-info-circle"></i></span></div>
             <div className="value"><span class="st st-darker"> { this.props.data.avgAgreement ? (Math.round(this.props.data.avgAgreement * 100) + "%") : "--"} </span></div>
           </div>
-          <div className="dashboard-item">
-            <div className="name">Avg. time per document</div>
-            <div className="value"><span class="st st-darker">{ this.props.data.avgTimePerDocument } seconds</span></div>
-          </div>
+
           </div>
 
           <Link to={BASE_URL + "projects/" + this.props.project_id + "/tagging"} className="annotate-button"><i class="fa fa-pencil"></i>Annotate<div className="subtitle">{this.props.data.userDocsAnnotated}/{this.props.data.userAnnotationsRequired} complete</div></Link>
@@ -780,7 +777,7 @@ class ProjectViewSidenav extends Component {
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Dashboard" icon="bar-chart"/>
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Entity Hierarchy" icon="sitemap"/>  
 
-          <ProjectViewSidenavSubmenu project_id={this.props.project_id} view={view} name="Annotations" menuItems={ [{name: "Curation", icon: "gavel"}, { name: "Download", icon: "download" }] } icon="list-alt"/>
+          <ProjectViewSidenavSubmenu project_id={this.props.project_id} view={view} name="Annotations" menuItems={ [{name: "Panel View", icon: "gavel"}, { name: "Download", icon: "download" }] } icon="list-alt"/>
 
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Annotators" icon="user"/>
           <ProjectViewSidenavButton project_id={this.props.project_id} view={view} name="Settings" icon="wrench"/>
@@ -1030,7 +1027,7 @@ class ProjectView extends Component {
               <section className={"route-section" + (!this.state.loading ? " loaded" : "")}>
                <Switch location={location}>
                   <Route path={BASE_URL + "projects/:id/dashboard"}           render={() => <ProjectDashboard loading={this.state.loading} data={this.state.data.dashboard} project_id={this.props.project_id} />} />     
-                  <Route path={BASE_URL + "projects/:id/annotations/curation" }           render={() => <CurationInterface user={this.props.user} project_id={this.props.project_id} prevState={this.curationInterfaceState} saveState={this.setCurationInterfaceData.bind(this)} loading={this.state.loading} documentIdQuery={docId} setErrorCode={this.props.setErrorCode} />} />     
+                  <Route path={BASE_URL + "projects/:id/annotations/panel-view" }           render={() => <CurationInterface user={this.props.user} project_id={this.props.project_id} prevState={this.curationInterfaceState} saveState={this.setCurationInterfaceData.bind(this)} loading={this.state.loading} documentIdQuery={docId} setErrorCode={this.props.setErrorCode} />} />     
                   <Route path={BASE_URL + "projects/:id/annotations/download"}            render={() => <AnnotationsTable user={this.props.user} project_id={this.props.project_id} data={this.state.data.annotationsTable ? this.state.data.annotationsTable : {users: [], num_combined_available: 0}} setErrorCode={this.props.setErrorCode} />} />     
                   <Route path={BASE_URL + "projects/:id/entity-hierarchy"}  render={() => <CategoryHierarchyPage loading={this.state.loading} data={this.state.data.categoryHierarchy} colourIndexes={this.state.data.dashboard.entityChartData ? this.state.data.dashboard.entityChartData.colourIndexes : null} />} />     
                   <Route path={BASE_URL + "projects/:id/annotators"}         render={() => <InvitationsPage data={this.state.data.invitationsTable ? this.state.data.invitationsTable : {}} loading={this.state.loading} />} />     
