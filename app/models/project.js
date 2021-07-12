@@ -621,11 +621,11 @@ ProjectSchema.methods.getCombinedAnnotations = async function(next) {
          annotator_agreement: "$document.annotator_agreement",
        }
      },
-     // {
-     //  $sort: {
-     //    document_index: 1,
-     //  }
-     // }
+     {
+       $sort: {
+         document_index: 1,
+       }
+     }
      
     ]).allowDiskUse(true)
     
@@ -713,6 +713,8 @@ function* zip(args) {
 // Input labels should be in BIO format (not converted to mention json).
 ProjectSchema.statics.getCompiledAnnotation = function(tokens, annotations) {
   //console.log(tokens, annotations, ",xx");
+  console.log('--------------------')
+  console.log(tokens)
   console.log(annotations[0])
   var compiledAnnotation = {
     'tokens': tokens,
@@ -744,7 +746,7 @@ ProjectSchema.statics.getCompiledAnnotation = function(tokens, annotations) {
   }
 
 
-  console.log("zipped:", zippedLabels[0]);
+  console.log("zipped:", zippedLabels);
 
   var mentionStart = -1;
   var mentionEnd = -1;
@@ -793,7 +795,8 @@ ProjectSchema.statics.getCompiledAnnotation = function(tokens, annotations) {
       // 3.a If there are any majority labels (regardless of B- or I-), start a new mention
       if(majority_labels.size > 0) {
         mentionStart  = l;
-        mentionEnd    = l + 1;
+        //mentionEnd = -1;
+        //mentionEnd    = l + 1;
         mentionLabels = majority_labels;
       }
 
@@ -803,28 +806,28 @@ ProjectSchema.statics.getCompiledAnnotation = function(tokens, annotations) {
 
       if(isSetsEqual(majority_labels, mentionLabels) && !majority_markers.has("B-")) {
 
-        mentionEnd += 1
+        //mentionEnd += 1
       } else {
 
         // 2.c If the sets are not equal, the current mention ends.
-        compiledAnnotation.mentions.push({ "start": mentionStart, "end": mentionEnd, "labels": Array.from(mentionLabels) });
+        compiledAnnotation.mentions.push({ "start": mentionStart, "end": l, "labels": Array.from(mentionLabels) });
         mentionStart = -1;
-        mentionEnd   = -1;
+        //mentionEnd   = -1;
         mentionLabels = new Set();
 
         // Then, check for B- tags.
         if(majority_markers.has("B-")) {
           if(majority_labels.size > 0) {
             mentionStart  = l;
-            mentionEnd    = l + 1;
+            //mentionEnd    = l + 1;
             mentionLabels = majority_labels;
           }              
         }
       }
     }
     // If at the end of the sentence and still in-mention, push that mention.
-    if(mentionStart > -1) {
-      compiledAnnotation.mentions.push({ "start": mentionStart, "end": mentionEnd, "labels": Array.from(mentionLabels) });
+    if(mentionStart > -1 && l === (zippedLabels.length - 1)) {
+      compiledAnnotation.mentions.push({ "start": mentionStart, "end": l + 1, "labels": Array.from(majority_labels) });
     }
   }
 
