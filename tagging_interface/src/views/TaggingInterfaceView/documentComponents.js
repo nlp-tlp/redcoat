@@ -1,7 +1,6 @@
-import React from 'react';
-import {Component} from 'react';
-import ReactHtmlParser from 'react-html-parser';
-
+import React from "react";
+import { Component } from "react";
+import ReactHtmlParser from "react-html-parser";
 
 // Returns the colour id of the given entityClass according to the entityColourMap, e.g.
 // 'item/pump': 1 (because "item" is the top level category)
@@ -17,20 +16,22 @@ class Label extends Component {
   }
 
   render() {
-
-    var split = this.props.entityClass.split('/');
-    var truncatedLabel = split.length > 1 ? "/" : ""
+    var split = this.props.entityClass.split("/");
+    var truncatedLabel = split.length > 1 ? "/" : "";
     truncatedLabel = truncatedLabel + split[split.length - 1];
 
     return (
-      <span className={"label tag-" + this.props.colourIdx} onClick={(e) => {this.props.deleteTag(this.props.entityClass);  }}><span className="label-name">{truncatedLabel}</span></span>
-    )
+      <span
+        className={"label tag-" + this.props.colourIdx}
+        onClick={(e) => {
+          this.props.deleteTag(this.props.entityClass);
+        }}
+      >
+        <span className="label-name">{truncatedLabel}</span>
+      </span>
+    );
   }
 }
-
-
-
-
 
 // A single word (or token) in the tagging interface.
 class Word extends Component {
@@ -38,7 +39,7 @@ class Word extends Component {
     super(props);
     this.state = {
       selected: false,
-    }
+    };
     this.wordInnerRef = React.createRef();
   }
 
@@ -49,21 +50,16 @@ class Word extends Component {
 
   // Clear the word justification of this word if it is does not have a label.
   componentDidUpdate(prevProps, prevState) {
-
     /* TODO: Fix the below to be much faster.
        The code should update the width of this word back to auto if this word no longer has a label,
        but it is too slow on long docs so I took it out.
     */
-
     // if(this.props.entityClasses.length === 0) {
-
     //   var ele =  this.wordInnerRef.current;
     //   $(ele).css("min-width", "auto");
-
     //   var width = ele.offsetWidth;
     //   var newWidth = Math.ceil(width / 25) * 25;
-    //   $(ele).css('min-width', newWidth + 'px');        
-
+    //   $(ele).css('min-width', newWidth + 'px');
     // }
   }
 
@@ -71,17 +67,17 @@ class Word extends Component {
     var text = this.props.text;
     var searchTermHighlighting = this.props.searchTermHighlighting;
 
-    console.log(this.props.searchTermHighlighting, "<X")
+    console.log(this.props.searchTermHighlighting, "<X");
 
-    var output = '';
+    var output = "";
 
-    for(var i = 0; i < text.length; i++) {
-      if(i === searchTermHighlighting[0]) {
-        output += '<span class="search-highlight">'
+    for (var i = 0; i < text.length; i++) {
+      if (i === searchTermHighlighting[0]) {
+        output += '<span class="search-highlight">';
       }
       output += text[i];
-      if(i === searchTermHighlighting[1]) {
-        output += '</span>'
+      if (i === searchTermHighlighting[1]) {
+        output += "</span>";
       }
     }
 
@@ -90,38 +86,69 @@ class Word extends Component {
   }
 
   render() {
-
     var hasLabel = this.props.entityClasses.length > 0;
 
-    var tagClass = hasLabel ? (" tag " + ((this.props.bioTag === "B") ? "tag-begin" : "") + (this.props.isLastInSpan ? " tag-end" : "")) : "";
+    var tagClass = hasLabel
+      ? " tag " +
+        (this.props.bioTag === "B" ? "tag-begin" : "") +
+        (this.props.isLastInSpan ? " tag-end" : "")
+      : "";
 
-    if(hasLabel) {
-      var labels = this.props.entityClasses.map((entityClass, i) => 
-                  <Label deleteTag={this.deleteTag.bind(this)} key={i} bioTag={this.props.bioTag} entityClass={entityClass} colourIdx={getColourIdx(entityClass, this.props.entityColourMap)} />
-                  )
-      
+    if (hasLabel) {
+      var labels = this.props.entityClasses.map((entityClass, i) => (
+        <Label
+          deleteTag={this.deleteTag.bind(this)}
+          key={i}
+          bioTag={this.props.bioTag}
+          entityClass={entityClass}
+          colourIdx={getColourIdx(entityClass, this.props.entityColourMap)}
+        />
+      ));
     } else {
-      var labels = '';
+      var labels = "";
     }
     var text = this.props.text;
-    if(this.props.searchTermHighlighting) {
+    if (this.props.searchTermHighlighting) {
       text = this.getHighlightedWord();
     }
+    var hasOOVHighlighting = this.props.hasOOVHighlighting;
 
+    var noiseClass = this.props.isNoise ? " noise " : "";
+    if (text === "<NOISE>" || text === "</NOISE>") {
+      noiseClass = " noise-label ";
+      hasOOVHighlighting = false;
+    }
 
-    var wordColourClass = (hasLabel ? (" tag-" + getColourIdx(this.props.entityClasses[0], this.props.entityColourMap)) : "")
+    var wordColourClass = hasLabel
+      ? " tag-" +
+        getColourIdx(this.props.entityClasses[0], this.props.entityColourMap)
+      : "";
     return (
-      <span className={"word" + (this.props.selected ? " selected" : "") + " " + tagClass}>
-
-        
-        <span className={"word-inner" + wordColourClass + (this.props.searchTermHighlighting ? " search-highlight" : "") } ref={this.wordInnerRef}
-              onMouseUp=  {() => this.props.updateSelections(this.props.index, 'up')}
-              onMouseDown={() => this.props.updateSelections(this.props.index, 'down')}>
-          { this.props.hasOOVHighlighting && <span className="word-oov-highlight"></span> }
+      <span
+        className={
+          "word" +
+          (this.props.selected ? " selected" : "") +
+          " " +
+          tagClass +
+          noiseClass
+        }
+      >
+        <span
+          className={
+            "word-inner" +
+            wordColourClass +
+            (this.props.searchTermHighlighting ? " search-highlight" : "")
+          }
+          ref={this.wordInnerRef}
+          onMouseUp={() => this.props.updateSelections(this.props.index, "up")}
+          onMouseDown={() =>
+            this.props.updateSelections(this.props.index, "down")
+          }
+        >
+          {hasOOVHighlighting && <span className="word-oov-highlight"></span>}
           {text}
         </span>
         {labels}
-        
       </span>
     );
   }
@@ -136,7 +163,7 @@ class Sentence extends Component {
 
   // Call the updateSelections function of the parent of this component (i.e. TaggingInterface), with this sentence's index included.
   updateSelections(wordIndex, action) {
-    this.props.updateSelections(this.props.index, wordIndex, action)
+    this.props.updateSelections(this.props.index, wordIndex, action);
   }
 
   deleteTag(wordIndex, entityClass) {
@@ -146,95 +173,116 @@ class Sentence extends Component {
   // Scroll to this sentence if it receives a new selection.
   // https://stackoverflow.com/questions/442404/retrieve-the-position-x-y-of-an-html-element-relative-to-the-browser-window
   componentDidUpdate(prevProps, prevState) {
-    if((this.props.selections) && (prevProps.selections.length === 0 && this.props.selections.length > 0)) {
-
+    if (
+      this.props.selections &&
+      prevProps.selections.length === 0 &&
+      this.props.selections.length > 0
+    ) {
       var element = this.sentenceRef.current;
       var bodyRect = document.body.getBoundingClientRect(),
-          elemRect = element.getBoundingClientRect(),
-          offset   = elemRect.top - bodyRect.top;
+        elemRect = element.getBoundingClientRect(),
+        offset = elemRect.top - bodyRect.top;
 
-       window.scrollTo({
+      window.scrollTo({
         top: offset - 200,
         left: 0,
-        behavior: 'smooth',
+        behavior: "smooth",
       });
     }
   }
 
   render() {
-
     var selections = this.props.selections;
 
     // Check props.selections to determine whether the word with a given index in this sentence is selected.
     // This is passed to the word as a prop so that it can be highlighted accordingly.
-    function isWordSelected(wordIndex) {      
-      if(selections.length === 0) return false;     
-      for(var i = 0; i < selections.length; i++) {
+    function isWordSelected(wordIndex) {
+      if (selections.length === 0) return false;
+      for (var i = 0; i < selections.length; i++) {
         var selection = selections[i];
-        if(selection.wordEndIndex < 0) continue;
-        if(selection.wordEndIndex >= wordIndex && wordIndex >= selection.wordStartIndex ) {
+        if (selection.wordEndIndex < 0) continue;
+        if (
+          selection.wordEndIndex >= wordIndex &&
+          wordIndex >= selection.wordStartIndex
+        ) {
           return true;
         }
       }
       return false;
     }
 
-
-
-    if(this.props.displayOnly) {
-      return (
-        <div className={"sentence-inner" + (this.props.displayOnly ? " display-only" : "")} ref={this.sentenceRef}>
-          { this.props.words.map((word, i) => 
-            <Word key={i}
-                  index={i}
-                  text={word}
-                  entityClasses={this.props.annotations[i].entityClasses || []}
-                  bioTag={this.props.annotations[i].bioTag}
-                  entityColourMap={this.props.entityColourMap}
-                  searchTermHighlighting={this.props.annotations[i].searchTermHighlighting}
-                  hasOOVHighlighting={this.props.annotations[i].hasOOVHighlighting}
-                  updateSelections={() => {return null}}
-                  deleteTag={() => {return null}}
-                  isLastInSpan={this.props.annotations[i].isLastInSpan()}
-            />)
-          }   
-        </div>
-      );      
+    var noiseWords = [];
+    var inNoise = false;
+    for (var i = 0; i < this.props.words.length; i++) {
+      var word = this.props.words[i];
+      if (word === "</NOISE>") {
+        inNoise = false;
+      }
+      noiseWords.push(inNoise);
+      if (word === "<NOISE>") {
+        inNoise = true;
+      }
     }
 
+    if (this.props.displayOnly) {
+      return (
+        <div
+          className={
+            "sentence-inner" + (this.props.displayOnly ? " display-only" : "")
+          }
+          ref={this.sentenceRef}
+        >
+          {this.props.words.map((word, i) => (
+            <Word
+              key={i}
+              index={i}
+              text={word}
+              isNoise={noiseWords[i]}
+              entityClasses={this.props.annotations[i].entityClasses || []}
+              bioTag={this.props.annotations[i].bioTag}
+              entityColourMap={this.props.entityColourMap}
+              searchTermHighlighting={
+                this.props.annotations[i].searchTermHighlighting
+              }
+              hasOOVHighlighting={this.props.annotations[i].hasOOVHighlighting}
+              updateSelections={() => {
+                return null;
+              }}
+              deleteTag={() => {
+                return null;
+              }}
+              isLastInSpan={this.props.annotations[i].isLastInSpan()}
+            />
+          ))}
+        </div>
+      );
+    }
 
     return (
       <div className="sentence-inner" ref={this.sentenceRef}>
-        { this.props.words.map((word, i) => 
-          <Word key={i}
-                index={i}
-                text={word}
-                selected={isWordSelected(i)}
-                entityClasses={this.props.annotations[i].entityClasses || []}
-                isLastInSpan={this.props.annotations[i].isLastInSpan()}
-                bioTag={this.props.annotations[i].bioTag}
-                updateSelections={this.updateSelections.bind(this)}
-                entityColourMap={this.props.entityColourMap}
-                deleteTag={this.deleteTag.bind(this)}
-                searchTermHighlighting={this.props.annotations[i].searchTermHighlighting}
-                hasOOVHighlighting={this.props.annotations[i].hasOOVHighlighting}
-
-
-          />)
-        }   
-        
-
-
-       
+        {this.props.words.map((word, i) => (
+          <Word
+            key={i}
+            index={i}
+            text={word}
+            isNoise={noiseWords[i]}
+            selected={isWordSelected(i)}
+            entityClasses={this.props.annotations[i].entityClasses || []}
+            isLastInSpan={this.props.annotations[i].isLastInSpan()}
+            bioTag={this.props.annotations[i].bioTag}
+            updateSelections={this.updateSelections.bind(this)}
+            entityColourMap={this.props.entityColourMap}
+            deleteTag={this.deleteTag.bind(this)}
+            searchTermHighlighting={
+              this.props.annotations[i].searchTermHighlighting
+            }
+            hasOOVHighlighting={this.props.annotations[i].hasOOVHighlighting}
+          />
+        ))}
       </div>
     );
   }
-
 }
-
-
-
-
 
 export { Word };
 export { Sentence };

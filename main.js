@@ -1,123 +1,131 @@
-var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var bodyParser = require('body-parser');
-const session = require('cookie-session');
-var cookieParser = require('cookie-parser')
-var csrf = require('csurf');
-var morgan = require('morgan');
+var express = require("express");
+var path = require("path");
+var favicon = require("serve-favicon");
+var bodyParser = require("body-parser");
+const session = require("cookie-session");
+var cookieParser = require("cookie-parser");
+var csrf = require("csurf");
+var morgan = require("morgan");
 
-
-
-var LocalStrategy = require('passport-local').Strategy;
+var LocalStrategy = require("passport-local").Strategy;
 var logger = require("./config/winston.js");
-var mongoose = require('mongoose')
-var BASE_URL = require('./config/base_url.js').base_url;
+var mongoose = require("mongoose");
+var BASE_URL = require("./config/base_url.js").base_url;
 
-
-
-var passport = require('passport');
+var passport = require("passport");
 // const JwtStrategy = require("passport-jwt").Strategy;
 // const ExtractJwt = require("passport-jwt").ExtractJwt;
 
-
-
-var DB_CONN_STRING = require('./config/db_config.js').mongo_conn_string;
-mongoose.connect(DB_CONN_STRING, function(err, db) {
-  if(err) { console.log("\x1b[31m" + err.message); }
+var DB_CONN_STRING = require("./config/db_config.js").mongo_conn_string;
+mongoose.connect(DB_CONN_STRING, function (err, db) {
+  if (err) {
+    console.log("\x1b[31m" + err.message);
+  }
 });
-var expressSanitizer = require('express-sanitizer');
+var expressSanitizer = require("express-sanitizer");
 
-
-mongoose.connection.on('open', function() {
+mongoose.connection.on("open", function () {
   var admin = mongoose.connection.db.admin();
-  admin.serverStatus(function(err, info) {
+  admin.serverStatus(function (err, info) {
     if (err) {
-        console.log(err);
-        return;
+      console.log(err);
+      return;
     }
-    var version = info.version//.split('.').map(function(n) { return parseInt(n, 10); });
+    var version = info.version; //.split('.').map(function(n) { return parseInt(n, 10); });
     logger.info("MongoDB version: " + version);
-    checkVersion(version.split('.').map(function(n) { return parseInt(n, 10); }))
-
+    checkVersion(
+      version.split(".").map(function (n) {
+        return parseInt(n, 10);
+      })
+    );
   });
 });
 
 function checkVersion(version) {
-  if(version[0] < 3) { // || (version[0] >= 3 && version[1] < 6)) {
+  if (version[0] < 3) {
+    // || (version[0] >= 3 && version[1] < 6)) {
     logger.error("MongoDB version must be at least 3.6.");
     process.exit();
   }
 }
 
-var User = require('./app/models/user');
+var User = require("./app/models/user");
 
-var sassMiddleware = require('node-sass-middleware');
-var path = require('path');
+//var sassMiddleware = require("node-sass-middleware");
+var path = require("path");
 
 var app = express();
 
-var cors = require('cors');
-app.use(cors({
-  origin: 'http://localhost:4000',
-  credentials: true,
-}));
-
+var cors = require("cors");
+app.use(
+  cors({
+    origin: "http://localhost:4000",
+    credentials: true,
+  })
+);
 
 // view engine setup
-app.set('views', path.join(__dirname, 'app/views'));
-app.set('view engine', 'pug');
+app.set("views", path.join(__dirname, "app/views"));
+app.set("view engine", "pug");
 
 app.locals.pretty = true;
 
 // uncomment after placing your favicon in /public
-app.use(favicon(path.join(__dirname, 'public', 'images/favicon.png')));
+app.use(favicon(path.join(__dirname, "public", "images/favicon.png")));
 app.use(morgan("short", { stream: logger.stream }));
-app.use(bodyParser.json({limit: '50mb'})); // use bodyParser to parse form data
-app.use(bodyParser.urlencoded({ extended: true, limit: '50mb', parameterLimit: 50000 }));
+app.use(bodyParser.json({ limit: "50mb" })); // use bodyParser to parse form data
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+    limit: "50mb",
+    parameterLimit: 50000,
+  })
+);
 app.use(cookieParser());
 app.use(expressSanitizer());
-app.use(
-   sassMiddleware({
-       src: __dirname + '/app/stylesheets', 
-       dest: __dirname + '/public/stylesheets',
-       prefix:  '/stylesheets',
-       outputStyle: 'compressed',
-       debug: false,       
-   })
-);
+// app.use(
+//   sassMiddleware({
+//     src: __dirname + "/app/stylesheets",
+//     dest: __dirname + "/public/stylesheets",
+//     prefix: "/stylesheets",
+//     outputStyle: "compressed",
+//     debug: false,
+//   })
+// );
 
 // app.use(flash());
 
 //app.use(session({keys: ['redcoatisaprettycoolannotationtool!']}));
 
-app.enable('trust proxy');
+app.enable("trust proxy");
 /*app.use(session({
    secret: 'redcoatisaprettycoolannotationtool!',
    proxy: true,
    key: 'session.sid',
    cookie: {secure: true},
-	rolling: true,
+  rolling: true,
 
 }));*/
 //app.use(session({keys: ['kjhkjhkukg', 'kufk8fyukukfkuyf']}));
 
-
-
-app.use(session({secret: 'redcoatisaprettycoolannotationtool!'}));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(session({ secret: "redcoatisaprettycoolannotationtool!" }));
+app.use(express.static(path.join(__dirname, "public")));
 //app.use(express.static(path.join(__dirname, 'public', 'redcoat')));
-
 
 // Setup Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
 //passport.use(new LocalStrategy(User.authenticate()));
-passport.use(new LocalStrategy({
-    usernameField: 'email',
-    passwordField: 'password'
-}, User.authenticate()));
+passport.use(
+  new LocalStrategy(
+    {
+      usernameField: "email",
+      passwordField: "password",
+    },
+    User.authenticate()
+  )
+);
 
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
@@ -141,9 +149,6 @@ passport.deserializeUser(User.deserializeUser());
 //   }
 // ));
 
-
-
-
 // const opts = {};
 // opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 // opts.secretOrKey = 'bababooey'; // todo: move this to an environment variable
@@ -162,93 +167,65 @@ passport.deserializeUser(User.deserializeUser());
 //   })
 // );
 
-
-
-
-
 // app.use(function(req, res, next) {
 //   res.header('Access-Control-Allow-Credentials', true)
 //   next();
 // })
 
-
-var envi = process.env.NODE_ENV || 'development';
+var envi = process.env.NODE_ENV || "development";
 
 var debugMode = true; // Set to true when running the react server (e.g. port 4000).
 var useCSRF = false; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.
-                     // When not running localhost:4000, this should be set to true.
-                     
+// When not running localhost:4000, this should be set to true.
 
-if(envi === 'production') {
-	useCSRF = true;
-	debugMode = false;
+if (envi === "production") {
+  useCSRF = true;
+  debugMode = false;
 }
 
 console.log("Use CSRF:   ", useCSRF);
 console.log("Debug Mode: ", debugMode);
 
-
-if(useCSRF) app.use(csrf({ cookie: true }));
+if (useCSRF) app.use(csrf({ cookie: true }));
 
 // Setup local variables that are used in almost every view.
-app.use(function(req, res, next) {
-
-  
-
-  if(req.user) console.log("logged in as user:", req.user.username);
-
-
+app.use(function (req, res, next) {
+  if (req.user) console.log("logged in as user:", req.user.username);
 
   res.locals.base_url = BASE_URL;
-  
+
   res.locals.user = req.user;
   res.locals.path = req.path;
   res.locals.project_invitations = null;
 
-  if(useCSRF) {
+  if (useCSRF) {
     var csrfToken = req.csrfToken();
     res.locals.csrfToken = req.csrfToken();
 
-    res.cookie('csrf-token', csrfToken);
+    res.cookie("csrf-token", csrfToken);
     console.log("CSRF:", csrfToken);
   }
 
-
-
-  
-
-  
   //res.cookie('csrf-token', res.locals.csrfToken);
   //console.log(req.user, "==")
-
-  
-
 
   // If using the development server, log in as 'test'.
   // This is seemingly the only way to make sure the tagging interface app works by itself (i.e. localhost:4000).
   // Can comment this out if you aren't developing the react app via localhost:4000.
-  if (app.get('env') === 'development' && debugMode) {
-
-    User.findOne({username: "test"}, function(err, user) {
-
+  if (app.get("env") === "development" && debugMode) {
+    User.findOne({ username: "test" }, function (err, user) {
       //return next(null, req, res);
-      req.login(user, function(err) {
-
+      req.login(user, function (err) {
         //const token = jwt.sign(user, 'your_jwt_secret');
         //console.log(token);
         return next(null, req, res);
       });
-
     });
     return;
   }
 
-
-
-  
-
   // if (app.get('env') === 'development' && req.user === undefined) {
-  //   User.findOne({username: "test"}, function(err, user) {      
+  //   User.findOne({username: "test"}, function(err, user) {
   //     //req.user = user;
   //     proceed(req, res, next);
   //     return;
@@ -265,20 +242,16 @@ app.use(function(req, res, next) {
   //     res.locals.recent_projects = recent_projects;
   //       //console.log("Recent projects:", res.locals.recent_projects);
 
-
-        
   //     next(null, req, res);
-  //   });      
+  //   });
   // }
 
   //if(req.user) {
-    next(null, req, res);    
+  next(null, req, res);
   //} else {
   //  next(null, req, res);
   //}
-  
-})
-
+});
 
 // Route middleware to make sure a user is logged in.
 // Users will be redirected if not.
@@ -299,13 +272,12 @@ app.use(function(req, res, next) {
 //     res.locals.user_stars = req.user.docgroups_annotated.length;
 //     return next();
 //   }
-//   if(NON_LOGIN_PATHS.has(req.path) || req.path.startsWith('/reset_password/')) {      
+//   if(NON_LOGIN_PATHS.has(req.path) || req.path.startsWith('/reset_password/')) {
 //     return next();
-//   } 
+//   }
 
 //   console.log('not logged in', req.path);
 
-  
 //   // TODO: IF working with new React interface, return res.send({"error": "user must be logged in"}) and redirect in the front end
 //   //res.send({})
 
@@ -313,32 +285,21 @@ app.use(function(req, res, next) {
 //   return next()
 // });
 
-
-
-
-
-
 // Setup routes
-var routes = { 
-  homepage:         ['/',              require('./routes/homepage')],
+var routes = {
+  homepage: ["/", require("./routes/homepage")],
   //setup_project:    ['/',          require('./routes/setup_project')],
-  user:             ['/api/users/',    require('./routes/user')],
-  project:          ['/api/projects/', require('./routes/project')]
-}
+  user: ["/api/users/", require("./routes/user")],
+  project: ["/api/projects/", require("./routes/project")],
+};
 
-for(var i in routes) {
+for (var i in routes) {
   app.use(routes[i][0], routes[i][1]);
 }
 
-
 var homepageController = require("app/controllers/homepage_controller");
 
-app.all('*', homepageController.index);
-
-
-
-
-
+app.all("*", homepageController.index);
 
 // catch 404 and forward to error handler
 // app.use(function(req, res, next) {
@@ -348,18 +309,17 @@ app.all('*', homepageController.index);
 //   next(err);
 // });
 
-
 // error handlers
 
 //development error handler
 //will print stacktrace
-if (app.get('env') === 'development') {
-  app.use(function(err, req, res, next) {
-    console.log(err, "<<")
+if (app.get("env") === "development") {
+  app.use(function (err, req, res, next) {
+    console.log(err, "<<");
     res.status(err.status || 500);
-    res.render('error', {
+    res.render("error", {
       message: err.message,
-      error: err
+      error: err,
     });
   });
 }
@@ -375,7 +335,7 @@ if (app.get('env') === 'development') {
 // });
 
 // var patterns = '*.jade *.css *.less *.styl *.scss *.sass *.png *.jpeg *.jpg *.gif *.webp *.svg';
- 
+
 // var browserRefreshClient = require('browser-refresh-client')
 
 // browserRefreshClient
