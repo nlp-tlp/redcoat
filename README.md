@@ -2,14 +2,34 @@
 
 Redcoat is a lightweight web-based annotation tool for labelling entity recognition data.
 
+## How to install
 
-## Dependencies
+The project is configured to use docker by default. If you want a regular installation, please refer to the corresponding section below.
+
+### Using Docker
+
+You can deploy the application using the provided docker-compose file. First, build the redcoat image, from the redcoat folder:
+
+```
+docker build -t redcoat:latest . 
+```
+
+Then:
+
+```
+docker-compose up -d
+```
+
+You may then visit the server in your browser by visiting [localhost:3000](http://localhost:3000).
+
+### Regular install
+
+#### Dependencies
 
 - NodeJS and NPM
 - MongoDB version 4 or later
 
-## How to install
-
+#### Installation
 
 First, ensure [Mongodb](https://www.mongodb.com/download-center/community) is installed. On the Community Server page, download the latest stable version (4.2.3 as of the time of writing) for your operating system (Windows x64, MSI for most users). Once it has been installed, open a new terminal window, and run Mongodb:
 
@@ -22,6 +42,10 @@ Then, in a new terminal window, clone this repository into a folder and navigate
     $ git clone https://github.com/Michael-Stewart-Webdev/redcoat.git
     $ cd redcoat
 
+Edit the file `config/db_config.js` with the proper connection string for the DB:
+
+    module.exports.mongo_conn_string = "mongodb://localhost:27017/redcoat-db-dev"
+
 Next, install Redcoat's dependencies using `npm`\*:
 
     $ npm install
@@ -30,7 +54,7 @@ Redcoat may be run using the command:
 
     $ npm start
 
-You may then visit the server in your browser by visiting `localhost:3000`.
+You may then visit the server in your browser by visiting [localhost:3000](http://localhost:3000).
 
 #### Note for Windows users - possible problems
 
@@ -52,18 +76,9 @@ If you have a Sendgrid account, and would like the server to be able to use your
 	
 You'll then need to restart Redcoat (terminate the process and run `npm run production` again) for the changes to take effect.
 
+For the Docker version, you can add your SendGrid API Key in the `api-key.env` file:
 
-## Using Docker
+    SENDGRID_API_KEY="<your sendgrid api key>"
 
-You can deploy the application using the provided docker-compose file. First, build the redcoat image, from the redcoat folder:
-
-```
-docker build -t redcoat:latest . 
-```
-
-Then:
-
-```
-docker-compose up -d
-```
+Then, you need to restart: `docker-compose up --force-recreate -d`
 
