@@ -62,7 +62,7 @@
     "mocha": "^5.2.0",
     "moment": "^2.24.0",
     "mongodb": "^3.5.5",
-    "mongoose": "^5.12.7",
+    "mongoose": "^5.13.15",
     "morgan": "^1.9.1",
     "multiparty": "^4.2.1",
     "natural": "^0.5.6",
