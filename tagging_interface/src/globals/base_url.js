@@ -1,2 +1,2 @@
-const BASE_URL = "/redcoat/";
+const BASE_URL = "/";
 export default BASE_URL;

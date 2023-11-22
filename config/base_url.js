@@ -1,1 +1,1 @@
-module.exports.base_url = process.env.BASE_URL || "/redcoat/";
+module.exports.base_url = process.env.BASE_URL || "/";

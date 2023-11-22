@@ -36,7 +36,7 @@ mongoose.connection.on("open", function () {
     checkVersion(
       version.split(".").map(function (n) {
         return parseInt(n, 10);
-      })
+      }),
     );
   });
 });
@@ -59,9 +59,9 @@ var app = express();
 var cors = require("cors");
 app.use(
   cors({
-    origin: "http://localhost:4000",
+    origin: "http://localhost:5000",
     credentials: true,
-  })
+  }),
 );
 
 // view engine setup
@@ -79,7 +79,7 @@ app.use(
     extended: true,
     limit: "50mb",
     parameterLimit: 50000,
-  })
+  }),
 );
 app.use(cookieParser());
 app.use(expressSanitizer());
@@ -123,8 +123,8 @@ passport.use(
       usernameField: "email",
       passwordField: "password",
     },
-    User.authenticate()
-  )
+    User.authenticate(),
+  ),
 );
 
 passport.serializeUser(User.serializeUser());
@@ -174,13 +174,15 @@ passport.deserializeUser(User.deserializeUser());
 
 var envi = process.env.NODE_ENV || "development";
 
+console.log("Environment: " + envi);
+
 var debugMode = true; // Set to true when running the react server (e.g. port 4000).
 var useCSRF = false; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.
 // When not running localhost:4000, this should be set to true.
 
 if (envi === "production") {
-  useCSRF = true;
-  debugMode = false;
+  var useCSRF = true;
+  var debugMode = false;
 }
 
 console.log("Use CSRF:   ", useCSRF);
@@ -285,6 +287,8 @@ app.use(function (req, res, next) {
 //   return next()
 // });
 
+var homepageController = require("app/controllers/homepage_controller");
+
 // Setup routes
 var routes = {
   homepage: ["/", require("./routes/homepage")],
@@ -297,9 +301,14 @@ for (var i in routes) {
   app.use(routes[i][0], routes[i][1]);
 }
 
-var homepageController = require("app/controllers/homepage_controller");
+//app.all("*", homepageController.index);
 
-app.all("*", homepageController.index);
+//
+//
+//
+// app.get("/test", (req, res) => {
+//   res.send("hello");
+// });
 
 // catch 404 and forward to error handler
 // app.use(function(req, res, next) {
