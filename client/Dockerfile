@@ -13,6 +13,9 @@ COPY public ./public/
 COPY src ./src/
 COPY jsconfig.json .
 
+ARG SERVER_HOST
+ENV REACT_APP_SERVER_HOST $SERVER_HOST
+
 RUN npm run build
 
 

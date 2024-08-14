@@ -1,1 +1,1 @@
-module.exports.mongo_conn_string = "mongodb://redcoat_db/redcoat-db-dev";
+module.exports.mongo_conn_string = process.env.MONGO_HOST;

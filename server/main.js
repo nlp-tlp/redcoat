@@ -56,10 +56,13 @@ var path = require("path");
 
 var app = express();
 
+console.log("client host");
+console.log(process.env.CLIENT_HOST);
+
 var cors = require("cors");
 app.use(
   cors({
-    origin: "http://localhost:4000",
+    origin: process.env.CLIENT_HOST,
     credentials: true,
   }),
 );

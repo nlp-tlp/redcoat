@@ -1,8 +1,7 @@
-var envi = process.env.NODE_ENV || "production";
+const API_URL = process.env.REACT_APP_SERVER_HOST + "/api/";
 
-const API_URL =
-  envi === "development"
-    ? "http://localhost:3000/api/"
-    : "http://localhost:5000/api/";
+console.log("API URL");
+console.log(process.env.REACT_APP_SERVER_HOST);
+console.log(API_URL);
 
 export default API_URL;
