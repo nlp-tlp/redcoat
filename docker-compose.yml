@@ -27,7 +27,7 @@ services:
             - 4000:80
 
     redcoat_db:
-        image: mongo
+        image: mongo:3.6.11-xenial
         volumes:
             - redcoat_data:/data/db
         ports:
