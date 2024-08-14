@@ -1,28 +1,42 @@
 version: "3.7"
 
 services:
-    redcoat:
-        image: redcoat:latest
-        container_name: redcoat_app
-        ports:
-            - "3000:3000"
-        expose:
-            - 3000
-        networks:
-            - redcoat
+    redcoat_server:
         depends_on:
             - redcoat_db
+        build:
+            context: .
+        networks:
+            - redcoat
+        build:
+            context: ./server
+        environment:
+            - PORT=5000
+        ports:
+            - 5000:5000
+
+    redcoat_client:
+        depends_on:
+            - redcoat_db
+            - redcoat_server
+        build:
+            context: ./client
+        networks:
+            - redcoat
+        ports:
+            - 4000:80
+
     redcoat_db:
         image: mongo
-        container_name: redcoat_db
         volumes:
-            - nlpdata:/data/db
+            - redcoat_data:/data/db
         ports:
             - "27017:27017"
         networks:
             - redcoat
+
 networks:
     redcoat:
 
 volumes:
-    nlpdata:
+    redcoat_data:

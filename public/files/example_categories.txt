@@ -1,4 +1,0 @@
-Person	PER
-Time	TIM
-Organisation	ORG	#4286f4
-Location	LOC
