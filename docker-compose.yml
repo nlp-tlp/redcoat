@@ -4,8 +4,6 @@ services:
     redcoat_server:
         depends_on:
             - redcoat_db
-        build:
-            context: .
         networks:
             - redcoat
         build:
@@ -29,7 +27,6 @@ services:
             - redcoat
         ports:
             - 4000:80
-
 
     redcoat_db:
         image: mongo:3.6.11-xenial
