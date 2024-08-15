@@ -12,6 +12,8 @@ var logger = require("./config/winston.js");
 var mongoose = require("mongoose");
 var BASE_URL = require("./config/base_url.js").base_url;
 
+var User = require("./app/models/user");
+
 var passport = require("passport");
 // const JwtStrategy = require("passport-jwt").Strategy;
 // const ExtractJwt = require("passport-jwt").ExtractJwt;
@@ -26,7 +28,7 @@ var expressSanitizer = require("express-sanitizer");
 
 mongoose.connection.on("open", function () {
   var admin = mongoose.connection.db.admin();
-  admin.serverStatus(function (err, info) {
+  admin.serverStatus(async function (err, info) {
     if (err) {
       console.log(err);
       return;
@@ -38,6 +40,21 @@ mongoose.connection.on("open", function () {
         return parseInt(n, 10);
       }),
     );
+
+    // Create test user if not already there
+    var newTestUser = new User({
+      username: "test",
+      email: "test@test.com",
+    });
+    try {
+      await User.register(newTestUser, "test");
+      console.log("Created test user.");
+    } catch (err) {
+      var msg = err.message;
+      if (msg.endsWith(".")) msg = msg.slice(0, msg.length - 1);
+      console.log("Did not create test user due to the following:");
+      console.log(msg);
+    }
   });
 });
 
