@@ -77,10 +77,10 @@ exports.userData = async function (req, res, next) {
 
 // GET: The logout action.
 exports.logout = function (req, res) {
-  req.logout();
-  console.log("lgoged out");
-  res.send({
-    "logged out": true,
+  req.logout(function () {
+    res.send({
+      "logged out": true,
+    });
   });
 };
 
@@ -120,7 +120,7 @@ exports.login = async function (req, res, next) {
 
   passport.authenticate("local", function (err, user, info) {
     if (err) {
-      logger.err(err.stack);
+      logger.error(err.stack);
       return res.send({ error: err.stack });
     }
     if (!user) {

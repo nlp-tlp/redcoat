@@ -1,32 +1,19 @@
 version: "3.7"
 
 services:
-    redcoat_server:
+    redcoat:
         depends_on:
             - redcoat_db
         networks:
             - redcoat
         build:
-            context: ./server
-        ports:
-            - 5000:80
-        environment:
-            - CLIENT_HOST=http://localhost:4000
-            - SERVER_HOST=http://localhost:5000
-            - MONGO_HOST=mongodb://redcoat_db/redcoat-db-dev
-
-    redcoat_client:
-        depends_on:
-            - redcoat_db
-            - redcoat_server
-        build:
-            context: ./client
-            args:
-                - SERVER_HOST=http://localhost:5000
-        networks:
-            - redcoat
+            context: .
         ports:
             - 4000:80
+        environment:
+            - CLIENT_HOST=http://localhost:4000
+            - SERVER_HOST=http://localhost:4000
+            - MONGO_HOST=mongodb://redcoat_db/redcoat-db-dev
 
     redcoat_db:
         image: mongo:3.6.11-xenial

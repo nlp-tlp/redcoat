@@ -10,3 +10,4 @@ sendgrid.env
 db/tmp
 mongodb/
 docker-compose-traefik.yml
+.env

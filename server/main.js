@@ -2,9 +2,10 @@ var express = require("express");
 var path = require("path");
 var favicon = require("serve-favicon");
 var bodyParser = require("body-parser");
-const session = require("cookie-session");
+//const session = require("cookie-session");
+const session = require("express-session");
 var cookieParser = require("cookie-parser");
-var csrf = require("csurf");
+//var csrf = require("csurf");
 var morgan = require("morgan");
 
 var LocalStrategy = require("passport-local").Strategy;
@@ -15,6 +16,7 @@ var BASE_URL = require("./config/base_url.js").base_url;
 var User = require("./app/models/user");
 
 var passport = require("passport");
+
 // const JwtStrategy = require("passport-jwt").Strategy;
 // const ExtractJwt = require("passport-jwt").ExtractJwt;
 
@@ -129,6 +131,7 @@ app.enable("trust proxy");
 //app.use(session({keys: ['kjhkjhkukg', 'kufk8fyukukfkuyf']}));
 
 app.use(session({ secret: "redcoatisaprettycoolannotationtool!" }));
+
 app.use(express.static(path.join(__dirname, "public")));
 //app.use(express.static(path.join(__dirname, 'public', 'redcoat')));
 
@@ -196,55 +199,41 @@ var envi = process.env.NODE_ENV || "development";
 
 console.log("Environment: " + envi);
 
-var debugMode = true; // Set to true when running the react server (e.g. port 4000).
-var useCSRF = false; // Set to false when working on the React interface on localhost:4000, otherwise it won't work.
-// When not running localhost:4000, this should be set to true.
-
-if (envi === "production") {
-  var useCSRF = true;
-  var debugMode = false;
-}
-
-console.log("Use CSRF:   ", useCSRF);
-console.log("Debug Mode: ", debugMode);
-
-if (useCSRF) app.use(csrf({ cookie: true }));
+//app.use(csrf({ cookie: true }));
 
 // Setup local variables that are used in almost every view.
 app.use(function (req, res, next) {
   if (req.user) console.log("logged in as user:", req.user.username);
 
+  console.log("REquest sent");
   res.locals.base_url = BASE_URL;
 
   res.locals.user = req.user;
   res.locals.path = req.path;
   res.locals.project_invitations = null;
 
-  if (useCSRF) {
-    var csrfToken = req.csrfToken();
-    res.locals.csrfToken = req.csrfToken();
+  // var csrfToken = req.csrfToken();
+  // res.locals.csrfToken = csrfToken;
 
-    res.cookie("csrf-token", csrfToken);
-    console.log("CSRF:", csrfToken);
-  }
+  // res.cookie("csrf-token", csrfToken);
+  //console.log("CSRF:", csrfToken);
 
-  //res.cookie('csrf-token', res.locals.csrfToken);
   //console.log(req.user, "==")
 
-  // If using the development server, log in as 'test'.
-  // This is seemingly the only way to make sure the tagging interface app works by itself (i.e. localhost:4000).
-  // Can comment this out if you aren't developing the react app via localhost:4000.
-  if (app.get("env") === "development" && debugMode) {
-    User.findOne({ username: "test" }, function (err, user) {
-      //return next(null, req, res);
-      req.login(user, function (err) {
-        //const token = jwt.sign(user, 'your_jwt_secret');
-        //console.log(token);
-        return next(null, req, res);
-      });
-    });
-    return;
-  }
+  // // If using the development server, log in as 'test'.
+  // // This is seemingly the only way to make sure the tagging interface app works by itself (i.e. localhost:4000).
+  // // Can comment this out if you aren't developing the react app via localhost:4000.
+  // if (app.get("env") === "development" && debugMode) {
+  //   User.findOne({ username: "test" }, function (err, user) {
+  //     //return next(null, req, res);
+  //     req.login(user, function (err) {
+  //       //const token = jwt.sign(user, 'your_jwt_secret');
+  //       //console.log(token);
+  //       return next(null, req, res);
+  //     });
+  //   });
+  //   return;
+  // }
 
   // if (app.get('env') === 'development' && req.user === undefined) {
   //   User.findOne({username: "test"}, function(err, user) {
