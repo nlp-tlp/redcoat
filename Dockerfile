@@ -5,13 +5,13 @@ WORKDIR /client
 
 RUN rm -rf /client/node_nodules
 
-COPY client/package*.json .
+COPY client/package*.json ./
 
 RUN npm install
 
 COPY client/public ./public/
 COPY client/src ./src/
-COPY client/jsconfig.json .
+COPY client/jsconfig.json ./
 
 ARG SERVER_HOST
 ENV REACT_APP_SERVER_HOST $SERVER_HOST

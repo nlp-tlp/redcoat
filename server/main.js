@@ -28,6 +28,9 @@ mongoose.connect(DB_CONN_STRING, function (err, db) {
 });
 var expressSanitizer = require("express-sanitizer");
 
+console.log("PORT:")
+console.log(process.env.PORT);
+
 mongoose.connection.on("open", function () {
   var admin = mongoose.connection.db.admin();
   admin.serverStatus(async function (err, info) {

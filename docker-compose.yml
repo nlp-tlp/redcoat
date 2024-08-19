@@ -9,11 +9,12 @@ services:
         build:
             context: .
         ports:
-            - 4000:80
+            - 4000:${PORT}
         environment:
             - CLIENT_HOST=http://localhost:4000
             - SERVER_HOST=http://localhost:4000
             - MONGO_HOST=mongodb://redcoat_db/redcoat-db-dev
+            - PORT=${PORT}
 
     redcoat_db:
         image: mongo:3.6.11-xenial
